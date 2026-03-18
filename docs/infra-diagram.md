@@ -32,8 +32,8 @@ flowchart TD
     rdf([RDF Data])
     t([raw tables])
     p -- updates with new data (?) --> t
-    t -- converted by convert script (?) --> rdf
-    rdf -. stored in (?) .-> gdb
-    t -. stored in (?) .-> db
+    t -- convert.py --> rdf
+    rdf -. stored in .-> gdb
+    t -. stored in .-> db
     end
 ```
