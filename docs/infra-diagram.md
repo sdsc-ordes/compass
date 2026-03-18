@@ -4,10 +4,11 @@
 
 Questions:
 
-- do we need a graph database? or can we store the RDF as JSON or other format in a DB.
+- do we need a graph database? or can we store the RDF as JSON(LD) or other format in a DB.
 - should database be postgres or RustFS (bucket storage) ? --> Depends on what we need to store.
 - do we store tables and RDF or just RDF ?
-- convert script: what language?
+-     This depends on the data - if we are dealing with highly transactional/time series data, we might need 2 DB's
+- convert script: Simple Python script based on a tabular representation of each object and property, backed by an ontology
 
 Flows:
 
