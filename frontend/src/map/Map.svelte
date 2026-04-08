@@ -166,13 +166,42 @@
 
       if (props.is_region) return; // Don't show popups for boundaries
 
-      new maplibregl.Popup({ closeButton: false, maxWidth: '280px' })
+      // MapLibre stringifies nested objects — parse them back
+      const focusAreas: {iri:string,label:string}[] = (() => { try { return JSON.parse(props.focusAreas || '[]'); } catch { return []; } })();
+      const region: {iri:string,label:string}|null = (() => { try { return JSON.parse(props.primaryOceanRegion || 'null'); } catch { return null; } })();
+      const funding: {iri:string,label:string}|null = (() => { try { return JSON.parse(props.fundingSource || 'null'); } catch { return null; } })();
+      const access: {iri:string,label:string}|null = (() => { try { return JSON.parse(props.accessType || 'null'); } catch { return null; } })();
+
+      const cB = 'display:inline-block;padding:1px 7px;border-radius:100px;font-size:11px;font-weight:500;text-decoration:none;';
+      const lS = 'font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;width:68px;flex-shrink:0;padding-top:2px;';
+      const rS = 'display:flex;align-items:flex-start;gap:4px;margin:3px 0;';
+
+      function propRow(label: string, inner: string) {
+        return `<div style="${rS}"><span style="${lS}">${label}</span><div style="display:flex;flex-wrap:wrap;gap:2px;">${inner}</div></div>`;
+      }
+      function chipLink(iri: string, lbl: string, bg: string, fg: string) {
+        return `<a href="${iri}" target="_blank" rel="noopener noreferrer" style="${cB}background:${bg};color:${fg};">${lbl}</a>`;
+      }
+
+      const focusRow = focusAreas.length
+        ? propRow(t.propFocusArea, focusAreas.map(fa => chipLink(fa.iri, fa.label, '#dbeafe', '#1d4ed8')).join(''))
+        : '';
+      const regionRow  = region  ? propRow(t.propRegion,  chipLink(region.iri,  region.label,  '#ccfbf1', '#0f766e')) : '';
+      const fundingRow = funding ? propRow(t.propFunding, chipLink(funding.iri, funding.label, '#fef3c7', '#b45309')) : '';
+      const accessRow  = access  ? propRow(t.propAccess,  chipLink(access.iri,  access.label,  '#dcfce7', '#15803d')) : '';
+
+      const chipsHtml = (focusRow || regionRow || fundingRow || accessRow)
+        ? `<div style="margin:8px 0;border-top:1px solid #f1f5f9;padding-top:6px;">${focusRow}${regionRow}${fundingRow}${accessRow}</div>`
+        : '';
+
+      new maplibregl.Popup({ closeButton: false, maxWidth: '300px' })
         .setLngLat(coordinates)
         .setHTML(`
           <div class="popup-content">
             <h4 style="margin: 0 0 4px; font-weight: 700; color: #0f172a;">${props.label}</h4>
-            <span style="display:inline-block; font-size: 11px; padding: 2px 6px; background: #f1f5f9; border-radius: 4px; color: #475569; margin-bottom: 8px;">${props.type}</span>
-            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.4;">${props.description || t.noDescription}</p>
+            <a href="${props.typeIri}" target="_blank" rel="noopener noreferrer" style="display:inline-block; font-size: 11px; padding: 2px 6px; background: #f1f5f9; border-radius: 4px; color: #475569; margin-bottom: 4px; text-decoration:none;">${props.type}</a>
+            ${chipsHtml}
+            ${props.founded ? `<p style="margin:4px 0 0; font-size:11px; color:#94a3b8;">Est. ${props.founded}</p>` : ''}
             <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
                <button style="background: #0284c7; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">${t.details}</button>
             </div>

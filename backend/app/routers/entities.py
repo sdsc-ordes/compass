@@ -41,6 +41,21 @@ async def get_entities(
             ?focusArea skos:prefLabel ?focusLabel .
             FILTER(lang(?focusLabel) = "{lang}")
         }}
+        OPTIONAL {{
+            ?s ocorg:primaryOceanRegion ?regionNode .
+            ?regionNode skos:prefLabel ?regionLab .
+            FILTER(lang(?regionLab) = "{lang}")
+        }}
+        OPTIONAL {{
+            ?s ocorg:fundingSource ?fundingNode .
+            ?fundingNode skos:prefLabel ?fundingLab .
+            FILTER(lang(?fundingLab) = "{lang}")
+        }}
+        OPTIONAL {{
+            ?s ocorg:accessType ?accessNode .
+            ?accessNode skos:prefLabel ?accessLab .
+            FILTER(lang(?accessLab) = "{lang}")
+        }}
         
         FILTER(lang(?label) = "{lang}")
     """
@@ -94,7 +109,15 @@ async def get_entities(
             where_clauses.append(f"?s {prop} ?{key}Val . FILTER(?{key}Val >= {val})")
 
     full_sparql = sparql_prefixes + """
-    SELECT ?s ?label ?lat ?long ?type ?country ?founded ?website (GROUP_CONCAT(?focusLabel; separator=", ") AS ?focusAreas) WHERE {
+    SELECT ?s ?label ?lat ?long ?type ?country ?founded ?website
+           (GROUP_CONCAT(CONCAT(STR(?focusArea), "|", COALESCE(?focusLabel, "")); separator=";;") AS ?focusAreasRaw)
+           (SAMPLE(?regionNode) AS ?regionIri)
+           (SAMPLE(?regionLab) AS ?regionLabel)
+           (SAMPLE(?fundingNode) AS ?fundingIri)
+           (SAMPLE(?fundingLab) AS ?fundingLabel)
+           (SAMPLE(?accessNode) AS ?accessIri)
+           (SAMPLE(?accessLab) AS ?accessLabel)
+    WHERE {
     """ + sparql_where_base + "\n".join(where_clauses) + """
     }
     GROUP BY ?s ?label ?lat ?long ?type ?country ?founded ?website
@@ -106,15 +129,33 @@ async def get_entities(
         try:
             lat = float(res["lat"])
             lng = float(res["long"])
-            
+
+            # Parse focus areas from "iri|label;;iri|label" format
+            focus_raw = res.get("focusAreasRaw", "") or ""
+            focus_areas = []
+            for pair in focus_raw.split(";;"):
+                parts = pair.strip().split("|", 1)
+                if len(parts) == 2 and parts[0]:
+                    focus_areas.append({"iri": parts[0].strip(), "label": parts[1].strip()})
+
+            def make_iri_obj(iri_val, label_val):
+                if not iri_val:
+                    return None
+                label = str(label_val) if label_val else str(iri_val).split("#")[-1].split("/")[-1]
+                return {"iri": str(iri_val), "label": label}
+
             properties = {
                 "id": res["s"],
                 "label": res["label"],
                 "type": res["type"].split("#")[-1] if "#" in res["type"] else res["type"].split("/")[-1],
+                "typeIri": res["type"],
                 "country": res.get("country", ""),
                 "founded": res.get("founded", ""),
                 "website": res.get("website", ""),
-                "description": f"Focus: {res.get('focusAreas', 'N/A')}, Founded: {res.get('founded', 'N/A')}"
+                "focusAreas": focus_areas,
+                "primaryOceanRegion": make_iri_obj(res.get("regionIri"), res.get("regionLabel")),
+                "fundingSource": make_iri_obj(res.get("fundingIri"), res.get("fundingLabel")),
+                "accessType": make_iri_obj(res.get("accessIri"), res.get("accessLabel")),
             }
             
             feature = Feature(

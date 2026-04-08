@@ -12,7 +12,11 @@ export const i18n = {
     noDescription: "No description available.",
     loading: "Loading entities...",
     results: "Results",
-    details: "View Details"
+    details: "View Details",
+    propFocusArea: "Focus areas",
+    propRegion: "Region",
+    propFunding: "Funding",
+    propAccess: "Access"
   },
   de: {
     filters: "Filter",
@@ -27,7 +31,11 @@ export const i18n = {
     noDescription: "Keine Beschreibung verfügbar.",
     loading: "Einträge werden geladen...",
     results: "Ergebnisse",
-    details: "Details anzeigen"
+    details: "Details anzeigen",
+    propFocusArea: "Schwerpunkte",
+    propRegion: "Region",
+    propFunding: "Finanzierung",
+    propAccess: "Zugang"
   }
 };
 

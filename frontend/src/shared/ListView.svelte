@@ -23,11 +23,43 @@
           <td>
             <div class="title-cell">
               <strong>{entity.properties.label}</strong>
-              <p class="description">{entity.properties.description || t.noDescription}</p>
+              <div class="prop-rows">
+                {#if (entity.properties.focusAreas || []).length > 0}
+                  <div class="prop-row">
+                    <span class="prop-label">{t.propFocusArea}</span>
+                    <div class="prop-chips">
+                      {#each (entity.properties.focusAreas || []) as fa}
+                        <a class="chip chip-focus" href={fa.iri} target="_blank" rel="noopener noreferrer">{fa.label}</a>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+                {#if entity.properties.primaryOceanRegion}
+                  <div class="prop-row">
+                    <span class="prop-label">{t.propRegion}</span>
+                    <a class="chip chip-region" href={entity.properties.primaryOceanRegion.iri} target="_blank" rel="noopener noreferrer">{entity.properties.primaryOceanRegion.label}</a>
+                  </div>
+                {/if}
+                {#if entity.properties.fundingSource}
+                  <div class="prop-row">
+                    <span class="prop-label">{t.propFunding}</span>
+                    <a class="chip chip-funding" href={entity.properties.fundingSource.iri} target="_blank" rel="noopener noreferrer">{entity.properties.fundingSource.label}</a>
+                  </div>
+                {/if}
+                {#if entity.properties.accessType}
+                  <div class="prop-row">
+                    <span class="prop-label">{t.propAccess}</span>
+                    <a class="chip chip-access" href={entity.properties.accessType.iri} target="_blank" rel="noopener noreferrer">{entity.properties.accessType.label}</a>
+                  </div>
+                {/if}
+              </div>
+              {#if entity.properties.founded}
+                <span class="founded-year">Est. {entity.properties.founded}</span>
+              {/if}
             </div>
           </td>
           <td>
-            <span class="type-badge">{entity.properties.type}</span>
+            <a class="type-badge" href={entity.properties.typeIri} target="_blank" rel="noopener noreferrer">{entity.properties.type}</a>
           </td>
           <td class="actions">
             <button class="action-btn" title={t.details}>
@@ -103,15 +135,64 @@
     font-weight: 600;
   }
 
-  .description {
-    margin: 0;
-    font-size: 0.875rem;
-    color: #64748b;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.5;
+  .prop-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .prop-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 2px 0;
+  }
+
+  .prop-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: 68px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+
+  .prop-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+
+  .chip:hover {
+    opacity: 0.75;
+    text-decoration: underline;
+  }
+
+  .chip-focus   { background: #dbeafe; color: #1d4ed8; }
+  .chip-region  { background: #ccfbf1; color: #0f766e; }
+  .chip-funding { background: #fef3c7; color: #b45309; }
+  .chip-access  { background: #dcfce7; color: #15803d; }
+
+  .founded-year {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 2px;
   }
 
   .type-badge {
@@ -122,6 +203,13 @@
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 600;
+    text-decoration: none;
+  }
+
+  .type-badge:hover {
+    background: #e2e8f0;
+    color: #334155;
+    text-decoration: underline;
   }
 
   .actions {
