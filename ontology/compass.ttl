@@ -1,0 +1,360 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:  <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix ocorg: <http://example.org/ocean-org/ontology#> .
+@prefix ocinst: <http://example.org/ocean-org/data#> .
+
+# ============================================================
+# Instance Data: Oceanographic Organizations
+# ============================================================
+
+# --- Research Institutes ---
+
+ocinst:WHOI a ocorg:ResearchInstitute ;
+    ocorg:organizationName "Woods Hole Oceanographic Institution"@en ;
+    ocorg:organizationName "Ozeanographisches Institut Woods Hole"@de ;
+    ocorg:country "United States"@en ;
+    ocorg:country "Vereinigte Staaten"@de ;
+    ocorg:foundedYear "1930"^^xsd:gYear ;
+    ocorg:staffSize 1000 ;
+    ocorg:websiteUrl "https://www.whoi.edu"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:DeepSeaExploration, ocorg:ClimateScience ;
+    geo:lat "41.5245"^^xsd:float ;
+    geo:long "-70.6731"^^xsd:float ;
+    ocorg:annualBudgetUSD 250 ;
+    ocorg:publicationsPerYear 400 ;
+    ocorg:researchVessels 4 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Mixed ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+
+ocinst:MBARI a ocorg:ResearchInstitute ;
+    ocorg:organizationName "Monterey Bay Aquarium Research Institute"@en ;
+    ocorg:organizationName "Monterey-Zweig des Monterey Bay Aquarium Forschungsinstituts"@de ;
+    ocorg:country "United States"@en ;
+    ocorg:country "Vereinigte Staaten"@de ;
+    ocorg:foundedYear "1987"^^xsd:gYear ;
+    ocorg:staffSize 220 ;
+    ocorg:websiteUrl "https://www.mbari.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:DeepSeaExploration, ocorg:MarineBiology ;
+    geo:lat "36.8022"^^xsd:float ;
+    geo:long "-121.7895"^^xsd:float ;
+    ocorg:annualBudgetUSD 60 ;
+    ocorg:publicationsPerYear 150 ;
+    ocorg:researchVessels 4 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Private ;
+    ocorg:primaryOceanRegion ocorg:Region_Pacific .
+
+ocinst:GEOMAR a ocorg:ResearchInstitute ;
+    ocorg:organizationName "GEOMAR Helmholtz Centre for Ocean Research Kiel"@en ;
+    ocorg:organizationName "GEOMAR Helmholtz-Zentrum für Ozeanforschung Kiel"@de ;
+    ocorg:country "Germany"@en ;
+    ocorg:country "Deutschland"@de ;
+    ocorg:foundedYear "2004"^^xsd:gYear ;
+    ocorg:staffSize 1100 ;
+    ocorg:websiteUrl "https://www.geomar.de"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:MarineGeology, ocorg:PhysicalOceanography, ocorg:ClimateScience ;
+    geo:lat "54.3280"^^xsd:float ;
+    geo:long "10.1797"^^xsd:float ;
+    ocorg:annualBudgetUSD 90 ;
+    ocorg:publicationsPerYear 500 ;
+    ocorg:researchVessels 5 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+
+ocinst:IFREMER a ocorg:ResearchInstitute ;
+    ocorg:organizationName "Institut Français de Recherche pour l'Exploitation de la Mer"@en ;
+    ocorg:organizationName "Französisches Forschungsinstitut für die Nutzung der Meere"@de ;
+    ocorg:country "France"@en ;
+    ocorg:country "Frankreich"@de ;
+    ocorg:foundedYear "1984"^^xsd:gYear ;
+    ocorg:staffSize 1500 ;
+    ocorg:websiteUrl "https://www.ifremer.fr"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:FisheriesScience, ocorg:DeepSeaExploration, ocorg:CoastalManagement ;
+    geo:lat "48.3534"^^xsd:float ;
+    geo:long "-4.5566"^^xsd:float ;
+    ocorg:annualBudgetUSD 220 ;
+    ocorg:publicationsPerYear 600 ;
+    ocorg:researchVessels 8 ;
+    ocorg:accessType ocorg:Access_ByPartnership ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+
+ocinst:JAMSTEC a ocorg:ResearchInstitute ;
+    ocorg:organizationName "Japan Agency for Marine-Earth Science and Technology"@en ;
+    ocorg:organizationName "Japanische Agentur für Meeres- und Geowissenschaften und Technologie"@de ;
+    ocorg:country "Japan"@en ;
+    ocorg:country "Japan"@de ;
+    ocorg:foundedYear "2004"^^xsd:gYear ;
+    ocorg:staffSize 800 ;
+    ocorg:websiteUrl "https://www.jamstec.go.jp"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:DeepSeaExploration, ocorg:MarineGeology, ocorg:ClimateScience ;
+    geo:lat "35.3208"^^xsd:float ;
+    geo:long "139.6520"^^xsd:float ;
+    ocorg:annualBudgetUSD 320 ;
+    ocorg:publicationsPerYear 450 ;
+    ocorg:researchVessels 6 ;
+    ocorg:accessType ocorg:Access_Restricted ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Pacific .
+
+ocinst:AWI a ocorg:ResearchInstitute ;
+    ocorg:organizationName "Alfred Wegener Institute for Polar and Marine Research"@en ;
+    ocorg:organizationName "Alfred-Wegener-Institut für Polar- und Meeresforschung"@de ;
+    ocorg:country "Germany"@en ;
+    ocorg:country "Deutschland"@de ;
+    ocorg:foundedYear "1980"^^xsd:gYear ;
+    ocorg:staffSize 1200 ;
+    ocorg:websiteUrl "https://www.awi.de"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PolarResearch, ocorg:ClimateScience, ocorg:MarineBiology ;
+    geo:lat "53.5310"^^xsd:float ;
+    geo:long "8.5850"^^xsd:float ;
+    ocorg:annualBudgetUSD 140 ;
+    ocorg:publicationsPerYear 550 ;
+    ocorg:researchVessels 5 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Arctic .
+
+ocinst:NOC a ocorg:ResearchInstitute ;
+    ocorg:organizationName "National Oceanography Centre"@en ;
+    ocorg:organizationName "Nationales Ozeanographiezentrum"@de ;
+    ocorg:country "United Kingdom"@en ;
+    ocorg:country "Vereinigtes Königreich"@de ;
+    ocorg:foundedYear "1995"^^xsd:gYear ;
+    ocorg:staffSize 600 ;
+    ocorg:websiteUrl "https://noc.ac.uk"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:MarineGeology, ocorg:ClimateScience ;
+    geo:lat "50.8931"^^xsd:float ;
+    geo:long "-1.3948"^^xsd:float ;
+    ocorg:annualBudgetUSD 90 ;
+    ocorg:publicationsPerYear 350 ;
+    ocorg:researchVessels 3 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+
+ocinst:CSIRO_Oceans a ocorg:ResearchInstitute ;
+    ocorg:organizationName "CSIRO Oceans and Atmosphere"@en ;
+    ocorg:organizationName "CSIRO Ozeane und Atmosphäre"@de ;
+    ocorg:country "Australia"@en ;
+    ocorg:country "Australien"@de ;
+    ocorg:foundedYear "1949"^^xsd:gYear ;
+    ocorg:staffSize 450 ;
+    ocorg:websiteUrl "https://www.csiro.au"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:ClimateScience, ocorg:FisheriesScience, ocorg:CoastalManagement ;
+    geo:lat "-42.8821"^^xsd:float ;
+    geo:long "147.3272"^^xsd:float ;
+    ocorg:annualBudgetUSD 110 ;
+    ocorg:publicationsPerYear 300 ;
+    ocorg:researchVessels 2 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Indian .
+
+# --- Universities ---
+
+ocinst:SIO a ocorg:University ;
+    ocorg:organizationName "Scripps Institution of Oceanography"@en ;
+    ocorg:organizationName "Scripps-Institut für Ozeanographie"@de ;
+    ocorg:country "United States"@en ;
+    ocorg:country "Vereinigte Staaten"@de ;
+    ocorg:foundedYear "1903"^^xsd:gYear ;
+    ocorg:staffSize 1400 ;
+    ocorg:websiteUrl "https://scripps.ucsd.edu"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:ClimateScience, ocorg:MarineBiology ;
+    geo:lat "32.8662"^^xsd:float ;
+    geo:long "-117.2544"^^xsd:float ;
+    ocorg:annualBudgetUSD 180 ;
+    ocorg:publicationsPerYear 700 ;
+    ocorg:researchVessels 2 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Mixed ;
+    ocorg:primaryOceanRegion ocorg:Region_Pacific .
+
+ocinst:UTokyo_AORI a ocorg:University ;
+    ocorg:organizationName "Atmosphere and Ocean Research Institute, University of Tokyo"@en ;
+    ocorg:organizationName "Atmosphären- und Ozeanforschungsinstitut der Universität Tokio"@de ;
+    ocorg:country "Japan"@en ;
+    ocorg:country "Japan"@de ;
+    ocorg:foundedYear "2010"^^xsd:gYear ;
+    ocorg:staffSize 250 ;
+    ocorg:websiteUrl "https://www.aori.u-tokyo.ac.jp"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:ClimateScience ;
+    geo:lat "35.6610"^^xsd:float ;
+    geo:long "139.6740"^^xsd:float ;
+    ocorg:annualBudgetUSD 50 ;
+    ocorg:publicationsPerYear 200 ;
+    ocorg:researchVessels 1 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Pacific .
+
+ocinst:Bergen_GFI a ocorg:University ;
+    ocorg:organizationName "Geophysical Institute, University of Bergen"@en ;
+    ocorg:organizationName "Geophysikalisches Institut der Universität Bergen"@de ;
+    ocorg:country "Norway"@en ;
+    ocorg:country "Norwegen"@de ;
+    ocorg:foundedYear "1917"^^xsd:gYear ;
+    ocorg:staffSize 180 ;
+    ocorg:websiteUrl "https://www.uib.no/en/gfi"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:PolarResearch, ocorg:ClimateScience ;
+    geo:lat "60.3833"^^xsd:float ;
+    geo:long "5.3317"^^xsd:float ;
+    ocorg:annualBudgetUSD 35 ;
+    ocorg:publicationsPerYear 180 ;
+    ocorg:researchVessels 1 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Arctic .
+
+ocinst:Dalhousie_Ocean a ocorg:University ;
+    ocorg:organizationName "Dalhousie University Department of Oceanography"@en ;
+    ocorg:organizationName "Institut für Ozeanographie der Dalhousie Universität"@de ;
+    ocorg:country "Canada"@en ;
+    ocorg:country "Kanada"@de ;
+    ocorg:foundedYear "1959"^^xsd:gYear ;
+    ocorg:staffSize 120 ;
+    ocorg:websiteUrl "https://www.dal.ca/oceanography"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:MarineBiology, ocorg:PhysicalOceanography, ocorg:FisheriesScience ;
+    geo:lat "44.6366"^^xsd:float ;
+    geo:long "-63.5917"^^xsd:float ;
+    ocorg:annualBudgetUSD 20 ;
+    ocorg:publicationsPerYear 120 ;
+    ocorg:researchVessels 0 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Mixed ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+
+ocinst:CapeTown_Ocean a ocorg:University ;
+    ocorg:organizationName "University of Cape Town Department of Oceanography"@en ;
+    ocorg:organizationName "Institut für Ozeanographie der Universität Kapstadt"@de ;
+    ocorg:country "South Africa"@en ;
+    ocorg:country "Südafrika"@de ;
+    ocorg:foundedYear "1975"^^xsd:gYear ;
+    ocorg:staffSize 80 ;
+    ocorg:websiteUrl "https://www.uct.ac.za"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:MarineBiology, ocorg:CoastalManagement, ocorg:ClimateScience ;
+    geo:lat "-33.9577"^^xsd:float ;
+    geo:long "18.4612"^^xsd:float ;
+    ocorg:annualBudgetUSD 10 ;
+    ocorg:publicationsPerYear 80 ;
+    ocorg:researchVessels 0 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Mixed ;
+    ocorg:primaryOceanRegion ocorg:Region_Indian .
+
+# --- Government Agencies ---
+
+ocinst:NOAA a ocorg:GovernmentAgency ;
+    ocorg:organizationName "National Oceanic and Atmospheric Administration"@en ;
+    ocorg:organizationName "Nationale Ozean- und Atmosphärenbehörde"@de ;
+    ocorg:country "United States"@en ;
+    ocorg:country "Vereinigte Staaten"@de ;
+    ocorg:foundedYear "1970"^^xsd:gYear ;
+    ocorg:staffSize 11000 ;
+    ocorg:websiteUrl "https://www.noaa.gov"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:ClimateScience, ocorg:FisheriesScience, ocorg:CoastalManagement ;
+    geo:lat "38.8833"^^xsd:float ;
+    geo:long "-76.9425"^^xsd:float ;
+    ocorg:annualBudgetUSD 800 ;
+    ocorg:publicationsPerYear 1500 ;
+    ocorg:researchVessels 16 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Global .
+
+ocinst:BOM_Ocean a ocorg:GovernmentAgency ;
+    ocorg:organizationName "Bureau of Meteorology — Ocean Services"@en ;
+    ocorg:organizationName "Meteorologisches Amt — Ozeandienste"@de ;
+    ocorg:country "Australia"@en ;
+    ocorg:country "Australien"@de ;
+    ocorg:foundedYear "1908"^^xsd:gYear ;
+    ocorg:staffSize 1700 ;
+    ocorg:websiteUrl "http://www.bom.gov.au"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:ClimateScience, ocorg:PhysicalOceanography ;
+    geo:lat "-37.8136"^^xsd:float ;
+    geo:long "144.9631"^^xsd:float ;
+    ocorg:annualBudgetUSD 350 ;
+    ocorg:publicationsPerYear 200 ;
+    ocorg:researchVessels 0 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Indian .
+
+ocinst:SOA_China a ocorg:GovernmentAgency ;
+    ocorg:organizationName "State Oceanic Administration of China"@en ;
+    ocorg:organizationName "Staatliche Ozeanverwaltung Chinas"@de ;
+    ocorg:country "China"@en ;
+    ocorg:country "China"@de ;
+    ocorg:foundedYear "1964"^^xsd:gYear ;
+    ocorg:staffSize 3000 ;
+    ocorg:websiteUrl "http://www.soa.gov.cn"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:CoastalManagement, ocorg:MarineGeology, ocorg:FisheriesScience ;
+    geo:lat "39.9042"^^xsd:float ;
+    geo:long "116.4074"^^xsd:float ;
+    ocorg:annualBudgetUSD 600 ;
+    ocorg:publicationsPerYear 400 ;
+    ocorg:researchVessels 12 ;
+    ocorg:accessType ocorg:Access_Restricted ;
+    ocorg:fundingSource ocorg:Funding_Public ;
+    ocorg:primaryOceanRegion ocorg:Region_Pacific .
+
+# --- NGOs ---
+
+ocinst:OceanConservancy a ocorg:NGO ;
+    ocorg:organizationName "Ocean Conservancy"@en ;
+    ocorg:organizationName "Meeresnaturschutzorganisation"@de ;
+    ocorg:country "United States"@en ;
+    ocorg:country "Vereinigte Staaten"@de ;
+    ocorg:foundedYear "1972"^^xsd:gYear ;
+    ocorg:staffSize 130 ;
+    ocorg:websiteUrl "https://oceanconservancy.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:CoastalManagement, ocorg:ClimateScience ;
+    geo:lat "38.9050"^^xsd:float ;
+    geo:long "-77.0420"^^xsd:float ;
+    ocorg:annualBudgetUSD 20 ;
+    ocorg:publicationsPerYear 30 ;
+    ocorg:researchVessels 0 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Mixed ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+
+ocinst:Oceana a ocorg:NGO ;
+    ocorg:organizationName "Oceana"@en ;
+    ocorg:organizationName "Oceana"@de ;
+    ocorg:country "United States"@en ;
+    ocorg:country "Vereinigte Staaten"@de ;
+    ocorg:foundedYear "2001"^^xsd:gYear ;
+    ocorg:staffSize 200 ;
+    ocorg:websiteUrl "https://oceana.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:FisheriesScience, ocorg:CoastalManagement, ocorg:MarineBiology ;
+    geo:lat "38.9072"^^xsd:float ;
+    geo:long "-77.0369"^^xsd:float ;
+    ocorg:annualBudgetUSD 35 ;
+    ocorg:publicationsPerYear 50 ;
+    ocorg:researchVessels 0 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_Mixed ;
+    ocorg:primaryOceanRegion ocorg:Region_Global .
+
+ocinst:DeepOceanStewardship a ocorg:NGO ;
+    ocorg:organizationName "Deep Ocean Stewardship Initiative"@en ;
+    ocorg:organizationName "Initiative zur Verwaltung der Tiefsee"@de ;
+    ocorg:country "United Kingdom"@en ;
+    ocorg:country "Vereinigtes Königreich"@de ;
+    ocorg:foundedYear "2013"^^xsd:gYear ;
+    ocorg:staffSize 25 ;
+    ocorg:websiteUrl "https://www.dosi-project.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:DeepSeaExploration, ocorg:MarineGeology ;
+    geo:lat "51.5246"^^xsd:float ;
+    geo:long "-0.0340"^^xsd:float ;
+    ocorg:annualBudgetUSD 2 ;
+    ocorg:publicationsPerYear 40 ;
+    ocorg:researchVessels 0 ;
+    ocorg:accessType ocorg:Access_Open ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Global .

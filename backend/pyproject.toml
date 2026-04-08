@@ -1,0 +1,15 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.135.3",
+    "geojson>=3.2.0",
+    "pyoxigraph>=0.3.0",
+    "pyshacl>=0.31.0",
+    "rdflib>=7.6.0",
+    "sqlite-utils>=3.39",
+    "uvicorn>=0.42.0",
+]

@@ -1,0 +1,230 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ocorg: <http://example.org/ocean-org/ontology#> .
+
+# ============================================================
+# SKOS Controlled Vocabularies: Oceanographic Organizations
+# ============================================================
+
+# ============================================================
+# Concept Scheme: Access Type
+# ============================================================
+
+ocorg:AccessTypeScheme a skos:ConceptScheme ;
+    skos:prefLabel "Access Type"@en ;
+    skos:prefLabel "Zugangstyp"@de ;
+    skos:definition "Controlled vocabulary for how external researchers can access an organization's facilities or data."@en ;
+    skos:definition "Kontrolliertes Vokabular für den Zugang externer Forscher zu Einrichtungen oder Daten einer Organisation."@de ;
+    skos:hasTopConcept ocorg:Access_Open ;
+    skos:hasTopConcept ocorg:Access_Restricted ;
+    skos:hasTopConcept ocorg:Access_ByPartnership ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+ocorg:Access_Open a skos:Concept ;
+    skos:prefLabel "Open"@en ;
+    skos:prefLabel "Offen"@de ;
+    skos:definition "Data and facilities are openly accessible to any researcher."@en ;
+    skos:definition "Daten und Einrichtungen sind für alle Forscher frei zugänglich."@de ;
+    skos:topConceptOf ocorg:AccessTypeScheme ;
+    skos:inScheme ocorg:AccessTypeScheme .
+
+ocorg:Access_Restricted a skos:Concept ;
+    skos:prefLabel "Restricted"@en ;
+    skos:prefLabel "Eingeschränkt"@de ;
+    skos:definition "Access is restricted and requires formal approval."@en ;
+    skos:definition "Der Zugang ist eingeschränkt und erfordert eine formelle Genehmigung."@de ;
+    skos:topConceptOf ocorg:AccessTypeScheme ;
+    skos:inScheme ocorg:AccessTypeScheme .
+
+ocorg:Access_ByPartnership a skos:Concept ;
+    skos:prefLabel "By Partnership"@en ;
+    skos:prefLabel "Durch Partnerschaft"@de ;
+    skos:definition "Access is available through institutional partnership agreements."@en ;
+    skos:definition "Der Zugang ist durch institutionelle Partnerschaftsvereinbarungen möglich."@de ;
+    skos:topConceptOf ocorg:AccessTypeScheme ;
+    skos:inScheme ocorg:AccessTypeScheme .
+
+# ============================================================
+# Concept Scheme: Funding Source
+# ============================================================
+
+ocorg:FundingSourceScheme a skos:ConceptScheme ;
+    skos:prefLabel "Funding Source"@en ;
+    skos:prefLabel "Finanzierungsquelle"@de ;
+    skos:definition "Controlled vocabulary for the primary source of an organization's funding."@en ;
+    skos:definition "Kontrolliertes Vokabular für die primäre Finanzierungsquelle einer Organisation."@de ;
+    skos:hasTopConcept ocorg:Funding_Public ;
+    skos:hasTopConcept ocorg:Funding_Private ;
+    skos:hasTopConcept ocorg:Funding_Mixed ;
+    skos:hasTopConcept ocorg:Funding_International ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+ocorg:Funding_Public a skos:Concept ;
+    skos:prefLabel "Public"@en ;
+    skos:prefLabel "Öffentlich"@de ;
+    skos:definition "Primarily funded by government or public bodies."@en ;
+    skos:definition "Hauptsächlich durch staatliche oder öffentliche Stellen finanziert."@de ;
+    skos:topConceptOf ocorg:FundingSourceScheme ;
+    skos:inScheme ocorg:FundingSourceScheme .
+
+ocorg:Funding_Private a skos:Concept ;
+    skos:prefLabel "Private"@en ;
+    skos:prefLabel "Privat"@de ;
+    skos:definition "Primarily funded by private organizations or individuals."@en ;
+    skos:definition "Hauptsächlich durch private Organisationen oder Einzelpersonen finanziert."@de ;
+    skos:topConceptOf ocorg:FundingSourceScheme ;
+    skos:inScheme ocorg:FundingSourceScheme .
+
+ocorg:Funding_Mixed a skos:Concept ;
+    skos:prefLabel "Mixed"@en ;
+    skos:prefLabel "Gemischt"@de ;
+    skos:definition "Funded by a combination of public and private sources."@en ;
+    skos:definition "Durch eine Kombination aus öffentlichen und privaten Quellen finanziert."@de ;
+    skos:topConceptOf ocorg:FundingSourceScheme ;
+    skos:inScheme ocorg:FundingSourceScheme .
+
+ocorg:Funding_International a skos:Concept ;
+    skos:prefLabel "International"@en ;
+    skos:prefLabel "International"@de ;
+    skos:definition "Primarily funded by international bodies such as the EU, UN, or similar."@en ;
+    skos:definition "Hauptsächlich durch internationale Einrichtungen wie EU, UN oder ähnliche finanziert."@de ;
+    skos:topConceptOf ocorg:FundingSourceScheme ;
+    skos:inScheme ocorg:FundingSourceScheme .
+
+# ============================================================
+# Concept Scheme: Ocean Region
+# ============================================================
+
+ocorg:OceanRegionScheme a skos:ConceptScheme ;
+    skos:prefLabel "Ocean Region"@en ;
+    skos:prefLabel "Meeresregion"@de ;
+    skos:definition "Controlled vocabulary for the primary ocean basin or region an organization focuses on."@en ;
+    skos:definition "Kontrolliertes Vokabular für das primäre Meeresbecken oder die Region, auf die sich eine Organisation konzentriert."@de ;
+    skos:hasTopConcept ocorg:Region_Atlantic ;
+    skos:hasTopConcept ocorg:Region_Pacific ;
+    skos:hasTopConcept ocorg:Region_Indian ;
+    skos:hasTopConcept ocorg:Region_Arctic ;
+    skos:hasTopConcept ocorg:Region_Southern ;
+    skos:hasTopConcept ocorg:Region_Global ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+ocorg:Region_Atlantic a skos:Concept ;
+    skos:prefLabel "Atlantic"@en ;
+    skos:prefLabel "Atlantik"@de ;
+    skos:definition "The Atlantic Ocean, including North and South Atlantic."@en ;
+    skos:topConceptOf ocorg:OceanRegionScheme ;
+    skos:inScheme ocorg:OceanRegionScheme .
+
+ocorg:Region_Pacific a skos:Concept ;
+    skos:prefLabel "Pacific"@en ;
+    skos:prefLabel "Pazifik"@de ;
+    skos:definition "The Pacific Ocean, including North and South Pacific."@en ;
+    skos:topConceptOf ocorg:OceanRegionScheme ;
+    skos:inScheme ocorg:OceanRegionScheme .
+
+ocorg:Region_Indian a skos:Concept ;
+    skos:prefLabel "Indian"@en ;
+    skos:prefLabel "Indischer Ozean"@de ;
+    skos:definition "The Indian Ocean."@en ;
+    skos:topConceptOf ocorg:OceanRegionScheme ;
+    skos:inScheme ocorg:OceanRegionScheme .
+
+ocorg:Region_Arctic a skos:Concept ;
+    skos:prefLabel "Arctic"@en ;
+    skos:prefLabel "Arktischer Ozean"@de ;
+    skos:definition "The Arctic Ocean and surrounding polar seas."@en ;
+    skos:topConceptOf ocorg:OceanRegionScheme ;
+    skos:inScheme ocorg:OceanRegionScheme .
+
+ocorg:Region_Southern a skos:Concept ;
+    skos:prefLabel "Southern"@en ;
+    skos:prefLabel "Südlicher Ozean"@de ;
+    skos:definition "The Southern Ocean surrounding Antarctica."@en ;
+    skos:topConceptOf ocorg:OceanRegionScheme ;
+    skos:inScheme ocorg:OceanRegionScheme .
+
+ocorg:Region_Global a skos:Concept ;
+    skos:prefLabel "Global"@en ;
+    skos:prefLabel "Global"@de ;
+    skos:definition "Global scope, not limited to a single ocean basin."@en ;
+    skos:definition "Globaler Geltungsbereich, nicht auf ein einzelnes Meeresbecken beschränkt."@de ;
+    skos:topConceptOf ocorg:OceanRegionScheme ;
+    skos:inScheme ocorg:OceanRegionScheme .
+
+# ============================================================
+# Concept Scheme: Focus Area
+# ============================================================
+
+ocorg:FocusAreaScheme a skos:ConceptScheme ;
+    skos:prefLabel "Focus Area"@en ;
+    skos:prefLabel "Schwerpunktbereich"@de ;
+    skos:definition "Controlled vocabulary for thematic research or activity focus areas."@en ;
+    skos:definition "Kontrolliertes Vokabular für thematische Forschungs- oder Tätigkeitsschwerpunkte."@de ;
+    skos:hasTopConcept ocorg:MarineBiology ;
+    skos:hasTopConcept ocorg:PhysicalOceanography ;
+    skos:hasTopConcept ocorg:ClimateScience ;
+    skos:hasTopConcept ocorg:DeepSeaExploration ;
+    skos:hasTopConcept ocorg:CoastalManagement ;
+    skos:hasTopConcept ocorg:MarineGeology ;
+    skos:hasTopConcept ocorg:FisheriesScience ;
+    skos:hasTopConcept ocorg:PolarResearch ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+ocorg:MarineBiology a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Marine Biology"@en ;
+    skos:prefLabel "Meeresbiologie"@de ;
+    skos:definition "Research focused on the organisms and ecosystems of the ocean."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:PhysicalOceanography a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Physical Oceanography"@en ;
+    skos:prefLabel "Physikalische Ozeanographie"@de ;
+    skos:definition "Study of ocean currents, waves, tides, and physical properties of seawater."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:ClimateScience a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Climate Science"@en ;
+    skos:prefLabel "Klimawissenschaft"@de ;
+    skos:definition "Research on climate systems, change, and ocean-atmosphere interactions."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:DeepSeaExploration a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Deep-Sea Exploration"@en ;
+    skos:prefLabel "Tiefsee-Exploration"@de ;
+    skos:definition "Exploration and study of deep-ocean environments and organisms."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:CoastalManagement a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Coastal Management"@en ;
+    skos:prefLabel "Küstenmanagement"@de ;
+    skos:definition "Sustainable management of coastal zones and nearshore environments."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:MarineGeology a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Marine Geology"@en ;
+    skos:prefLabel "Meeresgeologie"@de ;
+    skos:definition "Study of seafloor geology, sediments, and tectonic processes."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:FisheriesScience a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Fisheries Science"@en ;
+    skos:prefLabel "Fischereiwissenschaft"@de ;
+    skos:definition "Research on fish populations, fisheries management, and aquaculture."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
+
+ocorg:PolarResearch a skos:Concept, ocorg:FocusArea ;
+    skos:prefLabel "Polar Research"@en ;
+    skos:prefLabel "Polarforschung"@de ;
+    skos:definition "Research in Arctic and Antarctic ocean and ice environments."@en ;
+    skos:topConceptOf ocorg:FocusAreaScheme ;
+    skos:inScheme ocorg:FocusAreaScheme .
