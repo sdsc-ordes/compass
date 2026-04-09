@@ -47,12 +47,24 @@
   function notify() {
     onFilterChange(activeFilters);
   }
+
+  function resetFilters() {
+    activeFilters = {};
+    notify();
+  }
+
+  $: hasActiveFilters = Object.values(activeFilters).some(
+    (v) => (Array.isArray(v) ? v.length > 0 : v !== '' && v !== undefined)
+  );
 </script>
 
 <div class="filter-panel">
   <div class="header">
     <Filter size={18} color="#64748b" />
     <h3>{t.filters}</h3>
+    {#if hasActiveFilters}
+      <button class="reset-btn" on:click={resetFilters}>{t.resetFilters}</button>
+    {/if}
   </div>
 
   <div class="filters-list">
@@ -122,6 +134,22 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    flex: 1;
+  }
+  .reset-btn {
+    background: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
   }
   .filter-group {
     display: flex;

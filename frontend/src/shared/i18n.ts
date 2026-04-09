@@ -1,6 +1,7 @@
 export const i18n = {
   en: {
     filters: "Filters",
+    resetFilters: "Reset",
     mapView: "Map View",
     listView: "List View",
     topics: "Topics",
@@ -20,6 +21,7 @@ export const i18n = {
   },
   de: {
     filters: "Filter",
+    resetFilters: "Zurücksetzen",
     mapView: "Kartenansicht",
     listView: "Listenansicht",
     topics: "Themen",
