@@ -2,12 +2,13 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Filter, Check, ChevronDown, ChevronRight } from 'lucide-svelte';
+  import { Filter, Check, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-svelte';
   import { i18n, type Lang } from '../shared/i18n';
 
   export let apiurl = '';
   export let lang: Lang = 'en';
   export let onFilterChange: (filters: any) => void;
+  export let onToggle: (() => void) | undefined = undefined;
 
   let schema: any[] = [];
   let activeFilters: Record<string, any> = {};
@@ -80,6 +81,11 @@
     <h3>{t.filters}</h3>
     {#if hasActiveFilters}
       <button class="reset-btn" on:click={resetFilters}>{t.resetFilters}</button>
+    {/if}
+    {#if onToggle}
+      <button class="collapse-btn" on:click={onToggle} title="Hide filters" aria-label="Collapse filter panel">
+        <ChevronLeft size={16} />
+      </button>
     {/if}
   </div>
 
@@ -190,6 +196,26 @@
     background: #f1f5f9;
     border-color: #94a3b8;
     color: #0f172a;
+  }
+  .collapse-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .collapse-btn:hover {
+    background: #e2e8f0;
+    color: #475569;
+    border-color: #cbd5e1;
   }
   .filter-group {
     display: flex;

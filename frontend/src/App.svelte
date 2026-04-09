@@ -7,7 +7,7 @@
   import ListView from './shared/ListView.svelte';
   import EntitySidebar from './shared/EntitySidebar.svelte';
   import { i18n, type Lang } from './shared/i18n';
-  import { Map as MapIcon, List, Globe, Languages } from 'lucide-svelte';
+  import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft } from 'lucide-svelte';
 
   export let apiurl = '';
   export let lang: Lang = 'en';
@@ -19,6 +19,8 @@
   let error: string | null = null;
   let selectedEntity: any = null;
   let selectedEntityId: string | null = null;
+  let filterOpen = true;
+  let sidebarVisible = false;
 
   $: t = i18n[lang] || i18n.en;
 
@@ -162,6 +164,7 @@
   function handleEntitySelect(props: any) {
     // Store the ID — the reactive block above will populate selectedEntity from the entities array
     selectedEntityId = props?.id ?? null;
+    if (props?.id) sidebarVisible = true;
   }
 
   function toggleLang() {
@@ -201,25 +204,25 @@
         <Languages size={18} />
         <span>{lang.toUpperCase()}</span>
       </button>
+
     </div>
   </header>
 
   <div class="content">
-    <div class="sidebar">
-      <FilterPanel 
-        {apiurl} 
-        {lang} 
-        onFilterChange={handleFilterChange} 
+    {#if !filterOpen}
+      <button class="filter-reopen-tab" on:click={() => (filterOpen = true)} title="Show filters" aria-label="Open filter panel">
+        <ChevronRight size={16} />
+      </button>
+    {/if}
+    <div class="sidebar" class:closed={!filterOpen}>
+      <FilterPanel
+        {apiurl}
+        {lang}
+        onFilterChange={handleFilterChange}
+        onToggle={() => (filterOpen = false)}
       />
     </div>
     <div class="main-area">
-      <!-- DEBUG OVERLAY: Helpful to see if URL is being picked up -->
-      <div class="debug-overlay">
-        <span>URL: {apiurl || 'NOT SET'}</span> | 
-        <span>Status: {error ? 'ERROR' : (isLoading ? 'LOADING' : 'READY')}</span> |
-        <span>Entities: {entities.length}</span>
-      </div>
-
       {#if error}
         <div class="status-overlay error">
           <p>{error}</p>
@@ -233,17 +236,23 @@
         </div>
       {/if}
 
+      {#if selectedEntity && !sidebarVisible}
+        <button class="sidebar-reopen-tab" on:click={() => (sidebarVisible = true)} title="Show detail panel" aria-label="Open detail panel">
+          <ChevronLeft size={16} />
+        </button>
+      {/if}
+
       {#if viewMode === 'map'}
         <Map {apiurl} {lang} {entities} onEntitySelect={handleEntitySelect} />
       {:else}
         <ListView {entities} {lang} />
       {/if}
 
-      {#if selectedEntity}
+      {#if selectedEntity && sidebarVisible}
         <EntitySidebar
           entity={selectedEntity}
           {lang}
-          onClose={() => { selectedEntity = null; selectedEntityId = null; }}
+          onClose={() => { sidebarVisible = false; }}
         />
       {/if}
     </div>
@@ -342,6 +351,51 @@
     color: #475569;
   }
 
+  .filter-reopen-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    min-width: 20px;
+    border: none;
+    border-right: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+  }
+  .filter-reopen-tab:hover {
+    background: #e2e8f0;
+    color: #475569;
+  }
+
+  .sidebar-reopen-tab {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 49;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 56px;
+    border: 1px solid #e2e8f0;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.08);
+    transition: background 0.15s, color 0.15s;
+    padding: 0;
+  }
+  .sidebar-reopen-tab:hover {
+    background: #f1f5f9;
+    color: var(--primary);
+  }
+
   .content {
     display: flex;
     flex-grow: 1;
@@ -350,9 +404,18 @@
 
   .sidebar {
     width: 340px;
+    min-width: 340px;
     border-right: 1px solid #e2e8f0;
     background: #f8fafc;
     overflow-y: auto;
+    transition: min-width 0.25s ease, width 0.25s ease, opacity 0.2s ease, border 0.25s ease;
+  }
+  .sidebar.closed {
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    border-right: none;
   }
 
   .main-area {
@@ -360,21 +423,6 @@
     background: #fff;
     position: relative;
     overflow: hidden;
-  }
-
-  .debug-overlay {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 101;
-    background: rgba(15, 23, 42, 0.9);
-    color: #34d399; /* neon green */
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-family: monospace;
-    font-size: 11px;
-    pointer-events: none;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   .url-hint {
