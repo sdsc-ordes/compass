@@ -178,6 +178,29 @@ class RDFStore:
                 )
             })
 
+        # Special: Entity type filter — enumerate all top-level entity classes
+        type_classes = [
+            OCORG.ResearchInstitute,
+            OCORG.University,
+            OCORG.GovernmentAgency,
+            OCORG.NGO,
+            OCORG.Network,
+            OCORG.InternationalForum,
+            OCORG.Project,
+        ]
+        type_options = [
+            {"value": str(cls_iri), "label": self._get_label(g, cls_iri, RDFS.label, lang)}
+            for cls_iri in type_classes
+        ]
+        filters.append({
+            "id": "entityType",
+            "path": str(RDF.type),
+            "label": "Entity Type" if lang == "en" else "Eintragsart",
+            "type": "multiselect",
+            "order": 0,
+            "options": type_options,
+        })
+
         return sorted(filters, key=lambda x: x["label"]) # Alphabetical for now
 
     def _get_label(self, g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:

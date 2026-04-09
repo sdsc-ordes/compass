@@ -27,11 +27,25 @@ async def get_entities(
     """
 
     sparql_where_base = f"""
-        ?s a ?type .
-        ?type rdfs:subClassOf* ocorg:Organization .
-        ?s ocorg:organizationName ?label .
+        {{
+            ?s a ?type .
+            ?type rdfs:subClassOf* ocorg:Organization .
+        }} UNION {{
+            ?s a ocorg:Network .
+            BIND(ocorg:Network AS ?type)
+        }} UNION {{
+            ?s a ocorg:InternationalForum .
+            BIND(ocorg:InternationalForum AS ?type)
+        }} UNION {{
+            ?s a ocorg:Project .
+            BIND(ocorg:Project AS ?type)
+        }}
         ?s geo:lat ?lat .
         ?s geo:long ?long .
+        OPTIONAL {{ ?s ocorg:organizationName ?orgName . FILTER(lang(?orgName) = "{lang}") }}
+        OPTIONAL {{ ?s ocorg:projectName ?projNameVar . FILTER(lang(?projNameVar) = "{lang}") }}
+        BIND(COALESCE(?orgName, ?projNameVar) AS ?label)
+        FILTER(BOUND(?label))
         OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
         
         OPTIONAL {{ ?s ocorg:country ?country . FILTER(lang(?country) = "{lang}") }}
@@ -75,8 +89,14 @@ async def get_entities(
             OPTIONAL {{ ?project ocorg:projectUrl ?projUrl . }}
             OPTIONAL {{ ?project ocorg:species ?projSpecies . FILTER(lang(?projSpecies) = "en") }}
         }}
-        
-        FILTER(lang(?label) = "{lang}")
+        OPTIONAL {{ ?s ocorg:memberCount ?memberCount . }}
+        OPTIONAL {{ ?s ocorg:memberStates ?memberStates . }}
+        OPTIONAL {{ ?s ocorg:mandate ?mandate . FILTER(lang(?mandate) = "{lang}") }}
+        OPTIONAL {{ ?s ocorg:startDate ?selfStartDate . }}
+        OPTIONAL {{ ?s ocorg:endDate ?selfEndDate . }}
+        OPTIONAL {{ ?s ocorg:imageUrl ?selfImageUrl . }}
+        OPTIONAL {{ ?s ocorg:projectUrl ?selfProjUrl . }}
+        OPTIONAL {{ ?s ocorg:species ?selfSpecies . }}
     """
 
     # 2. Dynamic Filter Application
@@ -142,6 +162,11 @@ async def get_entities(
             safe_v = val.replace('"', '\\"')
             where_clauses.append(f'?s ocorg:mostRecentUpdate ?mruVal . FILTER(?mruVal >= "{safe_v}"^^xsd:date)')
         
+        elif key == "entityType":
+            iri_list = ", ".join(f"<{v}>" for v in values if v.startswith("http"))
+            if iri_list:
+                where_clauses.append(f"FILTER(?type IN ({iri_list}))")
+
         elif key in RANGE_FILTERS:
             prop = RANGE_FILTERS[key]
             where_clauses.append(f"?s {prop} ?{key}Val . FILTER(?{key}Val >= {val})")
@@ -161,8 +186,17 @@ async def get_entities(
            (SAMPLE(?donationUrl) AS ?donateUrl)
            (SAMPLE(?offersResearchTrips) AS ?researchTrips)
            (GROUP_CONCAT(DISTINCT ?activity; separator=";;") AS ?activitiesRaw)
-           (GROUP_CONCAT(DISTINCT CONCAT(COALESCE(?projName, ""), "|", COALESCE(STR(?projStart), ""), "|", COALESCE(STR(?projEnd), ""), "|", COALESCE(STR(?projImage), ""), "|", COALESCE(STR(?projUrl), "")); separator=";;") AS ?projectsRaw)
+           (GROUP_CONCAT(DISTINCT CONCAT(COALESCE(?projName, ""), "|", COALESCE(STR(?projStart), ""), "|", COALESCE(STR(?projEnd), ""), "|", COALESCE(STR(?projImage), ""), "|", COALESCE(STR(?projUrl), ""), "|", COALESCE(STR(?project), "")); separator=";;") AS ?projectsRaw)
            (GROUP_CONCAT(DISTINCT STR(?projSpecies); separator=";;") AS ?speciesRaw)
+           (GROUP_CONCAT(DISTINCT STR(?project); separator=";;") AS ?linkedProjectIris)
+           (SAMPLE(?memberCount) AS ?memberCountResult)
+           (SAMPLE(?memberStates) AS ?memberStatesResult)
+           (SAMPLE(?mandate) AS ?mandateResult)
+           (SAMPLE(?selfStartDate) AS ?selfStart)
+           (SAMPLE(?selfEndDate) AS ?selfEnd)
+           (SAMPLE(?selfImageUrl) AS ?selfImage)
+           (SAMPLE(?selfProjUrl) AS ?selfPUrl)
+           (GROUP_CONCAT(DISTINCT STR(?selfSpecies); separator=";;") AS ?selfSpeciesRaw)
     WHERE {
     """ + sparql_where_base + "\n".join(where_clauses) + """
     }
@@ -188,9 +222,12 @@ async def get_entities(
             activities_raw = res.get("activitiesRaw", "") or ""
             activities = [a.strip() for a in activities_raw.split(";;") if a.strip()]
 
-            # Parse species from all projects
+            # Parse species from linked projects + direct species (for project entities)
             species_raw = res.get("speciesRaw", "") or ""
-            all_species = [s.strip() for s in species_raw.split(";;") if s.strip()]
+            self_species_raw = res.get("selfSpeciesRaw", "") or ""
+            all_species = list(dict.fromkeys(
+                s.strip() for s in (species_raw + ";;" + self_species_raw).split(";;") if s.strip()
+            ))
 
             # Parse projects from "name|start|end|image;;..." format
             projects_raw = res.get("projectsRaw", "") or ""
@@ -203,6 +240,7 @@ async def get_entities(
                     if len(parts) > 2 and parts[2]: proj["endDate"] = parts[2]
                     if len(parts) > 3 and parts[3]: proj["imageUrl"] = parts[3]
                     if len(parts) > 4 and parts[4]: proj["projectUrl"] = parts[4]
+                    if len(parts) > 5 and parts[5]: proj["projectIri"] = parts[5]
                     projects.append(proj)
 
             def make_iri_obj(iri_val, label_val):
@@ -218,7 +256,7 @@ async def get_entities(
                 "typeIri": res["type"],
                 "country": res.get("country", ""),
                 "founded": res.get("founded", ""),
-                "website": res.get("website", ""),
+                "website": res.get("website", "") or res.get("selfPUrl", ""),
                 "focusAreas": focus_areas,
                 "primaryOceanRegion": make_iri_obj(res.get("regionIri"), res.get("regionLabel")),
                 "fundingSource": make_iri_obj(res.get("fundingIri"), res.get("fundingLabel")),
@@ -230,6 +268,14 @@ async def get_entities(
                 "activities": activities,
                 "projects": projects,
                 "species": all_species,
+                "memberCount": res.get("memberCountResult", ""),
+                "memberStates": res.get("memberStatesResult", ""),
+                "mandate": res.get("mandateResult", ""),
+                "startDate": res.get("selfStart", ""),
+                "endDate": res.get("selfEnd", ""),
+                "imageUrl": res.get("selfImage", ""),
+                "projectUrl": res.get("selfPUrl", ""),
+                "projectIris": [p.strip() for p in (res.get("linkedProjectIris") or "").split(";;") if p.strip()],
             }
             
             feature = Feature(

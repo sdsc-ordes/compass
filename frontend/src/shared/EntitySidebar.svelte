@@ -44,6 +44,10 @@
       <p class="founded">{t.established} {entity.founded}</p>
     {/if}
 
+    {#if entity?.startDate || entity?.endDate}
+      <p class="founded">{entity.startDate || '?'} – {entity.endDate || '?'}</p>
+    {/if}
+
     {#if entity?.country}
       <p class="country">{entity.country}</p>
     {/if}
@@ -149,7 +153,13 @@
           {t.propDonation}
         </a>
       {/if}
-      {#if entity?.website}
+      {#if entity?.projectUrl}
+        <a class="visit-btn primary" href={entity.projectUrl} target="_blank" rel="noopener noreferrer">
+          <ExternalLink size={15} />
+          {t.website}
+        </a>
+      {/if}
+      {#if entity?.website && !entity?.projectUrl}
         <a class="visit-btn primary" href={entity.website} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} />
           {t.website}

@@ -428,6 +428,8 @@ ocinst:WHOI_NARW_Project a ocorg:Project ;
     ocorg:endDate "2027-12-31"^^xsd:date ;
     ocorg:species "North Atlantic Right Whale"@en ;
     ocorg:species "Eubalaena glacialis"@en ;
+    geo:lat "42.0"^^xsd:float ;
+    geo:long "-65.0"^^xsd:float ;
     ocorg:imageUrl "https://www.whoi.edu/wp-content/uploads/2019/07/right-whale.jpg"^^xsd:anyURI ;
     ocorg:projectUrl "https://www.whoi.edu/what-we-do/explore/projects/right-whale-tagging/"^^xsd:anyURI .
 
@@ -438,6 +440,8 @@ ocinst:MBARI_DeepSea_Project a ocorg:Project ;
     ocorg:endDate "2026-06-14"^^xsd:date ;
     ocorg:species "Giant Pacific Octopus"@en ;
     ocorg:species "Vampire Squid"@en ;
+    geo:lat "36.7"^^xsd:float ;
+    geo:long "-122.15"^^xsd:float ;
     ocorg:imageUrl "https://www.mbari.org/wp-content/uploads/2021/deep-sea-census.jpg"^^xsd:anyURI ;
     ocorg:projectUrl "https://www.mbari.org/our-work/research-themes/deep-sea/"^^xsd:anyURI .
 
@@ -449,6 +453,8 @@ ocinst:Oceana_MedDolphin_Project a ocorg:Project ;
     ocorg:species "Bottlenose Dolphin"@en ;
     ocorg:species "Short-beaked Common Dolphin"@en ;
     ocorg:species "Striped Dolphin"@en ;
+    geo:lat "38.5"^^xsd:float ;
+    geo:long "14.5"^^xsd:float ;
     ocorg:imageUrl "https://oceana.org/wp-content/uploads/med-dolphins.jpg"^^xsd:anyURI ;
     ocorg:projectUrl "https://oceana.org/our-work/protect-marine-wildlife/dolphins/"^^xsd:anyURI .
 
@@ -459,6 +465,8 @@ ocinst:GEOMAR_Hydrothermal_Project a ocorg:Project ;
     ocorg:endDate "2027-08-31"^^xsd:date ;
     ocorg:species "Giant Tube Worm"@en ;
     ocorg:species "Pompeii Worm"@en ;
+    geo:lat "1.0"^^xsd:float ;
+    geo:long "-26.0"^^xsd:float ;
     ocorg:imageUrl "https://www.geomar.de/fileadmin/hydrothermal-vents.jpg"^^xsd:anyURI ;
     ocorg:projectUrl "https://www.geomar.de/en/research/fb2/fb2-mg/projects/"^^xsd:anyURI .
 
@@ -470,5 +478,148 @@ ocinst:AWI_ArcticIce_Project a ocorg:Project ;
     ocorg:species "Ringed Seal"@en ;
     ocorg:species "Polar Bear"@en ;
     ocorg:species "Arctic Cod"@en ;
+    geo:lat "78.5"^^xsd:float ;
+    geo:long "12.0"^^xsd:float ;
     ocorg:imageUrl "https://www.awi.de/fileadmin/arctic-sea-ice.jpg"^^xsd:anyURI ;
     ocorg:projectUrl "https://www.awi.de/en/science/special-groups/sea-ice-physics.html"^^xsd:anyURI .
+
+# ============================================================
+# Instance Data: Collaborative Networks
+# ============================================================
+
+ocinst:GOOS a ocorg:Network ;
+    ocorg:organizationName "Global Ocean Observing System"@en ;
+    ocorg:organizationName "Globales Ozeanbeobachtungssystem"@de ;
+    ocorg:country "France"@en ;
+    ocorg:country "Frankreich"@de ;
+    ocorg:foundedYear "1991"^^xsd:gYear ;
+    ocorg:memberCount 120 ;
+    ocorg:websiteUrl "https://www.goosocean.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:ClimateScience ;
+    geo:lat "48.3534"^^xsd:float ;
+    geo:long "-4.5566"^^xsd:float ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Global ;
+    ocorg:keySentence "Coordinating a global network of ocean observing systems to deliver essential ocean information."@en ;
+    ocorg:keySentence "Koordinierung eines globalen Netzes von Ozeanbeobachtungssystemen zur Bereitstellung wesentlicher Ozeaninformationen."@de ;
+    ocorg:activities "Coordinating Argo profiling float network with over 4000 active floats."@en ;
+    ocorg:activities "Developing the Global Ocean Observing System Framework for Ocean Observations."@en ;
+    ocorg:activities "Koordinierung des Argo-Profilatmosphären-Netzwerks mit über 4000 aktiven Schwimmern."@de ;
+    ocorg:mostRecentUpdate "2026-01-10"^^xsd:date ;
+    ocorg:hasLeadOrganization ocinst:IFREMER .
+
+ocinst:OceanGliders a ocorg:Network ;
+    ocorg:organizationName "OceanGliders"@en ;
+    ocorg:organizationName "OceanGliders"@de ;
+    ocorg:country "France"@en ;
+    ocorg:country "Frankreich"@de ;
+    ocorg:foundedYear "2016"^^xsd:gYear ;
+    ocorg:memberCount 30 ;
+    ocorg:websiteUrl "https://www.oceangliders.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:ClimateScience, ocorg:MarineBiology ;
+    geo:lat "48.4000"^^xsd:float ;
+    geo:long "-4.4900"^^xsd:float ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Global ;
+    ocorg:keySentence "International network coordinating autonomous glider observations of the global ocean."@en ;
+    ocorg:keySentence "Internationales Netzwerk zur Koordinierung autonomer Gleitflugzeugbeobachtungen des Weltozeans."@de ;
+    ocorg:activities "Standardizing glider data formats and quality control procedures."@en ;
+    ocorg:activities "Facilitating real-time data sharing from underwater glider platforms."@en ;
+    ocorg:activities "Standardisierung von Gliderformaten und Qualitätskontrollverfahren."@de ;
+    ocorg:mostRecentUpdate "2025-11-20"^^xsd:date .
+
+ocinst:CLIVAR a ocorg:Network ;
+    ocorg:organizationName "Climate and Ocean: Variability, Predictability and Change"@en ;
+    ocorg:organizationName "Klima und Ozean: Variabilität, Vorhersagbarkeit und Wandel"@de ;
+    ocorg:country "France"@en ;
+    ocorg:country "Frankreich"@de ;
+    ocorg:foundedYear "1995"^^xsd:gYear ;
+    ocorg:memberCount 60 ;
+    ocorg:websiteUrl "https://www.clivar.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:ClimateScience, ocorg:PhysicalOceanography ;
+    geo:lat "48.3100"^^xsd:float ;
+    geo:long "-4.5100"^^xsd:float ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Global ;
+    ocorg:keySentence "Facilitating analysis, modelling and prediction of Earth's climate system through ocean–atmosphere interactions."@en ;
+    ocorg:keySentence "Förderung der Analyse, Modellierung und Vorhersage des Erdklimasystems durch Ozean-Atmosphäre-Wechselwirkungen."@de ;
+    ocorg:activities "Coordinating international research on ocean-atmosphere decadal variability."@en ;
+    ocorg:activities "Supporting synthesis activities and model intercomparison projects."@en ;
+    ocorg:activities "Koordinierung internationaler Forschung zur dekadischen Ozean-Atmosphäre-Variabilität."@de ;
+    ocorg:mostRecentUpdate "2026-02-05"^^xsd:date .
+
+# ============================================================
+# Instance Data: International Fora
+# ============================================================
+
+ocinst:IOC_UNESCO a ocorg:InternationalForum ;
+    ocorg:organizationName "Intergovernmental Oceanographic Commission"@en ;
+    ocorg:organizationName "Zwischenstaatliche Ozeanographische Kommission"@de ;
+    ocorg:country "France"@en ;
+    ocorg:country "Frankreich"@de ;
+    ocorg:foundedYear "1960"^^xsd:gYear ;
+    ocorg:memberStates 150 ;
+    ocorg:hostCountry "France"@en ;
+    ocorg:hostCountry "Frankreich"@de ;
+    ocorg:mandate "To promote international cooperation in marine sciences and ocean services in order to learn more about the nature and resources of the oceans."@en ;
+    ocorg:mandate "Förderung der internationalen Zusammenarbeit in den Meereswissenschaften und Ozeandiensten."@de ;
+    ocorg:websiteUrl "https://www.ioc.unesco.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:PhysicalOceanography, ocorg:ClimateScience, ocorg:CoastalManagement ;
+    geo:lat "48.8460"^^xsd:float ;
+    geo:long "2.3046"^^xsd:float ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Global ;
+    ocorg:keySentence "UN body fostering global cooperation in ocean science, observations, and governance."@en ;
+    ocorg:keySentence "UN-Gremium zur Förderung der globalen Zusammenarbeit in Meeresforschung, Beobachtungen und Governance."@de ;
+    ocorg:activities "Coordinating the Global Ocean Observing System and tsunami warning networks."@en ;
+    ocorg:activities "Supporting the UN Decade of Ocean Science for Sustainable Development (2021-2030)."@en ;
+    ocorg:activities "Koordinierung des Globalen Ozeanbeobachtungssystems und Tsunami-Frühwarnsystemen."@de ;
+    ocorg:mostRecentUpdate "2026-03-15"^^xsd:date .
+
+ocinst:OSPAR a ocorg:InternationalForum ;
+    ocorg:organizationName "OSPAR Commission"@en ;
+    ocorg:organizationName "OSPAR-Kommission"@de ;
+    ocorg:country "United Kingdom"@en ;
+    ocorg:country "Vereinigtes Königreich"@de ;
+    ocorg:foundedYear "1992"^^xsd:gYear ;
+    ocorg:memberStates 16 ;
+    ocorg:hostCountry "United Kingdom"@en ;
+    ocorg:hostCountry "Vereinigtes Königreich"@de ;
+    ocorg:mandate "To protect and conserve the North-East Atlantic and its resources from the harmful effects of human activities."@en ;
+    ocorg:mandate "Schutz und Erhaltung des Nordostatlantiks und seiner Ressourcen vor schädlichen Auswirkungen menschlicher Aktivitäten."@de ;
+    ocorg:websiteUrl "https://www.ospar.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:CoastalManagement, ocorg:MarineBiology, ocorg:MarineGeology ;
+    geo:lat "51.5100"^^xsd:float ;
+    geo:long "-0.1300"^^xsd:float ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic ;
+    ocorg:keySentence "Protecting the North-East Atlantic marine environment through intergovernmental cooperation."@en ;
+    ocorg:keySentence "Schutz der Meeresumwelt des Nordostatlantiks durch zwischenstaatliche Zusammenarbeit."@de ;
+    ocorg:activities "Developing and monitoring marine protected areas in the North-East Atlantic."@en ;
+    ocorg:activities "Assessing hazardous substances, eutrophication, and offshore industry impacts."@en ;
+    ocorg:activities "Entwicklung und Überwachung von Meeresschutzgebieten im Nordostatlantik."@de ;
+    ocorg:mostRecentUpdate "2025-12-01"^^xsd:date .
+
+ocinst:CTI_CFF a ocorg:InternationalForum ;
+    ocorg:organizationName "Coral Triangle Initiative on Coral Reefs, Fisheries and Food Security"@en ;
+    ocorg:organizationName "Korallendreieck-Initiative für Korallenriffe, Fischerei und Ernährungssicherheit"@de ;
+    ocorg:country "Indonesia"@en ;
+    ocorg:country "Indonesien"@de ;
+    ocorg:foundedYear "2009"^^xsd:gYear ;
+    ocorg:memberStates 6 ;
+    ocorg:hostCountry "Indonesia"@en ;
+    ocorg:hostCountry "Indonesien"@de ;
+    ocorg:mandate "To safeguard marine and coastal resources of the Coral Triangle through multilateral cooperation."@en ;
+    ocorg:mandate "Schutz der Meeres- und Küstenressourcen des Korallendreiecks durch multilaterale Zusammenarbeit."@de ;
+    ocorg:websiteUrl "https://www.coraltriangleinitiative.org"^^xsd:anyURI ;
+    ocorg:hasFocusArea ocorg:MarineBiology, ocorg:FisheriesScience, ocorg:CoastalManagement ;
+    geo:lat "-2.5489"^^xsd:float ;
+    geo:long "118.0149"^^xsd:float ;
+    ocorg:fundingSource ocorg:Funding_International ;
+    ocorg:primaryOceanRegion ocorg:Region_Pacific ;
+    ocorg:keySentence "Six-nation partnership protecting the world's richest marine environment in the Coral Triangle."@en ;
+    ocorg:keySentence "Sechs-Länder-Partnerschaft zum Schutz der artenreichsten Meeresumwelt der Welt im Korallendreieck."@de ;
+    ocorg:activities "Implementing ecosystem approaches to fisheries management across member states."@en ;
+    ocorg:activities "Establishing and strengthening marine protected area networks in the Coral Triangle."@en ;
+    ocorg:activities "Umsetzung von Ökosystemansätzen für die Fischereibewirtschaftung in den Mitgliedstaaten."@de ;
+    ocorg:mostRecentUpdate "2025-10-05"^^xsd:date .

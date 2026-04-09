@@ -7,6 +7,28 @@
   import { i18n, type Lang } from '../shared/i18n';
   import { Globe as GlobeIcon, Map as MapIcon } from 'lucide-svelte';
 
+  // Map entity type IRIs to distinct pin colors
+  const TYPE_COLORS: Record<string, string> = {
+    'http://example.org/ocean-org/ontology#ResearchInstitute': '#10b981', // emerald
+    'http://example.org/ocean-org/ontology#University':        '#3b82f6', // blue
+    'http://example.org/ocean-org/ontology#GovernmentAgency':  '#f97316', // orange
+    'http://example.org/ocean-org/ontology#NGO':               '#a855f7', // purple
+    'http://example.org/ocean-org/ontology#Network':           '#06b6d4', // cyan
+    'http://example.org/ocean-org/ontology#InternationalForum':'#f59e0b', // amber
+    'http://example.org/ocean-org/ontology#Project':           '#ec4899', // pink
+  };
+  const DEFAULT_PIN_COLOR = '#64748b'; // slate for unknown types
+
+  // Build a MapLibre match expression from the type color map
+  function typeColorExpression(): maplibregl.ExpressionSpecification {
+    const expr: any[] = ['match', ['get', 'typeIri']];
+    for (const [iri, color] of Object.entries(TYPE_COLORS)) {
+      expr.push(iri, color);
+    }
+    expr.push(DEFAULT_PIN_COLOR); // fallback
+    return expr as maplibregl.ExpressionSpecification;
+  }
+
   export let apiurl = '';
   export let lang: Lang = 'en';
   export let entities: any[] = [];
@@ -15,6 +37,12 @@
   let mapContainer: HTMLElement;
   let map: maplibregl.Map;
   let projection: 'globe' | 'mercator' = 'mercator';
+
+  // Hover connection index
+  const PROJECT_IRI = 'http://example.org/ocean-org/ontology#Project';
+  let coordByIri = new Map<string, [number, number]>();
+  let orgToProjectIris = new Map<string, string[]>();
+  let projectToOrgIri = new Map<string, string>();
 
   $: t = i18n[lang] || i18n.en;
   $: if (map && entities) {
@@ -43,11 +71,12 @@
     if (!map || !map.isStyleLoaded()) return;
 
     // Remove all layers that depend on 'entities' source before removal
-    const layers = ['clusters', 'cluster-count', 'unclustered-point', 'cta-points', 'region-fill', 'region-outline'];
+    const layers = ['connections-line', 'clusters', 'cluster-count', 'unclustered-point', 'cta-points', 'region-fill', 'region-outline'];
     layers.forEach(l => {
       if (map.getLayer(l)) map.removeLayer(l);
     });
 
+    if (map.getSource('connections')) map.removeSource('connections');
     if (map.getSource('entities')) {
       map.removeSource('entities');
     }
@@ -119,14 +148,31 @@
       }
     });
 
-    // Regular Points
+    // Connections source + layer added BEFORE point layers so dots appear on top
+    map.addSource('connections', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+    map.addLayer({
+      id: 'connections-line',
+      type: 'line',
+      source: 'connections',
+      paint: {
+        'line-color': '#6366f1',
+        'line-width': 3,
+        'line-dasharray': [4, 3],
+        'line-opacity': 0.9
+      }
+    });
+
+    // Regular Points — color-coded by entity type
     map.addLayer({
       id: 'unclustered-point',
       type: 'circle',
       source: 'entities',
       filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'is_cta']]],
       paint: {
-        'circle-color': '#10b981', // Neon Green for high-contrast
+        'circle-color': typeColorExpression(),
         'circle-radius': 8,
         'circle-stroke-width': 2,
         'circle-stroke-color': '#fff'
@@ -171,6 +217,66 @@
         'line-dasharray': [2, 2]
       }
     });
+
+    // Build hover connection index from current entities
+    buildIndex();
+  }
+
+  function buildIndex() {
+    coordByIri = new Map();
+    orgToProjectIris = new Map();
+    projectToOrgIri = new Map();
+    for (const feature of entities) {
+      if (!feature.geometry?.coordinates) continue;
+      const { id: iri, typeIri, projectIris: rawProjectIris } = feature.properties;
+      if (!iri) continue;
+      const coords: [number, number] = [feature.geometry.coordinates[0], feature.geometry.coordinates[1]];
+      coordByIri.set(iri, coords);
+      if (typeIri !== PROJECT_IRI) {
+        // projectIris is an array on the raw feature, JSON string when stringified
+        let pIris: string[] = [];
+        try {
+          pIris = Array.isArray(rawProjectIris)
+            ? rawProjectIris
+            : rawProjectIris ? JSON.parse(rawProjectIris) : [];
+        } catch { /* ignore */ }
+        if (pIris.length) {
+          orgToProjectIris.set(iri, pIris);
+          for (const pIri of pIris) projectToOrgIri.set(pIri, iri);
+        }
+      }
+    }
+    console.log('[Compass] Connection index built —',
+      'orgs with projects:', orgToProjectIris.size,
+      'project→org entries:', projectToOrgIri.size,
+      'total coords:', coordByIri.size);
+  }
+
+  function showConnections(featureIri: string, typeIri: string) {
+    const src = map.getSource('connections') as any;
+    if (!src) { console.warn('[Compass] connections source not found'); return; }
+    const srcCoords = coordByIri.get(featureIri);
+    if (!srcCoords) { console.warn('[Compass] no coords for', featureIri); return; }
+    const lines: any[] = [];
+    if (typeIri === PROJECT_IRI) {
+      const orgIri = projectToOrgIri.get(featureIri);
+      if (orgIri) {
+        const orgCoords = coordByIri.get(orgIri);
+        if (orgCoords) lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: [srcCoords, orgCoords] }, properties: {} });
+      }
+    } else {
+      for (const pIri of orgToProjectIris.get(featureIri) ?? []) {
+        const pCoords = coordByIri.get(pIri);
+        if (pCoords) lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: [srcCoords, pCoords] }, properties: {} });
+      }
+    }
+    console.log('[Compass] showConnections', featureIri, '→', lines.length, 'line(s)');
+    src.setData({ type: 'FeatureCollection', features: lines });
+  }
+
+  function clearConnections() {
+    const src = map.getSource('connections') as any;
+    if (src) src.setData({ type: 'FeatureCollection', features: [] });
   }
 
   function setupEventHandlers() {
@@ -199,10 +305,24 @@
 
     map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
-    map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = ''; });
-    map.on('mouseenter', 'cta-points', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'cta-points', () => { map.getCanvas().style.cursor = ''; });
+    map.on('mouseenter', 'unclustered-point', (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const props = e.features![0].properties;
+      showConnections(props.id, props.typeIri);
+    });
+    map.on('mouseleave', 'unclustered-point', () => {
+      map.getCanvas().style.cursor = '';
+      clearConnections();
+    });
+    map.on('mouseenter', 'cta-points', (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const props = e.features![0].properties;
+      showConnections(props.id, props.typeIri);
+    });
+    map.on('mouseleave', 'cta-points', () => {
+      map.getCanvas().style.cursor = '';
+      clearConnections();
+    });
   }
 
   function toggleProjection() {
@@ -220,6 +340,20 @@
   
   <div class="map-badge">
     {entities.length} {t.results}
+  </div>
+
+  <div class="map-legend">
+    {#each Object.entries(TYPE_COLORS) as [iri, color]}
+      <div class="legend-item">
+        <span class="legend-dot" style="background:{color}"></span>
+        <span class="legend-label">{iri.split('#')[1]?.replace(/([A-Z])/g, ' $1').trim() ?? iri}</span>
+      </div>
+    {/each}
+    <div class="legend-separator"></div>
+    <div class="legend-item">
+      <span class="legend-dash"></span>
+      <span class="legend-label">{t.orgProjectLink}</span>
+    </div>
   </div>
 
   <button class="projection-toggle" on:click={toggleProjection}>
@@ -281,6 +415,64 @@
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 700;
+  }
+
+  .map-legend {
+    position: absolute;
+    bottom: 70px;
+    right: 16px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #1e293b;
+    white-space: nowrap;
+  }
+
+  .legend-separator {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 3px 0;
+  }
+
+  .legend-dash {
+    width: 18px;
+    height: 2px;
+    background: repeating-linear-gradient(
+      to right,
+      #6366f1 0px,
+      #6366f1 5px,
+      transparent 5px,
+      transparent 9px
+    );
+    flex-shrink: 0;
+    align-self: center;
   }
 
   :global(.maplibregl-popup-content) {

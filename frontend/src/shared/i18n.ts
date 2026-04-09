@@ -28,6 +28,7 @@ export const i18n = {
     propSpecies: "Species",
     established: "Established",
     website: "Website",
+    orgProjectLink: "Org ↔ Project",
   },
   de: {
     filters: "Filter",
@@ -58,6 +59,7 @@ export const i18n = {
     propSpecies: "Arten",
     established: "Gegründet",
     website: "Website",
+    orgProjectLink: "Org ↔ Projekt",
   }
 };
 
