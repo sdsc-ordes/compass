@@ -18,6 +18,7 @@
   let isLoading = true;
   let error: string | null = null;
   let selectedEntity: any = null;
+  let selectedEntityId: string | null = null;
 
   $: t = i18n[lang] || i18n.en;
 
@@ -138,14 +139,29 @@
     activeFilters = { ...filters };
   }
 
-  // When entities are re-fetched (e.g. language change), refresh the open sidebar entity
-  $: if (entities.length > 0 && selectedEntity?.id) {
-    const match = entities.find((e: any) => e.properties?.id === selectedEntity.id);
-    if (match) selectedEntity = { ...match.properties };
+  // When entities are re-fetched (e.g. language change), refresh the open sidebar.
+  // Depends only on `entities` and `selectedEntityId` — NOT on `selectedEntity` — to avoid infinite loops.
+  // Nested objects are re-serialized to JSON strings so EntitySidebar's JSON.parse calls work correctly.
+  $: if (selectedEntityId && entities.length > 0) {
+    const match = entities.find((e: any) => e.properties?.id === selectedEntityId);
+    if (match) {
+      const p = match.properties;
+      selectedEntity = {
+        ...p,
+        focusAreas: JSON.stringify(p.focusAreas || []),
+        primaryOceanRegion: JSON.stringify(p.primaryOceanRegion || null),
+        fundingSource: JSON.stringify(p.fundingSource || null),
+        accessType: JSON.stringify(p.accessType || null),
+        activities: JSON.stringify(p.activities || []),
+        projects: JSON.stringify(p.projects || []),
+        species: JSON.stringify(p.species || []),
+      };
+    }
   }
 
   function handleEntitySelect(props: any) {
-    selectedEntity = props;
+    // Store the ID — the reactive block above will populate selectedEntity from the entities array
+    selectedEntityId = props?.id ?? null;
   }
 
   function toggleLang() {
@@ -227,7 +243,7 @@
         <EntitySidebar
           entity={selectedEntity}
           {lang}
-          onClose={() => selectedEntity = null}
+          onClose={() => { selectedEntity = null; selectedEntityId = null; }}
         />
       {/if}
     </div>
