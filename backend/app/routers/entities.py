@@ -32,6 +32,7 @@ async def get_entities(
         ?s ocorg:organizationName ?label .
         ?s geo:lat ?lat .
         ?s geo:long ?long .
+        OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
         
         OPTIONAL {{ ?s ocorg:country ?country . FILTER(lang(?country) = "{lang}") }}
         OPTIONAL {{ ?s ocorg:foundedYear ?founded . }}
@@ -147,6 +148,7 @@ async def get_entities(
 
     full_sparql = sparql_prefixes + """
     SELECT ?s ?label ?lat ?long ?type ?country ?founded ?website
+           (SAMPLE(?typeLabel) AS ?typeLabelResult)
            (GROUP_CONCAT(DISTINCT CONCAT(STR(?focusArea), "|", COALESCE(?focusLabel, "")); separator=";;") AS ?focusAreasRaw)
            (SAMPLE(?regionNode) AS ?regionIri)
            (SAMPLE(?regionLab) AS ?regionLabel)
@@ -212,7 +214,7 @@ async def get_entities(
             properties = {
                 "id": res["s"],
                 "label": res["label"],
-                "type": res["type"].split("#")[-1] if "#" in res["type"] else res["type"].split("/")[-1],
+                "type": str(res.get("typeLabelResult") or (res["type"].split("#")[-1] if "#" in res["type"] else res["type"].split("/")[-1])),
                 "typeIri": res["type"],
                 "country": res.get("country", ""),
                 "founded": res.get("founded", ""),

@@ -138,6 +138,12 @@
     activeFilters = { ...filters };
   }
 
+  // When entities are re-fetched (e.g. language change), refresh the open sidebar entity
+  $: if (entities.length > 0 && selectedEntity?.id) {
+    const match = entities.find((e: any) => e.properties?.id === selectedEntity.id);
+    if (match) selectedEntity = { ...match.properties };
+  }
+
   function handleEntitySelect(props: any) {
     selectedEntity = props;
   }

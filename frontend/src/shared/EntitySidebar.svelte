@@ -41,7 +41,7 @@
     {/if}
 
     {#if entity?.founded}
-      <p class="founded">Established {entity.founded}</p>
+      <p class="founded">{t.established} {entity.founded}</p>
     {/if}
 
     {#if entity?.country}
@@ -152,7 +152,7 @@
       {#if entity?.website}
         <a class="visit-btn primary" href={entity.website} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} />
-          Website
+          {t.website}
         </a>
       {/if}
       {#if entity?.id}

@@ -26,6 +26,8 @@ export const i18n = {
     researchTripsYes: "Offers research trips",
     researchTripsNo: "No research trips",
     propSpecies: "Species",
+    established: "Established",
+    website: "Website",
   },
   de: {
     filters: "Filter",
@@ -54,6 +56,8 @@ export const i18n = {
     researchTripsYes: "Bietet Forschungsreisen an",
     researchTripsNo: "Keine Forschungsreisen",
     propSpecies: "Arten",
+    established: "Gegründet",
+    website: "Website",
   }
 };
 
