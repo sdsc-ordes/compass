@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X, ExternalLink } from 'lucide-svelte';
+  import { X, ExternalLink, Heart, Compass } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
 
   // Raw MapLibre feature properties (nested objects arrive as JSON strings)
@@ -10,10 +10,13 @@
   $: t = i18n[lang] || i18n.en;
 
   // MapLibre stringifies nested objects — parse them back
-  $: focusAreas = (() => { try { return JSON.parse(entity?.focusAreas || '[]'); } catch { return []; } })();
-  $: region     = (() => { try { return JSON.parse(entity?.primaryOceanRegion || 'null'); } catch { return null; } })();
-  $: funding    = (() => { try { return JSON.parse(entity?.fundingSource || 'null'); } catch { return null; } })();
-  $: access     = (() => { try { return JSON.parse(entity?.accessType || 'null'); } catch { return null; } })();
+  $: focusAreas  = (() => { try { return JSON.parse(entity?.focusAreas || '[]'); } catch { return []; } })();
+  $: region      = (() => { try { return JSON.parse(entity?.primaryOceanRegion || 'null'); } catch { return null; } })();
+  $: funding     = (() => { try { return JSON.parse(entity?.fundingSource || 'null'); } catch { return null; } })();
+  $: access      = (() => { try { return JSON.parse(entity?.accessType || 'null'); } catch { return null; } })();
+  $: activities  = (() => { try { return JSON.parse(entity?.activities || '[]'); } catch { return []; } })();
+  $: projects    = (() => { try { return JSON.parse(entity?.projects || '[]'); } catch { return []; } })();
+  $: species     = (() => { try { return JSON.parse(entity?.species || '[]'); } catch { return []; } })();
 </script>
 
 <aside class="entity-sidebar">
@@ -33,6 +36,10 @@
   <div class="sidebar-body">
     <h2 class="entity-name">{entity?.label}</h2>
 
+    {#if entity?.keySentence}
+      <p class="key-sentence">{entity.keySentence}</p>
+    {/if}
+
     {#if entity?.founded}
       <p class="founded">Established {entity.founded}</p>
     {/if}
@@ -41,8 +48,27 @@
       <p class="country">{entity.country}</p>
     {/if}
 
-    {#if focusAreas.length > 0 || region || funding || access}
+    {#if entity?.mostRecentUpdate}
+      <p class="last-update">{t.propLastUpdate}: {entity.mostRecentUpdate}</p>
+    {/if}
+
+    {#if entity?.offersResearchTrips}
+      <span class="chip chip-trips"><Compass size={12} /> {t.researchTripsYes}</span>
+    {/if}
+
+    {#if focusAreas.length > 0 || region || funding || access || activities.length > 0}
       <div class="props-section">
+        {#if activities.length > 0}
+          <div class="prop-row">
+            <span class="prop-label">{t.propActivities}</span>
+            <ul class="activities-list">
+              {#each activities as act}
+                <li>{act}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+
         {#if focusAreas.length > 0}
           <div class="prop-row">
             <span class="prop-label">{t.propFocusArea}</span>
@@ -77,7 +103,52 @@
       </div>
     {/if}
 
+    {#if projects.length > 0}
+      <div class="props-section">
+        <span class="prop-label">{t.propProjects}</span>
+        {#each projects as proj}
+          <div class="project-card">
+            {#if proj.imageUrl}
+              <img class="project-img" src={proj.imageUrl} alt={proj.name} />
+            {/if}
+            <div class="project-info">
+              {#if proj.projectUrl}
+                <a class="project-link" href={proj.projectUrl} target="_blank" rel="noopener noreferrer">
+                  <strong>{proj.name}</strong>
+                  <ExternalLink size={11} />
+                </a>
+              {:else}
+                <strong>{proj.name}</strong>
+              {/if}
+              {#if proj.startDate || proj.endDate}
+                <span class="project-dates">{proj.startDate || '?'} — {proj.endDate || '?'}</span>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
+    {#if species.length > 0}
+      <div class="props-section">
+        <div class="prop-row">
+          <span class="prop-label">{t.propSpecies}</span>
+          <div class="chips">
+            {#each species as sp}
+              <span class="chip chip-species">{sp}</span>
+            {/each}
+          </div>
+        </div>
+      </div>
+    {/if}
+
     <div class="actions">
+      {#if entity?.donationUrl}
+        <a class="visit-btn donate" href={entity.donationUrl} target="_blank" rel="noopener noreferrer">
+          <Heart size={15} />
+          {t.propDonation}
+        </a>
+      {/if}
       {#if entity?.website}
         <a class="visit-btn primary" href={entity.website} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} />
@@ -222,8 +293,72 @@
 
   .chip-focus   { background: #dbeafe; color: #1d4ed8; }
   .chip-region  { background: #ccfbf1; color: #0f766e; }
-  .chip-funding { background: #fef3c7; color: #b45309; }
-  .chip-access  { background: #dcfce7; color: #15803d; }
+  .chip-funding  { background: #fef3c7; color: #b45309; }
+  .chip-access   { background: #dcfce7; color: #15803d; }
+  .chip-species  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .chip-trips    { background: #ede9fe; color: #7c3aed; display: inline-flex; align-items: center; gap: 4px; margin-top: 0.5rem; }
+
+  .key-sentence {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.45;
+    font-style: italic;
+  }
+
+  .last-update {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+
+  .activities-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.8125rem;
+    color: #475569;
+    line-height: 1.5;
+  }
+  .activities-list li { margin-bottom: 0.25rem; }
+
+  .project-card {
+    display: flex;
+    gap: 0.625rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .project-card:last-child { border-bottom: none; }
+  .project-img {
+    width: 56px;
+    height: 56px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .project-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .project-info strong {
+    font-size: 0.8125rem;
+    color: #0f172a;
+  }
+  .project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8125rem;
+    color: #0284c7;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s;
+  }
+  .project-link:hover { color: #0369a1; text-decoration: underline; }
+  .project-dates {
+    font-size: 0.72rem;
+    color: #94a3b8;
+  }
 
   /* ── Action buttons ── */
   .actions {
@@ -251,6 +386,12 @@
     color: white;
   }
   .visit-btn.primary:hover { background: #0369a1; }
+
+  .visit-btn.donate {
+    background: #ec4899;
+    color: white;
+  }
+  .visit-btn.donate:hover { background: #db2777; }
 
   .visit-btn.secondary {
     background: transparent;

@@ -54,6 +54,12 @@ ocorg:FocusArea a rdfs:Class ;
     rdfs:comment "A thematic research or activity focus area."@en ;
     rdfs:comment "Ein thematischer Forschungs- oder Tätigkeitsschwerpunkt."@de .
 
+ocorg:Project a rdfs:Class ;
+    rdfs:label "Project"@en ;
+    rdfs:label "Projekt"@de ;
+    rdfs:comment "A research project conducted by an organization."@en ;
+    rdfs:comment "Ein Forschungsprojekt, das von einer Organisation durchgeführt wird."@de .
+
 # ============================================================
 # SHACL Node Shape: OrganizationShape
 # ============================================================
@@ -236,6 +242,71 @@ ocorg:OrganizationShape a sh:NodeShape ;
         sh:nodeKind sh:IRI ;
         sh:in ( ocorg:Region_Atlantic ocorg:Region_Pacific ocorg:Region_Indian ocorg:Region_Arctic ocorg:Region_Southern ocorg:Region_Global ) ;
         sh:maxCount 1 ;
+    ] ;
+
+    # --- keySentence (optional, at most 1, string) ---
+    sh:property [
+        sh:path ocorg:keySentence ;
+        sh:name "key sentence"@en ;
+        sh:name "Kernsatz"@de ;
+        sh:description "A single sentence summarizing the organization."@en ;
+        sh:description "Ein einzelner Satz, der die Organisation zusammenfasst."@de ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+
+    # --- activities (optional, multi-value, string) ---
+    sh:property [
+        sh:path ocorg:activities ;
+        sh:name "activities"@en ;
+        sh:name "Aktivitäten"@de ;
+        sh:description "Key activities or research efforts the organization undertakes."@en ;
+        sh:description "Wesentliche Aktivitäten oder Forschungsbemühungen der Organisation."@de ;
+        sh:datatype xsd:string ;
+    ] ;
+
+    # --- mostRecentUpdate (optional, at most 1, date) ---
+    sh:property [
+        sh:path ocorg:mostRecentUpdate ;
+        sh:name "most recent update"@en ;
+        sh:name "letzte Aktualisierung"@de ;
+        sh:description "Date of the most recent information update for this organization."@en ;
+        sh:description "Datum der letzten Informationsaktualisierung für diese Organisation."@de ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
+    ] ;
+
+    # --- donationUrl (optional, at most 1, anyURI) ---
+    sh:property [
+        sh:path ocorg:donationUrl ;
+        sh:name "donation URL"@en ;
+        sh:name "Spenden-URL"@de ;
+        sh:description "URL where donations can be made to support the organization."@en ;
+        sh:description "URL, unter der Spenden für die Organisation getätigt werden können."@de ;
+        sh:datatype xsd:anyURI ;
+        sh:maxCount 1 ;
+    ] ;
+
+    # --- offersResearchTrips (optional, at most 1, boolean) ---
+    sh:property [
+        sh:path ocorg:offersResearchTrips ;
+        sh:name "offers research trips"@en ;
+        sh:name "bietet Forschungsreisen an"@de ;
+        sh:description "Whether the organization offers research trips to the public or students."@en ;
+        sh:description "Ob die Organisation Forschungsreisen für die Öffentlichkeit oder Studierende anbietet."@de ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+    ] ;
+
+    # --- hasProject (optional, links to Project instances) ---
+    sh:property [
+        sh:path ocorg:hasProject ;
+        sh:name "has project"@en ;
+        sh:name "hat Projekt"@de ;
+        sh:description "Links to research projects run by this organization."@en ;
+        sh:description "Verknüpfung mit Forschungsprojekten dieser Organisation."@de ;
+        sh:class ocorg:Project ;
+        sh:nodeKind sh:IRI ;
     ] .
 
 # ============================================================
@@ -348,3 +419,74 @@ ocorg:PolarResearch a ocorg:FocusArea ;
     rdfs:label "Polarforschung"@de ;
     skos:prefLabel "Polar Research"@en ;
     skos:prefLabel "Polarforschung"@de .
+
+# ============================================================
+# SHACL Node Shape: ProjectShape
+# ============================================================
+
+ocorg:ProjectShape a sh:NodeShape ;
+    sh:targetClass ocorg:Project ;
+    rdfs:label "Project Shape"@en ;
+    rdfs:label "Projekt-Form"@de ;
+    rdfs:comment "Validates the expected structure of a research project."@en ;
+    rdfs:comment "Validiert die erwartete Struktur eines Forschungsprojekts."@de ;
+
+    sh:property [
+        sh:path ocorg:projectName ;
+        sh:name "project name"@en ;
+        sh:name "Projektname"@de ;
+        sh:description "The name of the research project."@en ;
+        sh:description "Der Name des Forschungsprojekts."@de ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path ocorg:startDate ;
+        sh:name "start date"@en ;
+        sh:name "Startdatum"@de ;
+        sh:description "The start date of the project."@en ;
+        sh:description "Das Startdatum des Projekts."@de ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path ocorg:endDate ;
+        sh:name "end date"@en ;
+        sh:name "Enddatum"@de ;
+        sh:description "The end date of the project."@en ;
+        sh:description "Das Enddatum des Projekts."@de ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path ocorg:species ;
+        sh:name "species"@en ;
+        sh:name "Arten"@de ;
+        sh:description "Species studied in the project."@en ;
+        sh:description "Im Projekt untersuchte Arten."@de ;
+        sh:datatype xsd:string ;
+    ] ;
+
+    sh:property [
+        sh:path ocorg:imageUrl ;
+        sh:name "image URL"@en ;
+        sh:name "Bild-URL"@de ;
+        sh:description "URL of an image representing the project."@en ;
+        sh:description "URL eines Bildes, das das Projekt darstellt."@de ;
+        sh:datatype xsd:anyURI ;
+        sh:maxCount 1 ;
+    ] ;
+
+    sh:property [
+        sh:path ocorg:projectUrl ;
+        sh:name "project URL"@en ;
+        sh:name "Projekt-URL"@de ;
+        sh:description "URL of the project's web page."@en ;
+        sh:description "URL der Projektwebseite."@de ;
+        sh:datatype xsd:anyURI ;
+        sh:maxCount 1 ;
+    ] .

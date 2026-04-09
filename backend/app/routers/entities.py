@@ -56,6 +56,24 @@ async def get_entities(
             ?accessNode skos:prefLabel ?accessLab .
             FILTER(lang(?accessLab) = "{lang}")
         }}
+        OPTIONAL {{ ?s ocorg:keySentence ?keySentence . FILTER(lang(?keySentence) = "{lang}") }}
+        OPTIONAL {{ ?s ocorg:mostRecentUpdate ?mostRecentUpdate . }}
+        OPTIONAL {{ ?s ocorg:donationUrl ?donationUrl . }}
+        OPTIONAL {{ ?s ocorg:offersResearchTrips ?offersResearchTrips . }}
+        OPTIONAL {{
+            ?s ocorg:activities ?activity .
+            FILTER(lang(?activity) = "{lang}")
+        }}
+        OPTIONAL {{
+            ?s ocorg:hasProject ?project .
+            ?project ocorg:projectName ?projName .
+            FILTER(lang(?projName) = "{lang}")
+            OPTIONAL {{ ?project ocorg:startDate ?projStart . }}
+            OPTIONAL {{ ?project ocorg:endDate ?projEnd . }}
+            OPTIONAL {{ ?project ocorg:imageUrl ?projImage . }}
+            OPTIONAL {{ ?project ocorg:projectUrl ?projUrl . }}
+            OPTIONAL {{ ?project ocorg:species ?projSpecies . FILTER(lang(?projSpecies) = "en") }}
+        }}
         
         FILTER(lang(?label) = "{lang}")
     """
@@ -104,19 +122,45 @@ async def get_entities(
             else:
                 where_clauses.append(filter_parts[0])
         
+        elif key == "species":
+            # Filter through hasProject/species join
+            filter_parts = []
+            for v in values:
+                safe_v = v.replace('"', '\\"')
+                filter_parts.append(
+                    f'?s ocorg:hasProject ?speciesProj . ?speciesProj ocorg:species ?speciesVal . FILTER(str(?speciesVal) = "{safe_v}")'
+                )
+            if filter_parts:
+                if len(filter_parts) > 1:
+                    where_clauses.append("{ " + " } UNION { ".join(filter_parts) + " }")
+                else:
+                    where_clauses.append(filter_parts[0])
+        
+        elif key == "mostRecentUpdate":
+            # Date filter: show organizations updated on or after the given date
+            safe_v = val.replace('"', '\\"')
+            where_clauses.append(f'?s ocorg:mostRecentUpdate ?mruVal . FILTER(?mruVal >= "{safe_v}"^^xsd:date)')
+        
         elif key in RANGE_FILTERS:
             prop = RANGE_FILTERS[key]
             where_clauses.append(f"?s {prop} ?{key}Val . FILTER(?{key}Val >= {val})")
 
     full_sparql = sparql_prefixes + """
     SELECT ?s ?label ?lat ?long ?type ?country ?founded ?website
-           (GROUP_CONCAT(CONCAT(STR(?focusArea), "|", COALESCE(?focusLabel, "")); separator=";;") AS ?focusAreasRaw)
+           (GROUP_CONCAT(DISTINCT CONCAT(STR(?focusArea), "|", COALESCE(?focusLabel, "")); separator=";;") AS ?focusAreasRaw)
            (SAMPLE(?regionNode) AS ?regionIri)
            (SAMPLE(?regionLab) AS ?regionLabel)
            (SAMPLE(?fundingNode) AS ?fundingIri)
            (SAMPLE(?fundingLab) AS ?fundingLabel)
            (SAMPLE(?accessNode) AS ?accessIri)
            (SAMPLE(?accessLab) AS ?accessLabel)
+           (SAMPLE(?keySentence) AS ?keySent)
+           (SAMPLE(?mostRecentUpdate) AS ?lastUpdate)
+           (SAMPLE(?donationUrl) AS ?donateUrl)
+           (SAMPLE(?offersResearchTrips) AS ?researchTrips)
+           (GROUP_CONCAT(DISTINCT ?activity; separator=";;") AS ?activitiesRaw)
+           (GROUP_CONCAT(DISTINCT CONCAT(COALESCE(?projName, ""), "|", COALESCE(STR(?projStart), ""), "|", COALESCE(STR(?projEnd), ""), "|", COALESCE(STR(?projImage), ""), "|", COALESCE(STR(?projUrl), "")); separator=";;") AS ?projectsRaw)
+           (GROUP_CONCAT(DISTINCT STR(?projSpecies); separator=";;") AS ?speciesRaw)
     WHERE {
     """ + sparql_where_base + "\n".join(where_clauses) + """
     }
@@ -138,6 +182,27 @@ async def get_entities(
                 if len(parts) == 2 and parts[0]:
                     focus_areas.append({"iri": parts[0].strip(), "label": parts[1].strip()})
 
+            # Parse activities from "act1;;act2" format
+            activities_raw = res.get("activitiesRaw", "") or ""
+            activities = [a.strip() for a in activities_raw.split(";;") if a.strip()]
+
+            # Parse species from all projects
+            species_raw = res.get("speciesRaw", "") or ""
+            all_species = [s.strip() for s in species_raw.split(";;") if s.strip()]
+
+            # Parse projects from "name|start|end|image;;..." format
+            projects_raw = res.get("projectsRaw", "") or ""
+            projects = []
+            for entry in projects_raw.split(";;"):
+                parts = entry.strip().split("|")
+                if len(parts) >= 1 and parts[0]:
+                    proj = {"name": parts[0]}
+                    if len(parts) > 1 and parts[1]: proj["startDate"] = parts[1]
+                    if len(parts) > 2 and parts[2]: proj["endDate"] = parts[2]
+                    if len(parts) > 3 and parts[3]: proj["imageUrl"] = parts[3]
+                    if len(parts) > 4 and parts[4]: proj["projectUrl"] = parts[4]
+                    projects.append(proj)
+
             def make_iri_obj(iri_val, label_val):
                 if not iri_val:
                     return None
@@ -156,6 +221,13 @@ async def get_entities(
                 "primaryOceanRegion": make_iri_obj(res.get("regionIri"), res.get("regionLabel")),
                 "fundingSource": make_iri_obj(res.get("fundingIri"), res.get("fundingLabel")),
                 "accessType": make_iri_obj(res.get("accessIri"), res.get("accessLabel")),
+                "keySentence": res.get("keySent", ""),
+                "mostRecentUpdate": res.get("lastUpdate", ""),
+                "donationUrl": res.get("donateUrl", ""),
+                "offersResearchTrips": res.get("researchTrips", "") == "true",
+                "activities": activities,
+                "projects": projects,
+                "species": all_species,
             }
             
             feature = Feature(

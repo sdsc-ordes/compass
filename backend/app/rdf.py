@@ -72,7 +72,9 @@ class RDFStore:
         
         # We skip geo:lat and geo:long from the filters as they are purely for mapping
         from rdflib.namespace import XSD
-        SKIP_PROPS = {GEO.lat, GEO.long, OCORG.organizationName, OCORG.websiteUrl}
+        SKIP_PROPS = {GEO.lat, GEO.long, OCORG.organizationName, OCORG.websiteUrl,
+                      OCORG.keySentence, OCORG.activities, OCORG.hasProject,
+                      OCORG.donationUrl, OCORG.offersResearchTrips}
 
         # Iterate over sh:property
         for prop in g.objects(shape_uri, SH.property):
@@ -92,6 +94,8 @@ class RDFStore:
             widget = "multiselect"  # Default
             if datatype in {XSD.integer, XSD.float, XSD.gYear}:
                 widget = "slider"
+            elif datatype == XSD.date:
+                widget = "datepicker"
             elif target_class or sh_in_list:
                 widget = "multiselect"
 
@@ -147,7 +151,32 @@ class RDFStore:
                     filter_item["min"] = min(vals) if vals else 1900
                     filter_item["max"] = max(vals) if vals else 2026
 
+            elif widget == "datepicker":
+                date_vals = sorted([str(v) for v in g.objects(None, path) if str(v)])
+                filter_item["min"] = date_vals[0] if date_vals else "2000-01-01"
+                filter_item["max"] = date_vals[-1] if date_vals else "2026-12-31"
+
             filters.append(filter_item)
+
+        # Special: Species filter — enumerate all unique species from project instances
+        species_values = set()
+        for subj in g.subjects(RDF.type, OCORG.Project):
+            for obj in g.objects(subj, OCORG.species):
+                if isinstance(obj, Literal) and (obj.language == lang or obj.language is None):
+                    species_values.add(str(obj))
+
+        if species_values:
+            filters.append({
+                "id": "species",
+                "path": str(OCORG.species),
+                "label": "Species" if lang == "en" else "Arten",
+                "type": "multiselect",
+                "order": 0,
+                "options": sorted(
+                    [{"value": s, "label": s} for s in species_values],
+                    key=lambda x: x["label"]
+                )
+            })
 
         return sorted(filters, key=lambda x: x["label"]) # Alphabetical for now
 

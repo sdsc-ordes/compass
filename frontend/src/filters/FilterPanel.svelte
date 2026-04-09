@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Filter, Check } from 'lucide-svelte';
+  import { Filter, Check, ChevronDown, ChevronRight } from 'lucide-svelte';
   import { i18n, type Lang } from '../shared/i18n';
 
   export let apiurl = '';
@@ -44,6 +44,12 @@
     notify();
   }
 
+  function handleDatePicker(filterId: string, event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    activeFilters[filterId] = val || undefined;
+    notify();
+  }
+
   function notify() {
     onFilterChange(activeFilters);
   }
@@ -51,6 +57,16 @@
   function resetFilters() {
     activeFilters = {};
     notify();
+  }
+
+  let collapsedFilters: Record<string, boolean> = {};
+
+  $: if (schema.length > 0 && Object.keys(collapsedFilters).length === 0) {
+    collapsedFilters = Object.fromEntries(schema.map(f => [f.id, true]));
+  }
+
+  function toggleCollapse(filterId: string) {
+    collapsedFilters[filterId] = !collapsedFilters[filterId];
   }
 
   $: hasActiveFilters = Object.values(activeFilters).some(
@@ -70,9 +86,19 @@
   <div class="filters-list">
     {#each schema as filter}
       <div class="filter-group">
-        <span class="filter-label">{filter.label}</span>
+        <button class="filter-group-header" on:click={() => toggleCollapse(filter.id)}>
+          <span class="filter-label">{filter.label}</span>
+          <span class="collapse-icon">
+            {#if collapsedFilters[filter.id]}
+              <ChevronRight size={14} color="#94a3b8" />
+            {:else}
+              <ChevronDown size={14} color="#94a3b8" />
+            {/if}
+          </span>
+        </button>
         
-        {#if filter.type === 'multiselect'}
+        {#if !collapsedFilters[filter.id]}
+          {#if filter.type === 'multiselect'}
           <div class="options">
             {#each filter.options as opt}
               <button 
@@ -104,6 +130,20 @@
                <span>{filter.max}</span>
             </div>
           </div>
+        {:else if filter.type === 'datepicker'}
+          <div class="datepicker-group">
+            <input
+              type="date"
+              min={filter.min}
+              max={filter.max}
+              value={activeFilters[filter.id] || ''}
+              on:change={(e) => handleDatePicker(filter.id, e)}
+            />
+            {#if activeFilters[filter.id]}
+              <span class="date-hint">Updated on or after {activeFilters[filter.id]}</span>
+            {/if}
+          </div>
+        {/if}
         {/if}
       </div>
     {/each}
@@ -154,13 +194,27 @@
   .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
   }
-  .filter-group label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1e293b;
+  .filter-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    width: 100%;
+    text-align: left;
+  }
+  .filter-group-header:hover .filter-label {
+    color: #0f172a;
+  }
+  .collapse-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
   }
   .options {
     display: flex;
@@ -224,5 +278,30 @@
   .current {
     color: #0284c7;
     font-weight: 700;
+  }
+  .datepicker-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  input[type="date"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #1e293b;
+    background: white;
+    cursor: pointer;
+    accent-color: #0284c7;
+  }
+  input[type="date"]:focus {
+    outline: none;
+    border-color: #0284c7;
+  }
+  .date-hint {
+    font-size: 0.75rem;
+    color: #0284c7;
+    font-weight: 500;
   }
 </style>

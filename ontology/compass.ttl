@@ -27,7 +27,17 @@ ocinst:WHOI a ocorg:ResearchInstitute ;
     ocorg:researchVessels 4 ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_Mixed ;
-    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic ;
+    ocorg:keySentence "A world leader in ocean science and engineering since 1930."@en ;
+    ocorg:keySentence "Weltführend in der Meeresforschung und -technik seit 1930."@de ;
+    ocorg:activities "Exploring deep-ocean ecosystems using autonomous underwater vehicles."@en ;
+    ocorg:activities "Monitoring ocean circulation and its impact on climate change."@en ;
+    ocorg:activities "Erforschung von Tiefsee-Ökosystemen mit autonomen Unterwasserfahrzeugen."@de ;
+    ocorg:activities "Überwachung der Ozeanzirkulation und ihres Einflusses auf den Klimawandel."@de ;
+    ocorg:mostRecentUpdate "2025-11-15"^^xsd:date ;
+    ocorg:donationUrl "https://www.whoi.edu/give"^^xsd:anyURI ;
+    ocorg:offersResearchTrips true ;
+    ocorg:hasProject ocinst:WHOI_NARW_Project .
 
 ocinst:MBARI a ocorg:ResearchInstitute ;
     ocorg:organizationName "Monterey Bay Aquarium Research Institute"@en ;
@@ -45,7 +55,17 @@ ocinst:MBARI a ocorg:ResearchInstitute ;
     ocorg:researchVessels 4 ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_Private ;
-    ocorg:primaryOceanRegion ocorg:Region_Pacific .
+    ocorg:primaryOceanRegion ocorg:Region_Pacific ;
+    ocorg:keySentence "Pioneering deep-sea research through innovative ocean technology."@en ;
+    ocorg:keySentence "Wegweisende Tiefseeforschung durch innovative Meerestechnologie."@de ;
+    ocorg:activities "Developing next-generation autonomous underwater vehicles for deep-sea exploration."@en ;
+    ocorg:activities "Cataloging deep-sea biodiversity in Monterey Canyon."@en ;
+    ocorg:activities "Entwicklung autonomer Unterwasserfahrzeuge der nächsten Generation."@de ;
+    ocorg:activities "Katalogisierung der Tiefsee-Biodiversität im Monterey Canyon."@de ;
+    ocorg:mostRecentUpdate "2026-01-20"^^xsd:date ;
+    ocorg:donationUrl "https://www.mbari.org/support"^^xsd:anyURI ;
+    ocorg:offersResearchTrips false ;
+    ocorg:hasProject ocinst:MBARI_DeepSea_Project .
 
 ocinst:GEOMAR a ocorg:ResearchInstitute ;
     ocorg:organizationName "GEOMAR Helmholtz Centre for Ocean Research Kiel"@en ;
@@ -63,7 +83,16 @@ ocinst:GEOMAR a ocorg:ResearchInstitute ;
     ocorg:researchVessels 5 ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_Public ;
-    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic ;
+    ocorg:keySentence "Germany's leading institute for marine geosciences."@en ;
+    ocorg:keySentence "Deutschlands führendes Institut für marine Geowissenschaften."@de ;
+    ocorg:activities "Studying submarine volcanism and hydrothermal vents."@en ;
+    ocorg:activities "Monitoring ocean acidification in the North Sea."@en ;
+    ocorg:activities "Erforschung von submarinem Vulkanismus und Hydrothermalquellen."@de ;
+    ocorg:activities "Überwachung der Ozeanversauerung in der Nordsee."@de ;
+    ocorg:mostRecentUpdate "2026-02-14"^^xsd:date ;
+    ocorg:offersResearchTrips true ;
+    ocorg:hasProject ocinst:GEOMAR_Hydrothermal_Project .
 
 ocinst:IFREMER a ocorg:ResearchInstitute ;
     ocorg:organizationName "Institut Français de Recherche pour l'Exploitation de la Mer"@en ;
@@ -117,7 +146,17 @@ ocinst:AWI a ocorg:ResearchInstitute ;
     ocorg:researchVessels 5 ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_Public ;
-    ocorg:primaryOceanRegion ocorg:Region_Arctic .
+    ocorg:primaryOceanRegion ocorg:Region_Arctic ;
+    ocorg:keySentence "Driving polar and marine research from the Arctic to the Antarctic."@en ;
+    ocorg:keySentence "Polar- und Meeresforschung von der Arktis bis zur Antarktis."@de ;
+    ocorg:activities "Operating long-term ecological monitoring stations in the Arctic."@en ;
+    ocorg:activities "Studying the impact of sea ice loss on polar marine ecosystems."@en ;
+    ocorg:activities "Betrieb langfristiger ökologischer Messstationen in der Arktis."@de ;
+    ocorg:activities "Untersuchung der Auswirkungen des Meereisverlusts auf polare marine Ökosysteme."@de ;
+    ocorg:mostRecentUpdate "2025-10-22"^^xsd:date ;
+    ocorg:donationUrl "https://www.awi.de/en/about-us/support.html"^^xsd:anyURI ;
+    ocorg:offersResearchTrips true ;
+    ocorg:hasProject ocinst:AWI_ArcticIce_Project .
 
 ocinst:NOC a ocorg:ResearchInstitute ;
     ocorg:organizationName "National Oceanography Centre"@en ;
@@ -321,7 +360,16 @@ ocinst:OceanConservancy a ocorg:NGO ;
     ocorg:researchVessels 0 ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_Mixed ;
-    ocorg:primaryOceanRegion ocorg:Region_Atlantic .
+    ocorg:primaryOceanRegion ocorg:Region_Atlantic ;
+    ocorg:keySentence "Protecting the ocean from today's greatest global challenges."@en ;
+    ocorg:keySentence "Schutz der Ozeane vor den größten globalen Herausforderungen."@de ;
+    ocorg:activities "Organizing International Coastal Cleanup events worldwide."@en ;
+    ocorg:activities "Advocating for policies to reduce ocean plastic pollution."@en ;
+    ocorg:activities "Organisation von internationalen Küstenreinigungsaktionen weltweit."@de ;
+    ocorg:activities "Eintreten für politische Maßnahmen zur Verringerung der Plastikverschmutzung."@de ;
+    ocorg:mostRecentUpdate "2026-03-01"^^xsd:date ;
+    ocorg:donationUrl "https://oceanconservancy.org/donate"^^xsd:anyURI ;
+    ocorg:offersResearchTrips false .
 
 ocinst:Oceana a ocorg:NGO ;
     ocorg:organizationName "Oceana"@en ;
@@ -339,7 +387,17 @@ ocinst:Oceana a ocorg:NGO ;
     ocorg:researchVessels 0 ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_Mixed ;
-    ocorg:primaryOceanRegion ocorg:Region_Global .
+    ocorg:primaryOceanRegion ocorg:Region_Global ;
+    ocorg:keySentence "Dedicated to restoring abundance in the world's oceans."@en ;
+    ocorg:keySentence "Engagiert für die Wiederherstellung des Artenreichtums in den Weltmeeren."@de ;
+    ocorg:activities "Investigating status, ecology and distribution of Mediterranean dolphins."@en ;
+    ocorg:activities "Assessing potential threats to dolphin populations."@en ;
+    ocorg:activities "Untersuchung von Status, Ökologie und Verbreitung mediterraner Delfine."@de ;
+    ocorg:activities "Bewertung potenzieller Bedrohungen für Delfinpopulationen."@de ;
+    ocorg:mostRecentUpdate "2025-12-10"^^xsd:date ;
+    ocorg:donationUrl "https://oceana.org/donate"^^xsd:anyURI ;
+    ocorg:offersResearchTrips true ;
+    ocorg:hasProject ocinst:Oceana_MedDolphin_Project .
 
 ocinst:DeepOceanStewardship a ocorg:NGO ;
     ocorg:organizationName "Deep Ocean Stewardship Initiative"@en ;
@@ -358,3 +416,59 @@ ocinst:DeepOceanStewardship a ocorg:NGO ;
     ocorg:accessType ocorg:Access_Open ;
     ocorg:fundingSource ocorg:Funding_International ;
     ocorg:primaryOceanRegion ocorg:Region_Global .
+
+# ============================================================
+# Instance Data: Research Projects
+# ============================================================
+
+ocinst:WHOI_NARW_Project a ocorg:Project ;
+    ocorg:projectName "North Atlantic Right Whale Monitoring"@en ;
+    ocorg:projectName "Überwachung des Nordatlantischen Glattwals"@de ;
+    ocorg:startDate "2018-03-01"^^xsd:date ;
+    ocorg:endDate "2027-12-31"^^xsd:date ;
+    ocorg:species "North Atlantic Right Whale"@en ;
+    ocorg:species "Eubalaena glacialis"@en ;
+    ocorg:imageUrl "https://www.whoi.edu/wp-content/uploads/2019/07/right-whale.jpg"^^xsd:anyURI ;
+    ocorg:projectUrl "https://www.whoi.edu/what-we-do/explore/projects/right-whale-tagging/"^^xsd:anyURI .
+
+ocinst:MBARI_DeepSea_Project a ocorg:Project ;
+    ocorg:projectName "Monterey Canyon Deep-Sea Census"@en ;
+    ocorg:projectName "Tiefsee-Zählung im Monterey Canyon"@de ;
+    ocorg:startDate "2020-06-15"^^xsd:date ;
+    ocorg:endDate "2026-06-14"^^xsd:date ;
+    ocorg:species "Giant Pacific Octopus"@en ;
+    ocorg:species "Vampire Squid"@en ;
+    ocorg:imageUrl "https://www.mbari.org/wp-content/uploads/2021/deep-sea-census.jpg"^^xsd:anyURI ;
+    ocorg:projectUrl "https://www.mbari.org/our-work/research-themes/deep-sea/"^^xsd:anyURI .
+
+ocinst:Oceana_MedDolphin_Project a ocorg:Project ;
+    ocorg:projectName "Mediterranean Dolphin Conservation"@en ;
+    ocorg:projectName "Schutz der Mittelmeer-Delfine"@de ;
+    ocorg:startDate "2021-01-10"^^xsd:date ;
+    ocorg:endDate "2026-12-31"^^xsd:date ;
+    ocorg:species "Bottlenose Dolphin"@en ;
+    ocorg:species "Short-beaked Common Dolphin"@en ;
+    ocorg:species "Striped Dolphin"@en ;
+    ocorg:imageUrl "https://oceana.org/wp-content/uploads/med-dolphins.jpg"^^xsd:anyURI ;
+    ocorg:projectUrl "https://oceana.org/our-work/protect-marine-wildlife/dolphins/"^^xsd:anyURI .
+
+ocinst:GEOMAR_Hydrothermal_Project a ocorg:Project ;
+    ocorg:projectName "Mid-Atlantic Ridge Hydrothermal Vent Study"@en ;
+    ocorg:projectName "Studie der Hydrothermalquellen am Mittelatlantischen Rücken"@de ;
+    ocorg:startDate "2022-09-01"^^xsd:date ;
+    ocorg:endDate "2027-08-31"^^xsd:date ;
+    ocorg:species "Giant Tube Worm"@en ;
+    ocorg:species "Pompeii Worm"@en ;
+    ocorg:imageUrl "https://www.geomar.de/fileadmin/hydrothermal-vents.jpg"^^xsd:anyURI ;
+    ocorg:projectUrl "https://www.geomar.de/en/research/fb2/fb2-mg/projects/"^^xsd:anyURI .
+
+ocinst:AWI_ArcticIce_Project a ocorg:Project ;
+    ocorg:projectName "Arctic Sea Ice Ecosystem Dynamics"@en ;
+    ocorg:projectName "Arktische Meereis-Ökosystemdynamik"@de ;
+    ocorg:startDate "2019-04-01"^^xsd:date ;
+    ocorg:endDate "2026-03-31"^^xsd:date ;
+    ocorg:species "Ringed Seal"@en ;
+    ocorg:species "Polar Bear"@en ;
+    ocorg:species "Arctic Cod"@en ;
+    ocorg:imageUrl "https://www.awi.de/fileadmin/arctic-sea-ice.jpg"^^xsd:anyURI ;
+    ocorg:projectUrl "https://www.awi.de/en/science/special-groups/sea-ice-physics.html"^^xsd:anyURI .

@@ -17,7 +17,15 @@ export const i18n = {
     propFocusArea: "Focus areas",
     propRegion: "Region",
     propFunding: "Funding",
-    propAccess: "Access"
+    propAccess: "Access",
+    propActivities: "Activities",
+    propProjects: "Projects",
+    propLastUpdate: "Last update",
+    propDonation: "Donate",
+    propResearchTrips: "Research trips",
+    researchTripsYes: "Offers research trips",
+    researchTripsNo: "No research trips",
+    propSpecies: "Species",
   },
   de: {
     filters: "Filter",
@@ -37,7 +45,15 @@ export const i18n = {
     propFocusArea: "Schwerpunkte",
     propRegion: "Region",
     propFunding: "Finanzierung",
-    propAccess: "Zugang"
+    propAccess: "Zugang",
+    propActivities: "Aktivitäten",
+    propProjects: "Projekte",
+    propLastUpdate: "Letztes Update",
+    propDonation: "Spenden",
+    propResearchTrips: "Forschungsreisen",
+    researchTripsYes: "Bietet Forschungsreisen an",
+    researchTripsNo: "Keine Forschungsreisen",
+    propSpecies: "Arten",
   }
 };
 

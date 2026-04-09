@@ -31,6 +31,7 @@
 
     map.on('load', () => {
       updateMarkers();
+      setupEventHandlers();
     });
   });
 
@@ -147,26 +148,6 @@
       }
     });
 
-    map.on('click', 'clusters', (e) => {
-      const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-      const clusterId = features[0].properties.cluster_id;
-      // @ts-ignore
-      map.getSource('entities').getClusterExpansionZoom(clusterId, (err, zoom) => {
-          if (err) return;
-          map.easeTo({
-            center: (features[0].geometry as any).coordinates,
-            zoom: zoom
-          });
-        }
-      );
-    });
-
-    map.on('click', ['unclustered-point', 'cta-points'], (e) => {
-      const props = e.features![0].properties;
-      if (props.is_region) return;
-      onEntitySelect(props);
-    });
-
     // Region Highlighting Layers
     map.addLayer({
       id: 'region-fill',
@@ -190,6 +171,38 @@
         'line-dasharray': [2, 2]
       }
     });
+  }
+
+  function setupEventHandlers() {
+    map.on('click', 'clusters', async (e) => {
+      const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+      if (!features.length) return;
+      const clusterId = features[0].properties.cluster_id;
+      const zoom = await (map.getSource('entities') as any).getClusterExpansionZoom(clusterId);
+      map.easeTo({
+        center: (features[0].geometry as any).coordinates,
+        zoom
+      });
+    });
+
+    map.on('click', 'unclustered-point', (e) => {
+      const props = e.features![0].properties;
+      if (props.is_region) return;
+      onEntitySelect(props);
+    });
+
+    map.on('click', 'cta-points', (e) => {
+      const props = e.features![0].properties;
+      if (props.is_region) return;
+      onEntitySelect(props);
+    });
+
+    map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
+    map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = ''; });
+    map.on('mouseenter', 'cta-points', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'cta-points', () => { map.getCanvas().style.cursor = ''; });
   }
 
   function toggleProjection() {
