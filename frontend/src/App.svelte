@@ -5,6 +5,7 @@
   import Map from './map/Map.svelte';
   import FilterPanel from './filters/FilterPanel.svelte';
   import ListView from './shared/ListView.svelte';
+  import EntitySidebar from './shared/EntitySidebar.svelte';
   import { i18n, type Lang } from './shared/i18n';
   import { Map as MapIcon, List, Globe, Languages } from 'lucide-svelte';
 
@@ -16,6 +17,7 @@
   let viewMode: 'map' | 'list' = 'map';
   let isLoading = true;
   let error: string | null = null;
+  let selectedEntity: any = null;
 
   $: t = i18n[lang] || i18n.en;
 
@@ -136,6 +138,10 @@
     activeFilters = { ...filters };
   }
 
+  function handleEntitySelect(props: any) {
+    selectedEntity = props;
+  }
+
   function toggleLang() {
     lang = lang === 'en' ? 'de' : 'en';
   }
@@ -206,9 +212,17 @@
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {apiurl} {lang} {entities} />
+        <Map {apiurl} {lang} {entities} onEntitySelect={handleEntitySelect} />
       {:else}
         <ListView {entities} {lang} />
+      {/if}
+
+      {#if selectedEntity}
+        <EntitySidebar
+          entity={selectedEntity}
+          {lang}
+          onClose={() => selectedEntity = null}
+        />
       {/if}
     </div>
   </div>
