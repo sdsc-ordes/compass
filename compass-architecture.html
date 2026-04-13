@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Compass – Architecture Diagram</title>
+  <style>
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #60a5fa;
+      margin-bottom: 0.5rem;
+    }
+    p.subtitle {
+      color: #94a3b8;
+      margin-top: 0;
+      margin-bottom: 2rem;
+    }
+    .mermaid {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 95vw;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Compass – Full Architecture</h1>
+  <p class="subtitle">OceanCare Interactive World Map &middot; Ontology-driven embeddable widget</p>
+
+  <div class="mermaid">
+flowchart TB
+    subgraph Ontology["🐢 Ontology Layer — Turtle files"]
+        direction LR
+        compass["<b>compass.ttl</b><br/>Instance data<br/>20+ orgs, projects,<br/>networks, forums"]
+        shapes["<b>shapes.ttl</b><br/>SHACL shapes<br/>validation +<br/>filter schema blueprint"]
+        vocab["<b>vocab.ttl</b><br/>SKOS vocabularies<br/>FocusArea, Region,<br/>Funding, Access"]
+    end
+
+    subgraph Backend["⚙️ Backend — FastAPI + Python"]
+        direction TB
+        subgraph Core["Core Modules"]
+            direction LR
+            rdf["<b>rdf.py — RDFStore</b><br/>• loads Turtle → Oxigraph<br/>• SPARQL query engine<br/>• caches property specs"]
+            ns["<b>namespaces.py</b><br/>• RDF namespace defs<br/>• PREFIX_MAP<br/>• SPARQL_PREFIXES"]
+        end
+        subgraph Pipeline["Query Pipeline"]
+            direction LR
+            schema["<b>schema.py</b><br/>• SHACL introspection<br/>• filter schema from shapes<br/>• property specs extraction"]
+            builder["<b>sparql_builder.py</b><br/>• builds SPARQL from<br/>&nbsp;&nbsp;SHACL property specs<br/>• applies user filters"]
+            parser["<b>result_parser.py</b><br/>• SPARQL → GeoJSON<br/>• species / project parsing<br/>• property aliasing"]
+        end
+        subgraph Routers["API Routers"]
+            direction LR
+            filters_r["<b>/api/filters/schema</b><br/>→ dynamic filter definitions"]
+            entities_r["<b>/api/entities</b><br/>→ GeoJSON FeatureCollection"]
+            detail_r["<b>/api/entities/detail</b><br/>→ single entity by IRI"]
+            states_r["<b>/api/states</b><br/>→ save / load shareable state"]
+        end
+        db["<b>db.py — SQLite</b><br/>persists shared<br/>map states"]
+    end
+
+    subgraph Frontend["🖥️ Frontend — Svelte → Web Component"]
+        direction TB
+        app["<b>App.svelte</b> — Root<br/>state mgmt, fetching,<br/>layout, URL sync, i18n"]
+        subgraph Views["Views"]
+            direction LR
+            map["<b>Map.svelte</b><br/>MapLibre GL JS<br/>• clusters &amp; pins<br/>• globe / flat toggle<br/>• org↔project connections<br/>• type-coded colors"]
+            listview["<b>ListView.svelte</b><br/>Table view<br/>with chips &amp; badges"]
+        end
+        subgraph Panels["Panels"]
+            direction LR
+            filterpanel["<b>FilterPanel.svelte</b><br/>• multiselect<br/>• slider<br/>• datepicker<br/>(auto-generated from SHACL)"]
+            sidebar["<b>EntitySidebar.svelte</b><br/>Detail panel:<br/>properties, projects,<br/>action buttons"]
+        end
+        i18n["<b>i18n.ts</b><br/>EN / DE translations"]
+    end
+
+    subgraph Embed["📦 Embedding"]
+        ce["<b>&lt;compass-map&gt;</b><br/>Custom Element<br/>(Shadow DOM)"]
+    end
+
+    compass --> rdf
+    shapes --> rdf
+    vocab --> rdf
+    rdf --> schema
+    ns --> builder
+    schema -- "property specs" --> builder
+    builder -- "SPARQL" --> rdf
+    rdf -- "results" --> parser
+    schema --> filters_r
+    builder --> entities_r
+    parser --> entities_r
+    rdf --> detail_r
+    states_r --> db
+    filters_r -- "filter schema JSON" --> filterpanel
+    entities_r -- "GeoJSON" --> app
+    app --> map
+    app --> listview
+    app --> filterpanel
+    app --> sidebar
+    app --> i18n
+    Frontend --> ce
+
+    classDef ontology fill:#1e3a5f,stroke:#60a5fa,color:#e0e0e0
+    classDef backend fill:#1e3a2f,stroke:#4ade80,color:#e0e0e0
+    classDef frontend fill:#3a1e5f,stroke:#a78bfa,color:#e0e0e0
+    classDef embed fill:#5f3a1e,stroke:#fb923c,color:#e0e0e0
+
+    class compass,shapes,vocab ontology
+    class rdf,ns,schema,builder,parser,filters_r,entities_r,detail_r,states_r,db backend
+    class app,map,listview,filterpanel,sidebar,i18n frontend
+    class ce embed
+  </div>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      flowchart: {
+        useMaxWidth: false,
+        htmlLabels: true,
+        curve: 'basis',
+        nodeSpacing: 50,
+        rankSpacing: 60
+      },
+      themeVariables: {
+        primaryColor: '#1e3a5f',
+        primaryTextColor: '#e0e0e0',
+        primaryBorderColor: '#60a5fa',
+        lineColor: '#60a5fa',
+        fontSize: '14px'
+      }
+    });
+  </script>
+</body>
+</html>
