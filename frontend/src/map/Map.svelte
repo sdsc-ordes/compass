@@ -38,11 +38,15 @@
   let map: maplibregl.Map;
   let projection: 'globe' | 'mercator' = 'mercator';
 
-  // Hover connection index
+  // Hover/click connection index
   const PROJECT_IRI = 'http://example.org/ocean-org/ontology#Project';
   let coordByIri = new Map<string, [number, number]>();
   let orgToProjectIris = new Map<string, string[]>();
   let projectToOrgIri = new Map<string, string>();
+
+  // Pinned selection (click-to-persist connections)
+  let selectedIri: string | null = null;
+  let selectedTypeIri: string | null = null;
 
   $: t = i18n[lang] || i18n.en;
   $: if (map && entities) {
@@ -294,13 +298,42 @@
     map.on('click', 'unclustered-point', (e) => {
       const props = e.features![0].properties;
       if (props.is_region) return;
+      if (selectedIri === props.id) {
+        // Second click on the same node — deselect
+        selectedIri = null;
+        selectedTypeIri = null;
+        clearConnections();
+      } else {
+        selectedIri = props.id;
+        selectedTypeIri = props.typeIri;
+        showConnections(selectedIri, selectedTypeIri!);
+      }
       onEntitySelect(props);
     });
 
     map.on('click', 'cta-points', (e) => {
       const props = e.features![0].properties;
       if (props.is_region) return;
+      if (selectedIri === props.id) {
+        selectedIri = null;
+        selectedTypeIri = null;
+        clearConnections();
+      } else {
+        selectedIri = props.id;
+        selectedTypeIri = props.typeIri;
+        showConnections(selectedIri, selectedTypeIri!);
+      }
       onEntitySelect(props);
+    });
+
+    // Click on empty map — clear selection
+    map.on('click', (e) => {
+      const hit = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point', 'cta-points', 'clusters'] });
+      if (!hit.length && selectedIri) {
+        selectedIri = null;
+        selectedTypeIri = null;
+        clearConnections();
+      }
     });
 
     map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
@@ -312,7 +345,12 @@
     });
     map.on('mouseleave', 'unclustered-point', () => {
       map.getCanvas().style.cursor = '';
-      clearConnections();
+      // Restore pinned selection if one is active
+      if (selectedIri && selectedTypeIri) {
+        showConnections(selectedIri, selectedTypeIri);
+      } else {
+        clearConnections();
+      }
     });
     map.on('mouseenter', 'cta-points', (e) => {
       map.getCanvas().style.cursor = 'pointer';
@@ -321,7 +359,11 @@
     });
     map.on('mouseleave', 'cta-points', () => {
       map.getCanvas().style.cursor = '';
-      clearConnections();
+      if (selectedIri && selectedTypeIri) {
+        showConnections(selectedIri, selectedTypeIri);
+      } else {
+        clearConnections();
+      }
     });
   }
 
