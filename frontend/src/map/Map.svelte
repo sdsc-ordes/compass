@@ -75,12 +75,13 @@
     if (!map || !map.isStyleLoaded()) return;
 
     // Remove all layers that depend on 'entities' source before removal
-    const layers = ['connections-line', 'clusters', 'cluster-count', 'unclustered-point', 'cta-points', 'region-fill', 'region-outline'];
+    const layers = ['connections-line', 'connections-nodes', 'clusters', 'cluster-count', 'unclustered-point', 'cta-points', 'region-fill', 'region-outline'];
     layers.forEach(l => {
       if (map.getLayer(l)) map.removeLayer(l);
     });
 
     if (map.getSource('connections')) map.removeSource('connections');
+    if (map.getSource('entities-connections')) map.removeSource('entities-connections');
     if (map.getSource('entities')) {
       map.removeSource('entities');
     }
@@ -169,6 +170,27 @@
       }
     });
 
+    // Separate non-clustered source for connection endpoint nodes.
+    // This ensures lines always terminate on precisely-placed individual dots
+    // instead of off-center on a cluster bubble.
+    map.addSource('entities-connections', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+      cluster: false
+    });
+    map.addLayer({
+      id: 'connections-nodes',
+      type: 'circle',
+      source: 'entities-connections',
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-color': typeColorExpression(),
+        'circle-radius': 8,
+        'circle-stroke-width': 3,
+        'circle-stroke-color': '#6366f1'
+      }
+    });
+
     // Regular Points — color-coded by entity type
     map.addLayer({
       id: 'unclustered-point',
@@ -254,6 +276,19 @@
       'orgs with projects:', orgToProjectIris.size,
       'project→org entries:', projectToOrgIri.size,
       'total coords:', coordByIri.size);
+    updateConnectionsSource();
+  }
+
+  function updateConnectionsSource() {
+    const src = map.getSource('entities-connections') as any;
+    if (!src) return;
+    // Collect all features that participate in at least one connection
+    const connectedIris = new Set<string>([
+      ...orgToProjectIris.keys(),
+      ...projectToOrgIri.keys()
+    ]);
+    const features = entities.filter(f => connectedIris.has(f.properties?.id));
+    src.setData({ type: 'FeatureCollection', features });
   }
 
   function showConnections(featureIri: string, typeIri: string) {
@@ -276,11 +311,28 @@
     }
     console.log('[Compass] showConnections', featureIri, '→', lines.length, 'line(s)');
     src.setData({ type: 'FeatureCollection', features: lines });
+
+    // Show the connection endpoint nodes from the non-clustered source so
+    // lines terminate on individual dots rather than cluster bubbles.
+    let endpointIris: string[] = [];
+    if (typeIri === PROJECT_IRI) {
+      const orgIri = projectToOrgIri.get(featureIri);
+      if (orgIri) endpointIris = [orgIri];
+    } else {
+      endpointIris = orgToProjectIris.get(featureIri) ?? [];
+    }
+    if (endpointIris.length) {
+      map.setFilter('connections-nodes', ['in', ['get', 'id'], ['literal', endpointIris]]);
+      map.setLayoutProperty('connections-nodes', 'visibility', 'visible');
+    }
   }
 
   function clearConnections() {
     const src = map.getSource('connections') as any;
     if (src) src.setData({ type: 'FeatureCollection', features: [] });
+    if (map.getLayer('connections-nodes')) {
+      map.setLayoutProperty('connections-nodes', 'visibility', 'none');
+    }
   }
 
   function setupEventHandlers() {

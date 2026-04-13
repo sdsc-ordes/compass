@@ -10,6 +10,7 @@ frontend/dist/
 # Python / backend
 .venv/
 backend/.venv/
+backend/states.db
 __pycache__/
 *.py[cod]
 *.pyo
