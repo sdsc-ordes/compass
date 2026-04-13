@@ -1,9 +1,19 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import filters, entities, states
 from .rdf import get_store
 
-app = FastAPI(title="OceanCare Compass API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    store = get_store()
+    print("Oxigraph Store Initialized with Ontology.")
+    yield
+
+
+app = FastAPI(title="OceanCare Compass API", lifespan=lifespan)
 
 # CORS for WordPress or other embed domains
 app.add_middleware(
@@ -12,12 +22,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Startup event to verify ontology loading
-@app.on_event("startup")
-async def startup_event():
-    store = get_store()
-    print("Oxigraph Store Initialized with Ontology.")
 
 @app.get("/")
 async def root():
