@@ -192,7 +192,8 @@ def _build_where_clauses(
             safe_v = val.replace('\\', '\\\\').replace('"', '\\"')
             prop = date_filters[key]
             where_clauses.append(
-                f'?s {prop} ?{key}Val . FILTER(?{key}Val >= "{safe_v}"^^xsd:date)'
+                f'OPTIONAL {{ ?s {prop} ?{key}Val . }} '
+                f'FILTER(!BOUND(?{key}Val) || ?{key}Val >= "{safe_v}"^^xsd:date)'
             )
 
         elif key == "entityType":
@@ -203,12 +204,20 @@ def _build_where_clauses(
                 where_clauses.append(f"FILTER(?type IN ({iri_list}))")
 
         elif key in range_filters:
-            prop = range_filters[key]
+            prop, datatype = range_filters[key]
             try:
                 numeric_val = float(val)
-                where_clauses.append(
-                    f"?s {prop} ?{key}Val . FILTER(?{key}Val >= {numeric_val})"
-                )
+                if datatype and "gYear" in datatype:
+                    year_int = int(numeric_val)
+                    where_clauses.append(
+                        f'OPTIONAL {{ ?s {prop} ?{key}Val . }} '
+                        f'FILTER(!BOUND(?{key}Val) || ?{key}Val >= "{year_int}"^^xsd:gYear)'
+                    )
+                else:
+                    where_clauses.append(
+                        f'OPTIONAL {{ ?s {prop} ?{key}Val . }} '
+                        f'FILTER(!BOUND(?{key}Val) || ?{key}Val >= {numeric_val})'
+                    )
             except ValueError:
                 continue
 
@@ -240,7 +249,7 @@ def build_entities_query(
         if spec["filter_type"] == "multiselect":
             filter_map[spec["id"]] = prefixed
         elif spec["filter_type"] == "slider":
-            range_filters[spec["id"]] = prefixed
+            range_filters[spec["id"]] = (prefixed, spec.get("datatype"))
         elif spec["filter_type"] == "datepicker":
             date_filters[spec["id"]] = prefixed
 

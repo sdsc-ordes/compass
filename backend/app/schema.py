@@ -117,9 +117,13 @@ def _multiselect_options(g, prop, path, target_class, sh_in_list, lang) -> list:
         for member in Collection(g, sh_in_list[0]):
             options.append({"value": str(member), "label": get_label(g, member, RDFS.label, lang)})
     else:
+        seen: dict = {}
         for val in g.objects(None, path):
             if isinstance(val, Literal) and (val.language == lang or val.language is None):
-                options.append({"value": str(val), "label": str(val)})
+                str_val = str(val)
+                if str_val not in seen:
+                    seen[str_val] = {"value": str_val, "label": str_val}
+        options = list(seen.values())
     return sorted(options, key=lambda x: x["label"])
 
 
@@ -222,6 +226,7 @@ def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
             "category": category,
             "is_multi": is_multi,
             "filter_type": filter_type,
+            "datatype": str(datatype) if datatype else None,
         })
 
     return specs
@@ -234,7 +239,7 @@ def _infer_category(datatype, is_iri: bool) -> str:
         return "uri_literal"
     if datatype is not None and str(datatype) == str(XSD.boolean):
         return "boolean"
-    if datatype is not None and str(datatype) == str(XSD.string):
+    if datatype is not None and str(datatype) in (str(XSD.string), str(RDF.langString)):
         return "lang_literal"
     return "simple_literal"  # integer, gYear, date, float, double
 
