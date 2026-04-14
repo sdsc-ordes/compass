@@ -18,6 +18,7 @@
     'http://example.org/ocean-org/ontology#Project':           '#ec4899', // pink
   };
   const DEFAULT_PIN_COLOR = '#64748b'; // slate for unknown types
+  const FEATURED_IRI = 'http://example.org/ocean-org/data#OceanCare';
 
   // Build a MapLibre match expression from the type color map
   function typeColorExpression(): maplibregl.ExpressionSpecification {
@@ -75,7 +76,7 @@
     if (!map || !map.isStyleLoaded()) return;
 
     // Remove all layers that depend on 'entities' source before removal
-    const layers = ['connections-line', 'connections-nodes', 'clusters', 'cluster-count', 'unclustered-point', 'cta-points', 'region-fill', 'region-outline'];
+    const layers = ['connections-line', 'connections-nodes', 'clusters', 'cluster-count', 'unclustered-point', 'featured-star', 'cta-points', 'region-fill', 'region-outline'];
     layers.forEach(l => {
       if (map.getLayer(l)) map.removeLayer(l);
     });
@@ -191,17 +192,36 @@
       }
     });
 
-    // Regular Points — color-coded by entity type
+    // Regular Points — color-coded by entity type (OceanCare rendered separately as a star)
     map.addLayer({
       id: 'unclustered-point',
       type: 'circle',
       source: 'entities',
-      filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'is_cta']]],
+      filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'is_cta']], ['!=', ['get', 'id'], FEATURED_IRI]],
       paint: {
         'circle-color': typeColorExpression(),
         'circle-radius': 8,
         'circle-stroke-width': 2,
         'circle-stroke-color': '#fff'
+      }
+    });
+
+    // OceanCare — gold star symbol
+    map.addLayer({
+      id: 'featured-star',
+      type: 'symbol',
+      source: 'entities',
+      filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'id'], FEATURED_IRI]],
+      layout: {
+        'text-field': '★',
+        'text-size': 28,
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+      },
+      paint: {
+        'text-color': '#f59e0b',
+        'text-halo-color': '#fff',
+        'text-halo-width': 1.5,
       }
     });
 
@@ -380,7 +400,7 @@
 
     // Click on empty map — clear selection
     map.on('click', (e) => {
-      const hit = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point', 'cta-points', 'clusters'] });
+      const hit = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point', 'featured-star', 'cta-points', 'clusters'] });
       if (!hit.length && selectedIri) {
         selectedIri = null;
         selectedTypeIri = null;
@@ -390,6 +410,32 @@
 
     map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
+    map.on('click', 'featured-star', (e) => {
+      const props = e.features![0].properties;
+      if (selectedIri === props.id) {
+        selectedIri = null;
+        selectedTypeIri = null;
+        clearConnections();
+      } else {
+        selectedIri = props.id;
+        selectedTypeIri = props.typeIri;
+        showConnections(selectedIri, selectedTypeIri!);
+      }
+      onEntitySelect(props);
+    });
+    map.on('mouseenter', 'featured-star', (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const props = e.features![0].properties;
+      showConnections(props.id, props.typeIri);
+    });
+    map.on('mouseleave', 'featured-star', () => {
+      map.getCanvas().style.cursor = '';
+      if (selectedIri && selectedTypeIri) {
+        showConnections(selectedIri, selectedTypeIri);
+      } else {
+        clearConnections();
+      }
+    });
     map.on('mouseenter', 'unclustered-point', (e) => {
       map.getCanvas().style.cursor = 'pointer';
       const props = e.features![0].properties;
@@ -443,6 +489,11 @@
         <span class="legend-label">{iri.split('#')[1]?.replace(/([A-Z])/g, ' $1').trim() ?? iri}</span>
       </div>
     {/each}
+    <div class="legend-separator"></div>
+    <div class="legend-item">
+      <span style="color:#f59e0b; font-size:1.1rem; line-height:1; flex-shrink:0;">★</span>
+      <span class="legend-label">OceanCare</span>
+    </div>
     <div class="legend-separator"></div>
     <div class="legend-item">
       <span class="legend-dash"></span>
