@@ -10,13 +10,18 @@
   $: t = i18n[lang] || i18n.en;
 
   // MapLibre stringifies nested objects — parse them back
-  $: focusAreas  = (() => { try { return JSON.parse(entity?.focusArea || '[]'); } catch { return []; } })();
-  $: region      = (() => { try { return JSON.parse(entity?.primaryOceanRegion || 'null'); } catch { return null; } })();
-  $: funding     = (() => { try { return JSON.parse(entity?.fundingSource || 'null'); } catch { return null; } })();
-  $: access      = (() => { try { return JSON.parse(entity?.accessType || 'null'); } catch { return null; } })();
-  $: activities  = (() => { try { return JSON.parse(entity?.activities || '[]'); } catch { return []; } })();
-  $: projects    = (() => { try { return JSON.parse(entity?.projects || '[]'); } catch { return []; } })();
-  $: species     = (() => { try { return JSON.parse(entity?.species || '[]'); } catch { return []; } })();
+  function safeParseJson<T>(raw: string | undefined, fallback: T): T {
+    if (!raw) return fallback;
+    try { return JSON.parse(raw) as T; } catch { return fallback; }
+  }
+
+  $: focusAreas = safeParseJson(entity?.focusArea, [] as any[]);
+  $: region     = safeParseJson(entity?.primaryOceanRegion, null);
+  $: funding    = safeParseJson(entity?.fundingSource, null);
+  $: access     = safeParseJson(entity?.accessType, null);
+  $: activities = safeParseJson(entity?.activities, [] as any[]);
+  $: projects   = safeParseJson(entity?.projects, [] as any[]);
+  $: species    = safeParseJson(entity?.species, [] as string[]);
 </script>
 
 <aside class="entity-sidebar">

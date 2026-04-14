@@ -12,12 +12,12 @@ from app.sparql_builder import (
     to_prefixed,
     _sparql_preamble,
 )
-from app.namespaces import OCORG
+from app.namespaces import COMPASS
 
 
 class TestToPrefixed:
     def test_known_namespace(self):
-        assert to_prefixed(str(OCORG.country)) == "ocorg:country"
+        assert to_prefixed(str(COMPASS.country)) == "compass:country"
 
     def test_unknown_namespace(self):
         assert to_prefixed("http://unknown.org/foo") == "<http://unknown.org/foo>"
@@ -25,19 +25,19 @@ class TestToPrefixed:
 
 class TestBuildOptional:
     def test_lang_literal(self):
-        spec = {"id": "country", "path_iri": str(OCORG.country), "category": "lang_literal"}
+        spec = {"id": "country", "path_iri": str(COMPASS.country), "category": "lang_literal"}
         result = build_optional(spec, "en")
         assert 'FILTER(lang(?country) = "en")' in result
         assert "OPTIONAL" in result
 
     def test_iri_with_label(self):
-        spec = {"id": "focusArea", "path_iri": str(OCORG.focusArea), "category": "iri_with_label"}
+        spec = {"id": "focusArea", "path_iri": str(COMPASS.focusArea), "category": "iri_with_label"}
         result = build_optional(spec, "en")
         assert "skos:prefLabel" in result
         assert "rdfs:label" in result
 
     def test_boolean(self):
-        spec = {"id": "offersTrips", "path_iri": str(OCORG.offersResearchTrips), "category": "boolean"}
+        spec = {"id": "offersTrips", "path_iri": str(COMPASS.offersResearchTrips), "category": "boolean"}
         result = build_optional(spec, "en")
         assert "OPTIONAL" in result
         assert "FILTER" not in result
@@ -71,16 +71,16 @@ class TestSparqlPreamble:
 
     def test_preamble_contains_organization_subclass_query(self):
         preamble = _sparql_preamble("en")
-        assert "rdfs:subClassOf* ocorg:Organization" in preamble
+        assert "rdfs:subClassOf* compass:Organization" in preamble
 
     def test_preamble_contains_network(self):
-        assert "ocorg:Network" in _sparql_preamble("en")
+        assert "compass:Network" in _sparql_preamble("en")
 
     def test_preamble_contains_forum(self):
-        assert "ocorg:InternationalForum" in _sparql_preamble("en")
+        assert "compass:InternationalForum" in _sparql_preamble("en")
 
     def test_preamble_contains_project(self):
-        assert "ocorg:Project" in _sparql_preamble("en")
+        assert "compass:Project" in _sparql_preamble("en")
 
     def test_preamble_geo_bindings(self):
         preamble = _sparql_preamble("en")
@@ -89,8 +89,8 @@ class TestSparqlPreamble:
 
     def test_preamble_name_bindings(self):
         preamble = _sparql_preamble("en")
-        assert "ocorg:organizationName" in preamble
-        assert "ocorg:projectName" in preamble
+        assert "compass:organizationName" in preamble
+        assert "compass:projectName" in preamble
 
 
 class TestBuildEntitiesQueryExecutes:
@@ -106,10 +106,10 @@ class TestBuildEntitiesQueryExecutes:
         # Count entities that have coordinates via a simple query
         count_q = """
             PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
-            PREFIX ocorg: <http://example.org/ocean-org/ontology#>
+            PREFIX compass: <http://example.org/ocean-org/ontology#>
             SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
                 ?s geo:lat ?lat ; geo:long ?long .
-                { ?s ocorg:organizationName ?n } UNION { ?s ocorg:projectName ?n }
+                { ?s compass:organizationName ?n } UNION { ?s compass:projectName ?n }
             }
         """
         count_result = store.query(count_q)
@@ -130,7 +130,7 @@ class TestBuildEntitiesQueryExecutes:
         filtered = store.query(
             build_entities_query(
                 property_specs, "en",
-                QueryParams(f"entityType={OCORG.ResearchInstitute}")
+                QueryParams(f"entityType={COMPASS.ResearchInstitute}")
             )
         )
         assert len(filtered) > 0, "entityType filter returned no results"

@@ -4,7 +4,7 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix geo:  <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix ocorg: <http://example.org/ocean-org/ontology#> .
+@prefix compass: <http://example.org/ocean-org/ontology#> .
 @prefix schema: <https://schema.org/> .
 
 # ============================================================
@@ -15,59 +15,59 @@
 # Classes (plain RDFS — SHACL doesn't replace class declarations)
 # ============================================================
 
-ocorg:Organization a rdfs:Class ;
+compass:Organization a rdfs:Class ;
     rdfs:label "Organization"@en ;
     rdfs:label "Organisation"@de ;
     rdfs:comment "An oceanographic or marine science organization."@en ;
     rdfs:comment "Eine ozeanographische oder meereswissenschaftliche Organisation."@de .
 
-ocorg:ResearchInstitute a rdfs:Class ;
-    rdfs:subClassOf ocorg:Organization ;
+compass:ResearchInstitute a rdfs:Class ;
+    rdfs:subClassOf compass:Organization ;
     rdfs:label "Research Institute"@en ;
     rdfs:label "Forschungsinstitut"@de ;
     rdfs:comment "A dedicated research institute focused on ocean science."@en ;
     rdfs:comment "Ein spezialisiertes Forschungsinstitut mit Schwerpunkt Meeresforschung."@de .
 
-ocorg:University a rdfs:Class ;
-    rdfs:subClassOf ocorg:Organization ;
+compass:University a rdfs:Class ;
+    rdfs:subClassOf compass:Organization ;
     rdfs:label "University"@en ;
     rdfs:label "Universität"@de ;
     rdfs:comment "A university with an oceanographic department or program."@en ;
     rdfs:comment "Eine Universität mit einem ozeanographischen Fachbereich oder Programm."@de .
 
-ocorg:GovernmentAgency a rdfs:Class ;
-    rdfs:subClassOf ocorg:Organization ;
+compass:GovernmentAgency a rdfs:Class ;
+    rdfs:subClassOf compass:Organization ;
     rdfs:label "Government Agency"@en ;
     rdfs:label "Regierungsbehörde"@de ;
     rdfs:comment "A government body involved in ocean research or management."@en ;
     rdfs:comment "Eine staatliche Stelle, die in der Meeresforschung oder -verwaltung tätig ist."@de .
 
-ocorg:NGO a rdfs:Class ;
-    rdfs:subClassOf ocorg:Organization ;
+compass:NGO a rdfs:Class ;
+    rdfs:subClassOf compass:Organization ;
     rdfs:label "NGO"@en ;
     rdfs:label "NGO"@de ;
     rdfs:comment "A non-governmental organization working in marine science or conservation."@en ;
     rdfs:comment "Eine Nichtregierungsorganisation, die in der Meereswissenschaft oder im Naturschutz tätig ist."@de .
 
-ocorg:FocusArea a rdfs:Class ;
+compass:FocusArea a rdfs:Class ;
     rdfs:label "Focus Area"@en ;
     rdfs:label "Schwerpunktbereich"@de ;
     rdfs:comment "A thematic research or activity focus area."@en ;
     rdfs:comment "Ein thematischer Forschungs- oder Tätigkeitsschwerpunkt."@de .
 
-ocorg:Project a rdfs:Class ;
+compass:Project a rdfs:Class ;
     rdfs:label "Project"@en ;
     rdfs:label "Projekt"@de ;
     rdfs:comment "A research project conducted by an organization."@en ;
     rdfs:comment "Ein Forschungsprojekt, das von einer Organisation durchgeführt wird."@de .
 
-ocorg:Network a rdfs:Class ;
+compass:Network a rdfs:Class ;
     rdfs:label "Network"@en ;
     rdfs:label "Netzwerk"@de ;
     rdfs:comment "A collaborative ocean research or monitoring network spanning multiple organizations."@en ;
     rdfs:comment "Ein kollaboratives Netzwerk für Meeresforschung oder -überwachung über mehrere Organisationen hinweg."@de .
 
-ocorg:InternationalForum a rdfs:Class ;
+compass:InternationalForum a rdfs:Class ;
     rdfs:label "International Forum"@en ;
     rdfs:label "Internationales Forum"@de ;
     rdfs:comment "An international policy, governance, or coordination forum for ocean affairs."@en ;
@@ -80,8 +80,8 @@ ocorg:InternationalForum a rdfs:Class ;
 # without duplicating constraint definitions.
 # ============================================================
 
-ocorg:NamePropertyShape a sh:PropertyShape ;
-    sh:path ocorg:organizationName ;
+compass:NamePropertyShape a sh:PropertyShape ;
+    sh:path compass:organizationName ;
     sh:name "name"@en ;
     sh:name "Name"@de ;
     sh:description "The display name of the entity."@en ;
@@ -90,7 +90,7 @@ ocorg:NamePropertyShape a sh:PropertyShape ;
     sh:minCount 1 ;
     sh:maxCount 1 .
 
-ocorg:GeoLatPropertyShape a sh:PropertyShape ;
+compass:GeoLatPropertyShape a sh:PropertyShape ;
     sh:path geo:lat ;
     sh:name "latitude"@en ;
     sh:name "Breitengrad"@de ;
@@ -103,7 +103,7 @@ ocorg:GeoLatPropertyShape a sh:PropertyShape ;
     sh:maxInclusive 90.0 ;
     sh:severity sh:Violation .
 
-ocorg:GeoLongPropertyShape a sh:PropertyShape ;
+compass:GeoLongPropertyShape a sh:PropertyShape ;
     sh:path geo:long ;
     sh:name "longitude"@en ;
     sh:name "Längengrad"@de ;
@@ -116,8 +116,8 @@ ocorg:GeoLongPropertyShape a sh:PropertyShape ;
     sh:maxInclusive 180.0 ;
     sh:severity sh:Violation .
 
-ocorg:CountryPropertyShape a sh:PropertyShape ;
-    sh:path ocorg:country ;
+compass:CountryPropertyShape a sh:PropertyShape ;
+    sh:path compass:country ;
     sh:name "country"@en ;
     sh:name "Land"@de ;
     sh:description "The country where the entity is primarily based."@en ;
@@ -125,7 +125,7 @@ ocorg:CountryPropertyShape a sh:PropertyShape ;
     sh:datatype xsd:string ;
     sh:maxCount 1 .
 
-ocorg:WebsitePropertyShape a sh:PropertyShape ;
+compass:WebsitePropertyShape a sh:PropertyShape ;
     sh:path schema:url ;
     sh:name "website URL"@en ;
     sh:name "Website-URL"@de ;
@@ -135,8 +135,8 @@ ocorg:WebsitePropertyShape a sh:PropertyShape ;
     sh:maxCount 1 ;
     sh:severity sh:Warning .
 
-ocorg:KeySentencePropertyShape a sh:PropertyShape ;
-    sh:path ocorg:keySentence ;
+compass:KeySentencePropertyShape a sh:PropertyShape ;
+    sh:path compass:keySentence ;
     sh:name "key sentence"@en ;
     sh:name "Kernsatz"@de ;
     sh:description "A single sentence summarizing the entity."@en ;
@@ -144,37 +144,37 @@ ocorg:KeySentencePropertyShape a sh:PropertyShape ;
     sh:datatype xsd:string ;
     sh:maxCount 1 .
 
-ocorg:FocusAreaPropertyShape a sh:PropertyShape ;
-    sh:path ocorg:focusArea ;
+compass:FocusAreaPropertyShape a sh:PropertyShape ;
+    sh:path compass:focusArea ;
     sh:name "focus area"@en ;
     sh:name "Schwerpunktbereich"@de ;
     sh:description "Links to one or more research or activity focus areas."@en ;
     sh:description "Verknüpft mit einem oder mehreren Forschungs- oder Aktivitätsschwerpunkten."@de ;
-    sh:class ocorg:FocusArea ;
+    sh:class compass:FocusArea ;
     sh:nodeKind sh:IRI .
 
-ocorg:OceanRegionPropertyShape a sh:PropertyShape ;
-    sh:path ocorg:primaryOceanRegion ;
+compass:OceanRegionPropertyShape a sh:PropertyShape ;
+    sh:path compass:primaryOceanRegion ;
     sh:name "primary ocean region"@en ;
     sh:name "primäre Meeresregion"@de ;
     sh:description "The primary ocean basin or region the entity focuses on."@en ;
     sh:description "Das primäre Meeresbecken oder die Region, auf die sich die Entität konzentriert."@de ;
     sh:nodeKind sh:IRI ;
-    sh:in ( ocorg:Region_Atlantic ocorg:Region_Pacific ocorg:Region_Indian ocorg:Region_Arctic ocorg:Region_Southern ocorg:Region_Global ) ;
+    sh:in ( compass:Region_Atlantic compass:Region_Pacific compass:Region_Indian compass:Region_Arctic compass:Region_Southern compass:Region_Global ) ;
     sh:maxCount 1 .
 
-ocorg:FundingSourcePropertyShape a sh:PropertyShape ;
-    sh:path ocorg:fundingSource ;
+compass:FundingSourcePropertyShape a sh:PropertyShape ;
+    sh:path compass:fundingSource ;
     sh:name "funding source"@en ;
     sh:name "Finanzierungsquelle"@de ;
     sh:description "Primary source of funding."@en ;
     sh:description "Hauptquelle der Finanzierung."@de ;
     sh:nodeKind sh:IRI ;
-    sh:in ( ocorg:Funding_Public ocorg:Funding_Private ocorg:Funding_Mixed ocorg:Funding_International ) ;
+    sh:in ( compass:Funding_Public compass:Funding_Private compass:Funding_Mixed compass:Funding_International ) ;
     sh:maxCount 1 .
 
-ocorg:MostRecentUpdatePropertyShape a sh:PropertyShape ;
-    sh:path ocorg:mostRecentUpdate ;
+compass:MostRecentUpdatePropertyShape a sh:PropertyShape ;
+    sh:path compass:mostRecentUpdate ;
     sh:name "most recent update"@en ;
     sh:name "letzte Aktualisierung"@de ;
     sh:description "Date of the most recent information update."@en ;
@@ -182,15 +182,15 @@ ocorg:MostRecentUpdatePropertyShape a sh:PropertyShape ;
     sh:datatype xsd:date ;
     sh:maxCount 1 .
 
-ocorg:ActivitiesPropertyShape a sh:PropertyShape ;
-    sh:path ocorg:activities ;
+compass:ActivitiesPropertyShape a sh:PropertyShape ;
+    sh:path compass:activities ;
     sh:name "activities"@en ;
     sh:name "Aktivitäten"@de ;
     sh:description "Key activities, initiatives, or research efforts."@en ;
     sh:description "Wesentliche Aktivitäten, Initiativen oder Forschungsbemühungen."@de ;
     sh:datatype xsd:string .
 
-ocorg:FoundedYearPropertyShape a sh:PropertyShape ;
+compass:FoundedYearPropertyShape a sh:PropertyShape ;
     sh:path schema:foundingDate ;
     sh:name "founded year"@en ;
     sh:name "Gründungsjahr"@de ;
@@ -203,8 +203,8 @@ ocorg:FoundedYearPropertyShape a sh:PropertyShape ;
 # SHACL Node Shape: OrganizationShape
 # ============================================================
 
-ocorg:OrganizationShape a sh:NodeShape ;
-    sh:targetClass ocorg:Organization ;
+compass:OrganizationShape a sh:NodeShape ;
+    sh:targetClass compass:Organization ;
     rdfs:label "Organization Shape"@en ;
     rdfs:label "Organisations-Form"@de ;
     rdfs:comment "Validates the expected structure of an oceanographic organization."@en ;
@@ -212,7 +212,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- organizationName (required, exactly 1, string) ---
     sh:property [
-        sh:path ocorg:organizationName ;
+        sh:path compass:organizationName ;
         sh:name "organization name"@en ;
         sh:name "Organisationsname"@de ;
         sh:description "The display name of the organization."@en ;
@@ -224,7 +224,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- country (required, exactly 1, string) ---
     sh:property [
-        sh:path ocorg:country ;
+        sh:path compass:country ;
         sh:name "country"@en ;
         sh:name "Land"@de ;
         sh:description "The country where the organization is located."@en ;
@@ -247,7 +247,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- staffSize (optional, at most 1, integer, ≥ 1) ---
     sh:property [
-        sh:path ocorg:staffSize ;
+        sh:path compass:staffSize ;
         sh:name "staff size"@en ;
         sh:name "Personalstärke"@de ;
         sh:description "Approximate number of staff or researchers."@en ;
@@ -271,12 +271,12 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- hasFocusArea (at least 1, must be a FocusArea instance) ---
     sh:property [
-        sh:path ocorg:focusArea ;
+        sh:path compass:focusArea ;
         sh:name "focus area"@en ;
         sh:name "Schwerpunktbereich"@de ;
         sh:description "Links an organization to one or more research focus areas."@en ;
         sh:description "Verknüpft eine Organisation mit einem oder mehreren Forschungsschwerpunkten."@de ;
-        sh:class ocorg:FocusArea ;
+        sh:class compass:FocusArea ;
         sh:minCount 1 ;
         sh:nodeKind sh:IRI ;
     ] ;
@@ -313,7 +313,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- annualBudgetUSD (optional, integer, millions USD) ---
     sh:property [
-        sh:path ocorg:annualBudgetUSD ;
+        sh:path compass:annualBudgetUSD ;
         sh:name "annual budget (USD millions)"@en ;
         sh:name "jährliches Budget (USD Millionen)"@de ;
         sh:description "Approximate annual research budget in millions of US dollars."@en ;
@@ -325,7 +325,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- publicationsPerYear (optional, integer) ---
     sh:property [
-        sh:path ocorg:publicationsPerYear ;
+        sh:path compass:publicationsPerYear ;
         sh:name "publications per year"@en ;
         sh:name "Publikationen pro Jahr"@de ;
         sh:description "Approximate number of peer-reviewed publications per year."@en ;
@@ -337,7 +337,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- researchVessels (optional, integer) ---
     sh:property [
-        sh:path ocorg:researchVessels ;
+        sh:path compass:researchVessels ;
         sh:name "research vessels"@en ;
         sh:name "Forschungsschiffe"@de ;
         sh:description "Number of research vessels operated."@en ;
@@ -349,43 +349,43 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- accessType (optional, controlled vocab IRI) ---
     sh:property [
-        sh:path ocorg:accessType ;
+        sh:path compass:accessType ;
         sh:name "access type"@en ;
         sh:name "Zugangstyp"@de ;
         sh:description "How external researchers can access this organization's facilities or data."@en ;
         sh:description "Wie externe Forscher auf die Einrichtungen oder Daten dieser Organisation zugreifen können."@de ;
         sh:nodeKind sh:IRI ;
-        sh:in ( ocorg:Access_Open ocorg:Access_Restricted ocorg:Access_ByPartnership ) ;
+        sh:in ( compass:Access_Open compass:Access_Restricted compass:Access_ByPartnership ) ;
         sh:maxCount 1 ;
     ] ;
 
     # --- fundingSource (optional, controlled vocab IRI) ---
     sh:property [
-        sh:path ocorg:fundingSource ;
+        sh:path compass:fundingSource ;
         sh:name "funding source"@en ;
         sh:name "Finanzierungsquelle"@de ;
         sh:description "Primary source of organizational funding."@en ;
         sh:description "Hauptquelle der Organisationsfinanzierung."@de ;
         sh:nodeKind sh:IRI ;
-        sh:in ( ocorg:Funding_Public ocorg:Funding_Private ocorg:Funding_Mixed ocorg:Funding_International ) ;
+        sh:in ( compass:Funding_Public compass:Funding_Private compass:Funding_Mixed compass:Funding_International ) ;
         sh:maxCount 1 ;
     ] ;
 
     # --- primaryOceanRegion (optional, controlled vocab IRI) ---
     sh:property [
-        sh:path ocorg:primaryOceanRegion ;
+        sh:path compass:primaryOceanRegion ;
         sh:name "primary ocean region"@en ;
         sh:name "primäre Meeresregion"@de ;
         sh:description "The primary ocean basin or region the organization focuses on."@en ;
         sh:description "Das primäre Meeresbecken oder die Region, auf die sich die Organisation konzentriert."@de ;
         sh:nodeKind sh:IRI ;
-        sh:in ( ocorg:Region_Atlantic ocorg:Region_Pacific ocorg:Region_Indian ocorg:Region_Arctic ocorg:Region_Southern ocorg:Region_Global ) ;
+        sh:in ( compass:Region_Atlantic compass:Region_Pacific compass:Region_Indian compass:Region_Arctic compass:Region_Southern compass:Region_Global ) ;
         sh:maxCount 1 ;
     ] ;
 
     # --- keySentence (optional, at most 1, string) ---
     sh:property [
-        sh:path ocorg:keySentence ;
+        sh:path compass:keySentence ;
         sh:name "key sentence"@en ;
         sh:name "Kernsatz"@de ;
         sh:description "A single sentence summarizing the organization."@en ;
@@ -396,7 +396,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- activities (optional, multi-value, string) ---
     sh:property [
-        sh:path ocorg:activities ;
+        sh:path compass:activities ;
         sh:name "activities"@en ;
         sh:name "Aktivitäten"@de ;
         sh:description "Key activities or research efforts the organization undertakes."@en ;
@@ -406,7 +406,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- mostRecentUpdate (optional, at most 1, date) ---
     sh:property [
-        sh:path ocorg:mostRecentUpdate ;
+        sh:path compass:mostRecentUpdate ;
         sh:name "most recent update"@en ;
         sh:name "letzte Aktualisierung"@de ;
         sh:description "Date of the most recent information update for this organization."@en ;
@@ -417,7 +417,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- donationUrl (optional, at most 1, anyURI) ---
     sh:property [
-        sh:path ocorg:donationUrl ;
+        sh:path compass:donationUrl ;
         sh:name "donation URL"@en ;
         sh:name "Spenden-URL"@de ;
         sh:description "URL where donations can be made to support the organization."@en ;
@@ -428,7 +428,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- offersResearchTrips (optional, at most 1, boolean) ---
     sh:property [
-        sh:path ocorg:offersResearchTrips ;
+        sh:path compass:offersResearchTrips ;
         sh:name "offers research trips"@en ;
         sh:name "bietet Forschungsreisen an"@de ;
         sh:description "Whether the organization offers research trips to the public or students."@en ;
@@ -439,12 +439,12 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- hasProject (optional, links to Project instances) ---
     sh:property [
-        sh:path ocorg:hasProject ;
+        sh:path compass:hasProject ;
         sh:name "has project"@en ;
         sh:name "hat Projekt"@de ;
         sh:description "Links to research projects run by this organization."@en ;
         sh:description "Verknüpfung mit Forschungsprojekten dieser Organisation."@de ;
-        sh:class ocorg:Project ;
+        sh:class compass:Project ;
         sh:nodeKind sh:IRI ;
     ] .
 
@@ -455,59 +455,59 @@ ocorg:OrganizationShape a sh:NodeShape ;
 # tools (e.g. SHACL Play) that follow sh:targetClass hierarchies.
 # ============================================================
 
-ocorg:ResearchInstituteShape a sh:NodeShape ;
-    sh:targetClass ocorg:ResearchInstitute ;
+compass:ResearchInstituteShape a sh:NodeShape ;
+    sh:targetClass compass:ResearchInstitute ;
     rdfs:label "Research Institute Shape"@en ;
     rdfs:label "Forschungsinstitut-Form"@de ;
-    sh:node ocorg:OrganizationShape .
+    sh:node compass:OrganizationShape .
 
-ocorg:UniversityShape a sh:NodeShape ;
-    sh:targetClass ocorg:University ;
+compass:UniversityShape a sh:NodeShape ;
+    sh:targetClass compass:University ;
     rdfs:label "University Shape"@en ;
     rdfs:label "Universitäts-Form"@de ;
-    sh:node ocorg:OrganizationShape .
+    sh:node compass:OrganizationShape .
 
-ocorg:GovernmentAgencyShape a sh:NodeShape ;
-    sh:targetClass ocorg:GovernmentAgency ;
+compass:GovernmentAgencyShape a sh:NodeShape ;
+    sh:targetClass compass:GovernmentAgency ;
     rdfs:label "Government Agency Shape"@en ;
     rdfs:label "Regierungsbehörden-Form"@de ;
-    sh:node ocorg:OrganizationShape .
+    sh:node compass:OrganizationShape .
 
-ocorg:NGOShape a sh:NodeShape ;
-    sh:targetClass ocorg:NGO ;
+compass:NGOShape a sh:NodeShape ;
+    sh:targetClass compass:NGO ;
     rdfs:label "NGO Shape"@en ;
     rdfs:label "NGO-Form"@de ;
-    sh:node ocorg:OrganizationShape .
+    sh:node compass:OrganizationShape .
 
 # ============================================================
 # SHACL Node Shape: NetworkShape
 # Reuses shared property shapes; adds network-specific constraints.
 # ============================================================
 
-ocorg:NetworkShape a sh:NodeShape ;
-    sh:targetClass ocorg:Network ;
+compass:NetworkShape a sh:NodeShape ;
+    sh:targetClass compass:Network ;
     rdfs:label "Network Shape"@en ;
     rdfs:label "Netzwerk-Form"@de ;
     rdfs:comment "Validates the expected structure of a collaborative ocean research or monitoring network."@en ;
     rdfs:comment "Validiert die erwartete Struktur eines kollaborativen Meeresforschungs- oder Überwachungsnetzwerks."@de ;
 
     # Shared property shapes (reused with OrganizationShape and InternationalForumShape)
-    sh:property ocorg:NamePropertyShape ;
-    sh:property ocorg:GeoLatPropertyShape ;
-    sh:property ocorg:GeoLongPropertyShape ;
-    sh:property ocorg:CountryPropertyShape ;
-    sh:property ocorg:WebsitePropertyShape ;
-    sh:property ocorg:KeySentencePropertyShape ;
-    sh:property ocorg:FocusAreaPropertyShape ;
-    sh:property ocorg:OceanRegionPropertyShape ;
-    sh:property ocorg:FundingSourcePropertyShape ;
-    sh:property ocorg:MostRecentUpdatePropertyShape ;
-    sh:property ocorg:ActivitiesPropertyShape ;
-    sh:property ocorg:FoundedYearPropertyShape ;
+    sh:property compass:NamePropertyShape ;
+    sh:property compass:GeoLatPropertyShape ;
+    sh:property compass:GeoLongPropertyShape ;
+    sh:property compass:CountryPropertyShape ;
+    sh:property compass:WebsitePropertyShape ;
+    sh:property compass:KeySentencePropertyShape ;
+    sh:property compass:FocusAreaPropertyShape ;
+    sh:property compass:OceanRegionPropertyShape ;
+    sh:property compass:FundingSourcePropertyShape ;
+    sh:property compass:MostRecentUpdatePropertyShape ;
+    sh:property compass:ActivitiesPropertyShape ;
+    sh:property compass:FoundedYearPropertyShape ;
 
     # --- memberCount (optional, integer, ≥ 1) ---
     sh:property [
-        sh:path ocorg:memberCount ;
+        sh:path compass:memberCount ;
         sh:name "member count"@en ;
         sh:name "Mitgliederanzahl"@de ;
         sh:description "Number of member organizations or institutions in the network."@en ;
@@ -519,12 +519,12 @@ ocorg:NetworkShape a sh:NodeShape ;
 
     # --- hasLeadOrganization (optional, link to an Organization IRI) ---
     sh:property [
-        sh:path ocorg:hasLeadOrganization ;
+        sh:path compass:hasLeadOrganization ;
         sh:name "lead organization"@en ;
         sh:name "Leitorganisation"@de ;
         sh:description "The organization leading or hosting the network secretariat."@en ;
         sh:description "Die Organisation, die das Netzwerksekretariat leitet oder beherbergt."@de ;
-        sh:class ocorg:Organization ;
+        sh:class compass:Organization ;
         sh:nodeKind sh:IRI ;
         sh:maxCount 1 ;
     ] .
@@ -534,30 +534,30 @@ ocorg:NetworkShape a sh:NodeShape ;
 # Reuses shared property shapes; adds forum-specific constraints.
 # ============================================================
 
-ocorg:InternationalForumShape a sh:NodeShape ;
-    sh:targetClass ocorg:InternationalForum ;
+compass:InternationalForumShape a sh:NodeShape ;
+    sh:targetClass compass:InternationalForum ;
     rdfs:label "International Forum Shape"@en ;
     rdfs:label "Internationales Forum-Form"@de ;
     rdfs:comment "Validates the expected structure of an international ocean governance forum."@en ;
     rdfs:comment "Validiert die erwartete Struktur eines internationalen Meeresgovernance-Forums."@de ;
 
     # Shared property shapes (reused with OrganizationShape and NetworkShape)
-    sh:property ocorg:NamePropertyShape ;
-    sh:property ocorg:GeoLatPropertyShape ;
-    sh:property ocorg:GeoLongPropertyShape ;
-    sh:property ocorg:CountryPropertyShape ;
-    sh:property ocorg:WebsitePropertyShape ;
-    sh:property ocorg:KeySentencePropertyShape ;
-    sh:property ocorg:FocusAreaPropertyShape ;
-    sh:property ocorg:OceanRegionPropertyShape ;
-    sh:property ocorg:FundingSourcePropertyShape ;
-    sh:property ocorg:MostRecentUpdatePropertyShape ;
-    sh:property ocorg:ActivitiesPropertyShape ;
-    sh:property ocorg:FoundedYearPropertyShape ;
+    sh:property compass:NamePropertyShape ;
+    sh:property compass:GeoLatPropertyShape ;
+    sh:property compass:GeoLongPropertyShape ;
+    sh:property compass:CountryPropertyShape ;
+    sh:property compass:WebsitePropertyShape ;
+    sh:property compass:KeySentencePropertyShape ;
+    sh:property compass:FocusAreaPropertyShape ;
+    sh:property compass:OceanRegionPropertyShape ;
+    sh:property compass:FundingSourcePropertyShape ;
+    sh:property compass:MostRecentUpdatePropertyShape ;
+    sh:property compass:ActivitiesPropertyShape ;
+    sh:property compass:FoundedYearPropertyShape ;
 
     # --- memberStates (optional, integer) ---
     sh:property [
-        sh:path ocorg:memberStates ;
+        sh:path compass:memberStates ;
         sh:name "member states"@en ;
         sh:name "Mitgliedstaaten"@de ;
         sh:description "Number of member nation-states participating in the forum."@en ;
@@ -569,7 +569,7 @@ ocorg:InternationalForumShape a sh:NodeShape ;
 
     # --- mandate (optional, at most 1, string) ---
     sh:property [
-        sh:path ocorg:mandate ;
+        sh:path compass:mandate ;
         sh:name "mandate"@en ;
         sh:name "Mandat"@de ;
         sh:description "The official mandate or mission statement of the forum."@en ;
@@ -580,7 +580,7 @@ ocorg:InternationalForumShape a sh:NodeShape ;
 
     # --- hostCountry (optional, at most 1, string) ---
     sh:property [
-        sh:path ocorg:hostCountry ;
+        sh:path compass:hostCountry ;
         sh:name "host country"@en ;
         sh:name "Gastland"@de ;
         sh:description "The country hosting the forum's secretariat."@en ;
@@ -593,8 +593,8 @@ ocorg:InternationalForumShape a sh:NodeShape ;
 # SHACL Node Shape: FocusAreaShape
 # ============================================================
 
-ocorg:FocusAreaShape a sh:NodeShape ;
-    sh:targetClass ocorg:FocusArea ;
+compass:FocusAreaShape a sh:NodeShape ;
+    sh:targetClass compass:FocusArea ;
     rdfs:label "Focus Area Shape"@en ;
     rdfs:label "Schwerpunktbereich-Form"@de ;
     rdfs:comment "Validates focus area instances."@en ;
@@ -621,49 +621,49 @@ ocorg:FocusAreaShape a sh:NodeShape ;
 # Focus Area Instances (controlled vocabulary)
 # ============================================================
 
-ocorg:MarineBiology a ocorg:FocusArea ;
+compass:MarineBiology a compass:FocusArea ;
     rdfs:label "Marine Biology"@en ;
     rdfs:label "Meeresbiologie"@de ;
     skos:prefLabel "Marine Biology"@en ;
     skos:prefLabel "Meeresbiologie"@de .
 
-ocorg:PhysicalOceanography a ocorg:FocusArea ;
+compass:PhysicalOceanography a compass:FocusArea ;
     rdfs:label "Physical Oceanography"@en ;
     rdfs:label "Physikalische Ozeanographie"@de ;
     skos:prefLabel "Physical Oceanography"@en ;
     skos:prefLabel "Physikalische Ozeanographie"@de .
 
-ocorg:ClimateScience a ocorg:FocusArea ;
+compass:ClimateScience a compass:FocusArea ;
     rdfs:label "Climate Science"@en ;
     rdfs:label "Klimawissenschaft"@de ;
     skos:prefLabel "Climate Science"@en ;
     skos:prefLabel "Klimawissenschaft"@de .
 
-ocorg:DeepSeaExploration a ocorg:FocusArea ;
+compass:DeepSeaExploration a compass:FocusArea ;
     rdfs:label "Deep-Sea Exploration"@en ;
     rdfs:label "Tiefsee-Exploration"@de ;
     skos:prefLabel "Deep-Sea Exploration"@en ;
     skos:prefLabel "Tiefsee-Exploration"@de .
 
-ocorg:CoastalManagement a ocorg:FocusArea ;
+compass:CoastalManagement a compass:FocusArea ;
     rdfs:label "Coastal Management"@en ;
     rdfs:label "Küstenmanagement"@de ;
     skos:prefLabel "Coastal Management"@en ;
     skos:prefLabel "Küstenmanagement"@de .
 
-ocorg:MarineGeology a ocorg:FocusArea ;
+compass:MarineGeology a compass:FocusArea ;
     rdfs:label "Marine Geology"@en ;
     rdfs:label "Meeresgeologie"@de ;
     skos:prefLabel "Marine Geology"@en ;
     skos:prefLabel "Meeresgeologie"@de .
 
-ocorg:FisheriesScience a ocorg:FocusArea ;
+compass:FisheriesScience a compass:FocusArea ;
     rdfs:label "Fisheries Science"@en ;
     rdfs:label "Fischereiwissenschaft"@de ;
     skos:prefLabel "Fisheries Science"@en ;
     skos:prefLabel "Fischereiwissenschaft"@de .
 
-ocorg:PolarResearch a ocorg:FocusArea ;
+compass:PolarResearch a compass:FocusArea ;
     rdfs:label "Polar Research"@en ;
     rdfs:label "Polarforschung"@de ;
     skos:prefLabel "Polar Research"@en ;
@@ -673,15 +673,15 @@ ocorg:PolarResearch a ocorg:FocusArea ;
 # SHACL Node Shape: ProjectShape
 # ============================================================
 
-ocorg:ProjectShape a sh:NodeShape ;
-    sh:targetClass ocorg:Project ;
+compass:ProjectShape a sh:NodeShape ;
+    sh:targetClass compass:Project ;
     rdfs:label "Project Shape"@en ;
     rdfs:label "Projekt-Form"@de ;
     rdfs:comment "Validates the expected structure of a research project."@en ;
     rdfs:comment "Validiert die erwartete Struktur eines Forschungsprojekts."@de ;
 
     sh:property [
-        sh:path ocorg:projectName ;
+        sh:path compass:projectName ;
         sh:name "project name"@en ;
         sh:name "Projektname"@de ;
         sh:description "The name of the research project."@en ;
@@ -692,7 +692,7 @@ ocorg:ProjectShape a sh:NodeShape ;
     ] ;
 
     sh:property [
-        sh:path ocorg:startDate ;
+        sh:path compass:startDate ;
         sh:name "start date"@en ;
         sh:name "Startdatum"@de ;
         sh:description "The start date of the project."@en ;
@@ -702,7 +702,7 @@ ocorg:ProjectShape a sh:NodeShape ;
     ] ;
 
     sh:property [
-        sh:path ocorg:endDate ;
+        sh:path compass:endDate ;
         sh:name "end date"@en ;
         sh:name "Enddatum"@de ;
         sh:description "The end date of the project."@en ;
@@ -712,7 +712,7 @@ ocorg:ProjectShape a sh:NodeShape ;
     ] ;
 
     sh:property [
-        sh:path ocorg:species ;
+        sh:path compass:species ;
         sh:name "species"@en ;
         sh:name "Arten"@de ;
         sh:description "Species studied in the project."@en ;
@@ -721,7 +721,7 @@ ocorg:ProjectShape a sh:NodeShape ;
     ] ;
 
     sh:property [
-        sh:path ocorg:imageUrl ;
+        sh:path compass:imageUrl ;
         sh:name "image URL"@en ;
         sh:name "Bild-URL"@de ;
         sh:description "URL of an image representing the project."@en ;
@@ -731,7 +731,7 @@ ocorg:ProjectShape a sh:NodeShape ;
     ] ;
 
     sh:property [
-        sh:path ocorg:projectUrl ;
+        sh:path compass:projectUrl ;
         sh:name "project URL"@en ;
         sh:name "Projekt-URL"@de ;
         sh:description "URL of the project's web page."@en ;

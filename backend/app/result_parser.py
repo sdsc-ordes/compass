@@ -12,9 +12,7 @@ from typing import Any, Dict, List
 
 from geojson import Feature, FeatureCollection, Point
 
-# Separators used by SPARQL GROUP_CONCAT expressions in the entities query
-ITEM_SEP = ";;"   # between multi-valued items
-FIELD_SEP = "|"   # between fields within a single item (e.g. project name|startDate|…)
+from .namespaces import ITEM_SEP, FIELD_SEP
 
 
 
@@ -94,7 +92,7 @@ def _parse_special_properties(res: dict) -> Dict[str, Any]:
         "startDate": res.get("selfStart", ""),
         "endDate": res.get("selfEnd", ""),
         "imageUrl": res.get("selfImage", ""),
-        "projectUrl": res.get("selfPUrl", ""),
+        "projectUrl": res.get("selfUrl", ""),
         "projectIris": [
             p.strip()
             for p in (res.get("linkedProjectIris") or "").split(ITEM_SEP)
@@ -137,7 +135,7 @@ def results_to_geojson(
 
             # Project entities may not have schema:url but do have projectUrl
             if not properties.get("url"):
-                properties["url"] = res.get("selfPUrl", "")
+                properties["url"] = res.get("selfUrl", "")
 
             properties["projects"] = _parse_projects(res.get("projectsRaw", "") or "")
             properties["species"] = _parse_species(res)

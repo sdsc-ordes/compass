@@ -76,6 +76,29 @@ class TestEntitiesEndpoint:
         assert len(data["features"]) > 0
 
 
+class TestStatesEndpoint:
+    def test_save_returns_id(self, client):
+        resp = client.post("/api/states/save", json={"zoom": 4, "center": [0, 20]})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "id" in data
+        assert isinstance(data["id"], str)
+        assert len(data["id"]) > 0
+
+    def test_round_trip(self, client):
+        payload = {"zoom": 7, "center": [10.0, 53.5], "filters": {"country": "Germany"}}
+        save_resp = client.post("/api/states/save", json=payload)
+        state_id = save_resp.json()["id"]
+
+        load_resp = client.get(f"/api/states/{state_id}")
+        assert load_resp.status_code == 200
+        assert load_resp.json() == payload
+
+    def test_unknown_id_returns_404(self, client):
+        resp = client.get("/api/states/doesnotexist")
+        assert resp.status_code == 404
+
+
 class TestEntityDetailEndpoint:
     def test_returns_detail(self, client):
         # First get an entity ID from the list

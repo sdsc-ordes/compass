@@ -24,14 +24,14 @@ queries = [
     
     # 4. The full join
     """
-    PREFIX ocorg: <http://example.org/ocean-org/ontology#>
+    PREFIX compass: <http://example.org/ocean-org/ontology#>
     PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
     SELECT ?s ?label ?lat ?long ?type WHERE {
         ?s a ?type .
-        ?type rdfs:subClassOf* ocorg:Organization .
-        ?s ocorg:organizationName ?label .
+        ?type rdfs:subClassOf* compass:Organization .
+        ?s compass:organizationName ?label .
         ?s geo:lat ?lat .
         ?s geo:long ?long .
     } LIMIT 5

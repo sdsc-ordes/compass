@@ -11,11 +11,11 @@ Helper functions are grouped by concern:
 """
 from typing import Any, Dict, List
 
-from .namespaces import PREFIX_MAP, SPARQL_PREFIXES
+from .namespaces import PREFIX_MAP, SPARQL_PREFIXES, ITEM_SEP, FIELD_SEP
 
 
 def to_prefixed(iri: str) -> str:
-    """Convert a full IRI to a SPARQL prefixed name (e.g. ocorg:country)."""
+    """Convert a full IRI to a SPARQL prefixed name (e.g. compass:country)."""
     for ns, prefix in PREFIX_MAP.items():
         if iri.startswith(ns):
             return prefix + iri[len(ns):]
@@ -53,15 +53,15 @@ def build_select_expr(spec: dict) -> str:
     if cat == "iri_with_label":
         if is_multi:
             return (
-                f'(GROUP_CONCAT(DISTINCT CONCAT(STR(?{sid}Node), "|", '
-                f'COALESCE(?{sid}Lab, "")); separator=";;") AS ?{sid}Raw)'
+                f'(GROUP_CONCAT(DISTINCT CONCAT(STR(?{sid}Node), "{FIELD_SEP}", '
+                f'COALESCE(?{sid}Lab, "")); separator="{ITEM_SEP}") AS ?{sid}Raw)'
             )
         return (
             f'(SAMPLE(?{sid}Node) AS ?{sid}Iri)\n'
             f'           (SAMPLE(?{sid}Lab) AS ?{sid}Label)'
         )
     if is_multi:
-        return f'(GROUP_CONCAT(DISTINCT ?{sid}; separator=";;") AS ?{sid}Raw)'
+        return f'(GROUP_CONCAT(DISTINCT ?{sid}; separator="{ITEM_SEP}") AS ?{sid}Raw)'
     return f'(SAMPLE(?{sid}) AS ?{sid}Result)'
 
 
@@ -74,22 +74,22 @@ def _sparql_preamble(lang: str) -> str:
     return f"""
         {{
             ?s a ?type .
-            ?type rdfs:subClassOf* ocorg:Organization .
+            ?type rdfs:subClassOf* compass:Organization .
         }} UNION {{
-            ?s a ocorg:Network .
-            BIND(ocorg:Network AS ?type)
+            ?s a compass:Network .
+            BIND(compass:Network AS ?type)
         }} UNION {{
-            ?s a ocorg:InternationalForum .
-            BIND(ocorg:InternationalForum AS ?type)
+            ?s a compass:InternationalForum .
+            BIND(compass:InternationalForum AS ?type)
         }} UNION {{
-            ?s a ocorg:Project .
-            BIND(ocorg:Project AS ?type)
+            ?s a compass:Project .
+            BIND(compass:Project AS ?type)
         }}
         ?s geo:lat ?lat .
         ?s geo:long ?long .
-        OPTIONAL {{ ?s ocorg:organizationName ?orgName . FILTER(lang(?orgName) = "{lang}") }}
-        OPTIONAL {{ ?s ocorg:projectName ?projNameVar . FILTER(lang(?projNameVar) = "{lang}") }}
-        BIND(COALESCE(?orgName, ?projNameVar) AS ?label)
+        OPTIONAL {{ ?s compass:organizationName ?orgName . FILTER(lang(?orgName) = "{lang}") }}
+        OPTIONAL {{ ?s compass:projectName ?selfProjName . FILTER(lang(?selfProjName) = "{lang}") }}
+        BIND(COALESCE(?orgName, ?selfProjName) AS ?label)
         FILTER(BOUND(?label))
         OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
 """
@@ -99,43 +99,43 @@ def _special_optionals(lang: str) -> str:
     """OPTIONAL clauses for nested/cross-shape properties (projects, network/forum fields)."""
     return f"""
         OPTIONAL {{
-            ?s ocorg:hasProject ?project .
-            ?project ocorg:projectName ?projName .
+            ?s compass:hasProject ?project .
+            ?project compass:projectName ?projName .
             FILTER(lang(?projName) = "{lang}")
-            OPTIONAL {{ ?project ocorg:startDate ?projStart . }}
-            OPTIONAL {{ ?project ocorg:endDate ?projEnd . }}
-            OPTIONAL {{ ?project ocorg:imageUrl ?projImage . }}
-            OPTIONAL {{ ?project ocorg:projectUrl ?projUrl . }}
-            OPTIONAL {{ ?project ocorg:species ?projSpecies . FILTER(lang(?projSpecies) = "en") }}
+            OPTIONAL {{ ?project compass:startDate ?projStart . }}
+            OPTIONAL {{ ?project compass:endDate ?projEnd . }}
+            OPTIONAL {{ ?project compass:imageUrl ?projImage . }}
+            OPTIONAL {{ ?project compass:projectUrl ?projUrl . }}
+            OPTIONAL {{ ?project compass:species ?projSpecies . FILTER(lang(?projSpecies) = "en") }}
         }}
-        OPTIONAL {{ ?s ocorg:memberCount ?memberCount . }}
-        OPTIONAL {{ ?s ocorg:memberStates ?memberStates . }}
-        OPTIONAL {{ ?s ocorg:mandate ?mandate . FILTER(lang(?mandate) = "{lang}") }}
-        OPTIONAL {{ ?s ocorg:startDate ?selfStartDate . }}
-        OPTIONAL {{ ?s ocorg:endDate ?selfEndDate . }}
-        OPTIONAL {{ ?s ocorg:imageUrl ?selfImageUrl . }}
-        OPTIONAL {{ ?s ocorg:projectUrl ?selfProjUrl . }}
-        OPTIONAL {{ ?s ocorg:species ?selfSpecies . }}
+        OPTIONAL {{ ?s compass:memberCount ?memberCount . }}
+        OPTIONAL {{ ?s compass:memberStates ?memberStates . }}
+        OPTIONAL {{ ?s compass:mandate ?mandate . FILTER(lang(?mandate) = "{lang}") }}
+        OPTIONAL {{ ?s compass:startDate ?selfStart . }}
+        OPTIONAL {{ ?s compass:endDate ?selfEnd . }}
+        OPTIONAL {{ ?s compass:imageUrl ?selfImage . }}
+        OPTIONAL {{ ?s compass:projectUrl ?selfUrl . }}
+        OPTIONAL {{ ?s compass:species ?selfSpecies . }}
 """
 
 
 def _special_selects() -> str:
     """SELECT expressions for nested/cross-shape variables (projects, species, network fields)."""
     return (
-        '           (GROUP_CONCAT(DISTINCT CONCAT(COALESCE(?projName, ""), "|",'
-        ' COALESCE(STR(?projStart), ""), "|", COALESCE(STR(?projEnd), ""), "|",'
-        ' COALESCE(STR(?projImage), ""), "|", COALESCE(STR(?projUrl), ""), "|",'
-        ' COALESCE(STR(?project), "")); separator=";;") AS ?projectsRaw)\n'
-        '           (GROUP_CONCAT(DISTINCT STR(?projSpecies); separator=";;") AS ?speciesRaw)\n'
-        '           (GROUP_CONCAT(DISTINCT STR(?project); separator=";;") AS ?linkedProjectIris)\n'
+        f'           (GROUP_CONCAT(DISTINCT CONCAT(COALESCE(?projName, ""), "{FIELD_SEP}",'
+        f' COALESCE(STR(?projStart), ""), "{FIELD_SEP}", COALESCE(STR(?projEnd), ""), "{FIELD_SEP}",'
+        f' COALESCE(STR(?projImage), ""), "{FIELD_SEP}", COALESCE(STR(?projUrl), ""), "{FIELD_SEP}",'
+        f' COALESCE(STR(?project), "")); separator="{ITEM_SEP}") AS ?projectsRaw)\n'
+        f'           (GROUP_CONCAT(DISTINCT STR(?projSpecies); separator="{ITEM_SEP}") AS ?speciesRaw)\n'
+        f'           (GROUP_CONCAT(DISTINCT STR(?project); separator="{ITEM_SEP}") AS ?linkedProjectIris)\n'
         '           (SAMPLE(?memberCount) AS ?memberCountResult)\n'
         '           (SAMPLE(?memberStates) AS ?memberStatesResult)\n'
         '           (SAMPLE(?mandate) AS ?mandateResult)\n'
-        '           (SAMPLE(?selfStartDate) AS ?selfStart)\n'
-        '           (SAMPLE(?selfEndDate) AS ?selfEnd)\n'
-        '           (SAMPLE(?selfImageUrl) AS ?selfImage)\n'
-        '           (SAMPLE(?selfProjUrl) AS ?selfPUrl)\n'
-        '           (GROUP_CONCAT(DISTINCT STR(?selfSpecies); separator=";;") AS ?selfSpeciesRaw)\n'
+        '           (SAMPLE(?selfStart) AS ?selfStart)\n'
+        '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
+        '           (SAMPLE(?selfImage) AS ?selfImage)\n'
+        '           (SAMPLE(?selfUrl) AS ?selfUrl)\n'
+        f'           (GROUP_CONCAT(DISTINCT STR(?selfSpecies); separator="{ITEM_SEP}") AS ?selfSpeciesRaw)\n'
     )
 
 
@@ -181,8 +181,8 @@ def _build_where_clauses(
             for v in values:
                 safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
                 parts.append(
-                    f'?s ocorg:hasProject ?speciesProj . '
-                    f'?speciesProj ocorg:species ?speciesVal . '
+                    f'?s compass:hasProject ?speciesProj . '
+                    f'?speciesProj compass:species ?speciesVal . '
                     f'FILTER(str(?speciesVal) = "{safe_v}")'
                 )
             if parts:

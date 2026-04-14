@@ -4,7 +4,7 @@ Validates that get_filters_schema() and get_property_specs() produce
 consistent, complete output from the real ontology shapes.
 """
 from app.schema import get_filters_schema, get_property_specs, _SKIP_PROPS, _DISPLAY_ONLY
-from app.namespaces import OCORG
+from app.namespaces import COMPASS
 
 
 class TestGetFiltersSchema:
@@ -20,7 +20,7 @@ class TestGetFiltersSchema:
     def test_species_filter_present(self, rdflib_graph):
         filters = get_filters_schema(rdflib_graph, "en")
         ids = {f["id"] for f in filters}
-        assert "species" in ids, "Species filter missing — check Project instances have ocorg:species"
+        assert "species" in ids, "Species filter missing — check Project instances have compass:species"
 
     def test_entity_type_filter_present(self, rdflib_graph):
         filters = get_filters_schema(rdflib_graph, "en")
@@ -32,9 +32,9 @@ class TestGetFiltersSchema:
         et_filter = next(f for f in filters if f["id"] == "entityType")
         type_iris = {opt["value"] for opt in et_filter["options"]}
         expected = {
-            str(OCORG.ResearchInstitute), str(OCORG.University),
-            str(OCORG.GovernmentAgency), str(OCORG.NGO),
-            str(OCORG.Network), str(OCORG.InternationalForum), str(OCORG.Project),
+            str(COMPASS.ResearchInstitute), str(COMPASS.University),
+            str(COMPASS.GovernmentAgency), str(COMPASS.NGO),
+            str(COMPASS.Network), str(COMPASS.InternationalForum), str(COMPASS.Project),
         }
         assert expected <= type_iris, (
             f"Missing entity types in filter: {expected - type_iris}"
@@ -75,7 +75,7 @@ class TestGetPropertySpecs:
         specs = get_property_specs(rdflib_graph)
         spec_iris = {s["path_iri"] for s in specs}
         from app.namespaces import GEO
-        for prop in [GEO.lat, GEO.long, OCORG.organizationName]:
+        for prop in [GEO.lat, GEO.long, COMPASS.organizationName]:
             assert str(prop) not in spec_iris, (
                 f"{prop} should be excluded from specs (handled in preamble)"
             )
@@ -83,7 +83,7 @@ class TestGetPropertySpecs:
     def test_no_nested_props_in_specs(self, rdflib_graph):
         specs = get_property_specs(rdflib_graph)
         spec_iris = {s["path_iri"] for s in specs}
-        assert str(OCORG.hasProject) not in spec_iris, (
+        assert str(COMPASS.hasProject) not in spec_iris, (
             "hasProject should be excluded (handled by _special_optionals)"
         )
 

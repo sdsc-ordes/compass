@@ -14,25 +14,25 @@ from rdflib import Graph, Literal, Namespace, RDF, RDFS, SH, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import SKOS, XSD
 
-from .namespaces import GEO, OCORG, SCHEMA
+from .namespaces import COMPASS, GEO, SCHEMA
 
 
 # Properties excluded from filters because they are handled in the SPARQL preamble
-_PREAMBLE_PROPS = {GEO.lat, GEO.long, OCORG.organizationName}
+_PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.organizationName}
 
 # Nested relationships that require special OPTIONAL handling in queries
-_NESTED_PROPS = {OCORG.hasProject}
+_NESTED_PROPS = {COMPASS.hasProject}
 
 # Fetched for display but not exposed as filter dimensions
 _DISPLAY_ONLY = {
-    SCHEMA.url, OCORG.keySentence, OCORG.activities,
-    OCORG.donationUrl, OCORG.offersResearchTrips,
+    SCHEMA.url, COMPASS.keySentence, COMPASS.activities,
+    COMPASS.donationUrl, COMPASS.offersResearchTrips,
 }
 
 # All properties excluded from the standard per-property loop
 _SKIP_PROPS = _PREAMBLE_PROPS | _NESTED_PROPS | {
-    SCHEMA.url, OCORG.keySentence, OCORG.activities,
-    OCORG.hasProject, OCORG.donationUrl, OCORG.offersResearchTrips,
+    SCHEMA.url, COMPASS.keySentence, COMPASS.activities,
+    COMPASS.hasProject, COMPASS.donationUrl, COMPASS.offersResearchTrips,
 }
 
 
@@ -61,7 +61,7 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
     """Build the filter UI schema by traversing the SHACL OrganizationShape."""
     filters: List[Dict[str, Any]] = []
 
-    for prop in g.objects(OCORG.OrganizationShape, SH.property):
+    for prop in g.objects(COMPASS.OrganizationShape, SH.property):
         path = g.value(prop, SH.path)
         if path in _SKIP_PROPS:
             continue
@@ -148,14 +148,14 @@ def _add_species_filter(g: Graph, filters: list, lang: str) -> None:
     """Append a species multiselect built from Project instances."""
     species_values = {
         str(obj)
-        for subj in g.subjects(RDF.type, OCORG.Project)
-        for obj in g.objects(subj, OCORG.species)
+        for subj in g.subjects(RDF.type, COMPASS.Project)
+        for obj in g.objects(subj, COMPASS.species)
         if isinstance(obj, Literal) and (obj.language == lang or obj.language is None)
     }
     if species_values:
         filters.append({
             "id": "species",
-            "path": str(OCORG.species),
+            "path": str(COMPASS.species),
             "label": "Species" if lang == "en" else "Arten",
             "type": "multiselect",
             "order": 0,
@@ -169,8 +169,8 @@ def _add_species_filter(g: Graph, filters: list, lang: str) -> None:
 def _add_entity_type_filter(g: Graph, filters: list, lang: str) -> None:
     """Append an entity-type multiselect for top-level OceanOrg classes."""
     type_classes = [
-        OCORG.ResearchInstitute, OCORG.University, OCORG.GovernmentAgency, OCORG.NGO,
-        OCORG.Network, OCORG.InternationalForum, OCORG.Project,
+        COMPASS.ResearchInstitute, COMPASS.University, COMPASS.GovernmentAgency, COMPASS.NGO,
+        COMPASS.Network, COMPASS.InternationalForum, COMPASS.Project,
     ]
     filters.append({
         "id": "entityType",
@@ -194,7 +194,7 @@ def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
     that needs a SPARQL OPTIONAL clause and a GeoJSON output field."""
     specs = []
 
-    for prop_node in g.objects(OCORG.OrganizationShape, SH.property):
+    for prop_node in g.objects(COMPASS.OrganizationShape, SH.property):
         path = g.value(prop_node, SH.path)
         if path is None or path in _PREAMBLE_PROPS or path in _NESTED_PROPS:
             continue

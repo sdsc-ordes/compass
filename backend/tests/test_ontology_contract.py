@@ -9,7 +9,7 @@ will break silently (empty results, missing fields, etc.).
 from rdflib import RDF, RDFS, Namespace, URIRef
 from rdflib.namespace import SKOS, XSD
 
-from app.namespaces import GEO, OCORG
+from app.namespaces import GEO, COMPASS
 
 
 # -- Top-level classes the SPARQL preamble UNION relies on --
@@ -18,10 +18,10 @@ class TestTopLevelClassesExist:
     """The UNION in _sparql_preamble() requires these classes to exist."""
 
     REQUIRED_CLASSES = [
-        OCORG.Organization,
-        OCORG.Network,
-        OCORG.InternationalForum,
-        OCORG.Project,
+        COMPASS.Organization,
+        COMPASS.Network,
+        COMPASS.InternationalForum,
+        COMPASS.Project,
     ]
 
     def test_classes_are_defined(self, rdflib_graph):
@@ -35,21 +35,21 @@ class TestTopLevelClassesExist:
 
 
 class TestOrganizationSubclassHierarchy:
-    """All Organization subtypes must be rdfs:subClassOf* ocorg:Organization
+    """All Organization subtypes must be rdfs:subClassOf* compass:Organization
     so the generic UNION branch matches them."""
 
     EXPECTED_SUBCLASSES = [
-        OCORG.ResearchInstitute,
-        OCORG.University,
-        OCORG.GovernmentAgency,
-        OCORG.NGO,
+        COMPASS.ResearchInstitute,
+        COMPASS.University,
+        COMPASS.GovernmentAgency,
+        COMPASS.NGO,
     ]
 
     def test_subclasses_declared(self, rdflib_graph):
         for cls in self.EXPECTED_SUBCLASSES:
             parents = set(rdflib_graph.objects(cls, RDFS.subClassOf))
-            assert OCORG.Organization in parents, (
-                f"{cls} is not declared rdfs:subClassOf ocorg:Organization. "
+            assert COMPASS.Organization in parents, (
+                f"{cls} is not declared rdfs:subClassOf compass:Organization. "
                 f"Entities of this type won't be found by the subclass query."
             )
 
@@ -59,7 +59,7 @@ class TestOrganizationSubclassHierarchy:
         from app.schema import _add_entity_type_filter
 
         # Collect what the ontology declares
-        ontology_subclasses = set(rdflib_graph.subjects(RDFS.subClassOf, OCORG.Organization))
+        ontology_subclasses = set(rdflib_graph.subjects(RDFS.subClassOf, COMPASS.Organization))
 
         # Collect what schema.py uses
         dummy_filters = []
@@ -85,18 +85,18 @@ class TestRequiredPredicates:
         assert long_triples, "No geo:long triples found — map will be empty"
 
     def test_name_predicates_in_data(self, rdflib_graph):
-        org_names = list(rdflib_graph.triples((None, OCORG.organizationName, None)))
-        assert org_names, "No ocorg:organizationName triples — organizations will be invisible"
+        org_names = list(rdflib_graph.triples((None, COMPASS.organizationName, None)))
+        assert org_names, "No compass:organizationName triples — organizations will be invisible"
 
     def test_project_name_in_data(self, rdflib_graph):
-        proj_names = list(rdflib_graph.triples((None, OCORG.projectName, None)))
-        projects = list(rdflib_graph.subjects(RDF.type, OCORG.Project))
+        proj_names = list(rdflib_graph.triples((None, COMPASS.projectName, None)))
+        projects = list(rdflib_graph.subjects(RDF.type, COMPASS.Project))
         if projects:
-            assert proj_names, "Projects exist but no ocorg:projectName triples — projects will be invisible"
+            assert proj_names, "Projects exist but no compass:projectName triples — projects will be invisible"
 
     def test_has_project_in_data(self, rdflib_graph):
-        has_proj = list(rdflib_graph.triples((None, OCORG.hasProject, None)))
-        assert has_proj, "No ocorg:hasProject triples — project list will be empty"
+        has_proj = list(rdflib_graph.triples((None, COMPASS.hasProject, None)))
+        assert has_proj, "No compass:hasProject triples — project list will be empty"
 
 
 class TestProjectPredicates:
@@ -104,15 +104,15 @@ class TestProjectPredicates:
     If any of these are renamed, the corresponding field goes blank."""
 
     EXPECTED_PROJECT_PREDICATES = [
-        OCORG.startDate,
-        OCORG.endDate,
-        OCORG.imageUrl,
-        OCORG.projectUrl,
-        OCORG.species,
+        COMPASS.startDate,
+        COMPASS.endDate,
+        COMPASS.imageUrl,
+        COMPASS.projectUrl,
+        COMPASS.species,
     ]
 
     def test_project_predicates_exist(self, rdflib_graph):
-        projects = list(rdflib_graph.subjects(RDF.type, OCORG.Project))
+        projects = list(rdflib_graph.subjects(RDF.type, COMPASS.Project))
         if not projects:
             return  # no projects to test against
 
@@ -128,14 +128,14 @@ class TestNetworkForumPredicates:
     """Predicates referenced in _special_optionals() for Network/Forum fields."""
 
     NETWORK_PREDICATES = [
-        (OCORG.memberCount, "memberCount"),
-        (OCORG.memberStates, "memberStates"),
-        (OCORG.mandate, "mandate"),
+        (COMPASS.memberCount, "memberCount"),
+        (COMPASS.memberStates, "memberStates"),
+        (COMPASS.mandate, "mandate"),
     ]
 
     def test_network_predicates_exist(self, rdflib_graph):
-        networks = list(rdflib_graph.subjects(RDF.type, OCORG.Network))
-        forums = list(rdflib_graph.subjects(RDF.type, OCORG.InternationalForum))
+        networks = list(rdflib_graph.subjects(RDF.type, COMPASS.Network))
+        forums = list(rdflib_graph.subjects(RDF.type, COMPASS.InternationalForum))
         if not networks and not forums:
             return
 
@@ -150,13 +150,13 @@ class TestNetworkForumPredicates:
 # -- SHACL shape that drives filters and property specs --
 
 class TestOrganizationShapeExists:
-    """schema.py reads ocorg:OrganizationShape. If renamed, everything breaks."""
+    """schema.py reads compass:OrganizationShape. If renamed, everything breaks."""
 
     def test_shape_has_properties(self, rdflib_graph):
         from rdflib import SH
-        props = list(rdflib_graph.objects(OCORG.OrganizationShape, SH.property))
+        props = list(rdflib_graph.objects(COMPASS.OrganizationShape, SH.property))
         assert len(props) > 0, (
-            "ocorg:OrganizationShape has no sh:property entries — "
+            "compass:OrganizationShape has no sh:property entries — "
             "filters will be empty, SPARQL will have no OPTIONAL clauses."
         )
 
@@ -170,8 +170,8 @@ class TestAllGeoEntitiesHaveLabels:
     def test_geo_entities_have_name(self, rdflib_graph):
         missing = []
         for subj in rdflib_graph.subjects(GEO.lat, None):
-            org_name = list(rdflib_graph.objects(subj, OCORG.organizationName))
-            proj_name = list(rdflib_graph.objects(subj, OCORG.projectName))
+            org_name = list(rdflib_graph.objects(subj, COMPASS.organizationName))
+            proj_name = list(rdflib_graph.objects(subj, COMPASS.projectName))
             if not org_name and not proj_name:
                 missing.append(str(subj))
         assert not missing, (

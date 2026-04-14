@@ -77,7 +77,9 @@
       }
     }
 
-    // Update Browser URL without page reload (stateless sync)
+    const API_FETCH_TIMEOUT_MS = 8_000;
+
+  // Update Browser URL without page reload (stateless sync)
     const urlObj = new URL(window.location.href);
     for (const [key, val] of Object.entries(f)) {
        urlObj.searchParams.set(key, String(val));
@@ -86,7 +88,7 @@
     window.history.replaceState({}, '', urlObj.toString());
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), API_FETCH_TIMEOUT_MS);
     const fullUrl = `${url}/api/entities/?${params.toString()}`;
     console.log('[Compass] Fetching:', fullUrl);
 
@@ -148,6 +150,9 @@
     const match = entities.find((e: any) => e.properties?.id === selectedEntityId);
     if (match) {
       const p = match.properties;
+      // MapLibre flattens GeoJSON feature properties to strings when rendering,
+      // so nested objects (arrays, objects) must be re-serialised here and
+      // parsed back in EntitySidebar via safeParseJson.
       selectedEntity = {
         ...p,
         focusArea: JSON.stringify(p.focusArea || []),

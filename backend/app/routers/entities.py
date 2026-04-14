@@ -29,7 +29,6 @@ async def get_entity_detail(
     """Returns single entity detail for popup."""
     sparql = f"""
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX compass: <http://oceancare.org/compass/>
     SELECT ?p ?o WHERE {{
         <{iri}> ?p ?o .
     }}
