@@ -74,6 +74,170 @@ compass:InternationalForum a rdfs:Class ;
     rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Meeresangelegenheiten."@de .
 
 # ============================================================
+# Property Declarations
+# All properties used as sh:path values must be typed as rdf:Property
+# with rdfs:label and rdfs:comment to satisfy ordes:pathShape and
+# ordes:conceptShape in shacl-shacl.ttl.
+# ============================================================
+
+compass:organizationName a rdf:Property ;
+    rdfs:label "organization name"@en ;
+    rdfs:label "Organisationsname"@de ;
+    rdfs:comment "The display name of the organization."@en .
+
+compass:country a rdf:Property ;
+    rdfs:label "country"@en ;
+    rdfs:label "Land"@de ;
+    rdfs:comment "The country where the entity is primarily based."@en .
+
+compass:keySentence a rdf:Property ;
+    rdfs:label "key sentence"@en ;
+    rdfs:label "Kernsatz"@de ;
+    rdfs:comment "A single sentence summarizing the entity."@en .
+
+compass:focusArea a rdf:Property ;
+    rdfs:label "focus area"@en ;
+    rdfs:label "Schwerpunktbereich"@de ;
+    rdfs:comment "Links to one or more research or activity focus areas."@en .
+
+compass:primaryOceanRegion a rdf:Property ;
+    rdfs:label "primary ocean region"@en ;
+    rdfs:label "primäre Meeresregion"@de ;
+    rdfs:comment "The primary ocean basin or region the entity focuses on."@en .
+
+compass:fundingSource a rdf:Property ;
+    rdfs:label "funding source"@en ;
+    rdfs:label "Finanzierungsquelle"@de ;
+    rdfs:comment "Primary source of funding."@en .
+
+compass:mostRecentUpdate a rdf:Property ;
+    rdfs:label "most recent update"@en ;
+    rdfs:label "letzte Aktualisierung"@de ;
+    rdfs:comment "Date of the most recent information update."@en .
+
+compass:activities a rdf:Property ;
+    rdfs:label "activities"@en ;
+    rdfs:label "Aktivitäten"@de ;
+    rdfs:comment "Key activities, initiatives, or research efforts."@en .
+
+compass:staffSize a rdf:Property ;
+    rdfs:label "staff size"@en ;
+    rdfs:label "Personalstärke"@de ;
+    rdfs:comment "Approximate number of staff or researchers."@en .
+
+compass:annualBudgetUSD a rdf:Property ;
+    rdfs:label "annual budget (USD millions)"@en ;
+    rdfs:label "jährliches Budget (USD Millionen)"@de ;
+    rdfs:comment "Approximate annual research budget in millions of US dollars."@en .
+
+compass:publicationsPerYear a rdf:Property ;
+    rdfs:label "publications per year"@en ;
+    rdfs:label "Publikationen pro Jahr"@de ;
+    rdfs:comment "Approximate number of peer-reviewed publications per year."@en .
+
+compass:researchVessels a rdf:Property ;
+    rdfs:label "research vessels"@en ;
+    rdfs:label "Forschungsschiffe"@de ;
+    rdfs:comment "Number of research vessels operated."@en .
+
+compass:accessType a rdf:Property ;
+    rdfs:label "access type"@en ;
+    rdfs:label "Zugangstyp"@de ;
+    rdfs:comment "How external researchers can access this organization's facilities or data."@en .
+
+compass:donationUrl a rdf:Property ;
+    rdfs:label "donation URL"@en ;
+    rdfs:label "Spenden-URL"@de ;
+    rdfs:comment "URL where donations can be made to support the organization."@en .
+
+compass:offersResearchTrips a rdf:Property ;
+    rdfs:label "offers research trips"@en ;
+    rdfs:label "bietet Forschungsreisen an"@de ;
+    rdfs:comment "Whether the organization offers research trips to the public or students."@en .
+
+compass:hasProject a rdf:Property ;
+    rdfs:label "has project"@en ;
+    rdfs:label "hat Projekt"@de ;
+    rdfs:comment "Links to research projects run by this organization."@en .
+
+compass:memberCount a rdf:Property ;
+    rdfs:label "member count"@en ;
+    rdfs:label "Mitgliederanzahl"@de ;
+    rdfs:comment "Number of member organizations or institutions in the network."@en .
+
+compass:hasLeadOrganization a rdf:Property ;
+    rdfs:label "lead organization"@en ;
+    rdfs:label "Leitorganisation"@de ;
+    rdfs:comment "The organization leading or hosting the network secretariat."@en .
+
+compass:memberStates a rdf:Property ;
+    rdfs:label "member states"@en ;
+    rdfs:label "Mitgliedstaaten"@de ;
+    rdfs:comment "Number of member nation-states participating in the forum."@en .
+
+compass:mandate a rdf:Property ;
+    rdfs:label "mandate"@en ;
+    rdfs:label "Mandat"@de ;
+    rdfs:comment "The official mandate or mission statement of the forum."@en .
+
+compass:hostCountry a rdf:Property ;
+    rdfs:label "host country"@en ;
+    rdfs:label "Gastland"@de ;
+    rdfs:comment "The country hosting the forum's secretariat."@en .
+
+compass:projectName a rdf:Property ;
+    rdfs:label "project name"@en ;
+    rdfs:label "Projektname"@de ;
+    rdfs:comment "The name of the research project."@en .
+
+compass:startDate a rdf:Property ;
+    rdfs:label "start date"@en ;
+    rdfs:label "Startdatum"@de ;
+    rdfs:comment "The start date of the project."@en .
+
+compass:endDate a rdf:Property ;
+    rdfs:label "end date"@en ;
+    rdfs:label "Enddatum"@de ;
+    rdfs:comment "The end date of the project."@en .
+
+compass:species a rdf:Property ;
+    rdfs:label "species"@en ;
+    rdfs:label "Arten"@de ;
+    rdfs:comment "Species studied in the project."@en .
+
+compass:imageUrl a rdf:Property ;
+    rdfs:label "image URL"@en ;
+    rdfs:label "Bild-URL"@de ;
+    rdfs:comment "URL of an image representing the project."@en .
+
+compass:projectUrl a rdf:Property ;
+    rdfs:label "project URL"@en ;
+    rdfs:label "Projekt-URL"@de ;
+    rdfs:comment "URL of the project's web page."@en .
+
+# External properties used in sh:path (stub declarations; authoritative
+# definitions live in the WGS84, Schema.org, and SKOS vocabularies).
+geo:lat a rdf:Property ;
+    rdfs:label "latitude"@en ;
+    rdfs:comment "WGS84 latitude coordinate of a spatial thing."@en .
+
+geo:long a rdf:Property ;
+    rdfs:label "longitude"@en ;
+    rdfs:comment "WGS84 longitude coordinate of a spatial thing."@en .
+
+schema:foundingDate a rdf:Property ;
+    rdfs:label "founding date"@en ;
+    rdfs:comment "The date that this organization was founded."@en .
+
+schema:url a rdf:Property ;
+    rdfs:label "url"@en ;
+    rdfs:comment "URL of the item."@en .
+
+skos:prefLabel a rdf:Property ;
+    rdfs:label "preferred label"@en ;
+    rdfs:comment "The preferred lexical label for a resource, in a given language."@en .
+
+# ============================================================
 # Shared (Named) Property Shapes
 # Reused across OrganizationShape, NetworkShape, and InternationalForumShape.
 # Defining constraints as named shapes enables reference by multiple node shapes
@@ -86,9 +250,9 @@ compass:NamePropertyShape a sh:PropertyShape ;
     sh:name "Name"@de ;
     sh:description "The display name of the entity."@en ;
     sh:description "Der Anzeigename der Entität."@de ;
-    sh:datatype xsd:string ;
+    sh:datatype rdf:langString ;
     sh:minCount 1 ;
-    sh:maxCount 1 .
+    sh:uniqueLang true .
 
 compass:GeoLatPropertyShape a sh:PropertyShape ;
     sh:path geo:lat ;
@@ -96,9 +260,8 @@ compass:GeoLatPropertyShape a sh:PropertyShape ;
     sh:name "Breitengrad"@de ;
     sh:description "WGS84 latitude."@en ;
     sh:description "WGS84 Breitengrad."@de ;
-    sh:datatype xsd:double ;
+    sh:datatype xsd:float ;
     sh:minCount 1 ;
-    sh:maxCount 1 ;
     sh:minInclusive -90.0 ;
     sh:maxInclusive 90.0 ;
     sh:severity sh:Violation .
@@ -109,9 +272,8 @@ compass:GeoLongPropertyShape a sh:PropertyShape ;
     sh:name "Längengrad"@de ;
     sh:description "WGS84 longitude."@en ;
     sh:description "WGS84 Längengrad."@de ;
-    sh:datatype xsd:double ;
+    sh:datatype xsd:float ;
     sh:minCount 1 ;
-    sh:maxCount 1 ;
     sh:minInclusive -180.0 ;
     sh:maxInclusive 180.0 ;
     sh:severity sh:Violation .
@@ -122,8 +284,8 @@ compass:CountryPropertyShape a sh:PropertyShape ;
     sh:name "Land"@de ;
     sh:description "The country where the entity is primarily based."@en ;
     sh:description "Das Land, in dem die Entität primär ansässig ist."@de ;
-    sh:datatype xsd:string ;
-    sh:maxCount 1 .
+    sh:datatype rdf:langString ;
+    sh:uniqueLang true .
 
 compass:WebsitePropertyShape a sh:PropertyShape ;
     sh:path schema:url ;
@@ -132,7 +294,6 @@ compass:WebsitePropertyShape a sh:PropertyShape ;
     sh:description "The entity's official website."@en ;
     sh:description "Die offizielle Website der Entität."@de ;
     sh:datatype xsd:anyURI ;
-    sh:maxCount 1 ;
     sh:severity sh:Warning .
 
 compass:KeySentencePropertyShape a sh:PropertyShape ;
@@ -141,8 +302,8 @@ compass:KeySentencePropertyShape a sh:PropertyShape ;
     sh:name "Kernsatz"@de ;
     sh:description "A single sentence summarizing the entity."@en ;
     sh:description "Ein einzelner Satz, der die Entität zusammenfasst."@de ;
-    sh:datatype xsd:string ;
-    sh:maxCount 1 .
+    sh:datatype rdf:langString ;
+    sh:uniqueLang true .
 
 compass:FocusAreaPropertyShape a sh:PropertyShape ;
     sh:path compass:focusArea ;
@@ -160,8 +321,7 @@ compass:OceanRegionPropertyShape a sh:PropertyShape ;
     sh:description "The primary ocean basin or region the entity focuses on."@en ;
     sh:description "Das primäre Meeresbecken oder die Region, auf die sich die Entität konzentriert."@de ;
     sh:nodeKind sh:IRI ;
-    sh:in ( compass:Region_Atlantic compass:Region_Pacific compass:Region_Indian compass:Region_Arctic compass:Region_Southern compass:Region_Global ) ;
-    sh:maxCount 1 .
+    sh:in ( compass:Region_Atlantic compass:Region_Pacific compass:Region_Indian compass:Region_Arctic compass:Region_Southern compass:Region_Global ) .
 
 compass:FundingSourcePropertyShape a sh:PropertyShape ;
     sh:path compass:fundingSource ;
@@ -170,8 +330,7 @@ compass:FundingSourcePropertyShape a sh:PropertyShape ;
     sh:description "Primary source of funding."@en ;
     sh:description "Hauptquelle der Finanzierung."@de ;
     sh:nodeKind sh:IRI ;
-    sh:in ( compass:Funding_Public compass:Funding_Private compass:Funding_Mixed compass:Funding_International ) ;
-    sh:maxCount 1 .
+    sh:in ( compass:Funding_Public compass:Funding_Private compass:Funding_Mixed compass:Funding_International ) .
 
 compass:MostRecentUpdatePropertyShape a sh:PropertyShape ;
     sh:path compass:mostRecentUpdate ;
@@ -179,8 +338,7 @@ compass:MostRecentUpdatePropertyShape a sh:PropertyShape ;
     sh:name "letzte Aktualisierung"@de ;
     sh:description "Date of the most recent information update."@en ;
     sh:description "Datum der letzten Informationsaktualisierung."@de ;
-    sh:datatype xsd:date ;
-    sh:maxCount 1 .
+    sh:datatype xsd:date .
 
 compass:ActivitiesPropertyShape a sh:PropertyShape ;
     sh:path compass:activities ;
@@ -188,7 +346,7 @@ compass:ActivitiesPropertyShape a sh:PropertyShape ;
     sh:name "Aktivitäten"@de ;
     sh:description "Key activities, initiatives, or research efforts."@en ;
     sh:description "Wesentliche Aktivitäten, Initiativen oder Forschungsbemühungen."@de ;
-    sh:datatype xsd:string .
+    sh:datatype rdf:langString .
 
 compass:FoundedYearPropertyShape a sh:PropertyShape ;
     sh:path schema:foundingDate ;
@@ -196,8 +354,7 @@ compass:FoundedYearPropertyShape a sh:PropertyShape ;
     sh:name "Gründungsjahr"@de ;
     sh:description "The year the entity was established."@en ;
     sh:description "Das Jahr, in dem die Entität gegründet wurde."@de ;
-    sh:datatype xsd:gYear ;
-    sh:maxCount 1 .
+    sh:datatype xsd:gYear .
 
 # ============================================================
 # SHACL Node Shape: OrganizationShape
@@ -217,9 +374,9 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:name "Organisationsname"@de ;
         sh:description "The display name of the organization."@en ;
         sh:description "Der Anzeigename der Organisation."@de ;
-        sh:datatype xsd:string ;
+        sh:datatype rdf:langString ;
         sh:minCount 1 ;
-        sh:maxCount 1 ;
+        sh:uniqueLang true ;
     ] ;
 
     # --- country (required, exactly 1, string) ---
@@ -229,9 +386,9 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:name "Land"@de ;
         sh:description "The country where the organization is located."@en ;
         sh:description "Das Land, in dem sich die Organisation befindet."@de ;
-        sh:datatype xsd:string ;
+        sh:datatype rdf:langString ;
         sh:minCount 1 ;
-        sh:maxCount 1 ;
+        sh:uniqueLang true ;
     ] ;
 
     # --- foundedYear (optional, at most 1, gYear) ---
@@ -288,7 +445,7 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:name "Breitengrad"@de ;
         sh:description "WGS84 latitude."@en ;
         sh:description "WGS84 Breitengrad."@de ;
-        sh:datatype xsd:double ;
+        sh:datatype xsd:float ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:minInclusive -90.0 ;
@@ -303,7 +460,7 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:name "Längengrad"@de ;
         sh:description "WGS84 longitude."@en ;
         sh:description "WGS84 Längengrad."@de ;
-        sh:datatype xsd:double ;
+        sh:datatype xsd:float ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
         sh:minInclusive -180.0 ;
@@ -390,8 +547,8 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:name "Kernsatz"@de ;
         sh:description "A single sentence summarizing the organization."@en ;
         sh:description "Ein einzelner Satz, der die Organisation zusammenfasst."@de ;
-        sh:datatype xsd:string ;
-        sh:maxCount 1 ;
+        sh:datatype rdf:langString ;
+        sh:uniqueLang true ;
     ] ;
 
     # --- activities (optional, multi-value, string) ---
@@ -401,7 +558,7 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:name "Aktivitäten"@de ;
         sh:description "Key activities or research efforts the organization undertakes."@en ;
         sh:description "Wesentliche Aktivitäten oder Forschungsbemühungen der Organisation."@de ;
-        sh:datatype xsd:string ;
+        sh:datatype rdf:langString ;
     ] ;
 
     # --- mostRecentUpdate (optional, at most 1, date) ---
@@ -574,8 +731,8 @@ compass:InternationalForumShape a sh:NodeShape ;
         sh:name "Mandat"@de ;
         sh:description "The official mandate or mission statement of the forum."@en ;
         sh:description "Das offizielle Mandat oder die Leitbild-Erklärung des Forums."@de ;
-        sh:datatype xsd:string ;
-        sh:maxCount 1 ;
+        sh:datatype rdf:langString ;
+        sh:uniqueLang true ;
     ] ;
 
     # --- hostCountry (optional, at most 1, string) ---
@@ -585,8 +742,8 @@ compass:InternationalForumShape a sh:NodeShape ;
         sh:name "Gastland"@de ;
         sh:description "The country hosting the forum's secretariat."@en ;
         sh:description "Das Land, das das Sekretariat des Forums beherbergt."@de ;
-        sh:datatype xsd:string ;
-        sh:maxCount 1 ;
+        sh:datatype rdf:langString ;
+        sh:uniqueLang true ;
     ] .
 
 # ============================================================
@@ -601,19 +758,11 @@ compass:FocusAreaShape a sh:NodeShape ;
     rdfs:comment "Validiert Schwerpunktbereich-Instanzen."@de ;
 
     sh:property [
-        sh:path rdfs:label ;
-        sh:name "label"@en ;
-        sh:name "Bezeichnung"@de ;
-        sh:datatype rdf:langString ;
-        sh:minCount 1 ;
-        sh:uniqueLang true ;
-    ] ;
-
-    sh:property [
         sh:path skos:prefLabel ;
         sh:name "preferred label"@en ;
         sh:name "bevorzugte Bezeichnung"@de ;
         sh:datatype rdf:langString ;
+        sh:minCount 1 ;
         sh:uniqueLang true ;
     ] .
 
@@ -686,9 +835,9 @@ compass:ProjectShape a sh:NodeShape ;
         sh:name "Projektname"@de ;
         sh:description "The name of the research project."@en ;
         sh:description "Der Name des Forschungsprojekts."@de ;
-        sh:datatype xsd:string ;
+        sh:datatype rdf:langString ;
         sh:minCount 1 ;
-        sh:maxCount 1 ;
+        sh:uniqueLang true ;
     ] ;
 
     sh:property [
@@ -717,7 +866,7 @@ compass:ProjectShape a sh:NodeShape ;
         sh:name "Arten"@de ;
         sh:description "Species studied in the project."@en ;
         sh:description "Im Projekt untersuchte Arten."@de ;
-        sh:datatype xsd:string ;
+        sh:datatype rdf:langString ;
     ] ;
 
     sh:property [

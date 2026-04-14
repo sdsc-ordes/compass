@@ -6,10 +6,18 @@ hardcoded in sparql_builder.py, schema.py, and result_parser.py.
 If any of these fail after an ontology edit, the corresponding backend code
 will break silently (empty results, missing fields, etc.).
 """
-from rdflib import RDF, RDFS, Namespace, URIRef
+import os
+
+import pyshacl
+from rdflib import RDF, RDFS, Graph, Namespace, URIRef
 from rdflib.namespace import SKOS, XSD
 
 from app.namespaces import GEO, COMPASS
+
+_ONTOLOGY_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "ontology",
+)
 
 
 # -- Top-level classes the SPARQL preamble UNION relies on --
@@ -178,3 +186,64 @@ class TestAllGeoEntitiesHaveLabels:
             f"Entities with geo:lat but no organizationName/projectName "
             f"(will be invisible on map): {missing}"
         )
+
+
+# -- SHACL validation of instance data --
+
+class TestShaclValidation:
+    """Instance data in compass.ttl must conform to shapes.ttl.
+
+    Add a new organisation or project? If it violates a SHACL constraint
+    (missing required property, wrong datatype, etc.) this test will fail
+    and tell you exactly which node and constraint are broken.
+    """
+
+    def test_instance_data_conforms_to_shapes(self):
+        data_graph = Graph()
+        for fname in ("compass.ttl", "vocab.ttl"):
+            data_graph.parse(os.path.join(_ONTOLOGY_DIR, fname), format="turtle")
+        shapes_graph = Graph().parse(
+            os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle"
+        )
+        # Also pass shapes.ttl as ont_graph so the RDFS subclass hierarchy
+        # (e.g. ResearchInstitute rdfs:subClassOf Organization) is available
+        # for inference when validating sh:class constraints.
+        conforms, _, report_text = pyshacl.validate(
+            data_graph,
+            shacl_graph=shapes_graph,
+            ont_graph=shapes_graph,
+            inference="rdfs",
+            abort_on_first=False,
+        )
+        assert conforms, f"SHACL validation failed:\n{report_text}"
+
+
+class TestShaclShacl:
+    """shapes.ttl must itself be a valid SHACL shapes graph.
+
+    Uses shacl-shacl.ttl (the W3C meta-shapes + project-specific ordes: shapes)
+    as the validator.  If this test fails, a shape definition is malformed —
+    e.g. a sh:targetClass points at an undeclared class, a sh:NodeShape has no
+    sh:node / sh:property, or a concept is missing its rdfs:label / skos:prefLabel.
+    """
+
+    def test_shapes_conform_to_shacl_shacl(self):
+        shapes_graph = Graph().parse(
+            os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle"
+        )
+        shacl_shacl_graph = Graph().parse(
+            os.path.join(_ONTOLOGY_DIR, "shacl-shacl.ttl"), format="turtle"
+        )
+        # vocab.ttl provides SKOS concept definitions that give context for the
+        # controlled-vocabulary IRIs referenced in shapes.ttl.
+        vocab_graph = Graph().parse(
+            os.path.join(_ONTOLOGY_DIR, "vocab.ttl"), format="turtle"
+        )
+        ont_graph = shapes_graph + vocab_graph
+        conforms, _, report_text = pyshacl.validate(
+            shapes_graph,
+            shacl_graph=shacl_shacl_graph,
+            ont_graph=ont_graph,
+            abort_on_first=False,
+        )
+        assert conforms, f"shapes.ttl violates SHACL-SHACL constraints:\n{report_text}"
