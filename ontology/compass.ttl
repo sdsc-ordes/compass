@@ -418,6 +418,33 @@ ocinst:DeepOceanStewardship a compass:NGO ;
     compass:fundingSource compass:Funding_International ;
     compass:primaryOceanRegion compass:Region_Global .
 
+ocinst:OceanCare a compass:NGO ;
+    compass:organizationName "OceanCare"@en ;
+    compass:organizationName "OceanCare"@de ;
+    compass:country "Switzerland"@en ;
+    compass:country "Schweiz"@de ;
+    schema:foundingDate "1989"^^xsd:gYear ;
+    compass:staffSize 30 ;
+    schema:url "https://www.oceancare.org/en/"^^xsd:anyURI ;
+    compass:focusArea compass:MarineBiology, compass:CoastalManagement ;
+    geo:lat "47.3769"^^xsd:float ;
+    geo:long "8.5417"^^xsd:float ;
+    compass:annualBudgetUSD 3 ;
+    compass:publicationsPerYear 20 ;
+    compass:researchVessels 0 ;
+    compass:accessType compass:Access_Open ;
+    compass:fundingSource compass:Funding_Mixed ;
+    compass:primaryOceanRegion compass:Region_Global ;
+    compass:keySentence "Protecting the world's oceans and the creatures that inhabit them."@en ;
+    compass:keySentence "Schutz der Weltmeere und der darin lebenden Lebewesen."@de ;
+    compass:activities "Campaigning against underwater noise pollution from shipping and sonar."@en ;
+    compass:activities "Advocating for a global moratorium on deep-sea mining."@en ;
+    compass:activities "Kampagne gegen Unterwasserlärm durch Schifffahrt und Sonar."@de ;
+    compass:activities "Einsatz für ein globales Moratorium für den Tiefseebergbau."@de ;
+    compass:mostRecentUpdate "2026-04-14"^^xsd:date ;
+    compass:donationUrl "https://www.oceancare.org/en/support-us/donate/"^^xsd:anyURI ;
+    compass:offersResearchTrips false .
+
 # ============================================================
 # Instance Data: Research Projects
 # ============================================================
