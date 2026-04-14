@@ -7,7 +7,6 @@ import pytest
 from starlette.datastructures import QueryParams
 
 from app.result_parser import (
-    PROPERTY_ALIASES,
     extract_property,
     results_to_geojson,
     _parse_projects,
@@ -94,8 +93,8 @@ class TestParseSpecialProperties:
 
 class TestExtractProperty:
     def test_multi_iri_with_label(self):
-        spec = {"id": "hasFocusArea", "category": "iri_with_label", "is_multi": True}
-        res = {"hasFocusAreaRaw": "http://ex.org/A|LabelA;;http://ex.org/B|LabelB"}
+        spec = {"id": "focusArea", "category": "iri_with_label", "is_multi": True}
+        res = {"focusAreaRaw": "http://ex.org/A|LabelA;;http://ex.org/B|LabelB"}
         result = extract_property(spec, res)
         assert len(result) == 2
         assert result[0] == {"iri": "http://ex.org/A", "label": "LabelA"}
@@ -117,17 +116,6 @@ class TestExtractProperty:
         result = extract_property(spec, res)
         assert result == ["Research", "Education", "Policy"]
 
-
-class TestPropertyAliases:
-    """Verify that PROPERTY_ALIASES keys correspond to real property spec IDs."""
-
-    def test_aliases_reference_real_specs(self, property_specs):
-        spec_ids = {s["id"] for s in property_specs}
-        for alias_from in PROPERTY_ALIASES:
-            assert alias_from in spec_ids, (
-                f"PROPERTY_ALIASES key '{alias_from}' doesn't match any property spec ID. "
-                f"Available: {sorted(spec_ids)}"
-            )
 
 
 # ---------------------------------------------------------------------------

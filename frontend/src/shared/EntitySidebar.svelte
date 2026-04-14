@@ -10,7 +10,7 @@
   $: t = i18n[lang] || i18n.en;
 
   // MapLibre stringifies nested objects — parse them back
-  $: focusAreas  = (() => { try { return JSON.parse(entity?.focusAreas || '[]'); } catch { return []; } })();
+  $: focusAreas  = (() => { try { return JSON.parse(entity?.focusArea || '[]'); } catch { return []; } })();
   $: region      = (() => { try { return JSON.parse(entity?.primaryOceanRegion || 'null'); } catch { return null; } })();
   $: funding     = (() => { try { return JSON.parse(entity?.fundingSource || 'null'); } catch { return null; } })();
   $: access      = (() => { try { return JSON.parse(entity?.accessType || 'null'); } catch { return null; } })();
@@ -40,8 +40,8 @@
       <p class="key-sentence">{entity.keySentence}</p>
     {/if}
 
-    {#if entity?.founded}
-      <p class="founded">{t.established} {entity.founded}</p>
+    {#if entity?.foundingDate}
+      <p class="founded">{t.established} {entity.foundingDate}</p>
     {/if}
 
     {#if entity?.startDate || entity?.endDate}
@@ -159,8 +159,8 @@
           {t.website}
         </a>
       {/if}
-      {#if entity?.website && !entity?.projectUrl}
-        <a class="visit-btn primary" href={entity.website} target="_blank" rel="noopener noreferrer">
+      {#if entity?.url && !entity?.projectUrl}
+        <a class="visit-btn primary" href={entity.url} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} />
           {t.website}
         </a>

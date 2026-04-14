@@ -35,11 +35,11 @@
                 {/if}
               </div>
               <div class="prop-rows">
-                {#if (entity.properties.focusAreas || []).length > 0}
+                {#if (entity.properties.focusArea || []).length > 0}
                   <div class="prop-row">
                     <span class="prop-label">{t.propFocusArea}</span>
                     <div class="prop-chips">
-                      {#each (entity.properties.focusAreas || []) as fa}
+                      {#each (entity.properties.focusArea || []) as fa}
                         <a class="chip chip-focus" href={fa.iri} target="_blank" rel="noopener noreferrer">{fa.label}</a>
                       {/each}
                     </div>
@@ -64,8 +64,8 @@
                   </div>
                 {/if}
               </div>
-              {#if entity.properties.founded}
-                <span class="founded-year">Est. {entity.properties.founded}</span>
+              {#if entity.properties.foundingDate}
+                <span class="founded-year">Est. {entity.properties.foundingDate}</span>
               {/if}
             </div>
           </td>

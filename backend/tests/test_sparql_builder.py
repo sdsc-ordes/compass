@@ -31,7 +31,7 @@ class TestBuildOptional:
         assert "OPTIONAL" in result
 
     def test_iri_with_label(self):
-        spec = {"id": "hasFocusArea", "path_iri": str(OCORG.hasFocusArea), "category": "iri_with_label"}
+        spec = {"id": "focusArea", "path_iri": str(OCORG.focusArea), "category": "iri_with_label"}
         result = build_optional(spec, "en")
         assert "skos:prefLabel" in result
         assert "rdfs:label" in result
@@ -45,10 +45,10 @@ class TestBuildOptional:
 
 class TestBuildSelectExpr:
     def test_multi_iri(self):
-        spec = {"id": "hasFocusArea", "category": "iri_with_label", "is_multi": True}
+        spec = {"id": "focusArea", "category": "iri_with_label", "is_multi": True}
         result = build_select_expr(spec)
         assert "GROUP_CONCAT" in result
-        assert "hasFocusAreaNode" in result
+        assert "focusAreaNode" in result
 
     def test_single_iri(self):
         spec = {"id": "funding", "category": "iri_with_label", "is_multi": False}

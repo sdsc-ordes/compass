@@ -14,7 +14,7 @@ from rdflib import Graph, Literal, Namespace, RDF, RDFS, SH, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import SKOS, XSD
 
-from .namespaces import GEO, OCORG
+from .namespaces import GEO, OCORG, SCHEMA
 
 
 # Properties excluded from filters because they are handled in the SPARQL preamble
@@ -25,13 +25,13 @@ _NESTED_PROPS = {OCORG.hasProject}
 
 # Fetched for display but not exposed as filter dimensions
 _DISPLAY_ONLY = {
-    OCORG.websiteUrl, OCORG.keySentence, OCORG.activities,
+    SCHEMA.url, OCORG.keySentence, OCORG.activities,
     OCORG.donationUrl, OCORG.offersResearchTrips,
 }
 
 # All properties excluded from the standard per-property loop
 _SKIP_PROPS = _PREAMBLE_PROPS | _NESTED_PROPS | {
-    OCORG.websiteUrl, OCORG.keySentence, OCORG.activities,
+    SCHEMA.url, OCORG.keySentence, OCORG.activities,
     OCORG.hasProject, OCORG.donationUrl, OCORG.offersResearchTrips,
 }
 

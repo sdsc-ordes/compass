@@ -150,7 +150,7 @@
       const p = match.properties;
       selectedEntity = {
         ...p,
-        focusAreas: JSON.stringify(p.focusAreas || []),
+        focusArea: JSON.stringify(p.focusArea || []),
         primaryOceanRegion: JSON.stringify(p.primaryOceanRegion || null),
         fundingSource: JSON.stringify(p.fundingSource || null),
         accessType: JSON.stringify(p.accessType || null),

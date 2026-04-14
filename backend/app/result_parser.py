@@ -16,12 +16,6 @@ from geojson import Feature, FeatureCollection, Point
 ITEM_SEP = ";;"   # between multi-valued items
 FIELD_SEP = "|"   # between fields within a single item (e.g. project name|startDate|…)
 
-# Frontend property key aliases: ontology local name → GeoJSON properties key
-PROPERTY_ALIASES: Dict[str, str] = {
-    "foundedYear": "founded",
-    "websiteUrl": "website",
-    "hasFocusArea": "focusAreas",
-}
 
 
 def extract_property(spec: dict, res: dict) -> Any:
@@ -112,14 +106,12 @@ def _parse_special_properties(res: dict) -> Dict[str, Any]:
 def results_to_geojson(
     results: List[Dict[str, Any]],
     specs: List[Dict[str, Any]],
-    property_aliases: Dict[str, str] = PROPERTY_ALIASES,
 ) -> FeatureCollection:
     """Convert SPARQL result rows into a GeoJSON FeatureCollection.
 
     Args:
         results: List of result dicts from RDFStore.query().
         specs: Property specs from RDFStore.get_property_specs().
-        property_aliases: Optional mapping to rename property keys in output.
 
     Returns:
         A GeoJSON FeatureCollection with one Feature per valid result row.
@@ -141,12 +133,11 @@ def results_to_geojson(
             }
 
             for spec in specs:
-                key = property_aliases.get(spec["id"], spec["id"])
-                properties[key] = extract_property(spec, res)
+                properties[spec["id"]] = extract_property(spec, res)
 
-            # Project entities may not have websiteUrl but do have projectUrl
-            if not properties.get("website"):
-                properties["website"] = res.get("selfPUrl", "")
+            # Project entities may not have schema:url but do have projectUrl
+            if not properties.get("url"):
+                properties["url"] = res.get("selfPUrl", "")
 
             properties["projects"] = _parse_projects(res.get("projectsRaw", "") or "")
             properties["species"] = _parse_species(res)

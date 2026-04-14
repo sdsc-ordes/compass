@@ -5,6 +5,7 @@
 @prefix geo:  <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix ocorg: <http://example.org/ocean-org/ontology#> .
+@prefix schema: <https://schema.org/> .
 
 # ============================================================
 # SHACL Shapes: Oceanographic Organizations
@@ -125,7 +126,7 @@ ocorg:CountryPropertyShape a sh:PropertyShape ;
     sh:maxCount 1 .
 
 ocorg:WebsitePropertyShape a sh:PropertyShape ;
-    sh:path ocorg:websiteUrl ;
+    sh:path schema:url ;
     sh:name "website URL"@en ;
     sh:name "Website-URL"@de ;
     sh:description "The entity's official website."@en ;
@@ -144,9 +145,9 @@ ocorg:KeySentencePropertyShape a sh:PropertyShape ;
     sh:maxCount 1 .
 
 ocorg:FocusAreaPropertyShape a sh:PropertyShape ;
-    sh:path ocorg:hasFocusArea ;
-    sh:name "has focus area"@en ;
-    sh:name "hat Schwerpunktbereich"@de ;
+    sh:path ocorg:focusArea ;
+    sh:name "focus area"@en ;
+    sh:name "Schwerpunktbereich"@de ;
     sh:description "Links to one or more research or activity focus areas."@en ;
     sh:description "Verknüpft mit einem oder mehreren Forschungs- oder Aktivitätsschwerpunkten."@de ;
     sh:class ocorg:FocusArea ;
@@ -190,7 +191,7 @@ ocorg:ActivitiesPropertyShape a sh:PropertyShape ;
     sh:datatype xsd:string .
 
 ocorg:FoundedYearPropertyShape a sh:PropertyShape ;
-    sh:path ocorg:foundedYear ;
+    sh:path schema:foundingDate ;
     sh:name "founded year"@en ;
     sh:name "Gründungsjahr"@de ;
     sh:description "The year the entity was established."@en ;
@@ -235,7 +236,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- foundedYear (optional, at most 1, gYear) ---
     sh:property [
-        sh:path ocorg:foundedYear ;
+        sh:path schema:foundingDate ;
         sh:name "founded year"@en ;
         sh:name "Gründungsjahr"@de ;
         sh:description "The year the organization was established."@en ;
@@ -258,7 +259,7 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- websiteUrl (optional, at most 1, anyURI) ---
     sh:property [
-        sh:path ocorg:websiteUrl ;
+        sh:path schema:url ;
         sh:name "website URL"@en ;
         sh:name "Website-URL"@de ;
         sh:description "The organization's website."@en ;
@@ -270,9 +271,9 @@ ocorg:OrganizationShape a sh:NodeShape ;
 
     # --- hasFocusArea (at least 1, must be a FocusArea instance) ---
     sh:property [
-        sh:path ocorg:hasFocusArea ;
-        sh:name "has focus area"@en ;
-        sh:name "hat Schwerpunktbereich"@de ;
+        sh:path ocorg:focusArea ;
+        sh:name "focus area"@en ;
+        sh:name "Schwerpunktbereich"@de ;
         sh:description "Links an organization to one or more research focus areas."@en ;
         sh:description "Verknüpft eine Organisation mit einem oder mehreren Forschungsschwerpunkten."@de ;
         sh:class ocorg:FocusArea ;
