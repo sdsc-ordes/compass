@@ -442,7 +442,7 @@ ocinst:OceanCare a compass:NGO ;
     compass:activities "Kampagne gegen Unterwasserlärm durch Schifffahrt und Sonar."@de ;
     compass:activities "Einsatz für ein globales Moratorium für den Tiefseebergbau."@de ;
     compass:mostRecentUpdate "2026-04-14"^^xsd:date ;
-    compass:donationUrl "https://www.oceancare.org/en/support-us/donate/"^^xsd:anyURI ;
+    compass:donationUrl "https://www.oceancare.org/en/donation/"^^xsd:anyURI ;
     compass:offersResearchTrips false .
 
 # ============================================================
