@@ -54,8 +54,8 @@
 | 26 | AND/OR selection for categories | ⚠️ Partial | **Within** a single filter: multiple values are OR'd (SPARQL `UNION`). **Across** filters: AND logic (all selected filters must match). No user-facing toggle to switch between AND/OR modes within a filter. |
 | 27 | Clustering to avoid visual density | ✅ Met | MapLibre clustering enabled (`clusterRadius: 50`, `clusterMaxZoom: 14`). Cluster bubbles scale by count with numeric labels. Click-to-expand. |
 | 28 | Manually select specific set of pins | ❌ Not met | No multi-select / lasso tool to hand-pick individual pins. Would need a "pin basket" or shift-click multi-select feature. |
-| 29 | Link/Button for map state with selected categories | ✅ Met | "Share" button saves filter state + view mode + language to backend (`POST /api/states/save`). Returns short URL with `?state=<id>` that fully restores the map state. |
-| 30 | QR code / image export for map state | ❌ Not met | No QR code generation. No map screenshot/image export. Shareable link only. |
+| 29 | Link/Button for map state with selected categories | ✅ Met | "Share" button opens `ShareModal` which saves filter state + view mode + language to backend (`POST /api/states/save`). Returns short URL with `?state=<id>` that fully restores the map state. URL is displayed with a copy-to-clipboard button. |
+| 30 | QR code / image export for map state | ⚠️ Partial | QR code is generated client-side via the `qrcode` library and displayed in `ShareModal` (200×200 px, dark-on-white). No map screenshot/image export — `map.getCanvas().toBlob()` could add that. |
 | 31 | Visualize connectivity & overlapping layers | ⚠️ Partial | Org↔Project connection lines (dashed indigo) on hover/click. Region fill/outline layers exist. No overlapping thematic layers (whale habitat, shipping zones, etc.) — would need GeoJSON polygon data for environmental/activity zones and a layer toggle UI. |
 
 ## Information Display
@@ -87,15 +87,15 @@
 | Status | Count |
 |--------|-------|
 | ✅ Met | 22 |
-| ⚠️ Partial | 10 |
-| ❌ Not met | 6 |
+| ⚠️ Partial | 11 |
+| ❌ Not met | 5 |
 
 ### Priority gaps
 
 | Gap | Effort | Notes |
 |-----|--------|-------|
 | Manual pin selection (lasso/basket) | High | Needs new UI interaction pattern + state management |
-| QR code / image export | Low | Library like `qrcode` for QR; `map.getCanvas().toBlob()` for screenshot |
+| Map image export | Low | `map.getCanvas().toBlob()` to download a PNG snapshot of the current view |
 | Donation pop-up on filter activation | Medium | Trigger modal when specific filter IDs are selected |
 | Video embed in sidebar | Low | Add `compass:videoUrl` property + `<iframe>`/`<video>` in EntitySidebar |
 | Entity-level image/logo | Low | Add `compass:imageUrl` to Organization shape + render in sidebar |
