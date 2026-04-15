@@ -66,7 +66,6 @@
       style: 'https://tiles.openfreemap.org/styles/liberty',
       center: [0, 20],
       zoom: 2,
-      preserveDrawingBuffer: true, // required for canvas screenshot export
     });
 
     map.on('load', () => {
@@ -74,6 +73,11 @@
         addOceanLayers();
       } catch (e) {
         console.warn('[Compass] Ocean layers failed to initialize:', e);
+      }
+      // Enable canvas buffer preservation for screenshot export
+      const canvas = map.getCanvas();
+      if (canvas) {
+        (canvas as any).getContext('webgl', { preserveDrawingBuffer: true });
       }
       mapLoaded = true;
       updateMarkers();

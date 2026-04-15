@@ -6,6 +6,7 @@
   import FilterPanel from './filters/FilterPanel.svelte';
   import ListView from './shared/ListView.svelte';
   import EntitySidebar from './shared/EntitySidebar.svelte';
+  import ShareModal from './shared/ShareModal.svelte';
   import { i18n, type Lang } from './shared/i18n';
   import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft } from 'lucide-svelte';
 
@@ -21,6 +22,7 @@
   let selectedEntityId: string | null = null;
   let filterOpen = true;
   let sidebarVisible = false;
+  let mounted = false;
 
   $: t = i18n[lang] || i18n.en;
 
@@ -46,6 +48,17 @@
         }
       }
     } else {
+       // Restore filter params from URL (all params except lang)
+       const restoredFilters: Record<string, string[]> = {};
+       for (const [key, val] of params.entries()) {
+         if (key === 'lang') continue;
+         if (!restoredFilters[key]) restoredFilters[key] = [];
+         restoredFilters[key].push(val);
+       }
+       if (Object.keys(restoredFilters).length > 0) {
+         activeFilters = restoredFilters;
+         console.log("[Compass] Restored filters from URL:", activeFilters);
+       }
        console.log("[Compass] No saved state. Running initial fetch...");
        if (apiurl) {
          fetchEntities(apiurl, lang, activeFilters);
@@ -53,11 +66,12 @@
          console.warn("[Compass] No apiurl on mount. Waiting for attribute...");
        }
     }
+    mounted = true;
   });
 
   $: {
     console.log("[Compass] Reactive check - apiurl:", apiurl, "lang:", lang);
-    if (apiurl) {
+    if (mounted && apiurl) {
       fetchEntities(apiurl, lang, activeFilters);
     }
   }
@@ -80,9 +94,13 @@
     const API_FETCH_TIMEOUT_MS = 8_000;
 
   // Update Browser URL without page reload (stateless sync)
-    const urlObj = new URL(window.location.href);
+    const urlObj = new URL(window.location.origin + window.location.pathname);
     for (const [key, val] of Object.entries(f)) {
-       urlObj.searchParams.set(key, String(val));
+      if (Array.isArray(val)) {
+        val.forEach(v => urlObj.searchParams.append(key, v));
+      } else if (val !== undefined && val !== '') {
+        urlObj.searchParams.set(key, String(val));
+      }
     }
     urlObj.searchParams.set('lang', l);
     window.history.replaceState({}, '', urlObj.toString());
@@ -116,27 +134,11 @@
   }
 
   let shareLink = '';
+  let showShareModal = false;
 
-  async function saveMapState() {
-    if (!apiurl) return;
-    const body = {
-      filters: activeFilters,
-      view: viewMode,
-      lang: lang
-    };
-
-    try {
-      const resp = await fetch(`${apiurl}/api/states/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await resp.json();
-      shareLink = `${window.location.origin}${window.location.pathname}?state=${data.id}`;
-      alert(`State saved! Your shareable link: ${shareLink}`);
-    } catch (e) {
-      console.error('Failed to save state:', e);
-    }
+  function saveMapState() {
+    shareLink = window.location.href;
+    showShareModal = true;
   }
 
   function handleFilterChange(filters: any) {
@@ -198,7 +200,7 @@
         </button>
       </div>
       
-      <button class="lang-toggle" on:click={saveMapState} title="Save current map state">
+      <button type="button" class="lang-toggle" on:click|preventDefault|stopPropagation={saveMapState} title="Save current map state">
         <div style="display:flex; align-items:center; gap:0.5rem">
            <svg xmlns="http://www.w3.org/2000/01/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
            <span>Share</span>
@@ -223,6 +225,7 @@
       <FilterPanel
         {apiurl}
         {lang}
+        initialFilters={activeFilters}
         onFilterChange={handleFilterChange}
         onToggle={() => (filterOpen = false)}
       />
@@ -262,6 +265,10 @@
       {/if}
     </div>
   </div>
+
+  {#if showShareModal && shareLink}
+    <ShareModal url={shareLink} {lang} onClose={() => (showShareModal = false)} />
+  {/if}
 </main>
 
 <style>

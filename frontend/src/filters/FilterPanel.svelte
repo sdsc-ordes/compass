@@ -9,12 +9,20 @@
   export let lang: Lang = 'en';
   export let onFilterChange: (filters: any) => void;
   export let onToggle: (() => void) | undefined = undefined;
+  export let initialFilters: Record<string, any> = {};
 
   let schema: any[] = [];
   let activeFilters: Record<string, any> = {};
+  let initialApplied = false;
 
   $: t = i18n[lang] || i18n.en;
   $: fetchSchema(apiurl, lang);
+
+  // Apply initial filters once schema is loaded
+  $: if (schema.length > 0 && !initialApplied && Object.keys(initialFilters).length > 0) {
+    activeFilters = { ...initialFilters };
+    initialApplied = true;
+  }
 
   async function fetchSchema(url: string, l: string) {
     if (!url) return;

@@ -29,6 +29,9 @@ export const i18n = {
     established: "Established",
     website: "Website",
     orgProjectLink: "Org ↔ Project",
+    shareTitle: "Share this view",
+    shareHint: "Scan the QR code or copy the link below.",
+    copyLink: "Copy link",
   },
   de: {
     filters: "Filter",
@@ -60,6 +63,9 @@ export const i18n = {
     established: "Gegründet",
     website: "Website",
     orgProjectLink: "Org ↔ Projekt",
+    shareTitle: "Ansicht teilen",
+    shareHint: "QR-Code scannen oder Link kopieren.",
+    copyLink: "Link kopieren",
   }
 };
 
