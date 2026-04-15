@@ -106,7 +106,12 @@ def _special_optionals(lang: str) -> str:
             OPTIONAL {{ ?project compass:endDate ?projEnd . }}
             OPTIONAL {{ ?project compass:imageUrl ?projImage . }}
             OPTIONAL {{ ?project compass:projectUrl ?projUrl . }}
-            OPTIONAL {{ ?project compass:species ?projSpecies . FILTER(lang(?projSpecies) = "en") }}
+            OPTIONAL {{
+                ?project compass:species ?projSpeciesNode .
+                OPTIONAL {{ ?projSpeciesNode skos:prefLabel ?projSpeciesSkos . FILTER(lang(?projSpeciesSkos) = "{lang}") }}
+                OPTIONAL {{ ?projSpeciesNode rdfs:label ?projSpeciesRdfs . FILTER(lang(?projSpeciesRdfs) = "{lang}") }}
+                BIND(COALESCE(?projSpeciesSkos, ?projSpeciesRdfs) AS ?projSpeciesLab)
+            }}
         }}
         OPTIONAL {{ ?s compass:memberCount ?memberCount . }}
         OPTIONAL {{ ?s compass:memberStates ?memberStates . }}
@@ -115,7 +120,12 @@ def _special_optionals(lang: str) -> str:
         OPTIONAL {{ ?s compass:endDate ?selfEnd . }}
         OPTIONAL {{ ?s compass:imageUrl ?selfImage . }}
         OPTIONAL {{ ?s compass:projectUrl ?selfUrl . }}
-        OPTIONAL {{ ?s compass:species ?selfSpecies . }}
+        OPTIONAL {{
+            ?s compass:species ?selfSpeciesNode .
+            OPTIONAL {{ ?selfSpeciesNode skos:prefLabel ?selfSpeciesSkos . FILTER(lang(?selfSpeciesSkos) = "{lang}") }}
+            OPTIONAL {{ ?selfSpeciesNode rdfs:label ?selfSpeciesRdfs . FILTER(lang(?selfSpeciesRdfs) = "{lang}") }}
+            BIND(COALESCE(?selfSpeciesSkos, ?selfSpeciesRdfs) AS ?selfSpeciesLab)
+        }}
 """
 
 
@@ -126,7 +136,7 @@ def _special_selects() -> str:
         f' COALESCE(STR(?projStart), ""), "{FIELD_SEP}", COALESCE(STR(?projEnd), ""), "{FIELD_SEP}",'
         f' COALESCE(STR(?projImage), ""), "{FIELD_SEP}", COALESCE(STR(?projUrl), ""), "{FIELD_SEP}",'
         f' COALESCE(STR(?project), "")); separator="{ITEM_SEP}") AS ?projectsRaw)\n'
-        f'           (GROUP_CONCAT(DISTINCT STR(?projSpecies); separator="{ITEM_SEP}") AS ?speciesRaw)\n'
+        f'           (GROUP_CONCAT(DISTINCT CONCAT(STR(?projSpeciesNode), "{FIELD_SEP}", COALESCE(STR(?projSpeciesLab), "")); separator="{ITEM_SEP}") AS ?speciesRaw)\n'
         f'           (GROUP_CONCAT(DISTINCT STR(?project); separator="{ITEM_SEP}") AS ?linkedProjectIris)\n'
         '           (SAMPLE(?memberCount) AS ?memberCountResult)\n'
         '           (SAMPLE(?memberStates) AS ?memberStatesResult)\n'
@@ -135,7 +145,7 @@ def _special_selects() -> str:
         '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
         '           (SAMPLE(?selfImage) AS ?selfImage)\n'
         '           (SAMPLE(?selfUrl) AS ?selfUrl)\n'
-        f'           (GROUP_CONCAT(DISTINCT STR(?selfSpecies); separator="{ITEM_SEP}") AS ?selfSpeciesRaw)\n'
+        f'           (GROUP_CONCAT(DISTINCT CONCAT(STR(?selfSpeciesNode), "{FIELD_SEP}", COALESCE(STR(?selfSpeciesLab), "")); separator="{ITEM_SEP}") AS ?selfSpeciesRaw)\n'
     )
 
 
@@ -179,12 +189,19 @@ def _build_where_clauses(
         elif key == "species":
             parts = []
             for v in values:
-                safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
-                parts.append(
-                    f'?s compass:hasProject ?speciesProj . '
-                    f'?speciesProj compass:species ?speciesVal . '
-                    f'FILTER(str(?speciesVal) = "{safe_v}")'
-                )
+                if v.startswith("http") and ">" not in v:
+                    parts.append(
+                        f'?s compass:hasProject ?speciesProj . '
+                        f'?speciesProj compass:species <{v}> . '
+                    )
+                else:
+                    safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
+                    parts.append(
+                        f'?s compass:hasProject ?speciesProj . '
+                        f'?speciesProj compass:species ?speciesVal . '
+                        f'?speciesVal skos:prefLabel ?speciesLabel . '
+                        f'FILTER(str(?speciesLabel) = "{safe_v}")'
+                    )
             if parts:
                 where_clauses.append(_union_or_single(parts))
 

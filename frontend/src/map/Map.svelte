@@ -20,6 +20,49 @@
   const DEFAULT_PIN_COLOR = '#64748b'; // slate for unknown types
   const FEATURED_IRI = 'http://example.org/ocean-org/data#OceanCare';
 
+  function getTypeLabel(iri: string, l: Lang): string {
+    const key = iri.split('#')[1]?.split('/').pop() ?? iri;
+    const labels: Record<string, { en: string; de: string }> = {
+      ResearchInstitute: { en: 'Research Institute', de: 'Forschungsinstitut' },
+      University: { en: 'University', de: 'Universität' },
+      GovernmentAgency: { en: 'Government Agency', de: 'Behörde' },
+      NGO: { en: 'NGO', de: 'NGO' },
+      Network: { en: 'Network', de: 'Netzwerk' },
+      InternationalForum: { en: 'International Forum', de: 'Internationales Forum' },
+      Project: { en: 'Project', de: 'Projekt' },
+    };
+    const found = labels[key];
+    if (!found) return key.replace(/([A-Z])/g, ' $1').trim();
+    return l === 'de' ? found.de : found.en;
+  }
+
+  function containsNameField(expr: any): boolean {
+    if (!expr) return false;
+    if (typeof expr === 'string') return expr.includes('name');
+    if (Array.isArray(expr)) return expr.some(containsNameField);
+    if (typeof expr === 'object') return Object.values(expr).some(containsNameField);
+    return false;
+  }
+
+  function applyBasemapLanguage(l: Lang) {
+    if (!map?.isStyleLoaded()) return;
+    const layers = map.getStyle().layers || [];
+    const field = l === 'de'
+      ? ['coalesce', ['get', 'name:de'], ['get', 'name'], ['get', 'name:en']]
+      : ['coalesce', ['get', 'name:en'], ['get', 'name'], ['get', 'name:de']];
+
+    for (const layer of layers) {
+      if (layer.type !== 'symbol') continue;
+      const current = map.getLayoutProperty(layer.id, 'text-field');
+      if (!containsNameField(current)) continue;
+      try {
+        map.setLayoutProperty(layer.id, 'text-field', field as any);
+      } catch {
+        // Some symbol layers may not accept dynamic text-field overrides.
+      }
+    }
+  }
+
   // Build a MapLibre match expression from the type color map
   function typeColorExpression(): maplibregl.ExpressionSpecification {
     const expr: any[] = ['match', ['get', 'typeIri']];
@@ -56,6 +99,9 @@
   let mapLoaded = false;
 
   $: t = i18n[lang] || i18n.en;
+  $: if (mapLoaded) {
+    applyBasemapLanguage(lang);
+  }
   $: if (mapLoaded && entities) {
     updateMarkers();
   }
@@ -80,6 +126,7 @@
         (canvas as any).getContext('webgl', { preserveDrawingBuffer: true });
       }
       mapLoaded = true;
+      applyBasemapLanguage(lang);
       updateMarkers();
       setupEventHandlers();
     });
@@ -557,7 +604,7 @@
     {#each Object.entries(TYPE_COLORS) as [iri, color]}
       <div class="legend-item">
         <span class="legend-dot" style="background:{color}"></span>
-        <span class="legend-label">{iri.split('#')[1]?.replace(/([A-Z])/g, ' $1').trim() ?? iri}</span>
+        <span class="legend-label">{getTypeLabel(iri, lang)}</span>
       </div>
     {/each}
     <div class="legend-separator"></div>

@@ -57,11 +57,19 @@ class TestParseProjects:
 
 class TestParseSpecies:
     def test_merges_project_and_self_species(self):
-        res = {"speciesRaw": "Whale;;Dolphin", "selfSpeciesRaw": "Turtle;;Whale"}
+        res = {
+            "speciesRaw": "http://ex.org/species/whale|Whale;;http://ex.org/species/dolphin|Dolphin",
+            "selfSpeciesRaw": "http://ex.org/species/turtle|Turtle;;http://ex.org/species/whale|Whale",
+        }
         species = _parse_species(res)
         assert set(species) == {"Whale", "Dolphin", "Turtle"}
         # Whale appears once (deduped), order preserved
         assert species.index("Whale") < species.index("Dolphin")
+
+    def test_species_fallback_to_legacy_literals(self):
+        res = {"speciesRaw": "Whale;;Dolphin", "selfSpeciesRaw": "Turtle;;Whale"}
+        species = _parse_species(res)
+        assert set(species) == {"Whale", "Dolphin", "Turtle"}
 
     def test_empty_species(self):
         assert _parse_species({}) == []

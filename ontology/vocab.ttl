@@ -228,3 +228,98 @@ compass:PolarResearch a skos:Concept, compass:FocusArea ;
     skos:definition "Research in Arctic and Antarctic ocean and ice environments."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
     skos:inScheme compass:FocusAreaScheme .
+
+# ============================================================
+# Concept Scheme: Species
+# ============================================================
+
+compass:SpeciesScheme a skos:ConceptScheme ;
+    skos:prefLabel "Species"@en ;
+    skos:prefLabel "Arten"@de ;
+    skos:definition "Controlled vocabulary for species studied in projects."@en ;
+    skos:definition "Kontrolliertes Vokabular für in Projekten untersuchte Arten."@de ;
+    skos:hasTopConcept compass:Species_NorthAtlanticRightWhale ;
+    skos:hasTopConcept compass:Species_EubalaenaGlacialis ;
+    skos:hasTopConcept compass:Species_GiantPacificOctopus ;
+    skos:hasTopConcept compass:Species_VampireSquid ;
+    skos:hasTopConcept compass:Species_BottlenoseDolphin ;
+    skos:hasTopConcept compass:Species_ShortBeakedCommonDolphin ;
+    skos:hasTopConcept compass:Species_StripedDolphin ;
+    skos:hasTopConcept compass:Species_GiantTubeWorm ;
+    skos:hasTopConcept compass:Species_PompeiiWorm ;
+    skos:hasTopConcept compass:Species_RingedSeal ;
+    skos:hasTopConcept compass:Species_PolarBear ;
+    skos:hasTopConcept compass:Species_ArcticCod ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:Species_NorthAtlanticRightWhale a skos:Concept ;
+    skos:prefLabel "North Atlantic Right Whale"@en ;
+    skos:prefLabel "Nordatlantischer Glattwal"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_EubalaenaGlacialis a skos:Concept ;
+    skos:prefLabel "Eubalaena glacialis"@en ;
+    skos:prefLabel "Eubalaena glacialis"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_GiantPacificOctopus a skos:Concept ;
+    skos:prefLabel "Giant Pacific Octopus"@en ;
+    skos:prefLabel "Riesenpazifikkrake"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_VampireSquid a skos:Concept ;
+    skos:prefLabel "Vampire Squid"@en ;
+    skos:prefLabel "Vampirtintenfisch"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_BottlenoseDolphin a skos:Concept ;
+    skos:prefLabel "Bottlenose Dolphin"@en ;
+    skos:prefLabel "Großer Tümmler"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_ShortBeakedCommonDolphin a skos:Concept ;
+    skos:prefLabel "Short-beaked Common Dolphin"@en ;
+    skos:prefLabel "Kurzschnäuziger Gemeiner Delfin"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_StripedDolphin a skos:Concept ;
+    skos:prefLabel "Striped Dolphin"@en ;
+    skos:prefLabel "Streifendelfin"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_GiantTubeWorm a skos:Concept ;
+    skos:prefLabel "Giant Tube Worm"@en ;
+    skos:prefLabel "Riesenröhrenwurm"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_PompeiiWorm a skos:Concept ;
+    skos:prefLabel "Pompeii Worm"@en ;
+    skos:prefLabel "Pompejiwurm"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_RingedSeal a skos:Concept ;
+    skos:prefLabel "Ringed Seal"@en ;
+    skos:prefLabel "Ringelrobbe"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_PolarBear a skos:Concept ;
+    skos:prefLabel "Polar Bear"@en ;
+    skos:prefLabel "Eisbär"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .
+
+compass:Species_ArcticCod a skos:Concept ;
+    skos:prefLabel "Arctic Cod"@en ;
+    skos:prefLabel "Polardorsch"@de ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    skos:inScheme compass:SpeciesScheme .

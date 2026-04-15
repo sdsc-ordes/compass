@@ -73,14 +73,30 @@ def _parse_projects(projects_raw: str) -> List[Dict[str, Any]]:
 
 
 def _parse_species(res: dict) -> List[str]:
-    """Merge species from linked projects and species declared directly on the entity."""
+    """Merge species from linked projects and species declared directly on the entity.
+
+    Supports both legacy literal values and new iri|label encodings.
+    """
     species_raw = res.get("speciesRaw", "") or ""
     self_species_raw = res.get("selfSpeciesRaw", "") or ""
-    return list(dict.fromkeys(
-        s.strip()
-        for s in (species_raw + ITEM_SEP + self_species_raw).split(ITEM_SEP)
-        if s.strip()
-    ))
+
+    merged: List[str] = []
+    for token in (species_raw + ITEM_SEP + self_species_raw).split(ITEM_SEP):
+        token = token.strip()
+        if not token:
+            continue
+
+        if FIELD_SEP in token:
+            iri, label = token.split(FIELD_SEP, 1)
+            iri = iri.strip()
+            label = label.strip()
+            value = label or iri.split("#")[-1].split("/")[-1]
+        else:
+            value = token
+
+        merged.append(value)
+
+    return list(dict.fromkeys(merged))
 
 
 def _parse_special_properties(res: dict) -> Dict[str, Any]:

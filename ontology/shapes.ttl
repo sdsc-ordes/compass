@@ -866,7 +866,8 @@ compass:ProjectShape a sh:NodeShape ;
         sh:name "Arten"@de ;
         sh:description "Species studied in the project."@en ;
         sh:description "Im Projekt untersuchte Arten."@de ;
-        sh:datatype rdf:langString ;
+        sh:class skos:Concept ;
+        sh:nodeKind sh:IRI ;
     ] ;
 
     sh:property [

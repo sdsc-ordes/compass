@@ -95,7 +95,7 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
 
         filters.append(filter_item)
 
-    _add_species_filter(g, filters, lang)
+    _add_promoted_filters(g, filters, lang)
     _add_entity_type_filter(g, filters, lang)
     return sorted(filters, key=lambda x: x["label"])
 
@@ -119,10 +119,17 @@ def _multiselect_options(g, prop, path, target_class, sh_in_list, lang) -> list:
     else:
         seen: dict = {}
         for val in g.objects(None, path):
-            if isinstance(val, Literal) and (val.language == lang or val.language is None):
-                str_val = str(val)
-                if str_val not in seen:
-                    seen[str_val] = {"value": str_val, "label": str_val}
+            if isinstance(val, URIRef):
+                key = str(val)
+                if key not in seen:
+                    seen[key] = {
+                        "value": key,
+                        "label": get_label(g, val, RDFS.label, lang),
+                    }
+            elif isinstance(val, Literal) and (val.language == lang or val.language is None):
+                key = str(val)
+                if key not in seen:
+                    seen[key] = {"value": key, "label": key}
         options = list(seen.values())
     return sorted(options, key=lambda x: x["label"])
 
@@ -148,26 +155,40 @@ def _datepicker_bounds(g, path) -> dict:
     }
 
 
-def _add_species_filter(g: Graph, filters: list, lang: str) -> None:
-    """Append a species multiselect built from Project instances."""
-    species_values = {
-        str(obj)
-        for subj in g.subjects(RDF.type, COMPASS.Project)
-        for obj in g.objects(subj, COMPASS.species)
-        if isinstance(obj, Literal) and (obj.language == lang or obj.language is None)
-    }
-    if species_values:
-        filters.append({
-            "id": "species",
-            "path": str(COMPASS.species),
-            "label": "Species" if lang == "en" else "Arten",
-            "type": "multiselect",
-            "order": 0,
-            "options": sorted(
-                [{"value": s, "label": s} for s in species_values],
-                key=lambda x: x["label"],
-            ),
-        })
+# Properties from related shapes to promote as organization-level filters.
+# Each entry is (shape IRI, property path IRI).  The filter label comes from
+# sh:name on the property shape; options use the generic _multiselect_options.
+_PROMOTED_SHAPE_FILTERS = [
+    (COMPASS.ProjectShape, COMPASS.species),
+]
+
+
+def _add_promoted_filters(g: Graph, filters: list, lang: str) -> None:
+    """Surface properties from related shapes (e.g. ProjectShape) as filters."""
+    for shape_iri, path_iri in _PROMOTED_SHAPE_FILTERS:
+        # Locate the sh:property node for this path within the shape
+        prop_node = None
+        for node in g.objects(shape_iri, SH.property):
+            if g.value(node, SH.path) == path_iri:
+                prop_node = node
+                break
+
+        path_str = str(path_iri)
+        local_name = path_str.split("#")[-1].split("/")[-1]
+        label = get_label(g, prop_node, SH.name, lang) if prop_node else local_name
+
+        # Always enumerate from actual data (target_class=None) because the
+        # declared class on the shape may be too broad (e.g. skos:Concept).
+        options = _multiselect_options(g, prop_node, path_iri, None, [], lang)
+        if options:
+            filters.append({
+                "id": local_name,
+                "path": path_str,
+                "label": label,
+                "type": "multiselect",
+                "order": 0,
+                "options": options,
+            })
 
 
 def _add_entity_type_filter(g: Graph, filters: list, lang: str) -> None:
