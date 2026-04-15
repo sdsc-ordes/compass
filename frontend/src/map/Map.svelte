@@ -35,6 +35,11 @@
   export let entities: any[] = [];
   export let onEntitySelect: (props: any) => void = () => {};
 
+  /** Expose the WebGL canvas for screenshot capture. */
+  export function getMapCanvas(): HTMLCanvasElement | null {
+    return map?.getCanvas() ?? null;
+  }
+
   let mapContainer: HTMLElement;
   let map: maplibregl.Map;
   let projection: 'globe' | 'mercator' = 'mercator';
@@ -48,21 +53,29 @@
   // Pinned selection (click-to-persist connections)
   let selectedIri: string | null = null;
   let selectedTypeIri: string | null = null;
+  let mapLoaded = false;
 
   $: t = i18n[lang] || i18n.en;
-  $: if (map && entities) {
+  $: if (mapLoaded && entities) {
     updateMarkers();
   }
 
   onMount(() => {
     map = new maplibregl.Map({
       container: mapContainer,
-      style: 'https://tiles.openfreemap.org/styles/liberty', 
+      style: 'https://tiles.openfreemap.org/styles/liberty',
       center: [0, 20],
       zoom: 2,
+      preserveDrawingBuffer: true, // required for canvas screenshot export
     });
 
     map.on('load', () => {
+      try {
+        addOceanLayers();
+      } catch (e) {
+        console.warn('[Compass] Ocean layers failed to initialize:', e);
+      }
+      mapLoaded = true;
       updateMarkers();
       setupEventHandlers();
     });
@@ -72,8 +85,62 @@
     if (map) map.remove();
   });
 
+  function addOceanLayers() {
+    // Find the first layer above 'water' so we can insert ocean overlays
+    // between the basemap water fill (blue) and land/label layers.
+    const styleLayers = map.getStyle().layers;
+    const waterIdx = styleLayers.findIndex(l => l.id === 'water');
+    const aboveWater = waterIdx >= 0 && waterIdx + 1 < styleLayers.length
+      ? styleLayers[waterIdx + 1].id
+      : undefined;
+
+    // --- GEBCO Bathymetry ---
+    // Free for commercial use with attribution: https://www.gebco.net/data_and_products/gridded_bathymetry_data/
+    map.addSource('gebco-bathymetry', {
+      type: 'raster',
+      tiles: [
+        'https://wms.gebco.net/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
+        '&LAYERS=GEBCO_LATEST&WIDTH=256&HEIGHT=256&CRS=EPSG:3857' +
+        '&BBOX={bbox-epsg-3857}&FORMAT=image/png'
+      ],
+      tileSize: 256,
+      attribution: '© <a href="https://www.gebco.net" target="_blank" rel="noopener">GEBCO</a> Compilation Group'
+    });
+
+    // GEBCO sits ABOVE the basemap water fill at partial opacity.
+    // The basemap keeps its natural blue ocean color; GEBCO adds depth texture on top.
+    // Land/label layers above mask GEBCO on land automatically.
+    map.addLayer(
+      { id: 'gebco-layer', type: 'raster', source: 'gebco-bathymetry',
+        paint: {
+          'raster-opacity': 0.35,
+          'raster-contrast': 0.15,
+          'raster-saturation': -0.3,
+        }
+      },
+      aboveWater
+    );
+
+    // --- OpenSeaMap nautical overlay ---
+    // Free for commercial use (CC BY-SA 2.0): https://www.openseamap.org
+    map.addSource('openseamap', {
+      type: 'raster',
+      tiles: ['https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '© <a href="https://www.openseamap.org" target="_blank" rel="noopener">OpenSeaMap</a> contributors'
+    });
+
+    // Subtle nautical marks above bathymetry, below entity pins
+    map.addLayer({
+      id: 'openseamap-layer',
+      type: 'raster',
+      source: 'openseamap',
+      paint: { 'raster-opacity': 0.45 }
+    });
+  }
+
   function updateMarkers() {
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !mapLoaded) return;
 
     // Remove all layers that depend on 'entities' source before removal
     const layers = ['connections-line', 'connections-nodes', 'clusters', 'cluster-count', 'unclustered-point', 'featured-star', 'cta-points', 'region-fill', 'region-outline'];
@@ -200,7 +267,7 @@
       filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'is_cta']], ['!=', ['get', 'id'], FEATURED_IRI]],
       paint: {
         'circle-color': typeColorExpression(),
-        'circle-radius': 8,
+        'circle-radius': 12, // 24px diameter — meets WCAG 2.5.8 touch target minimum
         'circle-stroke-width': 2,
         'circle-stroke-color': '#fff'
       }
@@ -233,7 +300,7 @@
       filter: ['all', ['!', ['has', 'point_count']], ['has', 'is_cta']],
       paint: {
         'circle-color': '#f43f5e',
-        'circle-radius': 9,
+        'circle-radius': 12, // 24px diameter — meets WCAG 2.5.8 touch target minimum
         'circle-stroke-width': 3,
         'circle-stroke-color': '#ffe4e6',
         'circle-blur': 0.1

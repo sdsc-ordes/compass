@@ -524,7 +524,7 @@ ocinst:GOOS a compass:Network ;
     compass:memberCount 120 ;
     schema:url "https://www.goosocean.org"^^xsd:anyURI ;
     compass:focusArea compass:PhysicalOceanography, compass:ClimateScience ;
-    geo:lat "48.3534"^^xsd:float ;
+    geo:lat "47.3534"^^xsd:float ;
     geo:long "-4.5566"^^xsd:float ;
     compass:fundingSource compass:Funding_International ;
     compass:primaryOceanRegion compass:Region_Global ;
