@@ -15,6 +15,7 @@
 
   let entities: any[] = [];
   let activeFilters: any = {};
+  let legendTypeFilters: string[] = [];
   let viewMode: 'map' | 'list' = 'map';
   let isLoading = true;
   let error: string | null = null;
@@ -41,6 +42,7 @@
           const resp = await fetch(`${apiurl}/api/states/${stateId}`);
           const data = await resp.json();
           activeFilters = data.filters || {};
+          legendTypeFilters = Array.isArray(activeFilters.entityType) ? activeFilters.entityType : [];
           viewMode = data.view || 'map';
           if (data.lang) lang = data.lang;
         } catch (e) {
@@ -57,6 +59,7 @@
        }
        if (Object.keys(restoredFilters).length > 0) {
          activeFilters = restoredFilters;
+         legendTypeFilters = Array.isArray(activeFilters.entityType) ? activeFilters.entityType : [];
          console.log("[Compass] Restored filters from URL:", activeFilters);
        }
        console.log("[Compass] No saved state. Running initial fetch...");
@@ -142,7 +145,23 @@
   }
 
   function handleFilterChange(filters: any) {
-    activeFilters = { ...filters };
+    // Preserve entityType managed by the map legend (not by FilterPanel)
+    activeFilters = {
+      ...filters,
+      ...(legendTypeFilters.length ? { entityType: legendTypeFilters } : {}),
+    };
+  }
+
+  function handleTypeFilterChange(iris: string[]) {
+    legendTypeFilters = iris;
+    activeFilters = {
+      ...activeFilters,
+      ...(iris.length ? { entityType: iris } : {}),
+    };
+    if (!iris.length) {
+      const { entityType: _, ...rest } = activeFilters;
+      activeFilters = rest;
+    }
   }
 
   // When entities are re-fetched (e.g. language change), refresh the open sidebar.
@@ -247,7 +266,7 @@
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {apiurl} {lang} {entities} onEntitySelect={handleEntitySelect} />
+        <Map {apiurl} {lang} {entities} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} />
       {:else}
         <ListView {entities} {lang} />
       {/if}

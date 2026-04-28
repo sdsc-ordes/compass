@@ -71,6 +71,8 @@
   export let lang: Lang = 'en';
   export let entities: any[] = [];
   export let onEntitySelect: (props: any) => void = () => {};
+  export let activeTypeFilters: string[] = [];
+  export let onTypeFilterChange: (iris: string[]) => void = () => {};
 
   /** Expose the WebGL canvas for screenshot capture. */
   export function getMapCanvas(): HTMLCanvasElement | null {
@@ -80,6 +82,19 @@
   let mapContainer: HTMLElement;
   let map: maplibregl.Map;
   let projection: 'globe' | 'mercator' = 'mercator';
+
+  // Legend type filter state — empty set means "show all"
+  let selectedTypeIris = new Set<string>();
+
+  function toggleTypeLegend(iri: string) {
+    if (selectedTypeIris.has(iri)) {
+      selectedTypeIris.delete(iri);
+    } else {
+      selectedTypeIris.add(iri);
+    }
+    selectedTypeIris = new Set(selectedTypeIris); // trigger reactivity
+    onTypeFilterChange([...selectedTypeIris]);
+  }
 
   // Hover/click connection index
   const PROJECT_IRI = 'http://example.org/ocean-org/ontology#Project';
@@ -101,6 +116,10 @@
   }
 
   onMount(() => {
+    if (activeTypeFilters.length > 0) {
+      selectedTypeIris = new Set(activeTypeFilters);
+    }
+
     map = new maplibregl.Map({
       container: mapContainer,
       style: 'https://tiles.openfreemap.org/styles/liberty',
@@ -596,10 +615,16 @@
 
   <div class="map-legend">
     {#each Object.entries(TYPE_COLORS) as [iri, color]}
-      <div class="legend-item">
+      <button
+        class="legend-item legend-type-btn"
+        class:legend-inactive={selectedTypeIris.size > 0 && !selectedTypeIris.has(iri)}
+        class:legend-active={selectedTypeIris.has(iri)}
+        on:click={() => toggleTypeLegend(iri)}
+        title={getTypeLabel(iri, lang)}
+      >
         <span class="legend-dot" style="background:{color}"></span>
         <span class="legend-label">{getTypeLabel(iri, lang)}</span>
-      </div>
+      </button>
     {/each}
     <div class="legend-separator"></div>
     <div class="legend-item">
@@ -694,6 +719,26 @@
     display: flex;
     align-items: center;
     gap: 7px;
+  }
+
+  .legend-type-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 5px;
+    transition: opacity 0.18s, background 0.18s;
+    width: 100%;
+    text-align: left;
+  }
+  .legend-type-btn:hover {
+    background: rgba(0,0,0,0.06);
+  }
+  .legend-type-btn.legend-inactive {
+    opacity: 0.35;
+  }
+  .legend-type-btn.legend-active {
+    background: rgba(0,0,0,0.07);
   }
 
   .legend-dot {

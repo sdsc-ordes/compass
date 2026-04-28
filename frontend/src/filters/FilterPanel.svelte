@@ -70,6 +70,9 @@
 
   let collapsedFilters: Record<string, boolean> = {};
 
+  // entityType is handled by the map legend — exclude it from the filter panel
+  $: displaySchema = schema.filter((f: any) => f.id !== 'entityType');
+
   $: if (schema.length > 0 && Object.keys(collapsedFilters).length === 0) {
     collapsedFilters = Object.fromEntries(schema.map(f => [f.id, true]));
   }
@@ -98,7 +101,7 @@
   </div>
 
   <div class="filters-list">
-    {#each schema as filter}
+    {#each displaySchema as filter}
       <div class="filter-group">
         <button class="filter-group-header" on:click={() => toggleCollapse(filter.id)}>
           <span class="filter-label">{filter.label}</span>
