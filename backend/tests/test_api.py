@@ -31,7 +31,7 @@ class TestFiltersEndpoint:
             assert "id" in f
             assert "label" in f
             assert "type" in f
-            assert f["type"] in {"multiselect", "slider", "datepicker"}
+            assert f["type"] in {"multiselect", "slider", "datepicker", "toggle"}
 
     def test_german_works(self, client):
         data = client.get("/api/filters/schema?lang=de").json()

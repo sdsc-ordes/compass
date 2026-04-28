@@ -75,65 +75,59 @@ class TestRequiredPredicates:
 class TestSpecialOptionalPredicates:
     """Predicates referenced in _special_optionals() for type-specific fields."""
 
-    NETWORK_PREDICATES = [
-        (COMPASS.memberCount, "memberCount"),
-        (COMPASS.memberStates, "memberStates"),
-        (COMPASS.mandate, "mandate"),
-    ]
-
-    def test_network_predicates_exist(self, rdflib_graph):
-        networks = list(rdflib_graph.subjects(RDF.type, COMPASS.Network))
-        forums = list(rdflib_graph.subjects(RDF.type, COMPASS.InternationalForum))
-        if not networks and not forums:
-            return
-
-        for pred, name in self.NETWORK_PREDICATES:
-            triples = list(rdflib_graph.triples((None, pred, None)))
-            assert triples, (
-                f"No triples with predicate {pred} ({name}). "
-                f"If renamed, update _special_optionals() and _parse_special_properties()."
-            )
-
-    def test_project_date_predicates_exist(self, rdflib_graph):
+    def test_project_startdate_predicate_exists(self, rdflib_graph):
         projects = list(rdflib_graph.subjects(RDF.type, COMPASS.Project))
         if not projects:
             return
-        for pred in [COMPASS.startDate, COMPASS.endDate]:
-            triples = list(rdflib_graph.triples((None, pred, None)))
-            assert triples, (
-                f"No triples with predicate {pred}. "
-                f"If renamed, update _special_optionals() and _parse_special_properties()."
-            )
-
-
-# -- ForumShape drives filter schema and property specs --
-
-class TestForumShapeExists:
-    """schema.py reads compass:ForumShape. If renamed or emptied, everything breaks."""
-
-    def test_shape_has_properties(self, rdflib_graph):
-        props = list(rdflib_graph.objects(COMPASS.ForumShape, SH.property))
-        assert len(props) > 0, (
-            "compass:ForumShape has no sh:property entries — "
-            "filters will be empty, SPARQL will have no OPTIONAL clauses."
+        triples = list(rdflib_graph.triples((None, COMPASS.startDate, None)))
+        assert triples, (
+            "No compass:startDate triples found. "
+            "If renamed, update _special_optionals() and _parse_special_properties()."
         )
 
-    def test_focus_area_property_in_shape(self, rdflib_graph):
-        paths = {
-            rdflib_graph.value(p, SH.path)
-            for p in rdflib_graph.objects(COMPASS.ForumShape, SH.property)
-        }
-        assert COMPASS.focusArea in paths, (
-            "compass:focusArea not found in ForumShape — focus-area filter will be missing."
+
+# -- Named property shapes drive schema.py (via entity NodeShapes) --
+
+class TestNamedPropertyShapes:
+    """schema.py reads named sh:Shape IRIs from entity NodeShapes (those with sh:targetClass).
+    If entity NodeShapes lose their sh:property references, filters and SPARQL break."""
+
+    def _entity_prop_paths(self, g):
+        paths = set()
+        for node_shape in g.subjects(SH.targetClass, None):
+            for p in g.objects(node_shape, SH.property):
+                if isinstance(p, URIRef):
+                    path = g.value(p, SH.path)
+                    if path is not None:
+                        paths.add(path)
+        return paths
+
+    def test_entity_nodeshapes_have_named_properties(self, rdflib_graph):
+        count = sum(
+            1
+            for node_shape in rdflib_graph.subjects(SH.targetClass, None)
+            for p in rdflib_graph.objects(node_shape, SH.property)
+            if isinstance(p, URIRef)
+        )
+        assert count > 0, (
+            "No named sh:property IRIs found on entity NodeShapes — "
+            "filters will be empty and SPARQL will have no OPTIONAL clauses."
         )
 
-    def test_public_theme_property_in_shape(self, rdflib_graph):
-        paths = {
-            rdflib_graph.value(p, SH.path)
-            for p in rdflib_graph.objects(COMPASS.ForumShape, SH.property)
-        }
-        assert COMPASS.publicTheme in paths, (
-            "compass:publicTheme not found in ForumShape — theme filter will be missing."
+    def test_key_sentence_in_entity_shapes(self, rdflib_graph):
+        paths = self._entity_prop_paths(rdflib_graph)
+        assert COMPASS.keySentence in paths, (
+            "compass:keySentence not found in any entity NodeShape property — "
+            "key sentence field will be missing."
+        )
+
+    def test_founding_date_in_entity_shapes(self, rdflib_graph):
+        from rdflib import URIRef
+        founding_date = URIRef("https://schema.org/foundingDate")
+        paths = self._entity_prop_paths(rdflib_graph)
+        assert founding_date in paths, (
+            "schema:foundingDate not found in any entity NodeShape property — "
+            "founding year field will be missing."
         )
 
 

@@ -15,25 +15,19 @@ from app.sparql_builder import build_entities_query
 
 
 class TestParseSpecialProperties:
-    def test_extracts_network_fields(self):
+    def test_extracts_project_dates(self):
         res = {
-            "memberCountResult": "45",
-            "memberStatesResult": "23",
-            "mandateResult": "Ocean governance",
             "selfStart": "2010-01-01",
-            "selfEnd": "",
+            "selfEnd": "2020-12-31",
         }
         props = _parse_special_properties(res)
-        assert props["memberCount"] == "45"
-        assert props["memberStates"] == "23"
-        assert props["mandate"] == "Ocean governance"
         assert props["startDate"] == "2010-01-01"
-        assert props["endDate"] == ""
+        assert props["endDate"] == "2020-12-31"
 
     def test_missing_fields_default_empty(self):
         props = _parse_special_properties({})
-        assert props["memberCount"] == ""
-        assert props["mandate"] == ""
+        assert props["startDate"] == ""
+        assert props["endDate"] == ""
 
 
 class TestExtractProperty:

@@ -59,6 +59,16 @@
     notify();
   }
 
+  function setBooleanFilter(filterId: string, val: string) {
+    if (val === 'any') {
+      const { [filterId]: _, ...rest } = activeFilters;
+      activeFilters = rest;
+    } else {
+      activeFilters[filterId] = val;
+    }
+    notify();
+  }
+
   function notify() {
     onFilterChange(activeFilters);
   }
@@ -159,6 +169,18 @@
             {#if activeFilters[filter.id]}
               <span class="date-hint">Updated on or after {activeFilters[filter.id]}</span>
             {/if}
+          </div>
+        {:else if filter.type === 'toggle'}
+          <div class="bool-group">
+            {#each ['any', 'true', 'false'] as val}
+              <button
+                class="bool-btn"
+                class:active={(val === 'any' && !activeFilters[filter.id]) || activeFilters[filter.id] === val}
+                on:click={() => setBooleanFilter(filter.id, val)}
+              >
+                {val === 'any' ? (lang === 'de' ? 'Alle' : 'Any') : val === 'true' ? (lang === 'de' ? 'Ja' : 'Yes') : (lang === 'de' ? 'Nein' : 'No')}
+              </button>
+            {/each}
           </div>
         {/if}
         {/if}
@@ -340,5 +362,34 @@
     font-size: 0.75rem;
     color: #0284c7;
     font-weight: 500;
+  }
+  .bool-group {
+    display: flex;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .bool-btn {
+    flex: 1;
+    padding: 5px 4px;
+    font-size: 0.8125rem;
+    background: white;
+    border: none;
+    border-right: 1px solid #e2e8f0;
+    color: #64748b;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .bool-btn:last-child {
+    border-right: none;
+  }
+  .bool-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  .bool-btn.active {
+    background: #0284c7;
+    color: white;
+    font-weight: 600;
   }
 </style>

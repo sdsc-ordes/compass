@@ -26,12 +26,22 @@ _NESTED_PROPS: set = set()
 # Fetched for display but not exposed as filter dimensions
 _DISPLAY_ONLY = {
     SCHEMA.url, SCHEMA.image, COMPASS.keySentence, COMPASS.activities,
-    COMPASS.location, COMPASS.secretTheme, COMPASS.managedByOceanCare,
-    COMPASS.mandate,
+    COMPASS.location, COMPASS.secretTheme,
 }
 
 # All properties excluded from the standard per-property loop
 _SKIP_PROPS = _PREAMBLE_PROPS | _NESTED_PROPS | _DISPLAY_ONLY
+
+
+def _entity_property_nodes(g: Graph):
+    """Yield each named sh:Shape (IRI) referenced via sh:property from any
+    entity NodeShape (a NodeShape that has sh:targetClass)."""
+    seen: set = set()
+    for node_shape in g.subjects(SH.targetClass, None):
+        for p in g.objects(node_shape, SH.property):
+            if isinstance(p, URIRef) and p not in seen:
+                seen.add(p)
+                yield p
 
 
 def get_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
@@ -59,7 +69,7 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
     """Build the filter UI schema by traversing the SHACL ForumShape."""
     filters: List[Dict[str, Any]] = []
 
-    for prop in g.objects(COMPASS.ForumShape, SH.property):
+    for prop in _entity_property_nodes(g):
         path = g.value(prop, SH.path)
         if path in _SKIP_PROPS:
             continue
@@ -102,6 +112,8 @@ def _infer_widget(datatype, target_class, sh_in_list) -> str:
         return "slider"
     if datatype == XSD.date:
         return "datepicker"
+    if datatype == XSD.boolean:
+        return "toggle"
     return "multiselect"
 
 
@@ -180,7 +192,7 @@ def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
     that needs a SPARQL OPTIONAL clause and a GeoJSON output field."""
     specs = []
 
-    for prop_node in g.objects(COMPASS.ForumShape, SH.property):
+    for prop_node in _entity_property_nodes(g):
         path = g.value(prop_node, SH.path)
         if path is None or path in _PREAMBLE_PROPS or path in _NESTED_PROPS:
             continue
@@ -227,8 +239,10 @@ def _infer_category(datatype, is_iri: bool) -> str:
 
 
 def _infer_filter_type(path, category: str, datatype) -> str:
-    if path in _DISPLAY_ONLY or category in ("uri_literal", "boolean"):
+    if path in _DISPLAY_ONLY or category == "uri_literal":
         return "none"
+    if category == "boolean":
+        return "toggle"
     if category == "iri_with_label":
         return "multiselect"
     if datatype is not None and str(datatype) in {

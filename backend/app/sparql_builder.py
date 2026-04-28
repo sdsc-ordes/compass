@@ -94,22 +94,16 @@ def _sparql_preamble(lang: str) -> str:
 
 
 def _special_optionals(lang: str) -> str:
-    """OPTIONAL clauses for type-specific properties not in ForumShape."""
+    """OPTIONAL clauses for type-specific properties not in entity NodeShapes."""
     return f"""
-        OPTIONAL {{ ?s compass:memberCount ?memberCount . }}
-        OPTIONAL {{ ?s compass:memberStates ?memberStates . }}
-        OPTIONAL {{ ?s compass:mandate ?mandate . FILTER(lang(?mandate) = "{lang}") }}
         OPTIONAL {{ ?s compass:startDate ?selfStart . }}
         OPTIONAL {{ ?s compass:endDate ?selfEnd . }}
 """
 
 
 def _special_selects() -> str:
-    """SELECT expressions for type-specific variables not in ForumShape specs."""
+    """SELECT expressions for type-specific variables not in entity NodeShape specs."""
     return (
-        '           (SAMPLE(?memberCount) AS ?memberCountResult)\n'
-        '           (SAMPLE(?memberStates) AS ?memberStatesResult)\n'
-        '           (SAMPLE(?mandate) AS ?mandateResult)\n'
         '           (SAMPLE(?selfStart) AS ?selfStart)\n'
         '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
     )
@@ -210,7 +204,7 @@ def build_entities_query(
     date_filters: Dict[str, str] = {}
     for spec in specs:
         prefixed = to_prefixed(spec["path_iri"])
-        if spec["filter_type"] == "multiselect":
+        if spec["filter_type"] in ("multiselect", "toggle"):
             filter_map[spec["id"]] = prefixed
         elif spec["filter_type"] == "slider":
             range_filters[spec["id"]] = (prefixed, spec.get("datatype"))

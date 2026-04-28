@@ -53,11 +53,8 @@ def extract_property(spec: dict, res: dict) -> Any:
 
 
 def _parse_special_properties(res: dict) -> dict:
-    """Extract type-specific fields (Network/Forum/Project) from a result row."""
+    """Extract type-specific fields (Project) from a result row."""
     return {
-        "memberCount": res.get("memberCountResult", ""),
-        "memberStates": res.get("memberStatesResult", ""),
-        "mandate": res.get("mandateResult", ""),
         "startDate": res.get("selfStart", ""),
         "endDate": res.get("selfEnd", ""),
     }

@@ -88,7 +88,7 @@ class TestGetPropertySpecs:
             assert spec["category"] in valid, f"Invalid category '{spec['category']}' for {spec['id']}"
 
     def test_spec_filter_types_valid(self, rdflib_graph):
-        valid = {"multiselect", "slider", "datepicker", "none"}
+        valid = {"multiselect", "slider", "datepicker", "toggle", "none"}
         for spec in get_property_specs(rdflib_graph):
             assert spec["filter_type"] in valid, f"Invalid filter_type '{spec['filter_type']}' for {spec['id']}"
 
