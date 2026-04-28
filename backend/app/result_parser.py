@@ -52,68 +52,14 @@ def extract_property(spec: dict, res: dict) -> Any:
     return res.get(f"{sid}Result", "")
 
 
-def _parse_projects(projects_raw: str) -> List[Dict[str, Any]]:
-    """Parse the GROUP_CONCAT project string into a list of project dicts.
-
-    Each entry in the raw string has the form:
-        name|startDate|endDate|imageUrl|projectUrl|projectIri
-    """
-    projects = []
-    for entry in projects_raw.split(ITEM_SEP):
-        parts = entry.strip().split(FIELD_SEP)
-        if len(parts) >= 1 and parts[0]:
-            proj: Dict[str, Any] = {"name": parts[0]}
-            if len(parts) > 1 and parts[1]: proj["startDate"] = parts[1]
-            if len(parts) > 2 and parts[2]: proj["endDate"] = parts[2]
-            if len(parts) > 3 and parts[3]: proj["imageUrl"] = parts[3]
-            if len(parts) > 4 and parts[4]: proj["projectUrl"] = parts[4]
-            if len(parts) > 5 and parts[5]: proj["projectIri"] = parts[5]
-            projects.append(proj)
-    return projects
-
-
-def _parse_species(res: dict) -> List[str]:
-    """Merge species from linked projects and species declared directly on the entity.
-
-    Supports both legacy literal values and new iri|label encodings.
-    """
-    species_raw = res.get("speciesRaw", "") or ""
-    self_species_raw = res.get("selfSpeciesRaw", "") or ""
-
-    merged: List[str] = []
-    for token in (species_raw + ITEM_SEP + self_species_raw).split(ITEM_SEP):
-        token = token.strip()
-        if not token:
-            continue
-
-        if FIELD_SEP in token:
-            iri, label = token.split(FIELD_SEP, 1)
-            iri = iri.strip()
-            label = label.strip()
-            value = label or iri.split("#")[-1].split("/")[-1]
-        else:
-            value = token
-
-        merged.append(value)
-
-    return list(dict.fromkeys(merged))
-
-
-def _parse_special_properties(res: dict) -> Dict[str, Any]:
-    """Extract Network/Forum/Project-specific fields from a result row."""
+def _parse_special_properties(res: dict) -> dict:
+    """Extract type-specific fields (Network/Forum/Project) from a result row."""
     return {
         "memberCount": res.get("memberCountResult", ""),
         "memberStates": res.get("memberStatesResult", ""),
         "mandate": res.get("mandateResult", ""),
         "startDate": res.get("selfStart", ""),
         "endDate": res.get("selfEnd", ""),
-        "imageUrl": res.get("selfImage", ""),
-        "projectUrl": res.get("selfUrl", ""),
-        "projectIris": [
-            p.strip()
-            for p in (res.get("linkedProjectIris") or "").split(ITEM_SEP)
-            if p.strip()
-        ],
     }
 
 
@@ -149,12 +95,6 @@ def results_to_geojson(
             for spec in specs:
                 properties[spec["id"]] = extract_property(spec, res)
 
-            # Project entities may not have schema:url but do have projectUrl
-            if not properties.get("url"):
-                properties["url"] = res.get("selfUrl", "")
-
-            properties["projects"] = _parse_projects(res.get("projectsRaw", "") or "")
-            properties["species"] = _parse_species(res)
             properties.update(_parse_special_properties(res))
 
             features.append(Feature(geometry=Point((lng, lat)), properties=properties))

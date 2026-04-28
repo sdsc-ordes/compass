@@ -16,10 +16,6 @@
   }
 
   $: focusAreas = safeParseJson(entity?.focusArea, [] as any[]);
-  $: region     = safeParseJson(entity?.primaryOceanRegion, null);
-  $: funding    = safeParseJson(entity?.fundingSource, null);
-  $: access     = safeParseJson(entity?.accessType, null);
-  $: activities = safeParseJson(entity?.activities, [] as any[]);
   $: projects   = safeParseJson(entity?.projects, [] as any[]);
   $: species    = safeParseJson(entity?.species, [] as string[]);
 </script>
@@ -57,27 +53,12 @@
       <p class="country">{entity.country}</p>
     {/if}
 
-    {#if entity?.mostRecentUpdate}
-      <p class="last-update">{t.propLastUpdate}: {entity.mostRecentUpdate}</p>
-    {/if}
-
     {#if entity?.offersResearchTrips}
       <span class="chip chip-trips"><Compass size={12} /> {t.researchTripsYes}</span>
     {/if}
 
-    {#if focusAreas.length > 0 || region || funding || access || activities.length > 0}
+    {#if focusAreas.length > 0}
       <div class="props-section">
-        {#if activities.length > 0}
-          <div class="prop-row">
-            <span class="prop-label">{t.propActivities}</span>
-            <ul class="activities-list">
-              {#each activities as act}
-                <li>{act}</li>
-              {/each}
-            </ul>
-          </div>
-        {/if}
-
         {#if focusAreas.length > 0}
           <div class="prop-row">
             <span class="prop-label">{t.propFocusArea}</span>
@@ -89,26 +70,6 @@
           </div>
         {/if}
 
-        {#if region}
-          <div class="prop-row">
-            <span class="prop-label">{t.propRegion}</span>
-            <a class="chip chip-region" href={region.iri} target="_blank" rel="noopener noreferrer">{region.label}</a>
-          </div>
-        {/if}
-
-        {#if funding}
-          <div class="prop-row">
-            <span class="prop-label">{t.propFunding}</span>
-            <a class="chip chip-funding" href={funding.iri} target="_blank" rel="noopener noreferrer">{funding.label}</a>
-          </div>
-        {/if}
-
-        {#if access}
-          <div class="prop-row">
-            <span class="prop-label">{t.propAccess}</span>
-            <a class="chip chip-access" href={access.iri} target="_blank" rel="noopener noreferrer">{access.label}</a>
-          </div>
-        {/if}
       </div>
     {/if}
 

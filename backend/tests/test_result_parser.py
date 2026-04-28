@@ -9,70 +9,9 @@ from starlette.datastructures import QueryParams
 from app.result_parser import (
     extract_property,
     results_to_geojson,
-    _parse_projects,
-    _parse_species,
     _parse_special_properties,
 )
 from app.sparql_builder import build_entities_query
-
-
-# ---------------------------------------------------------------------------
-# Unit tests for _parse_projects
-# ---------------------------------------------------------------------------
-
-class TestParseProjects:
-    def test_full_project_entry(self):
-        raw = "MyProject|2020-01-01|2025-12-31|http://img.png|http://proj.org|http://iri/1"
-        result = _parse_projects(raw)
-        assert len(result) == 1
-        assert result[0]["name"] == "MyProject"
-        assert result[0]["startDate"] == "2020-01-01"
-        assert result[0]["endDate"] == "2025-12-31"
-        assert result[0]["imageUrl"] == "http://img.png"
-        assert result[0]["projectUrl"] == "http://proj.org"
-        assert result[0]["projectIri"] == "http://iri/1"
-
-    def test_partial_project_entry(self):
-        raw = "ProjectX|2020-01-01|||"
-        result = _parse_projects(raw)
-        assert len(result) == 1
-        assert result[0]["name"] == "ProjectX"
-        assert "endDate" not in result[0]
-
-    def test_multiple_projects(self):
-        raw = "ProjA|2020|||http://a||;;ProjB|2021|||http://b||"
-        result = _parse_projects(raw)
-        assert len(result) == 2
-        assert result[0]["name"] == "ProjA"
-        assert result[1]["name"] == "ProjB"
-
-    def test_empty_string(self):
-        assert _parse_projects("") == []
-
-    def test_name_only(self):
-        result = _parse_projects("JustAName")
-        assert len(result) == 1
-        assert result[0]["name"] == "JustAName"
-
-
-class TestParseSpecies:
-    def test_merges_project_and_self_species(self):
-        res = {
-            "speciesRaw": "http://ex.org/species/whale|Whale;;http://ex.org/species/dolphin|Dolphin",
-            "selfSpeciesRaw": "http://ex.org/species/turtle|Turtle;;http://ex.org/species/whale|Whale",
-        }
-        species = _parse_species(res)
-        assert set(species) == {"Whale", "Dolphin", "Turtle"}
-        # Whale appears once (deduped), order preserved
-        assert species.index("Whale") < species.index("Dolphin")
-
-    def test_species_fallback_to_legacy_literals(self):
-        res = {"speciesRaw": "Whale;;Dolphin", "selfSpeciesRaw": "Turtle;;Whale"}
-        species = _parse_species(res)
-        assert set(species) == {"Whale", "Dolphin", "Turtle"}
-
-    def test_empty_species(self):
-        assert _parse_species({}) == []
 
 
 class TestParseSpecialProperties:
@@ -83,20 +22,18 @@ class TestParseSpecialProperties:
             "mandateResult": "Ocean governance",
             "selfStart": "2010-01-01",
             "selfEnd": "",
-            "selfImage": "http://img.png",
-            "selfPUrl": "http://proj.org",
-            "linkedProjectIris": "http://p1;;http://p2",
         }
         props = _parse_special_properties(res)
         assert props["memberCount"] == "45"
         assert props["memberStates"] == "23"
         assert props["mandate"] == "Ocean governance"
-        assert props["projectIris"] == ["http://p1", "http://p2"]
+        assert props["startDate"] == "2010-01-01"
+        assert props["endDate"] == ""
 
     def test_missing_fields_default_empty(self):
         props = _parse_special_properties({})
         assert props["memberCount"] == ""
-        assert props["projectIris"] == []
+        assert props["mandate"] == ""
 
 
 class TestExtractProperty:
@@ -153,27 +90,3 @@ class TestResultsToGeojsonIntegration:
             coords = feature["geometry"]["coordinates"]
             assert -180 <= coords[0] <= 180, f"Invalid longitude: {coords[0]}"
             assert -90 <= coords[1] <= 90, f"Invalid latitude: {coords[1]}"
-
-    def test_projects_field_populated(self, store, property_specs):
-        """At least some entities should have populated projects lists."""
-        sparql = build_entities_query(property_specs, "en", QueryParams(""))
-        results = store.query(sparql)
-        geojson = results_to_geojson(results, property_specs)
-
-        has_projects = [
-            f for f in geojson["features"]
-            if f["properties"].get("projects")
-        ]
-        assert len(has_projects) > 0, "No entities have populated projects — check hasProject triples"
-
-    def test_species_field_populated(self, store, property_specs):
-        """At least some entities should have species."""
-        sparql = build_entities_query(property_specs, "en", QueryParams(""))
-        results = store.query(sparql)
-        geojson = results_to_geojson(results, property_specs)
-
-        has_species = [
-            f for f in geojson["features"]
-            if f["properties"].get("species")
-        ]
-        assert len(has_species) > 0, "No entities have species — check species triples"

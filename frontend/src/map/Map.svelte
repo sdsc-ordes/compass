@@ -9,13 +9,10 @@
 
   // Map entity type IRIs to distinct pin colors
   const TYPE_COLORS: Record<string, string> = {
-    'http://example.org/ocean-org/ontology#ResearchInstitute': '#10b981', // emerald
-    'http://example.org/ocean-org/ontology#University':        '#3b82f6', // blue
-    'http://example.org/ocean-org/ontology#GovernmentAgency':  '#f97316', // orange
-    'http://example.org/ocean-org/ontology#NGO':               '#a855f7', // purple
-    'http://example.org/ocean-org/ontology#Network':           '#06b6d4', // cyan
-    'http://example.org/ocean-org/ontology#InternationalForum':'#f59e0b', // amber
-    'http://example.org/ocean-org/ontology#Project':           '#ec4899', // pink
+    'http://example.org/ocean-org/ontology#PartnerOrganization': '#10b981', // emerald
+    'http://example.org/ocean-org/ontology#Network':             '#06b6d4', // cyan
+    'http://example.org/ocean-org/ontology#InternationalForum':  '#f59e0b', // amber
+    'http://example.org/ocean-org/ontology#Project':             '#ec4899', // pink
   };
   const DEFAULT_PIN_COLOR = '#64748b'; // slate for unknown types
   const FEATURED_IRI = 'http://example.org/ocean-org/data#OceanCare';
@@ -23,10 +20,7 @@
   function getTypeLabel(iri: string, l: Lang): string {
     const key = iri.split('#')[1]?.split('/').pop() ?? iri;
     const labels: Record<string, { en: string; de: string }> = {
-      ResearchInstitute: { en: 'Research Institute', de: 'Forschungsinstitut' },
-      University: { en: 'University', de: 'Universität' },
-      GovernmentAgency: { en: 'Government Agency', de: 'Behörde' },
-      NGO: { en: 'NGO', de: 'NGO' },
+      PartnerOrganization: { en: 'Partner Organisation', de: 'Partnerorganisation' },
       Network: { en: 'Network', de: 'Netzwerk' },
       InternationalForum: { en: 'International Forum', de: 'Internationales Forum' },
       Project: { en: 'Project', de: 'Projekt' },

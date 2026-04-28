@@ -1,653 +1,204 @@
-@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
-@prefix geo:  <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:    <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix schema: <https://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
 @prefix compass: <http://example.org/ocean-org/ontology#> .
-@prefix ocinst: <http://example.org/ocean-org/data#> .
+@prefix ocinst:  <http://example.org/ocean-org/data#> .
 
 # ============================================================
-# Instance Data: Oceanographic Organizations
+# Instance Data: OceanCare Compass Entities
 # ============================================================
 
-# --- Research Institutes ---
-
-ocinst:WHOI a compass:ResearchInstitute ;
-    compass:organizationName "Woods Hole Oceanographic Institution"@en ;
-    compass:organizationName "Ozeanographisches Institut Woods Hole"@de ;
-    compass:country "United States"@en ;
-    compass:country "Vereinigte Staaten"@de ;
-    schema:foundingDate "1930"^^xsd:gYear ;
-    compass:staffSize 1000 ;
-    schema:url "https://www.whoi.edu"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:DeepSeaExploration, compass:ClimateScience ;
-    geo:lat "41.5245"^^xsd:float ;
-    geo:long "-70.6731"^^xsd:float ;
-    compass:annualBudgetUSD 250 ;
-    compass:publicationsPerYear 400 ;
-    compass:researchVessels 4 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Atlantic ;
-    compass:keySentence "A world leader in ocean science and engineering since 1930."@en ;
-    compass:keySentence "Weltführend in der Meeresforschung und -technik seit 1930."@de ;
-    compass:activities "Exploring deep-ocean ecosystems using autonomous underwater vehicles."@en ;
-    compass:activities "Monitoring ocean circulation and its impact on climate change."@en ;
-    compass:activities "Erforschung von Tiefsee-Ökosystemen mit autonomen Unterwasserfahrzeugen."@de ;
-    compass:activities "Überwachung der Ozeanzirkulation und ihres Einflusses auf den Klimawandel."@de ;
-    compass:mostRecentUpdate "2025-11-15"^^xsd:date ;
-    compass:donationUrl "https://www.whoi.edu/give"^^xsd:anyURI ;
-    compass:offersResearchTrips true ;
-    compass:hasProject ocinst:WHOI_NARW_Project .
-
-ocinst:MBARI a compass:ResearchInstitute ;
-    compass:organizationName "Monterey Bay Aquarium Research Institute"@en ;
-    compass:organizationName "Monterey-Zweig des Monterey Bay Aquarium Forschungsinstituts"@de ;
-    compass:country "United States"@en ;
-    compass:country "Vereinigte Staaten"@de ;
-    schema:foundingDate "1987"^^xsd:gYear ;
-    compass:staffSize 220 ;
-    schema:url "https://www.mbari.org"^^xsd:anyURI ;
-    compass:focusArea compass:DeepSeaExploration, compass:MarineBiology ;
-    geo:lat "36.8022"^^xsd:float ;
-    geo:long "-121.7895"^^xsd:float ;
-    compass:annualBudgetUSD 60 ;
-    compass:publicationsPerYear 150 ;
-    compass:researchVessels 4 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Private ;
-    compass:primaryOceanRegion compass:Region_Pacific ;
-    compass:keySentence "Pioneering deep-sea research through innovative ocean technology."@en ;
-    compass:keySentence "Wegweisende Tiefseeforschung durch innovative Meerestechnologie."@de ;
-    compass:activities "Developing next-generation autonomous underwater vehicles for deep-sea exploration."@en ;
-    compass:activities "Cataloging deep-sea biodiversity in Monterey Canyon."@en ;
-    compass:activities "Entwicklung autonomer Unterwasserfahrzeuge der nächsten Generation."@de ;
-    compass:activities "Katalogisierung der Tiefsee-Biodiversität im Monterey Canyon."@de ;
-    compass:mostRecentUpdate "2026-01-20"^^xsd:date ;
-    compass:donationUrl "https://www.mbari.org/support"^^xsd:anyURI ;
-    compass:offersResearchTrips false ;
-    compass:hasProject ocinst:MBARI_DeepSea_Project .
-
-ocinst:GEOMAR a compass:ResearchInstitute ;
-    compass:organizationName "GEOMAR Helmholtz Centre for Ocean Research Kiel"@en ;
-    compass:organizationName "GEOMAR Helmholtz-Zentrum für Ozeanforschung Kiel"@de ;
-    compass:country "Germany"@en ;
-    compass:country "Deutschland"@de ;
-    schema:foundingDate "2004"^^xsd:gYear ;
-    compass:staffSize 1100 ;
-    schema:url "https://www.geomar.de"^^xsd:anyURI ;
-    compass:focusArea compass:MarineGeology, compass:PhysicalOceanography, compass:ClimateScience ;
-    geo:lat "54.3280"^^xsd:float ;
-    geo:long "10.1797"^^xsd:float ;
-    compass:annualBudgetUSD 90 ;
-    compass:publicationsPerYear 500 ;
-    compass:researchVessels 5 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Atlantic ;
-    compass:keySentence "Germany's leading institute for marine geosciences."@en ;
-    compass:keySentence "Deutschlands führendes Institut für marine Geowissenschaften."@de ;
-    compass:activities "Studying submarine volcanism and hydrothermal vents."@en ;
-    compass:activities "Monitoring ocean acidification in the North Sea."@en ;
-    compass:activities "Erforschung von submarinem Vulkanismus und Hydrothermalquellen."@de ;
-    compass:activities "Überwachung der Ozeanversauerung in der Nordsee."@de ;
-    compass:mostRecentUpdate "2026-02-14"^^xsd:date ;
-    compass:offersResearchTrips true ;
-    compass:hasProject ocinst:GEOMAR_Hydrothermal_Project .
-
-ocinst:IFREMER a compass:ResearchInstitute ;
-    compass:organizationName "Institut Français de Recherche pour l'Exploitation de la Mer"@en ;
-    compass:organizationName "Französisches Forschungsinstitut für die Nutzung der Meere"@de ;
-    compass:country "France"@en ;
-    compass:country "Frankreich"@de ;
-    schema:foundingDate "1984"^^xsd:gYear ;
-    compass:staffSize 1500 ;
-    schema:url "https://www.ifremer.fr"^^xsd:anyURI ;
-    compass:focusArea compass:FisheriesScience, compass:DeepSeaExploration, compass:CoastalManagement ;
-    geo:lat "48.3534"^^xsd:float ;
-    geo:long "-4.5566"^^xsd:float ;
-    compass:annualBudgetUSD 220 ;
-    compass:publicationsPerYear 600 ;
-    compass:researchVessels 8 ;
-    compass:accessType compass:Access_ByPartnership ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Atlantic .
-
-ocinst:JAMSTEC a compass:ResearchInstitute ;
-    compass:organizationName "Japan Agency for Marine-Earth Science and Technology"@en ;
-    compass:organizationName "Japanische Agentur für Meeres- und Geowissenschaften und Technologie"@de ;
-    compass:country "Japan"@en ;
-    compass:country "Japan"@de ;
-    schema:foundingDate "2004"^^xsd:gYear ;
-    compass:staffSize 800 ;
-    schema:url "https://www.jamstec.go.jp"^^xsd:anyURI ;
-    compass:focusArea compass:DeepSeaExploration, compass:MarineGeology, compass:ClimateScience ;
-    geo:lat "35.3208"^^xsd:float ;
-    geo:long "139.6520"^^xsd:float ;
-    compass:annualBudgetUSD 320 ;
-    compass:publicationsPerYear 450 ;
-    compass:researchVessels 6 ;
-    compass:accessType compass:Access_Restricted ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Pacific .
-
-ocinst:AWI a compass:ResearchInstitute ;
-    compass:organizationName "Alfred Wegener Institute for Polar and Marine Research"@en ;
-    compass:organizationName "Alfred-Wegener-Institut für Polar- und Meeresforschung"@de ;
-    compass:country "Germany"@en ;
-    compass:country "Deutschland"@de ;
-    schema:foundingDate "1980"^^xsd:gYear ;
-    compass:staffSize 1200 ;
-    schema:url "https://www.awi.de"^^xsd:anyURI ;
-    compass:focusArea compass:PolarResearch, compass:ClimateScience, compass:MarineBiology ;
-    geo:lat "53.5310"^^xsd:float ;
-    geo:long "8.5850"^^xsd:float ;
-    compass:annualBudgetUSD 140 ;
-    compass:publicationsPerYear 550 ;
-    compass:researchVessels 5 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Arctic ;
-    compass:keySentence "Driving polar and marine research from the Arctic to the Antarctic."@en ;
-    compass:keySentence "Polar- und Meeresforschung von der Arktis bis zur Antarktis."@de ;
-    compass:activities "Operating long-term ecological monitoring stations in the Arctic."@en ;
-    compass:activities "Studying the impact of sea ice loss on polar marine ecosystems."@en ;
-    compass:activities "Betrieb langfristiger ökologischer Messstationen in der Arktis."@de ;
-    compass:activities "Untersuchung der Auswirkungen des Meereisverlusts auf polare marine Ökosysteme."@de ;
-    compass:mostRecentUpdate "2025-10-22"^^xsd:date ;
-    compass:donationUrl "https://www.awi.de/en/about-us/support.html"^^xsd:anyURI ;
-    compass:offersResearchTrips true ;
-    compass:hasProject ocinst:AWI_ArcticIce_Project .
-
-ocinst:NOC a compass:ResearchInstitute ;
-    compass:organizationName "National Oceanography Centre"@en ;
-    compass:organizationName "Nationales Ozeanographiezentrum"@de ;
-    compass:country "United Kingdom"@en ;
-    compass:country "Vereinigtes Königreich"@de ;
-    schema:foundingDate "1995"^^xsd:gYear ;
-    compass:staffSize 600 ;
-    schema:url "https://noc.ac.uk"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:MarineGeology, compass:ClimateScience ;
-    geo:lat "50.8931"^^xsd:float ;
-    geo:long "-1.3948"^^xsd:float ;
-    compass:annualBudgetUSD 90 ;
-    compass:publicationsPerYear 350 ;
-    compass:researchVessels 3 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Atlantic .
-
-ocinst:CSIRO_Oceans a compass:ResearchInstitute ;
-    compass:organizationName "CSIRO Oceans and Atmosphere"@en ;
-    compass:organizationName "CSIRO Ozeane und Atmosphäre"@de ;
-    compass:country "Australia"@en ;
-    compass:country "Australien"@de ;
-    schema:foundingDate "1949"^^xsd:gYear ;
-    compass:staffSize 450 ;
-    schema:url "https://www.csiro.au"^^xsd:anyURI ;
-    compass:focusArea compass:ClimateScience, compass:FisheriesScience, compass:CoastalManagement ;
-    geo:lat "-42.8821"^^xsd:float ;
-    geo:long "147.3272"^^xsd:float ;
-    compass:annualBudgetUSD 110 ;
-    compass:publicationsPerYear 300 ;
-    compass:researchVessels 2 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Indian .
-
-# --- Universities ---
-
-ocinst:SIO a compass:University ;
-    compass:organizationName "Scripps Institution of Oceanography"@en ;
-    compass:organizationName "Scripps-Institut für Ozeanographie"@de ;
-    compass:country "United States"@en ;
-    compass:country "Vereinigte Staaten"@de ;
-    schema:foundingDate "1903"^^xsd:gYear ;
-    compass:staffSize 1400 ;
-    schema:url "https://scripps.ucsd.edu"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:ClimateScience, compass:MarineBiology ;
-    geo:lat "32.8662"^^xsd:float ;
-    geo:long "-117.2544"^^xsd:float ;
-    compass:annualBudgetUSD 180 ;
-    compass:publicationsPerYear 700 ;
-    compass:researchVessels 2 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Pacific .
-
-ocinst:UTokyo_AORI a compass:University ;
-    compass:organizationName "Atmosphere and Ocean Research Institute, University of Tokyo"@en ;
-    compass:organizationName "Atmosphären- und Ozeanforschungsinstitut der Universität Tokio"@de ;
-    compass:country "Japan"@en ;
-    compass:country "Japan"@de ;
-    schema:foundingDate "2010"^^xsd:gYear ;
-    compass:staffSize 250 ;
-    schema:url "https://www.aori.u-tokyo.ac.jp"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:ClimateScience ;
-    geo:lat "35.6610"^^xsd:float ;
-    geo:long "139.6740"^^xsd:float ;
-    compass:annualBudgetUSD 50 ;
-    compass:publicationsPerYear 200 ;
-    compass:researchVessels 1 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Pacific .
-
-ocinst:Bergen_GFI a compass:University ;
-    compass:organizationName "Geophysical Institute, University of Bergen"@en ;
-    compass:organizationName "Geophysikalisches Institut der Universität Bergen"@de ;
-    compass:country "Norway"@en ;
-    compass:country "Norwegen"@de ;
-    schema:foundingDate "1917"^^xsd:gYear ;
-    compass:staffSize 180 ;
-    schema:url "https://www.uib.no/en/gfi"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:PolarResearch, compass:ClimateScience ;
-    geo:lat "60.3833"^^xsd:float ;
-    geo:long "5.3317"^^xsd:float ;
-    compass:annualBudgetUSD 35 ;
-    compass:publicationsPerYear 180 ;
-    compass:researchVessels 1 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Arctic .
-
-ocinst:Dalhousie_Ocean a compass:University ;
-    compass:organizationName "Dalhousie University Department of Oceanography"@en ;
-    compass:organizationName "Institut für Ozeanographie der Dalhousie Universität"@de ;
-    compass:country "Canada"@en ;
-    compass:country "Kanada"@de ;
-    schema:foundingDate "1959"^^xsd:gYear ;
-    compass:staffSize 120 ;
-    schema:url "https://www.dal.ca/oceanography"^^xsd:anyURI ;
-    compass:focusArea compass:MarineBiology, compass:PhysicalOceanography, compass:FisheriesScience ;
-    geo:lat "44.6366"^^xsd:float ;
-    geo:long "-63.5917"^^xsd:float ;
-    compass:annualBudgetUSD 20 ;
-    compass:publicationsPerYear 120 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Atlantic .
-
-ocinst:CapeTown_Ocean a compass:University ;
-    compass:organizationName "University of Cape Town Department of Oceanography"@en ;
-    compass:organizationName "Institut für Ozeanographie der Universität Kapstadt"@de ;
-    compass:country "South Africa"@en ;
-    compass:country "Südafrika"@de ;
-    schema:foundingDate "1975"^^xsd:gYear ;
-    compass:staffSize 80 ;
-    schema:url "https://www.uct.ac.za"^^xsd:anyURI ;
-    compass:focusArea compass:MarineBiology, compass:CoastalManagement, compass:ClimateScience ;
-    geo:lat "-33.9577"^^xsd:float ;
-    geo:long "18.4612"^^xsd:float ;
-    compass:annualBudgetUSD 10 ;
-    compass:publicationsPerYear 80 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Indian .
-
-# --- Government Agencies ---
-
-ocinst:NOAA a compass:GovernmentAgency ;
-    compass:organizationName "National Oceanic and Atmospheric Administration"@en ;
-    compass:organizationName "Nationale Ozean- und Atmosphärenbehörde"@de ;
-    compass:country "United States"@en ;
-    compass:country "Vereinigte Staaten"@de ;
-    schema:foundingDate "1970"^^xsd:gYear ;
-    compass:staffSize 11000 ;
-    schema:url "https://www.noaa.gov"^^xsd:anyURI ;
-    compass:focusArea compass:ClimateScience, compass:FisheriesScience, compass:CoastalManagement ;
-    geo:lat "38.8833"^^xsd:float ;
-    geo:long "-76.9425"^^xsd:float ;
-    compass:annualBudgetUSD 800 ;
-    compass:publicationsPerYear 1500 ;
-    compass:researchVessels 16 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Global .
-
-ocinst:BOM_Ocean a compass:GovernmentAgency ;
-    compass:organizationName "Bureau of Meteorology — Ocean Services"@en ;
-    compass:organizationName "Meteorologisches Amt — Ozeandienste"@de ;
-    compass:country "Australia"@en ;
-    compass:country "Australien"@de ;
-    schema:foundingDate "1908"^^xsd:gYear ;
-    compass:staffSize 1700 ;
-    schema:url "http://www.bom.gov.au"^^xsd:anyURI ;
-    compass:focusArea compass:ClimateScience, compass:PhysicalOceanography ;
-    geo:lat "-37.8136"^^xsd:float ;
-    geo:long "144.9631"^^xsd:float ;
-    compass:annualBudgetUSD 350 ;
-    compass:publicationsPerYear 200 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Indian .
-
-ocinst:SOA_China a compass:GovernmentAgency ;
-    compass:organizationName "State Oceanic Administration of China"@en ;
-    compass:organizationName "Staatliche Ozeanverwaltung Chinas"@de ;
-    compass:country "China"@en ;
-    compass:country "China"@de ;
-    schema:foundingDate "1964"^^xsd:gYear ;
-    compass:staffSize 3000 ;
-    schema:url "http://www.soa.gov.cn"^^xsd:anyURI ;
-    compass:focusArea compass:CoastalManagement, compass:MarineGeology, compass:FisheriesScience ;
-    geo:lat "39.9042"^^xsd:float ;
-    geo:long "116.4074"^^xsd:float ;
-    compass:annualBudgetUSD 600 ;
-    compass:publicationsPerYear 400 ;
-    compass:researchVessels 12 ;
-    compass:accessType compass:Access_Restricted ;
-    compass:fundingSource compass:Funding_Public ;
-    compass:primaryOceanRegion compass:Region_Pacific .
-
-# --- NGOs ---
-
-ocinst:OceanConservancy a compass:NGO ;
-    compass:organizationName "Ocean Conservancy"@en ;
-    compass:organizationName "Meeresnaturschutzorganisation"@de ;
-    compass:country "United States"@en ;
-    compass:country "Vereinigte Staaten"@de ;
-    schema:foundingDate "1972"^^xsd:gYear ;
-    compass:staffSize 130 ;
-    schema:url "https://oceanconservancy.org"^^xsd:anyURI ;
-    compass:focusArea compass:CoastalManagement, compass:ClimateScience ;
-    geo:lat "38.9050"^^xsd:float ;
-    geo:long "-77.0420"^^xsd:float ;
-    compass:annualBudgetUSD 20 ;
-    compass:publicationsPerYear 30 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Atlantic ;
-    compass:keySentence "Protecting the ocean from today's greatest global challenges."@en ;
-    compass:keySentence "Schutz der Ozeane vor den größten globalen Herausforderungen."@de ;
-    compass:activities "Organizing International Coastal Cleanup events worldwide."@en ;
-    compass:activities "Advocating for policies to reduce ocean plastic pollution."@en ;
-    compass:activities "Organisation von internationalen Küstenreinigungsaktionen weltweit."@de ;
-    compass:activities "Eintreten für politische Maßnahmen zur Verringerung der Plastikverschmutzung."@de ;
-    compass:mostRecentUpdate "2026-03-01"^^xsd:date ;
-    compass:donationUrl "https://oceanconservancy.org/donate"^^xsd:anyURI ;
-    compass:offersResearchTrips false .
-
-ocinst:Oceana a compass:NGO ;
-    compass:organizationName "Oceana"@en ;
-    compass:organizationName "Oceana"@de ;
-    compass:country "United States"@en ;
-    compass:country "Vereinigte Staaten"@de ;
-    schema:foundingDate "2001"^^xsd:gYear ;
-    compass:staffSize 200 ;
-    schema:url "https://oceana.org"^^xsd:anyURI ;
-    compass:focusArea compass:FisheriesScience, compass:CoastalManagement, compass:MarineBiology ;
-    geo:lat "38.9072"^^xsd:float ;
-    geo:long "-77.0369"^^xsd:float ;
-    compass:annualBudgetUSD 35 ;
-    compass:publicationsPerYear 50 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Global ;
-    compass:keySentence "Dedicated to restoring abundance in the world's oceans."@en ;
-    compass:keySentence "Engagiert für die Wiederherstellung des Artenreichtums in den Weltmeeren."@de ;
-    compass:activities "Investigating status, ecology and distribution of Mediterranean dolphins."@en ;
-    compass:activities "Assessing potential threats to dolphin populations."@en ;
-    compass:activities "Untersuchung von Status, Ökologie und Verbreitung mediterraner Delfine."@de ;
-    compass:activities "Bewertung potenzieller Bedrohungen für Delfinpopulationen."@de ;
-    compass:mostRecentUpdate "2025-12-10"^^xsd:date ;
-    compass:donationUrl "https://oceana.org/donate"^^xsd:anyURI ;
-    compass:offersResearchTrips true ;
-    compass:hasProject ocinst:Oceana_MedDolphin_Project .
-
-ocinst:DeepOceanStewardship a compass:NGO ;
-    compass:organizationName "Deep Ocean Stewardship Initiative"@en ;
-    compass:organizationName "Initiative zur Verwaltung der Tiefsee"@de ;
-    compass:country "United Kingdom"@en ;
-    compass:country "Vereinigtes Königreich"@de ;
-    schema:foundingDate "2013"^^xsd:gYear ;
-    compass:staffSize 25 ;
-    schema:url "https://www.dosi-project.org"^^xsd:anyURI ;
-    compass:focusArea compass:DeepSeaExploration, compass:MarineGeology ;
-    geo:lat "51.5246"^^xsd:float ;
-    geo:long "-0.0340"^^xsd:float ;
-    compass:annualBudgetUSD 2 ;
-    compass:publicationsPerYear 40 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Global .
-
-ocinst:OceanCare a compass:NGO ;
-    compass:organizationName "OceanCare"@en ;
-    compass:organizationName "OceanCare"@de ;
-    compass:country "Switzerland"@en ;
-    compass:country "Schweiz"@de ;
-    schema:foundingDate "1989"^^xsd:gYear ;
-    compass:staffSize 30 ;
-    schema:url "https://www.oceancare.org/en/"^^xsd:anyURI ;
-    compass:focusArea compass:MarineBiology, compass:CoastalManagement ;
-    geo:lat "47.3769"^^xsd:float ;
-    geo:long "8.5417"^^xsd:float ;
-    compass:annualBudgetUSD 3 ;
-    compass:publicationsPerYear 20 ;
-    compass:researchVessels 0 ;
-    compass:accessType compass:Access_Open ;
-    compass:fundingSource compass:Funding_Mixed ;
-    compass:primaryOceanRegion compass:Region_Global ;
-    compass:keySentence "Protecting the world's oceans and the creatures that inhabit them."@en ;
-    compass:keySentence "Schutz der Weltmeere und der darin lebenden Lebewesen."@de ;
-    compass:activities "Campaigning against underwater noise pollution from shipping and sonar."@en ;
-    compass:activities "Advocating for a global moratorium on deep-sea mining."@en ;
-    compass:activities "Kampagne gegen Unterwasserlärm durch Schifffahrt und Sonar."@de ;
-    compass:activities "Einsatz für ein globales Moratorium für den Tiefseebergbau."@de ;
-    compass:mostRecentUpdate "2026-04-14"^^xsd:date ;
-    compass:donationUrl "https://www.oceancare.org/en/donation/"^^xsd:anyURI ;
-    compass:offersResearchTrips false .
-
 # ============================================================
-# Instance Data: Research Projects
+# International Forums (5)
 # ============================================================
 
-ocinst:WHOI_NARW_Project a compass:Project ;
-    compass:projectName "North Atlantic Right Whale Monitoring"@en ;
-    compass:projectName "Überwachung des Nordatlantischen Glattwals"@de ;
-    compass:startDate "2018-03-01"^^xsd:date ;
-    compass:endDate "2027-12-31"^^xsd:date ;
-    compass:species compass:Species_NorthAtlanticRightWhale ;
-    compass:species compass:Species_EubalaenaGlacialis ;
-    geo:lat "42.0"^^xsd:float ;
-    geo:long "-65.0"^^xsd:float ;
-    compass:imageUrl "https://www.whoi.edu/wp-content/uploads/2019/07/right-whale.jpg"^^xsd:anyURI ;
-    compass:projectUrl "https://www.whoi.edu/what-we-do/explore/projects/right-whale-tagging/"^^xsd:anyURI .
+ocinst:UnitedNations a compass:InternationalForum ;
+    compass:name "United Nations"@en ;
+    compass:name "Vereinte Nationen"@de ;
+    compass:location "UN Headquarters, New York, USA"@en ;
+    schema:foundingDate "2011"^^xsd:gYear ;
+    compass:keySentence "UN Special Consultative Status"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "40.7490"^^xsd:float ;
+    geo:long "-73.9670"^^xsd:float .
 
-ocinst:MBARI_DeepSea_Project a compass:Project ;
-    compass:projectName "Monterey Canyon Deep-Sea Census"@en ;
-    compass:projectName "Tiefsee-Zählung im Monterey Canyon"@de ;
-    compass:startDate "2020-06-15"^^xsd:date ;
-    compass:endDate "2026-06-14"^^xsd:date ;
-    compass:species compass:Species_GiantPacificOctopus ;
-    compass:species compass:Species_VampireSquid ;
-    geo:lat "36.7"^^xsd:float ;
-    geo:long "-122.15"^^xsd:float ;
-    compass:imageUrl "https://www.mbari.org/wp-content/uploads/2021/deep-sea-census.jpg"^^xsd:anyURI ;
-    compass:projectUrl "https://www.mbari.org/our-work/research-themes/deep-sea/"^^xsd:anyURI .
+ocinst:UNEP a compass:InternationalForum ;
+    compass:name "UN Environment Programme (UNEP)"@en ;
+    compass:name "UN-Umweltprogramm"@de ;
+    compass:location "UN Office Nairobi, Kenya"@en ;
+    schema:foundingDate "2015"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    geo:lat "-1.2346"^^xsd:float ;
+    geo:long "36.8164"^^xsd:float .
 
-ocinst:Oceana_MedDolphin_Project a compass:Project ;
-    compass:projectName "Mediterranean Dolphin Conservation"@en ;
-    compass:projectName "Schutz der Mittelmeer-Delfine"@de ;
-    compass:startDate "2021-01-10"^^xsd:date ;
-    compass:endDate "2026-12-31"^^xsd:date ;
-    compass:species compass:Species_BottlenoseDolphin ;
-    compass:species compass:Species_ShortBeakedCommonDolphin ;
-    compass:species compass:Species_StripedDolphin ;
-    geo:lat "38.5"^^xsd:float ;
-    geo:long "14.5"^^xsd:float ;
-    compass:imageUrl "https://oceana.org/wp-content/uploads/med-dolphins.jpg"^^xsd:anyURI ;
-    compass:projectUrl "https://oceana.org/our-work/protect-marine-wildlife/dolphins/"^^xsd:anyURI .
-
-ocinst:GEOMAR_Hydrothermal_Project a compass:Project ;
-    compass:projectName "Mid-Atlantic Ridge Hydrothermal Vent Study"@en ;
-    compass:projectName "Studie der Hydrothermalquellen am Mittelatlantischen Rücken"@de ;
-    compass:startDate "2022-09-01"^^xsd:date ;
-    compass:endDate "2027-08-31"^^xsd:date ;
-    compass:species compass:Species_GiantTubeWorm ;
-    compass:species compass:Species_PompeiiWorm ;
-    geo:lat "1.0"^^xsd:float ;
-    geo:long "-26.0"^^xsd:float ;
-    compass:imageUrl "https://www.geomar.de/fileadmin/hydrothermal-vents.jpg"^^xsd:anyURI ;
-    compass:projectUrl "https://www.geomar.de/en/research/fb2/fb2-mg/projects/"^^xsd:anyURI .
-
-ocinst:AWI_ArcticIce_Project a compass:Project ;
-    compass:projectName "Arctic Sea Ice Ecosystem Dynamics"@en ;
-    compass:projectName "Arktische Meereis-Ökosystemdynamik"@de ;
-    compass:startDate "2019-04-01"^^xsd:date ;
-    compass:endDate "2026-03-31"^^xsd:date ;
-    compass:species compass:Species_RingedSeal ;
-    compass:species compass:Species_PolarBear ;
-    compass:species compass:Species_ArcticCod ;
-    geo:lat "78.5"^^xsd:float ;
-    geo:long "12.0"^^xsd:float ;
-    compass:imageUrl "https://www.awi.de/fileadmin/arctic-sea-ice.jpg"^^xsd:anyURI ;
-    compass:projectUrl "https://www.awi.de/en/science/special-groups/sea-ice-physics.html"^^xsd:anyURI .
-
-# ============================================================
-# Instance Data: Collaborative Networks
-# ============================================================
-
-ocinst:GOOS a compass:Network ;
-    compass:organizationName "Global Ocean Observing System"@en ;
-    compass:organizationName "Globales Ozeanbeobachtungssystem"@de ;
-    compass:country "France"@en ;
-    compass:country "Frankreich"@de ;
-    schema:foundingDate "1991"^^xsd:gYear ;
-    compass:memberCount 120 ;
-    schema:url "https://www.goosocean.org"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:ClimateScience ;
-    geo:lat "47.3534"^^xsd:float ;
-    geo:long "-4.5566"^^xsd:float ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Global ;
-    compass:keySentence "Coordinating a global network of ocean observing systems to deliver essential ocean information."@en ;
-    compass:keySentence "Koordinierung eines globalen Netzes von Ozeanbeobachtungssystemen zur Bereitstellung wesentlicher Ozeaninformationen."@de ;
-    compass:activities "Coordinating Argo profiling float network with over 4000 active floats."@en ;
-    compass:activities "Developing the Global Ocean Observing System Framework for Ocean Observations."@en ;
-    compass:activities "Koordinierung des Argo-Profilatmosphären-Netzwerks mit über 4000 aktiven Schwimmern."@de ;
-    compass:mostRecentUpdate "2026-01-10"^^xsd:date ;
-    compass:hasLeadOrganization ocinst:IFREMER .
-
-ocinst:OceanGliders a compass:Network ;
-    compass:organizationName "OceanGliders"@en ;
-    compass:organizationName "OceanGliders"@de ;
-    compass:country "France"@en ;
-    compass:country "Frankreich"@de ;
+ocinst:CMSBonnConvention a compass:InternationalForum ;
+    compass:name "CMS/Bonn Convention"@en ;
+    compass:name "CMS/Bonner Konvention"@de ;
+    compass:location "Bonn, Germany"@en ;
     schema:foundingDate "2016"^^xsd:gYear ;
-    compass:memberCount 30 ;
-    schema:url "https://www.oceangliders.org"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:ClimateScience, compass:MarineBiology ;
-    geo:lat "48.4000"^^xsd:float ;
-    geo:long "-4.4900"^^xsd:float ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Global ;
-    compass:keySentence "International network coordinating autonomous glider observations of the global ocean."@en ;
-    compass:keySentence "Internationales Netzwerk zur Koordinierung autonomer Gleitflugzeugbeobachtungen des Weltozeans."@de ;
-    compass:activities "Standardizing glider data formats and quality control procedures."@en ;
-    compass:activities "Facilitating real-time data sharing from underwater glider platforms."@en ;
-    compass:activities "Standardisierung von Gliderformaten und Qualitätskontrollverfahren."@de ;
-    compass:mostRecentUpdate "2025-11-20"^^xsd:date .
+    compass:keySentence "Partnerorganisation of CMS/Bonn Convention"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "50.7181"^^xsd:float ;
+    geo:long "7.1272"^^xsd:float .
 
-ocinst:CLIVAR a compass:Network ;
-    compass:organizationName "Climate and Ocean: Variability, Predictability and Change"@en ;
-    compass:organizationName "Klima und Ozean: Variabilität, Vorhersagbarkeit und Wandel"@de ;
-    compass:country "France"@en ;
-    compass:country "Frankreich"@de ;
-    schema:foundingDate "1995"^^xsd:gYear ;
-    compass:memberCount 60 ;
-    schema:url "https://www.clivar.org"^^xsd:anyURI ;
-    compass:focusArea compass:ClimateScience, compass:PhysicalOceanography ;
-    geo:lat "48.3100"^^xsd:float ;
-    geo:long "-4.5100"^^xsd:float ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Global ;
-    compass:keySentence "Facilitating analysis, modelling and prediction of Earth's climate system through ocean–atmosphere interactions."@en ;
-    compass:keySentence "Förderung der Analyse, Modellierung und Vorhersage des Erdklimasystems durch Ozean-Atmosphäre-Wechselwirkungen."@de ;
-    compass:activities "Coordinating international research on ocean-atmosphere decadal variability."@en ;
-    compass:activities "Supporting synthesis activities and model intercomparison projects."@en ;
-    compass:activities "Koordinierung internationaler Forschung zur dekadischen Ozean-Atmosphäre-Variabilität."@de ;
-    compass:mostRecentUpdate "2026-02-05"^^xsd:date .
+ocinst:FAOGFCM a compass:InternationalForum ;
+    compass:name "FAO/GFCM"@en ;
+    compass:location "Rome, Italy"@en ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:keySentence "Partnerorganisation of FAO/GFCM"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "41.9063"^^xsd:float ;
+    geo:long "12.4703"^^xsd:float .
 
-# ============================================================
-# Instance Data: International Fora
-# ============================================================
-
-ocinst:IOC_UNESCO a compass:InternationalForum ;
-    compass:organizationName "Intergovernmental Oceanographic Commission"@en ;
-    compass:organizationName "Zwischenstaatliche Ozeanographische Kommission"@de ;
-    compass:country "France"@en ;
-    compass:country "Frankreich"@de ;
-    schema:foundingDate "1960"^^xsd:gYear ;
-    compass:memberStates 150 ;
-    compass:hostCountry "France"@en ;
-    compass:hostCountry "Frankreich"@de ;
-    compass:mandate "To promote international cooperation in marine sciences and ocean services in order to learn more about the nature and resources of the oceans."@en ;
-    compass:mandate "Förderung der internationalen Zusammenarbeit in den Meereswissenschaften und Ozeandiensten."@de ;
-    schema:url "https://www.ioc.unesco.org"^^xsd:anyURI ;
-    compass:focusArea compass:PhysicalOceanography, compass:ClimateScience, compass:CoastalManagement ;
-    geo:lat "48.8460"^^xsd:float ;
-    geo:long "2.3046"^^xsd:float ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Global ;
-    compass:keySentence "UN body fostering global cooperation in ocean science, observations, and governance."@en ;
-    compass:keySentence "UN-Gremium zur Förderung der globalen Zusammenarbeit in Meeresforschung, Beobachtungen und Governance."@de ;
-    compass:activities "Coordinating the Global Ocean Observing System and tsunami warning networks."@en ;
-    compass:activities "Supporting the UN Decade of Ocean Science for Sustainable Development (2021-2030)."@en ;
-    compass:activities "Koordinierung des Globalen Ozeanbeobachtungssystems und Tsunami-Frühwarnsystemen."@de ;
-    compass:mostRecentUpdate "2026-03-15"^^xsd:date .
-
-ocinst:OSPAR a compass:InternationalForum ;
-    compass:organizationName "OSPAR Commission"@en ;
-    compass:organizationName "OSPAR-Kommission"@de ;
-    compass:country "United Kingdom"@en ;
-    compass:country "Vereinigtes Königreich"@de ;
+ocinst:IWC a compass:InternationalForum ;
+    compass:name "International Whaling Commission (IWC)"@en ;
+    compass:name "Internationale Walfangkommission (IWC)"@de ;
+    compass:location "Cambridge, UK"@en ;
     schema:foundingDate "1992"^^xsd:gYear ;
-    compass:memberStates 16 ;
-    compass:hostCountry "United Kingdom"@en ;
-    compass:hostCountry "Vereinigtes Königreich"@de ;
-    compass:mandate "To protect and conserve the North-East Atlantic and its resources from the harmful effects of human activities."@en ;
-    compass:mandate "Schutz und Erhaltung des Nordostatlantiks und seiner Ressourcen vor schädlichen Auswirkungen menschlicher Aktivitäten."@de ;
-    schema:url "https://www.ospar.org"^^xsd:anyURI ;
-    compass:focusArea compass:CoastalManagement, compass:MarineBiology, compass:MarineGeology ;
-    geo:lat "51.5100"^^xsd:float ;
-    geo:long "-0.1300"^^xsd:float ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Atlantic ;
-    compass:keySentence "Protecting the North-East Atlantic marine environment through intergovernmental cooperation."@en ;
-    compass:keySentence "Schutz der Meeresumwelt des Nordostatlantiks durch zwischenstaatliche Zusammenarbeit."@de ;
-    compass:activities "Developing and monitoring marine protected areas in the North-East Atlantic."@en ;
-    compass:activities "Assessing hazardous substances, eutrophication, and offshore industry impacts."@en ;
-    compass:activities "Entwicklung und Überwachung von Meeresschutzgebieten im Nordostatlantik."@de ;
-    compass:mostRecentUpdate "2025-12-01"^^xsd:date .
+    compass:keySentence "Observer status at the meetings of the International Whaling Commission (IWC)"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "52.2486"^^xsd:float ;
+    geo:long "0.0930"^^xsd:float .
 
-ocinst:CTI_CFF a compass:InternationalForum ;
-    compass:organizationName "Coral Triangle Initiative on Coral Reefs, Fisheries and Food Security"@en ;
-    compass:organizationName "Korallendreieck-Initiative für Korallenriffe, Fischerei und Ernährungssicherheit"@de ;
-    compass:country "Indonesia"@en ;
-    compass:country "Indonesien"@de ;
-    schema:foundingDate "2009"^^xsd:gYear ;
-    compass:memberStates 6 ;
-    compass:hostCountry "Indonesia"@en ;
-    compass:hostCountry "Indonesien"@de ;
-    compass:mandate "To safeguard marine and coastal resources of the Coral Triangle through multilateral cooperation."@en ;
-    compass:mandate "Schutz der Meeres- und Küstenressourcen des Korallendreiecks durch multilaterale Zusammenarbeit."@de ;
-    schema:url "https://www.coraltriangleinitiative.org"^^xsd:anyURI ;
-    compass:focusArea compass:MarineBiology, compass:FisheriesScience, compass:CoastalManagement ;
-    geo:lat "-2.5489"^^xsd:float ;
-    geo:long "118.0149"^^xsd:float ;
-    compass:fundingSource compass:Funding_International ;
-    compass:primaryOceanRegion compass:Region_Pacific ;
-    compass:keySentence "Six-nation partnership protecting the world's richest marine environment in the Coral Triangle."@en ;
-    compass:keySentence "Sechs-Länder-Partnerschaft zum Schutz der artenreichsten Meeresumwelt der Welt im Korallendreieck."@de ;
-    compass:activities "Implementing ecosystem approaches to fisheries management across member states."@en ;
-    compass:activities "Establishing and strengthening marine protected area networks in the Coral Triangle."@en ;
-    compass:activities "Umsetzung von Ökosystemansätzen für die Fischereibewirtschaftung in den Mitgliedstaaten."@de ;
-    compass:mostRecentUpdate "2025-10-05"^^xsd:date .
+# ============================================================
+# Networks (5)
+# ============================================================
+
+ocinst:BFFP a compass:Network ;
+    compass:name "Break Free From Plastic (BFFP)"@en ;
+    compass:location "Quezon City, Philippines"@en ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:keySentence "Core member of BFFP since 2019."@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "14.6393"^^xsd:float ;
+    geo:long "121.0424"^^xsd:float .
+
+ocinst:DSCC a compass:Network ;
+    compass:name "Deep Sea Conservation Coalition (DSCC)"@en ;
+    compass:location "Amsterdam, Netherlands"@en ;
+    schema:foundingDate "2021"^^xsd:gYear ;
+    compass:keySentence "Member of DSCC since 2021"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "52.3529"^^xsd:float ;
+    geo:long "4.8701"^^xsd:float .
+
+ocinst:GGGI a compass:Network ;
+    compass:name "Global Ghost Gear Initiative (GGGI)"@en ;
+    compass:location "Washington D.C., USA"@en ;
+    schema:foundingDate "2019"^^xsd:gYear ;
+    compass:keySentence "Member of GGGI since 2019"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "38.9029"^^xsd:float ;
+    geo:long "-77.0302"^^xsd:float .
+
+ocinst:HSA a compass:Network ;
+    compass:name "High Seas Alliance (HSA)"@en ;
+    compass:location "Amsterdam, Netherlands"@en ;
+    schema:foundingDate "2011"^^xsd:gYear ;
+    compass:keySentence "Member of HSA since 2011"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "52.3702"^^xsd:float ;
+    geo:long "4.8952"^^xsd:float .
+
+ocinst:STRA a compass:Network ;
+    compass:name "Sea Turtle Rescue Alliance (STRA)"@en ;
+    compass:location "Bristol, UK"@en ;
+    schema:foundingDate "2021"^^xsd:gYear ;
+    compass:keySentence "Founding member of STRA"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "51.4516"^^xsd:float ;
+    geo:long "-2.5930"^^xsd:float .
+
+# ============================================================
+# Partner Organisations (7)
+# ============================================================
+
+ocinst:OceanCare a compass:PartnerOrganization ;
+    compass:name "OceanCare"@en ;
+    compass:name "OceanCare"@de ;
+    compass:location "Wädenswil, Switzerland"@en ;
+    compass:location "Wädenswil, Schweiz"@de ;
+    schema:foundingDate "1989"^^xsd:gYear ;
+    schema:url "https://www.oceancare.org"^^xsd:anyURI ;
+    schema:image "https://www.oceancare.org/wp-content/uploads/2022/01/OceanCare_logo.svg"^^xsd:anyURI ;
+    compass:managedByOceanCare true ;
+    compass:keySentence "A Swiss marine conservation organization protecting ocean biodiversity through science and advocacy."@en ;
+    compass:keySentence "Eine Schweizer Meeresschutzorganisation, die durch Wissenschaft und Lobbyarbeit die Meeresbiodiversität schützt."@de ;
+    geo:lat "47.2290"^^xsd:float ;
+    geo:long "8.6760"^^xsd:float .
+
+ocinst:DolphinBiologyAndConservation a compass:PartnerOrganization ;
+    compass:name "Dolphin Biology and Conservation"@en ;
+    compass:location "Cordenons (PN), Italy"@en ;
+    schema:foundingDate "2018"^^xsd:gYear ;
+    compass:keySentence "Adriatic Dolphins"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "43.18"^^xsd:float ;
+    geo:long "13.80"^^xsd:float .
+
+ocinst:AlnitakResearchInstitute a compass:PartnerOrganization ;
+    compass:name "Alnitak Research Institute"@en ;
+    compass:location "Madrid, Spain"@en ;
+    schema:foundingDate "2015"^^xsd:gYear ;
+    compass:keySentence "MEDTOP / LIFE OASIS"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "39.75"^^xsd:float ;
+    geo:long "2.9"^^xsd:float .
+
+ocinst:BEES a compass:PartnerOrganization ;
+    compass:name "BEES"@en ;
+    compass:location "Porto Novo, Benin"@en ;
+    schema:foundingDate "2019"^^xsd:gYear ;
+    compass:keySentence "Aquatic Wild Meat"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "6.4965"^^xsd:float ;
+    geo:long "2.6036"^^xsd:float .
+
+ocinst:BritishDiversMarineLifeRescue a compass:PartnerOrganization ;
+    compass:name "British Divers Marine Life Rescue"@en ;
+    compass:location "Cornwall, UK"@en ;
+    schema:foundingDate "2012"^^xsd:gYear ;
+    compass:keySentence "Marine Life Rescue"@en ;
+    compass:managedByOceanCare false ;
+    geo:lat "50.20263"^^xsd:float ;
+    geo:long "-5.20263"^^xsd:float .
+
+ocinst:CIT a compass:PartnerOrganization ;
+    compass:name "CIT"@en ;
+    compass:location "Caracas, Venezuela"@en ;
+    schema:foundingDate "2017"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    geo:lat "10.488"^^xsd:float ;
+    geo:long "-66.879"^^xsd:float .
+
+ocinst:CBDHabitat a compass:PartnerOrganization ;
+    compass:name "CBD-Hábitat"@en ;
+    compass:location "Cap Blanc, Mauritania"@en ;
+    schema:foundingDate "2005"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    geo:lat "20.7701"^^xsd:float ;
+    geo:long "-17.0488"^^xsd:float .
+
+# ============================================================
+# Projects (2)
+# ============================================================
+
+ocinst:SAVEWhales a compass:Project ;
+    compass:name "SAvE Whales"@en ;
+    compass:location "Kythira Strait, Greece"@en ;
+    compass:keySentence "OceanCare enables the development of the SAvE Whales warning system"@en ;
+    compass:managedByOceanCare true ;
+    geo:lat "35.8428"^^xsd:float ;
+    geo:long "23.2325"^^xsd:float .
+
+ocinst:WhaleDolphinHuntFaroeIslands a compass:Project ;
+    compass:name "Whale & Dolphin Hunt Faroe Islands"@en ;
+    compass:location "Faroe Islands"@en ;
+    compass:startDate "1992-01-01"^^xsd:date ;
+    compass:keySentence "Campaign against Faroese whale and dolphin hunts"@en ;
+    compass:managedByOceanCare true ;
+    geo:lat "62.0000"^^xsd:float ;
+    geo:long "-6.7830"^^xsd:float .

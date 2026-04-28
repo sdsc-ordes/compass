@@ -8,58 +8,18 @@
 @prefix schema: <https://schema.org/> .
 
 # ============================================================
-# SHACL Shapes: Oceanographic Organizations
+# SHACL Shapes: OceanCare Compass Entities
 # ============================================================
 
 # ============================================================
-# Classes (plain RDFS — SHACL doesn't replace class declarations)
+# Classes
 # ============================================================
 
-compass:Organization a rdfs:Class ;
-    rdfs:label "Organization"@en ;
-    rdfs:label "Organisation"@de ;
-    rdfs:comment "An oceanographic or marine science organization."@en ;
-    rdfs:comment "Eine ozeanographische oder meereswissenschaftliche Organisation."@de .
-
-compass:ResearchInstitute a rdfs:Class ;
-    rdfs:subClassOf compass:Organization ;
-    rdfs:label "Research Institute"@en ;
-    rdfs:label "Forschungsinstitut"@de ;
-    rdfs:comment "A dedicated research institute focused on ocean science."@en ;
-    rdfs:comment "Ein spezialisiertes Forschungsinstitut mit Schwerpunkt Meeresforschung."@de .
-
-compass:University a rdfs:Class ;
-    rdfs:subClassOf compass:Organization ;
-    rdfs:label "University"@en ;
-    rdfs:label "Universität"@de ;
-    rdfs:comment "A university with an oceanographic department or program."@en ;
-    rdfs:comment "Eine Universität mit einem ozeanographischen Fachbereich oder Programm."@de .
-
-compass:GovernmentAgency a rdfs:Class ;
-    rdfs:subClassOf compass:Organization ;
-    rdfs:label "Government Agency"@en ;
-    rdfs:label "Regierungsbehörde"@de ;
-    rdfs:comment "A government body involved in ocean research or management."@en ;
-    rdfs:comment "Eine staatliche Stelle, die in der Meeresforschung oder -verwaltung tätig ist."@de .
-
-compass:NGO a rdfs:Class ;
-    rdfs:subClassOf compass:Organization ;
-    rdfs:label "NGO"@en ;
-    rdfs:label "NGO"@de ;
-    rdfs:comment "A non-governmental organization working in marine science or conservation."@en ;
-    rdfs:comment "Eine Nichtregierungsorganisation, die in der Meereswissenschaft oder im Naturschutz tätig ist."@de .
-
-compass:FocusArea a rdfs:Class ;
-    rdfs:label "Focus Area"@en ;
-    rdfs:label "Schwerpunktbereich"@de ;
-    rdfs:comment "A thematic research or activity focus area."@en ;
-    rdfs:comment "Ein thematischer Forschungs- oder Tätigkeitsschwerpunkt."@de .
-
-compass:Project a rdfs:Class ;
-    rdfs:label "Project"@en ;
-    rdfs:label "Projekt"@de ;
-    rdfs:comment "A research project conducted by an organization."@en ;
-    rdfs:comment "Ein Forschungsprojekt, das von einer Organisation durchgeführt wird."@de .
+compass:InternationalForum a rdfs:Class ;
+    rdfs:label "International Forum"@en ;
+    rdfs:label "Internationales Forum"@de ;
+    rdfs:comment "An international policy, governance, or coordination forum for ocean affairs."@en ;
+    rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Meeresangelegenheiten."@de .
 
 compass:Network a rdfs:Class ;
     rdfs:label "Network"@en ;
@@ -67,11 +27,29 @@ compass:Network a rdfs:Class ;
     rdfs:comment "A collaborative ocean research or monitoring network spanning multiple organizations."@en ;
     rdfs:comment "Ein kollaboratives Netzwerk für Meeresforschung oder -überwachung über mehrere Organisationen hinweg."@de .
 
-compass:InternationalForum a rdfs:Class ;
-    rdfs:label "International Forum"@en ;
-    rdfs:label "Internationales Forum"@de ;
-    rdfs:comment "An international policy, governance, or coordination forum for ocean affairs."@en ;
-    rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Meeresangelegenheiten."@de .
+compass:PartnerOrganization a rdfs:Class ;
+    rdfs:label "Partner Organization"@en ;
+    rdfs:label "Partnerorganisation"@de ;
+    rdfs:comment "An OceanCare partner organization active in marine conservation or research."@en ;
+    rdfs:comment "Eine OceanCare-Partnerorganisation, die im Meeresschutz oder in der Meeresforschung tätig ist."@de .
+
+compass:Project a rdfs:Class ;
+    rdfs:label "Project"@en ;
+    rdfs:label "Projekt"@de ;
+    rdfs:comment "A time-limited project or programme addressing ocean issues."@en ;
+    rdfs:comment "Ein zeitlich begrenztes Projekt oder Programm zur Bewältigung von Meeresfragen."@de .
+
+compass:FocusArea a rdfs:Class ;
+    rdfs:label "Focus Area"@en ;
+    rdfs:label "Schwerpunktbereich"@de ;
+    rdfs:comment "A thematic research or activity focus area."@en ;
+    rdfs:comment "Ein thematischer Forschungs- oder Tätigkeitsschwerpunkt."@de .
+
+compass:Theme a rdfs:Class ;
+    rdfs:label "Theme"@en ;
+    rdfs:label "Thema"@de ;
+    rdfs:comment "A cross-cutting theme used to categorize entities in the compass."@en ;
+    rdfs:comment "Ein übergreifendes Thema zur Kategorisierung von Entitäten im Compass."@de .
 
 # ============================================================
 # Property Declarations
@@ -80,15 +58,15 @@ compass:InternationalForum a rdfs:Class ;
 # ordes:conceptShape in shacl-shacl.ttl.
 # ============================================================
 
-compass:organizationName a rdf:Property ;
-    rdfs:label "organization name"@en ;
-    rdfs:label "Organisationsname"@de ;
-    rdfs:comment "The display name of the organization."@en .
+compass:name a rdf:Property ;
+    rdfs:label "name"@en ;
+    rdfs:label "Name"@de ;
+    rdfs:comment "The display name of the entity."@en .
 
-compass:country a rdf:Property ;
-    rdfs:label "country"@en ;
-    rdfs:label "Land"@de ;
-    rdfs:comment "The country where the entity is primarily based."@en .
+compass:location a rdf:Property ;
+    rdfs:label "location"@en ;
+    rdfs:label "Ort"@de ;
+    rdfs:comment "Human-readable location description (city, country)."@en .
 
 compass:keySentence a rdf:Property ;
     rdfs:label "key sentence"@en ;
@@ -100,75 +78,30 @@ compass:focusArea a rdf:Property ;
     rdfs:label "Schwerpunktbereich"@de ;
     rdfs:comment "Links to one or more research or activity focus areas."@en .
 
-compass:primaryOceanRegion a rdf:Property ;
-    rdfs:label "primary ocean region"@en ;
-    rdfs:label "primäre Meeresregion"@de ;
-    rdfs:comment "The primary ocean basin or region the entity focuses on."@en .
+compass:publicTheme a rdf:Property ;
+    rdfs:label "public theme"@en ;
+    rdfs:label "öffentliches Thema"@de ;
+    rdfs:comment "A publicly visible cross-cutting theme associated with this entity."@en .
 
-compass:fundingSource a rdf:Property ;
-    rdfs:label "funding source"@en ;
-    rdfs:label "Finanzierungsquelle"@de ;
-    rdfs:comment "Primary source of funding."@en .
+compass:secretTheme a rdf:Property ;
+    rdfs:label "internal theme"@en ;
+    rdfs:label "internes Thema"@de ;
+    rdfs:comment "An internal (non-public) theme tag for this entity."@en .
 
-compass:mostRecentUpdate a rdf:Property ;
-    rdfs:label "most recent update"@en ;
-    rdfs:label "letzte Aktualisierung"@de ;
-    rdfs:comment "Date of the most recent information update."@en .
+compass:managedByOceanCare a rdf:Property ;
+    rdfs:label "managed by OceanCare"@en ;
+    rdfs:label "verwaltet von OceanCare"@de ;
+    rdfs:comment "Whether this entity is directly managed by OceanCare."@en .
 
-compass:activities a rdf:Property ;
-    rdfs:label "activities"@en ;
-    rdfs:label "Aktivitäten"@de ;
-    rdfs:comment "Key activities, initiatives, or research efforts."@en .
-
-compass:staffSize a rdf:Property ;
-    rdfs:label "staff size"@en ;
-    rdfs:label "Personalstärke"@de ;
-    rdfs:comment "Approximate number of staff or researchers."@en .
-
-compass:annualBudgetUSD a rdf:Property ;
-    rdfs:label "annual budget (USD millions)"@en ;
-    rdfs:label "jährliches Budget (USD Millionen)"@de ;
-    rdfs:comment "Approximate annual research budget in millions of US dollars."@en .
-
-compass:publicationsPerYear a rdf:Property ;
-    rdfs:label "publications per year"@en ;
-    rdfs:label "Publikationen pro Jahr"@de ;
-    rdfs:comment "Approximate number of peer-reviewed publications per year."@en .
-
-compass:researchVessels a rdf:Property ;
-    rdfs:label "research vessels"@en ;
-    rdfs:label "Forschungsschiffe"@de ;
-    rdfs:comment "Number of research vessels operated."@en .
-
-compass:accessType a rdf:Property ;
-    rdfs:label "access type"@en ;
-    rdfs:label "Zugangstyp"@de ;
-    rdfs:comment "How external researchers can access this organization's facilities or data."@en .
-
-compass:donationUrl a rdf:Property ;
-    rdfs:label "donation URL"@en ;
-    rdfs:label "Spenden-URL"@de ;
-    rdfs:comment "URL where donations can be made to support the organization."@en .
-
-compass:offersResearchTrips a rdf:Property ;
-    rdfs:label "offers research trips"@en ;
-    rdfs:label "bietet Forschungsreisen an"@de ;
-    rdfs:comment "Whether the organization offers research trips to the public or students."@en .
-
-compass:hasProject a rdf:Property ;
-    rdfs:label "has project"@en ;
-    rdfs:label "hat Projekt"@de ;
-    rdfs:comment "Links to research projects run by this organization."@en .
+compass:isPublic a rdf:Property ;
+    rdfs:label "is public"@en ;
+    rdfs:label "ist öffentlich"@de ;
+    rdfs:comment "Whether this concept is publicly visible in the Compass UI."@en .
 
 compass:memberCount a rdf:Property ;
     rdfs:label "member count"@en ;
     rdfs:label "Mitgliederanzahl"@de ;
     rdfs:comment "Number of member organizations or institutions in the network."@en .
-
-compass:hasLeadOrganization a rdf:Property ;
-    rdfs:label "lead organization"@en ;
-    rdfs:label "Leitorganisation"@de ;
-    rdfs:comment "The organization leading or hosting the network secretariat."@en .
 
 compass:memberStates a rdf:Property ;
     rdfs:label "member states"@en ;
@@ -180,16 +113,6 @@ compass:mandate a rdf:Property ;
     rdfs:label "Mandat"@de ;
     rdfs:comment "The official mandate or mission statement of the forum."@en .
 
-compass:hostCountry a rdf:Property ;
-    rdfs:label "host country"@en ;
-    rdfs:label "Gastland"@de ;
-    rdfs:comment "The country hosting the forum's secretariat."@en .
-
-compass:projectName a rdf:Property ;
-    rdfs:label "project name"@en ;
-    rdfs:label "Projektname"@de ;
-    rdfs:comment "The name of the research project."@en .
-
 compass:startDate a rdf:Property ;
     rdfs:label "start date"@en ;
     rdfs:label "Startdatum"@de ;
@@ -200,20 +123,10 @@ compass:endDate a rdf:Property ;
     rdfs:label "Enddatum"@de ;
     rdfs:comment "The end date of the project."@en .
 
-compass:species a rdf:Property ;
-    rdfs:label "species"@en ;
-    rdfs:label "Arten"@de ;
-    rdfs:comment "Species studied in the project."@en .
-
-compass:imageUrl a rdf:Property ;
-    rdfs:label "image URL"@en ;
-    rdfs:label "Bild-URL"@de ;
-    rdfs:comment "URL of an image representing the project."@en .
-
-compass:projectUrl a rdf:Property ;
-    rdfs:label "project URL"@en ;
-    rdfs:label "Projekt-URL"@de ;
-    rdfs:comment "URL of the project's web page."@en .
+compass:linkedForum a rdf:Property ;
+    rdfs:label "linked forum"@en ;
+    rdfs:label "verknüpftes Forum"@de ;
+    rdfs:comment "Links to an international forum this entity is associated with."@en .
 
 # External properties used in sh:path (stub declarations; authoritative
 # definitions live in the WGS84, Schema.org, and SKOS vocabularies).
@@ -233,218 +146,44 @@ schema:url a rdf:Property ;
     rdfs:label "url"@en ;
     rdfs:comment "URL of the item."@en .
 
+schema:image a rdf:Property ;
+    rdfs:label "image"@en ;
+    rdfs:comment "URL of an image or logo representing the entity."@en .
+
 skos:prefLabel a rdf:Property ;
     rdfs:label "preferred label"@en ;
     rdfs:comment "The preferred lexical label for a resource, in a given language."@en .
 
 # ============================================================
-# Shared (Named) Property Shapes
-# Reused across OrganizationShape, NetworkShape, and InternationalForumShape.
-# Defining constraints as named shapes enables reference by multiple node shapes
-# without duplicating constraint definitions.
+# ForumShape — master shape driving filter schema generation.
+# No sh:targetClass: individual type shapes delegate to this via sh:node.
+# schema.py reads sh:property entries from this shape to build filter UI
+# and auto-generate SPARQL OPTIONAL clauses.
 # ============================================================
 
-compass:NamePropertyShape a sh:PropertyShape ;
-    sh:path compass:organizationName ;
-    sh:name "name"@en ;
-    sh:name "Name"@de ;
-    sh:description "The display name of the entity."@en ;
-    sh:description "Der Anzeigename der Entität."@de ;
-    sh:datatype rdf:langString ;
-    sh:minCount 1 ;
-    sh:uniqueLang true .
+compass:ForumShape a sh:NodeShape ;
+    rdfs:label "Forum Shape"@en ;
+    rdfs:label "Forum-Form"@de ;
+    rdfs:comment "Master property shape shared by all Compass entity types."@en ;
 
-compass:GeoLatPropertyShape a sh:PropertyShape ;
-    sh:path geo:lat ;
-    sh:name "latitude"@en ;
-    sh:name "Breitengrad"@de ;
-    sh:description "WGS84 latitude."@en ;
-    sh:description "WGS84 Breitengrad."@de ;
-    sh:datatype xsd:float ;
-    sh:minCount 1 ;
-    sh:minInclusive -90.0 ;
-    sh:maxInclusive 90.0 ;
-    sh:severity sh:Violation .
-
-compass:GeoLongPropertyShape a sh:PropertyShape ;
-    sh:path geo:long ;
-    sh:name "longitude"@en ;
-    sh:name "Längengrad"@de ;
-    sh:description "WGS84 longitude."@en ;
-    sh:description "WGS84 Längengrad."@de ;
-    sh:datatype xsd:float ;
-    sh:minCount 1 ;
-    sh:minInclusive -180.0 ;
-    sh:maxInclusive 180.0 ;
-    sh:severity sh:Violation .
-
-compass:CountryPropertyShape a sh:PropertyShape ;
-    sh:path compass:country ;
-    sh:name "country"@en ;
-    sh:name "Land"@de ;
-    sh:description "The country where the entity is primarily based."@en ;
-    sh:description "Das Land, in dem die Entität primär ansässig ist."@de ;
-    sh:datatype rdf:langString ;
-    sh:uniqueLang true .
-
-compass:WebsitePropertyShape a sh:PropertyShape ;
-    sh:path schema:url ;
-    sh:name "website URL"@en ;
-    sh:name "Website-URL"@de ;
-    sh:description "The entity's official website."@en ;
-    sh:description "Die offizielle Website der Entität."@de ;
-    sh:datatype xsd:anyURI ;
-    sh:severity sh:Warning .
-
-compass:KeySentencePropertyShape a sh:PropertyShape ;
-    sh:path compass:keySentence ;
-    sh:name "key sentence"@en ;
-    sh:name "Kernsatz"@de ;
-    sh:description "A single sentence summarizing the entity."@en ;
-    sh:description "Ein einzelner Satz, der die Entität zusammenfasst."@de ;
-    sh:datatype rdf:langString ;
-    sh:uniqueLang true .
-
-compass:FocusAreaPropertyShape a sh:PropertyShape ;
-    sh:path compass:focusArea ;
-    sh:name "focus area"@en ;
-    sh:name "Schwerpunktbereich"@de ;
-    sh:description "Links to one or more research or activity focus areas."@en ;
-    sh:description "Verknüpft mit einem oder mehreren Forschungs- oder Aktivitätsschwerpunkten."@de ;
-    sh:class compass:FocusArea ;
-    sh:nodeKind sh:IRI .
-
-compass:OceanRegionPropertyShape a sh:PropertyShape ;
-    sh:path compass:primaryOceanRegion ;
-    sh:name "primary ocean region"@en ;
-    sh:name "primäre Meeresregion"@de ;
-    sh:description "The primary ocean basin or region the entity focuses on."@en ;
-    sh:description "Das primäre Meeresbecken oder die Region, auf die sich die Entität konzentriert."@de ;
-    sh:nodeKind sh:IRI ;
-    sh:in ( compass:Region_Atlantic compass:Region_Pacific compass:Region_Indian compass:Region_Arctic compass:Region_Southern compass:Region_Global ) .
-
-compass:FundingSourcePropertyShape a sh:PropertyShape ;
-    sh:path compass:fundingSource ;
-    sh:name "funding source"@en ;
-    sh:name "Finanzierungsquelle"@de ;
-    sh:description "Primary source of funding."@en ;
-    sh:description "Hauptquelle der Finanzierung."@de ;
-    sh:nodeKind sh:IRI ;
-    sh:in ( compass:Funding_Public compass:Funding_Private compass:Funding_Mixed compass:Funding_International ) .
-
-compass:MostRecentUpdatePropertyShape a sh:PropertyShape ;
-    sh:path compass:mostRecentUpdate ;
-    sh:name "most recent update"@en ;
-    sh:name "letzte Aktualisierung"@de ;
-    sh:description "Date of the most recent information update."@en ;
-    sh:description "Datum der letzten Informationsaktualisierung."@de ;
-    sh:datatype xsd:date .
-
-compass:ActivitiesPropertyShape a sh:PropertyShape ;
-    sh:path compass:activities ;
-    sh:name "activities"@en ;
-    sh:name "Aktivitäten"@de ;
-    sh:description "Key activities, initiatives, or research efforts."@en ;
-    sh:description "Wesentliche Aktivitäten, Initiativen oder Forschungsbemühungen."@de ;
-    sh:datatype rdf:langString .
-
-compass:FoundedYearPropertyShape a sh:PropertyShape ;
-    sh:path schema:foundingDate ;
-    sh:name "founded year"@en ;
-    sh:name "Gründungsjahr"@de ;
-    sh:description "The year the entity was established."@en ;
-    sh:description "Das Jahr, in dem die Entität gegründet wurde."@de ;
-    sh:datatype xsd:gYear .
-
-# ============================================================
-# SHACL Node Shape: OrganizationShape
-# ============================================================
-
-compass:OrganizationShape a sh:NodeShape ;
-    sh:targetClass compass:Organization ;
-    rdfs:label "Organization Shape"@en ;
-    rdfs:label "Organisations-Form"@de ;
-    rdfs:comment "Validates the expected structure of an oceanographic organization."@en ;
-    rdfs:comment "Validiert die erwartete Struktur einer ozeanographischen Organisation."@de ;
-
-    # --- organizationName (required, exactly 1, string) ---
+    # --- name (required, lang string) ---
     sh:property [
-        sh:path compass:organizationName ;
-        sh:name "organization name"@en ;
-        sh:name "Organisationsname"@de ;
-        sh:description "The display name of the organization."@en ;
-        sh:description "Der Anzeigename der Organisation."@de ;
+        sh:path compass:name ;
+        sh:name "name"@en ;
+        sh:name "Name"@de ;
+        sh:description "The display name of the entity."@en ;
+        sh:description "Der Anzeigename der Entität."@de ;
         sh:datatype rdf:langString ;
         sh:minCount 1 ;
         sh:uniqueLang true ;
     ] ;
 
-    # --- country (required, exactly 1, string) ---
-    sh:property [
-        sh:path compass:country ;
-        sh:name "country"@en ;
-        sh:name "Land"@de ;
-        sh:description "The country where the organization is located."@en ;
-        sh:description "Das Land, in dem sich die Organisation befindet."@de ;
-        sh:datatype rdf:langString ;
-        sh:minCount 1 ;
-        sh:uniqueLang true ;
-    ] ;
-
-    # --- foundedYear (optional, at most 1, gYear) ---
-    sh:property [
-        sh:path schema:foundingDate ;
-        sh:name "founded year"@en ;
-        sh:name "Gründungsjahr"@de ;
-        sh:description "The year the organization was established."@en ;
-        sh:description "Das Jahr, in dem die Organisation gegründet wurde."@de ;
-        sh:datatype xsd:gYear ;
-        sh:maxCount 1 ;
-    ] ;
-
-    # --- staffSize (optional, at most 1, integer, ≥ 1) ---
-    sh:property [
-        sh:path compass:staffSize ;
-        sh:name "staff size"@en ;
-        sh:name "Personalstärke"@de ;
-        sh:description "Approximate number of staff or researchers."@en ;
-        sh:description "Ungefähre Anzahl der Mitarbeiter oder Forscher."@de ;
-        sh:datatype xsd:integer ;
-        sh:maxCount 1 ;
-        sh:minInclusive 1 ;
-    ] ;
-
-    # --- websiteUrl (optional, at most 1, anyURI) ---
-    sh:property [
-        sh:path schema:url ;
-        sh:name "website URL"@en ;
-        sh:name "Website-URL"@de ;
-        sh:description "The organization's website."@en ;
-        sh:description "Die Website der Organisation."@de ;
-        sh:datatype xsd:anyURI ;
-        sh:maxCount 1 ;
-        sh:severity sh:Warning ;
-    ] ;
-
-    # --- hasFocusArea (at least 1, must be a FocusArea instance) ---
-    sh:property [
-        sh:path compass:focusArea ;
-        sh:name "focus area"@en ;
-        sh:name "Schwerpunktbereich"@de ;
-        sh:description "Links an organization to one or more research focus areas."@en ;
-        sh:description "Verknüpft eine Organisation mit einem oder mehreren Forschungsschwerpunkten."@de ;
-        sh:class compass:FocusArea ;
-        sh:minCount 1 ;
-        sh:nodeKind sh:IRI ;
-    ] ;
-
-    # --- geo:lat (required, exactly 1, double, -90..90) ---
+    # --- latitude (required) ---
     sh:property [
         sh:path geo:lat ;
         sh:name "latitude"@en ;
         sh:name "Breitengrad"@de ;
         sh:description "WGS84 latitude."@en ;
-        sh:description "WGS84 Breitengrad."@de ;
         sh:datatype xsd:float ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -453,13 +192,12 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:severity sh:Violation ;
     ] ;
 
-    # --- geo:long (required, exactly 1, double, -180..180) ---
+    # --- longitude (required) ---
     sh:property [
         sh:path geo:long ;
         sh:name "longitude"@en ;
         sh:name "Längengrad"@de ;
         sh:description "WGS84 longitude."@en ;
-        sh:description "WGS84 Längengrad."@de ;
         sh:datatype xsd:float ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -468,227 +206,103 @@ compass:OrganizationShape a sh:NodeShape ;
         sh:severity sh:Violation ;
     ] ;
 
-    # --- annualBudgetUSD (optional, integer, millions USD) ---
+    # --- location (optional, lang string) ---
     sh:property [
-        sh:path compass:annualBudgetUSD ;
-        sh:name "annual budget (USD millions)"@en ;
-        sh:name "jährliches Budget (USD Millionen)"@de ;
-        sh:description "Approximate annual research budget in millions of US dollars."@en ;
-        sh:description "Ungefähres jährliches Forschungsbudget in Millionen US-Dollar."@de ;
-        sh:datatype xsd:integer ;
-        sh:maxCount 1 ;
-        sh:minInclusive 0 ;
-    ] ;
-
-    # --- publicationsPerYear (optional, integer) ---
-    sh:property [
-        sh:path compass:publicationsPerYear ;
-        sh:name "publications per year"@en ;
-        sh:name "Publikationen pro Jahr"@de ;
-        sh:description "Approximate number of peer-reviewed publications per year."@en ;
-        sh:description "Ungefähre Anzahl der Peer-Review-Publikationen pro Jahr."@de ;
-        sh:datatype xsd:integer ;
-        sh:maxCount 1 ;
-        sh:minInclusive 0 ;
-    ] ;
-
-    # --- researchVessels (optional, integer) ---
-    sh:property [
-        sh:path compass:researchVessels ;
-        sh:name "research vessels"@en ;
-        sh:name "Forschungsschiffe"@de ;
-        sh:description "Number of research vessels operated."@en ;
-        sh:description "Anzahl der betriebenen Forschungsschiffe."@de ;
-        sh:datatype xsd:integer ;
-        sh:maxCount 1 ;
-        sh:minInclusive 0 ;
-    ] ;
-
-    # --- accessType (optional, controlled vocab IRI) ---
-    sh:property [
-        sh:path compass:accessType ;
-        sh:name "access type"@en ;
-        sh:name "Zugangstyp"@de ;
-        sh:description "How external researchers can access this organization's facilities or data."@en ;
-        sh:description "Wie externe Forscher auf die Einrichtungen oder Daten dieser Organisation zugreifen können."@de ;
-        sh:nodeKind sh:IRI ;
-        sh:in ( compass:Access_Open compass:Access_Restricted compass:Access_ByPartnership ) ;
-        sh:maxCount 1 ;
-    ] ;
-
-    # --- fundingSource (optional, controlled vocab IRI) ---
-    sh:property [
-        sh:path compass:fundingSource ;
-        sh:name "funding source"@en ;
-        sh:name "Finanzierungsquelle"@de ;
-        sh:description "Primary source of organizational funding."@en ;
-        sh:description "Hauptquelle der Organisationsfinanzierung."@de ;
-        sh:nodeKind sh:IRI ;
-        sh:in ( compass:Funding_Public compass:Funding_Private compass:Funding_Mixed compass:Funding_International ) ;
-        sh:maxCount 1 ;
-    ] ;
-
-    # --- primaryOceanRegion (optional, controlled vocab IRI) ---
-    sh:property [
-        sh:path compass:primaryOceanRegion ;
-        sh:name "primary ocean region"@en ;
-        sh:name "primäre Meeresregion"@de ;
-        sh:description "The primary ocean basin or region the organization focuses on."@en ;
-        sh:description "Das primäre Meeresbecken oder die Region, auf die sich die Organisation konzentriert."@de ;
-        sh:nodeKind sh:IRI ;
-        sh:in ( compass:Region_Atlantic compass:Region_Pacific compass:Region_Indian compass:Region_Arctic compass:Region_Southern compass:Region_Global ) ;
-        sh:maxCount 1 ;
-    ] ;
-
-    # --- keySentence (optional, at most 1, string) ---
-    sh:property [
-        sh:path compass:keySentence ;
-        sh:name "key sentence"@en ;
-        sh:name "Kernsatz"@de ;
-        sh:description "A single sentence summarizing the organization."@en ;
-        sh:description "Ein einzelner Satz, der die Organisation zusammenfasst."@de ;
+        sh:path compass:location ;
+        sh:name "location"@en ;
+        sh:name "Ort"@de ;
+        sh:description "Human-readable location (city, country)."@en ;
+        sh:description "Menschenlesbare Ortsangabe (Stadt, Land)."@de ;
         sh:datatype rdf:langString ;
         sh:uniqueLang true ;
     ] ;
 
-    # --- activities (optional, multi-value, string) ---
+    # --- website URL (optional) ---
     sh:property [
-        sh:path compass:activities ;
-        sh:name "activities"@en ;
-        sh:name "Aktivitäten"@de ;
-        sh:description "Key activities or research efforts the organization undertakes."@en ;
-        sh:description "Wesentliche Aktivitäten oder Forschungsbemühungen der Organisation."@de ;
-        sh:datatype rdf:langString ;
-    ] ;
-
-    # --- mostRecentUpdate (optional, at most 1, date) ---
-    sh:property [
-        sh:path compass:mostRecentUpdate ;
-        sh:name "most recent update"@en ;
-        sh:name "letzte Aktualisierung"@de ;
-        sh:description "Date of the most recent information update for this organization."@en ;
-        sh:description "Datum der letzten Informationsaktualisierung für diese Organisation."@de ;
-        sh:datatype xsd:date ;
+        sh:path schema:url ;
+        sh:name "website URL"@en ;
+        sh:name "Website-URL"@de ;
+        sh:description "The entity's official website."@en ;
+        sh:datatype xsd:anyURI ;
         sh:maxCount 1 ;
+        sh:severity sh:Warning ;
     ] ;
 
-    # --- donationUrl (optional, at most 1, anyURI) ---
+    # --- image/logo (optional) ---
     sh:property [
-        sh:path compass:donationUrl ;
-        sh:name "donation URL"@en ;
-        sh:name "Spenden-URL"@de ;
-        sh:description "URL where donations can be made to support the organization."@en ;
-        sh:description "URL, unter der Spenden für die Organisation getätigt werden können."@de ;
+        sh:path schema:image ;
+        sh:name "logo"@en ;
+        sh:name "Logo"@de ;
+        sh:description "URL of an image or logo for the entity."@en ;
         sh:datatype xsd:anyURI ;
         sh:maxCount 1 ;
     ] ;
 
-    # --- offersResearchTrips (optional, at most 1, boolean) ---
+    # --- key sentence (optional, lang string) ---
     sh:property [
-        sh:path compass:offersResearchTrips ;
-        sh:name "offers research trips"@en ;
-        sh:name "bietet Forschungsreisen an"@de ;
-        sh:description "Whether the organization offers research trips to the public or students."@en ;
-        sh:description "Ob die Organisation Forschungsreisen für die Öffentlichkeit oder Studierende anbietet."@de ;
+        sh:path compass:keySentence ;
+        sh:name "key sentence"@en ;
+        sh:name "Kernsatz"@de ;
+        sh:description "A single sentence summarizing the entity."@en ;
+        sh:datatype rdf:langString ;
+        sh:uniqueLang true ;
+    ] ;
+
+    # --- focus area (optional, min 0, class FocusArea) ---
+    sh:property [
+        sh:path compass:focusArea ;
+        sh:name "focus area"@en ;
+        sh:name "Schwerpunktbereich"@de ;
+        sh:description "Links to one or more thematic focus areas."@en ;
+        sh:description "Verknüpft mit einem oder mehreren thematischen Schwerpunktbereichen."@de ;
+        sh:class compass:FocusArea ;
+        sh:nodeKind sh:IRI ;
+    ] ;
+
+    # --- public theme (optional, class Theme) ---
+    sh:property [
+        sh:path compass:publicTheme ;
+        sh:name "public theme"@en ;
+        sh:name "öffentliches Thema"@de ;
+        sh:description "A publicly visible cross-cutting theme for this entity."@en ;
+        sh:description "Ein öffentlich sichtbares übergreifendes Thema für diese Entität."@de ;
+        sh:class compass:Theme ;
+        sh:nodeKind sh:IRI ;
+    ] ;
+
+    # --- internal theme (optional, class Theme, display only) ---
+    sh:property [
+        sh:path compass:secretTheme ;
+        sh:name "internal theme"@en ;
+        sh:name "internes Thema"@de ;
+        sh:description "An internal theme tag, not publicly displayed."@en ;
+        sh:class compass:Theme ;
+        sh:nodeKind sh:IRI ;
+    ] ;
+
+    # --- managed by OceanCare (optional, boolean) ---
+    sh:property [
+        sh:path compass:managedByOceanCare ;
+        sh:name "managed by OceanCare"@en ;
+        sh:name "verwaltet von OceanCare"@de ;
+        sh:description "Whether this entity is directly managed by OceanCare."@en ;
         sh:datatype xsd:boolean ;
         sh:maxCount 1 ;
     ] ;
 
-    # --- hasProject (optional, links to Project instances) ---
+    # --- founding date (optional, gYear) ---
     sh:property [
-        sh:path compass:hasProject ;
-        sh:name "has project"@en ;
-        sh:name "hat Projekt"@de ;
-        sh:description "Links to research projects run by this organization."@en ;
-        sh:description "Verknüpfung mit Forschungsprojekten dieser Organisation."@de ;
-        sh:class compass:Project ;
-        sh:nodeKind sh:IRI ;
-    ] .
-
-# ============================================================
-# SHACL Node Shapes: Organization Subclasses
-# Each delegates property validation to OrganizationShape via sh:node.
-# Keeping subclasses as separate shapes avoids infinite recursion in
-# tools (e.g. SHACL Play) that follow sh:targetClass hierarchies.
-# ============================================================
-
-compass:ResearchInstituteShape a sh:NodeShape ;
-    sh:targetClass compass:ResearchInstitute ;
-    rdfs:label "Research Institute Shape"@en ;
-    rdfs:label "Forschungsinstitut-Form"@de ;
-    sh:node compass:OrganizationShape .
-
-compass:UniversityShape a sh:NodeShape ;
-    sh:targetClass compass:University ;
-    rdfs:label "University Shape"@en ;
-    rdfs:label "Universitäts-Form"@de ;
-    sh:node compass:OrganizationShape .
-
-compass:GovernmentAgencyShape a sh:NodeShape ;
-    sh:targetClass compass:GovernmentAgency ;
-    rdfs:label "Government Agency Shape"@en ;
-    rdfs:label "Regierungsbehörden-Form"@de ;
-    sh:node compass:OrganizationShape .
-
-compass:NGOShape a sh:NodeShape ;
-    sh:targetClass compass:NGO ;
-    rdfs:label "NGO Shape"@en ;
-    rdfs:label "NGO-Form"@de ;
-    sh:node compass:OrganizationShape .
-
-# ============================================================
-# SHACL Node Shape: NetworkShape
-# Reuses shared property shapes; adds network-specific constraints.
-# ============================================================
-
-compass:NetworkShape a sh:NodeShape ;
-    sh:targetClass compass:Network ;
-    rdfs:label "Network Shape"@en ;
-    rdfs:label "Netzwerk-Form"@de ;
-    rdfs:comment "Validates the expected structure of a collaborative ocean research or monitoring network."@en ;
-    rdfs:comment "Validiert die erwartete Struktur eines kollaborativen Meeresforschungs- oder Überwachungsnetzwerks."@de ;
-
-    # Shared property shapes (reused with OrganizationShape and InternationalForumShape)
-    sh:property compass:NamePropertyShape ;
-    sh:property compass:GeoLatPropertyShape ;
-    sh:property compass:GeoLongPropertyShape ;
-    sh:property compass:CountryPropertyShape ;
-    sh:property compass:WebsitePropertyShape ;
-    sh:property compass:KeySentencePropertyShape ;
-    sh:property compass:FocusAreaPropertyShape ;
-    sh:property compass:OceanRegionPropertyShape ;
-    sh:property compass:FundingSourcePropertyShape ;
-    sh:property compass:MostRecentUpdatePropertyShape ;
-    sh:property compass:ActivitiesPropertyShape ;
-    sh:property compass:FoundedYearPropertyShape ;
-
-    # --- memberCount (optional, integer, ≥ 1) ---
-    sh:property [
-        sh:path compass:memberCount ;
-        sh:name "member count"@en ;
-        sh:name "Mitgliederanzahl"@de ;
-        sh:description "Number of member organizations or institutions in the network."@en ;
-        sh:description "Anzahl der Mitgliedsorganisationen oder -institutionen im Netzwerk."@de ;
-        sh:datatype xsd:integer ;
-        sh:maxCount 1 ;
-        sh:minInclusive 1 ;
-    ] ;
-
-    # --- hasLeadOrganization (optional, link to an Organization IRI) ---
-    sh:property [
-        sh:path compass:hasLeadOrganization ;
-        sh:name "lead organization"@en ;
-        sh:name "Leitorganisation"@de ;
-        sh:description "The organization leading or hosting the network secretariat."@en ;
-        sh:description "Die Organisation, die das Netzwerksekretariat leitet oder beherbergt."@de ;
-        sh:class compass:Organization ;
-        sh:nodeKind sh:IRI ;
+        sh:path schema:foundingDate ;
+        sh:name "founded year"@en ;
+        sh:name "Gründungsjahr"@de ;
+        sh:description "The year the entity was established."@en ;
+        sh:datatype xsd:gYear ;
         sh:maxCount 1 ;
     ] .
 
 # ============================================================
-# SHACL Node Shape: InternationalForumShape
-# Reuses shared property shapes; adds forum-specific constraints.
+# SHACL Node Shapes: 4 entity types
+# Each validates its class and delegates shared constraints to ForumShape.
 # ============================================================
 
 compass:InternationalForumShape a sh:NodeShape ;
@@ -696,54 +310,89 @@ compass:InternationalForumShape a sh:NodeShape ;
     rdfs:label "International Forum Shape"@en ;
     rdfs:label "Internationales Forum-Form"@de ;
     rdfs:comment "Validates the expected structure of an international ocean governance forum."@en ;
-    rdfs:comment "Validiert die erwartete Struktur eines internationalen Meeresgovernance-Forums."@de ;
+    sh:node compass:ForumShape ;
 
-    # Shared property shapes (reused with OrganizationShape and NetworkShape)
-    sh:property compass:NamePropertyShape ;
-    sh:property compass:GeoLatPropertyShape ;
-    sh:property compass:GeoLongPropertyShape ;
-    sh:property compass:CountryPropertyShape ;
-    sh:property compass:WebsitePropertyShape ;
-    sh:property compass:KeySentencePropertyShape ;
-    sh:property compass:FocusAreaPropertyShape ;
-    sh:property compass:OceanRegionPropertyShape ;
-    sh:property compass:FundingSourcePropertyShape ;
-    sh:property compass:MostRecentUpdatePropertyShape ;
-    sh:property compass:ActivitiesPropertyShape ;
-    sh:property compass:FoundedYearPropertyShape ;
-
-    # --- memberStates (optional, integer) ---
+    # --- member states (optional, integer) ---
     sh:property [
         sh:path compass:memberStates ;
         sh:name "member states"@en ;
         sh:name "Mitgliedstaaten"@de ;
         sh:description "Number of member nation-states participating in the forum."@en ;
-        sh:description "Anzahl der am Forum teilnehmenden Mitglied-Nationalstaaten."@de ;
         sh:datatype xsd:integer ;
         sh:maxCount 1 ;
         sh:minInclusive 1 ;
     ] ;
 
-    # --- mandate (optional, at most 1, string) ---
+    # --- mandate (optional, lang string) ---
     sh:property [
         sh:path compass:mandate ;
         sh:name "mandate"@en ;
         sh:name "Mandat"@de ;
         sh:description "The official mandate or mission statement of the forum."@en ;
-        sh:description "Das offizielle Mandat oder die Leitbild-Erklärung des Forums."@de ;
         sh:datatype rdf:langString ;
         sh:uniqueLang true ;
+    ] .
+
+compass:NetworkShape a sh:NodeShape ;
+    sh:targetClass compass:Network ;
+    rdfs:label "Network Shape"@en ;
+    rdfs:label "Netzwerk-Form"@de ;
+    rdfs:comment "Validates the expected structure of a collaborative ocean network."@en ;
+    sh:node compass:ForumShape ;
+
+    # --- member count (optional, integer) ---
+    sh:property [
+        sh:path compass:memberCount ;
+        sh:name "member count"@en ;
+        sh:name "Mitgliederanzahl"@de ;
+        sh:description "Number of member organizations in the network."@en ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+        sh:minInclusive 1 ;
+    ] .
+
+compass:PartnerOrganizationShape a sh:NodeShape ;
+    sh:targetClass compass:PartnerOrganization ;
+    rdfs:label "Partner Organization Shape"@en ;
+    rdfs:label "Partnerorganisation-Form"@de ;
+    rdfs:comment "Validates the expected structure of an OceanCare partner organization."@en ;
+    sh:node compass:ForumShape ;
+
+    # --- linked forum (optional, IRI of related InternationalForum) ---
+    sh:property [
+        sh:path compass:linkedForum ;
+        sh:name "linked forum"@en ;
+        sh:name "verknüpftes Forum"@de ;
+        sh:description "An international forum this partner organization is associated with."@en ;
+        sh:class compass:InternationalForum ;
+        sh:nodeKind sh:IRI ;
+    ] .
+
+compass:ProjectShape a sh:NodeShape ;
+    sh:targetClass compass:Project ;
+    rdfs:label "Project Shape"@en ;
+    rdfs:label "Projekt-Form"@de ;
+    rdfs:comment "Validates the expected structure of a project or programme."@en ;
+    sh:node compass:ForumShape ;
+
+    # --- start date (optional) ---
+    sh:property [
+        sh:path compass:startDate ;
+        sh:name "start date"@en ;
+        sh:name "Startdatum"@de ;
+        sh:description "The start date of the project."@en ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
     ] ;
 
-    # --- hostCountry (optional, at most 1, string) ---
+    # --- end date (optional) ---
     sh:property [
-        sh:path compass:hostCountry ;
-        sh:name "host country"@en ;
-        sh:name "Gastland"@de ;
-        sh:description "The country hosting the forum's secretariat."@en ;
-        sh:description "Das Land, das das Sekretariat des Forums beherbergt."@de ;
-        sh:datatype rdf:langString ;
-        sh:uniqueLang true ;
+        sh:path compass:endDate ;
+        sh:name "end date"@en ;
+        sh:name "Enddatum"@de ;
+        sh:description "The end date or target completion date of the project."@en ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
     ] .
 
 # ============================================================
@@ -754,8 +403,7 @@ compass:FocusAreaShape a sh:NodeShape ;
     sh:targetClass compass:FocusArea ;
     rdfs:label "Focus Area Shape"@en ;
     rdfs:label "Schwerpunktbereich-Form"@de ;
-    rdfs:comment "Validates focus area instances."@en ;
-    rdfs:comment "Validiert Schwerpunktbereich-Instanzen."@de ;
+    rdfs:comment "Validates focus area concept instances."@en ;
 
     sh:property [
         sh:path skos:prefLabel ;
@@ -767,125 +415,30 @@ compass:FocusAreaShape a sh:NodeShape ;
     ] .
 
 # ============================================================
-# Focus Area Instances (controlled vocabulary)
+# SHACL Node Shape: ThemeShape
 # ============================================================
 
-compass:MarineBiology a compass:FocusArea ;
-    rdfs:label "Marine Biology"@en ;
-    rdfs:label "Meeresbiologie"@de ;
-    skos:prefLabel "Marine Biology"@en ;
-    skos:prefLabel "Meeresbiologie"@de .
-
-compass:PhysicalOceanography a compass:FocusArea ;
-    rdfs:label "Physical Oceanography"@en ;
-    rdfs:label "Physikalische Ozeanographie"@de ;
-    skos:prefLabel "Physical Oceanography"@en ;
-    skos:prefLabel "Physikalische Ozeanographie"@de .
-
-compass:ClimateScience a compass:FocusArea ;
-    rdfs:label "Climate Science"@en ;
-    rdfs:label "Klimawissenschaft"@de ;
-    skos:prefLabel "Climate Science"@en ;
-    skos:prefLabel "Klimawissenschaft"@de .
-
-compass:DeepSeaExploration a compass:FocusArea ;
-    rdfs:label "Deep-Sea Exploration"@en ;
-    rdfs:label "Tiefsee-Exploration"@de ;
-    skos:prefLabel "Deep-Sea Exploration"@en ;
-    skos:prefLabel "Tiefsee-Exploration"@de .
-
-compass:CoastalManagement a compass:FocusArea ;
-    rdfs:label "Coastal Management"@en ;
-    rdfs:label "Küstenmanagement"@de ;
-    skos:prefLabel "Coastal Management"@en ;
-    skos:prefLabel "Küstenmanagement"@de .
-
-compass:MarineGeology a compass:FocusArea ;
-    rdfs:label "Marine Geology"@en ;
-    rdfs:label "Meeresgeologie"@de ;
-    skos:prefLabel "Marine Geology"@en ;
-    skos:prefLabel "Meeresgeologie"@de .
-
-compass:FisheriesScience a compass:FocusArea ;
-    rdfs:label "Fisheries Science"@en ;
-    rdfs:label "Fischereiwissenschaft"@de ;
-    skos:prefLabel "Fisheries Science"@en ;
-    skos:prefLabel "Fischereiwissenschaft"@de .
-
-compass:PolarResearch a compass:FocusArea ;
-    rdfs:label "Polar Research"@en ;
-    rdfs:label "Polarforschung"@de ;
-    skos:prefLabel "Polar Research"@en ;
-    skos:prefLabel "Polarforschung"@de .
-
-# ============================================================
-# SHACL Node Shape: ProjectShape
-# ============================================================
-
-compass:ProjectShape a sh:NodeShape ;
-    sh:targetClass compass:Project ;
-    rdfs:label "Project Shape"@en ;
-    rdfs:label "Projekt-Form"@de ;
-    rdfs:comment "Validates the expected structure of a research project."@en ;
-    rdfs:comment "Validiert die erwartete Struktur eines Forschungsprojekts."@de ;
+compass:ThemeShape a sh:NodeShape ;
+    sh:targetClass compass:Theme ;
+    rdfs:label "Theme Shape"@en ;
+    rdfs:label "Thema-Form"@de ;
+    rdfs:comment "Validates theme concept instances."@en ;
 
     sh:property [
-        sh:path compass:projectName ;
-        sh:name "project name"@en ;
-        sh:name "Projektname"@de ;
-        sh:description "The name of the research project."@en ;
-        sh:description "Der Name des Forschungsprojekts."@de ;
+        sh:path skos:prefLabel ;
+        sh:name "preferred label"@en ;
+        sh:name "bevorzugte Bezeichnung"@de ;
         sh:datatype rdf:langString ;
         sh:minCount 1 ;
         sh:uniqueLang true ;
     ] ;
 
     sh:property [
-        sh:path compass:startDate ;
-        sh:name "start date"@en ;
-        sh:name "Startdatum"@de ;
-        sh:description "The start date of the project."@en ;
-        sh:description "Das Startdatum des Projekts."@de ;
-        sh:datatype xsd:date ;
-        sh:maxCount 1 ;
-    ] ;
-
-    sh:property [
-        sh:path compass:endDate ;
-        sh:name "end date"@en ;
-        sh:name "Enddatum"@de ;
-        sh:description "The end date of the project."@en ;
-        sh:description "Das Enddatum des Projekts."@de ;
-        sh:datatype xsd:date ;
-        sh:maxCount 1 ;
-    ] ;
-
-    sh:property [
-        sh:path compass:species ;
-        sh:name "species"@en ;
-        sh:name "Arten"@de ;
-        sh:description "Species studied in the project."@en ;
-        sh:description "Im Projekt untersuchte Arten."@de ;
-        sh:class skos:Concept ;
-        sh:nodeKind sh:IRI ;
-    ] ;
-
-    sh:property [
-        sh:path compass:imageUrl ;
-        sh:name "image URL"@en ;
-        sh:name "Bild-URL"@de ;
-        sh:description "URL of an image representing the project."@en ;
-        sh:description "URL eines Bildes, das das Projekt darstellt."@de ;
-        sh:datatype xsd:anyURI ;
-        sh:maxCount 1 ;
-    ] ;
-
-    sh:property [
-        sh:path compass:projectUrl ;
-        sh:name "project URL"@en ;
-        sh:name "Projekt-URL"@de ;
-        sh:description "URL of the project's web page."@en ;
-        sh:description "URL der Projektwebseite."@de ;
-        sh:datatype xsd:anyURI ;
+        sh:path compass:isPublic ;
+        sh:name "is public"@en ;
+        sh:name "ist öffentlich"@de ;
+        sh:description "Whether this theme is publicly visible in the Compass UI."@en ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
         sh:maxCount 1 ;
     ] .

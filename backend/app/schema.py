@@ -18,22 +18,20 @@ from .namespaces import COMPASS, GEO, SCHEMA
 
 
 # Properties excluded from filters because they are handled in the SPARQL preamble
-_PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.organizationName}
+_PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.name}
 
 # Nested relationships that require special OPTIONAL handling in queries
-_NESTED_PROPS = {COMPASS.hasProject}
+_NESTED_PROPS: set = set()
 
 # Fetched for display but not exposed as filter dimensions
 _DISPLAY_ONLY = {
-    SCHEMA.url, COMPASS.keySentence, COMPASS.activities,
-    COMPASS.donationUrl, COMPASS.offersResearchTrips,
+    SCHEMA.url, SCHEMA.image, COMPASS.keySentence, COMPASS.activities,
+    COMPASS.location, COMPASS.secretTheme, COMPASS.managedByOceanCare,
+    COMPASS.mandate,
 }
 
 # All properties excluded from the standard per-property loop
-_SKIP_PROPS = _PREAMBLE_PROPS | _NESTED_PROPS | {
-    SCHEMA.url, COMPASS.keySentence, COMPASS.activities,
-    COMPASS.hasProject, COMPASS.donationUrl, COMPASS.offersResearchTrips,
-}
+_SKIP_PROPS = _PREAMBLE_PROPS | _NESTED_PROPS | _DISPLAY_ONLY
 
 
 def get_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
@@ -58,10 +56,10 @@ def get_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
 # ---------------------------------------------------------------------------
 
 def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
-    """Build the filter UI schema by traversing the SHACL OrganizationShape."""
+    """Build the filter UI schema by traversing the SHACL ForumShape."""
     filters: List[Dict[str, Any]] = []
 
-    for prop in g.objects(COMPASS.OrganizationShape, SH.property):
+    for prop in g.objects(COMPASS.ForumShape, SH.property):
         path = g.value(prop, SH.path)
         if path in _SKIP_PROPS:
             continue
@@ -95,7 +93,6 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
 
         filters.append(filter_item)
 
-    _add_promoted_filters(g, filters, lang)
     _add_entity_type_filter(g, filters, lang)
     return sorted(filters, key=lambda x: x["label"])
 
@@ -155,47 +152,11 @@ def _datepicker_bounds(g, path) -> dict:
     }
 
 
-# Properties from related shapes to promote as organization-level filters.
-# Each entry is (shape IRI, property path IRI).  The filter label comes from
-# sh:name on the property shape; options use the generic _multiselect_options.
-_PROMOTED_SHAPE_FILTERS = [
-    (COMPASS.ProjectShape, COMPASS.species),
-]
-
-
-def _add_promoted_filters(g: Graph, filters: list, lang: str) -> None:
-    """Surface properties from related shapes (e.g. ProjectShape) as filters."""
-    for shape_iri, path_iri in _PROMOTED_SHAPE_FILTERS:
-        # Locate the sh:property node for this path within the shape
-        prop_node = None
-        for node in g.objects(shape_iri, SH.property):
-            if g.value(node, SH.path) == path_iri:
-                prop_node = node
-                break
-
-        path_str = str(path_iri)
-        local_name = path_str.split("#")[-1].split("/")[-1]
-        label = get_label(g, prop_node, SH.name, lang) if prop_node else local_name
-
-        # Always enumerate from actual data (target_class=None) because the
-        # declared class on the shape may be too broad (e.g. skos:Concept).
-        options = _multiselect_options(g, prop_node, path_iri, None, [], lang)
-        if options:
-            filters.append({
-                "id": local_name,
-                "path": path_str,
-                "label": label,
-                "type": "multiselect",
-                "order": 0,
-                "options": options,
-            })
-
-
 def _add_entity_type_filter(g: Graph, filters: list, lang: str) -> None:
-    """Append an entity-type multiselect for top-level OceanOrg classes."""
+    """Append an entity-type multiselect for the 4 Compass entity classes."""
     type_classes = [
-        COMPASS.ResearchInstitute, COMPASS.University, COMPASS.GovernmentAgency, COMPASS.NGO,
-        COMPASS.Network, COMPASS.InternationalForum, COMPASS.Project,
+        COMPASS.InternationalForum, COMPASS.Network,
+        COMPASS.PartnerOrganization, COMPASS.Project,
     ]
     filters.append({
         "id": "entityType",
@@ -215,11 +176,11 @@ def _add_entity_type_filter(g: Graph, filters: list, lang: str) -> None:
 # ---------------------------------------------------------------------------
 
 def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
-    """Return property metadata for every SHACL property in OrganizationShape
+    """Return property metadata for every SHACL property in ForumShape
     that needs a SPARQL OPTIONAL clause and a GeoJSON output field."""
     specs = []
 
-    for prop_node in g.objects(COMPASS.OrganizationShape, SH.property):
+    for prop_node in g.objects(COMPASS.ForumShape, SH.property):
         path = g.value(prop_node, SH.path)
         if path is None or path in _PREAMBLE_PROPS or path in _NESTED_PROPS:
             continue

@@ -158,10 +158,6 @@
       selectedEntity = {
         ...p,
         focusArea: JSON.stringify(p.focusArea || []),
-        primaryOceanRegion: JSON.stringify(p.primaryOceanRegion || null),
-        fundingSource: JSON.stringify(p.fundingSource || null),
-        accessType: JSON.stringify(p.accessType || null),
-        activities: JSON.stringify(p.activities || []),
         projects: JSON.stringify(p.projects || []),
         species: JSON.stringify(p.species || []),
       };

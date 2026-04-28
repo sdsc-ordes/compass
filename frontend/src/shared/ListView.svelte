@@ -45,24 +45,6 @@
                     </div>
                   </div>
                 {/if}
-                {#if entity.properties.primaryOceanRegion}
-                  <div class="prop-row">
-                    <span class="prop-label">{t.propRegion}</span>
-                    <a class="chip chip-region" href={entity.properties.primaryOceanRegion.iri} target="_blank" rel="noopener noreferrer">{entity.properties.primaryOceanRegion.label}</a>
-                  </div>
-                {/if}
-                {#if entity.properties.fundingSource}
-                  <div class="prop-row">
-                    <span class="prop-label">{t.propFunding}</span>
-                    <a class="chip chip-funding" href={entity.properties.fundingSource.iri} target="_blank" rel="noopener noreferrer">{entity.properties.fundingSource.label}</a>
-                  </div>
-                {/if}
-                {#if entity.properties.accessType}
-                  <div class="prop-row">
-                    <span class="prop-label">{t.propAccess}</span>
-                    <a class="chip chip-access" href={entity.properties.accessType.iri} target="_blank" rel="noopener noreferrer">{entity.properties.accessType.label}</a>
-                  </div>
-                {/if}
               </div>
               {#if entity.properties.foundingDate}
                 <span class="founded-year">Est. {entity.properties.foundingDate}</span>

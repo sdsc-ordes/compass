@@ -73,79 +73,45 @@ def _sparql_preamble(lang: str) -> str:
     """Fixed WHERE preamble covering type resolution, geometry, and name binding."""
     return f"""
         {{
-            ?s a ?type .
-            ?type rdfs:subClassOf* compass:Organization .
+            ?s a compass:InternationalForum .
+            BIND(compass:InternationalForum AS ?type)
         }} UNION {{
             ?s a compass:Network .
             BIND(compass:Network AS ?type)
         }} UNION {{
-            ?s a compass:InternationalForum .
-            BIND(compass:InternationalForum AS ?type)
-        }} UNION {{
             ?s a compass:Project .
             BIND(compass:Project AS ?type)
+        }} UNION {{
+            ?s a compass:PartnerOrganization .
+            BIND(compass:PartnerOrganization AS ?type)
         }}
         ?s geo:lat ?lat .
         ?s geo:long ?long .
-        OPTIONAL {{ ?s compass:organizationName ?orgName . FILTER(lang(?orgName) = "{lang}") }}
-        OPTIONAL {{ ?s compass:projectName ?selfProjName . FILTER(lang(?selfProjName) = "{lang}") }}
-        BIND(COALESCE(?orgName, ?selfProjName) AS ?label)
+        OPTIONAL {{ ?s compass:name ?label . FILTER(lang(?label) = "{lang}") }}
         FILTER(BOUND(?label))
         OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
 """
 
 
 def _special_optionals(lang: str) -> str:
-    """OPTIONAL clauses for nested/cross-shape properties (projects, network/forum fields)."""
+    """OPTIONAL clauses for type-specific properties not in ForumShape."""
     return f"""
-        OPTIONAL {{
-            ?s compass:hasProject ?project .
-            ?project compass:projectName ?projName .
-            FILTER(lang(?projName) = "{lang}")
-            OPTIONAL {{ ?project compass:startDate ?projStart . }}
-            OPTIONAL {{ ?project compass:endDate ?projEnd . }}
-            OPTIONAL {{ ?project compass:imageUrl ?projImage . }}
-            OPTIONAL {{ ?project compass:projectUrl ?projUrl . }}
-            OPTIONAL {{
-                ?project compass:species ?projSpeciesNode .
-                OPTIONAL {{ ?projSpeciesNode skos:prefLabel ?projSpeciesSkos . FILTER(lang(?projSpeciesSkos) = "{lang}") }}
-                OPTIONAL {{ ?projSpeciesNode rdfs:label ?projSpeciesRdfs . FILTER(lang(?projSpeciesRdfs) = "{lang}") }}
-                BIND(COALESCE(?projSpeciesSkos, ?projSpeciesRdfs) AS ?projSpeciesLab)
-            }}
-        }}
         OPTIONAL {{ ?s compass:memberCount ?memberCount . }}
         OPTIONAL {{ ?s compass:memberStates ?memberStates . }}
         OPTIONAL {{ ?s compass:mandate ?mandate . FILTER(lang(?mandate) = "{lang}") }}
         OPTIONAL {{ ?s compass:startDate ?selfStart . }}
         OPTIONAL {{ ?s compass:endDate ?selfEnd . }}
-        OPTIONAL {{ ?s compass:imageUrl ?selfImage . }}
-        OPTIONAL {{ ?s compass:projectUrl ?selfUrl . }}
-        OPTIONAL {{
-            ?s compass:species ?selfSpeciesNode .
-            OPTIONAL {{ ?selfSpeciesNode skos:prefLabel ?selfSpeciesSkos . FILTER(lang(?selfSpeciesSkos) = "{lang}") }}
-            OPTIONAL {{ ?selfSpeciesNode rdfs:label ?selfSpeciesRdfs . FILTER(lang(?selfSpeciesRdfs) = "{lang}") }}
-            BIND(COALESCE(?selfSpeciesSkos, ?selfSpeciesRdfs) AS ?selfSpeciesLab)
-        }}
 """
 
 
 def _special_selects() -> str:
-    """SELECT expressions for nested/cross-shape variables (projects, species, network fields)."""
+    """SELECT expressions for type-specific variables not in ForumShape specs."""
     return (
-        f'           (GROUP_CONCAT(DISTINCT CONCAT(COALESCE(?projName, ""), "{FIELD_SEP}",'
-        f' COALESCE(STR(?projStart), ""), "{FIELD_SEP}", COALESCE(STR(?projEnd), ""), "{FIELD_SEP}",'
-        f' COALESCE(STR(?projImage), ""), "{FIELD_SEP}", COALESCE(STR(?projUrl), ""), "{FIELD_SEP}",'
-        f' COALESCE(STR(?project), "")); separator="{ITEM_SEP}") AS ?projectsRaw)\n'
-        f'           (GROUP_CONCAT(DISTINCT CONCAT(STR(?projSpeciesNode), "{FIELD_SEP}", COALESCE(STR(?projSpeciesLab), "")); separator="{ITEM_SEP}") AS ?speciesRaw)\n'
-        f'           (GROUP_CONCAT(DISTINCT STR(?project); separator="{ITEM_SEP}") AS ?linkedProjectIris)\n'
         '           (SAMPLE(?memberCount) AS ?memberCountResult)\n'
         '           (SAMPLE(?memberStates) AS ?memberStatesResult)\n'
         '           (SAMPLE(?mandate) AS ?mandateResult)\n'
         '           (SAMPLE(?selfStart) AS ?selfStart)\n'
         '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
-        '           (SAMPLE(?selfImage) AS ?selfImage)\n'
-        '           (SAMPLE(?selfUrl) AS ?selfUrl)\n'
-        f'           (GROUP_CONCAT(DISTINCT CONCAT(STR(?selfSpeciesNode), "{FIELD_SEP}", COALESCE(STR(?selfSpeciesLab), "")); separator="{ITEM_SEP}") AS ?selfSpeciesRaw)\n'
     )
 
 
@@ -183,25 +149,6 @@ def _build_where_clauses(
                 else:
                     safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
                     parts.append(f'?s {prop} ?{key}Val . FILTER(str(?{key}Val) = "{safe_v}")')
-            if parts:
-                where_clauses.append(_union_or_single(parts))
-
-        elif key == "species":
-            parts = []
-            for v in values:
-                if v.startswith("http") and ">" not in v:
-                    parts.append(
-                        f'?s compass:hasProject ?speciesProj . '
-                        f'?speciesProj compass:species <{v}> . '
-                    )
-                else:
-                    safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
-                    parts.append(
-                        f'?s compass:hasProject ?speciesProj . '
-                        f'?speciesProj compass:species ?speciesVal . '
-                        f'?speciesVal skos:prefLabel ?speciesLabel . '
-                        f'FILTER(str(?speciesLabel) = "{safe_v}")'
-                    )
             if parts:
                 where_clauses.append(_union_or_single(parts))
 

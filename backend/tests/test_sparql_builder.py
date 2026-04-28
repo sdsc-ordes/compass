@@ -17,7 +17,7 @@ from app.namespaces import COMPASS
 
 class TestToPrefixed:
     def test_known_namespace(self):
-        assert to_prefixed(str(COMPASS.country)) == "compass:country"
+        assert to_prefixed(str(COMPASS.focusArea)) == "compass:focusArea"
 
     def test_unknown_namespace(self):
         assert to_prefixed("http://unknown.org/foo") == "<http://unknown.org/foo>"
@@ -25,9 +25,9 @@ class TestToPrefixed:
 
 class TestBuildOptional:
     def test_lang_literal(self):
-        spec = {"id": "country", "path_iri": str(COMPASS.country), "category": "lang_literal"}
+        spec = {"id": "location", "path_iri": str(COMPASS.location), "category": "lang_literal"}
         result = build_optional(spec, "en")
-        assert 'FILTER(lang(?country) = "en")' in result
+        assert 'FILTER(lang(?location) = "en")' in result
         assert "OPTIONAL" in result
 
     def test_iri_with_label(self):
@@ -37,7 +37,7 @@ class TestBuildOptional:
         assert "rdfs:label" in result
 
     def test_boolean(self):
-        spec = {"id": "offersTrips", "path_iri": str(COMPASS.offersResearchTrips), "category": "boolean"}
+        spec = {"id": "managedByOceanCare", "path_iri": str(COMPASS.managedByOceanCare), "category": "boolean"}
         result = build_optional(spec, "en")
         assert "OPTIONAL" in result
         assert "FILTER" not in result
@@ -67,11 +67,10 @@ class TestBuildSelectExpr:
 
 
 class TestSparqlPreamble:
-    """The preamble UNION must reference the same classes as the ontology contract."""
+    """The preamble UNION must reference the 4 entity classes."""
 
-    def test_preamble_contains_organization_subclass_query(self):
-        preamble = _sparql_preamble("en")
-        assert "rdfs:subClassOf* compass:Organization" in preamble
+    def test_preamble_contains_international_forum(self):
+        assert "compass:InternationalForum" in _sparql_preamble("en")
 
     def test_preamble_contains_network(self):
         assert "compass:Network" in _sparql_preamble("en")
@@ -82,15 +81,17 @@ class TestSparqlPreamble:
     def test_preamble_contains_project(self):
         assert "compass:Project" in _sparql_preamble("en")
 
+    def test_preamble_contains_partner_organization(self):
+        assert "compass:PartnerOrganization" in _sparql_preamble("en")
+
     def test_preamble_geo_bindings(self):
         preamble = _sparql_preamble("en")
         assert "geo:lat" in preamble
         assert "geo:long" in preamble
 
-    def test_preamble_name_bindings(self):
+    def test_preamble_name_binding(self):
         preamble = _sparql_preamble("en")
-        assert "compass:organizationName" in preamble
-        assert "compass:projectName" in preamble
+        assert "compass:name" in preamble
 
 
 class TestBuildEntitiesQueryExecutes:
@@ -102,14 +103,14 @@ class TestBuildEntitiesQueryExecutes:
         assert len(results) > 0, "Base entities query returned no results"
 
     def test_all_geo_entities_returned(self, store, property_specs):
-        """Every entity with lat/long and a label should appear."""
-        # Count entities that have coordinates via a simple query
+        """Every entity with lat/long and a compass:name should appear."""
+        # Count entities that have coordinates and a name
         count_q = """
             PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
             PREFIX compass: <http://example.org/ocean-org/ontology#>
             SELECT (COUNT(DISTINCT ?s) AS ?count) WHERE {
                 ?s geo:lat ?lat ; geo:long ?long .
-                { ?s compass:organizationName ?n } UNION { ?s compass:projectName ?n }
+                ?s compass:name ?n .
             }
         """
         count_result = store.query(count_q)
@@ -130,7 +131,7 @@ class TestBuildEntitiesQueryExecutes:
         filtered = store.query(
             build_entities_query(
                 property_specs, "en",
-                QueryParams(f"entityType={COMPASS.ResearchInstitute}")
+                QueryParams(f"entityType={COMPASS.InternationalForum}")
             )
         )
         assert len(filtered) > 0, "entityType filter returned no results"

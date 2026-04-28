@@ -3,159 +3,16 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
 @prefix compass: <http://example.org/ocean-org/ontology#> .
 
 # ============================================================
-# SKOS Controlled Vocabularies: Oceanographic Organizations
+# SKOS Controlled Vocabularies: OceanCare Compass
 # ============================================================
-
-# ============================================================
-# Concept Scheme: Access Type
-# ============================================================
-
-compass:AccessTypeScheme a skos:ConceptScheme ;
-    skos:prefLabel "Access Type"@en ;
-    skos:prefLabel "Zugangstyp"@de ;
-    skos:definition "Controlled vocabulary for how external researchers can access an organization's facilities or data."@en ;
-    skos:definition "Kontrolliertes Vokabular für den Zugang externer Forscher zu Einrichtungen oder Daten einer Organisation."@de ;
-    skos:hasTopConcept compass:Access_Open ;
-    skos:hasTopConcept compass:Access_Restricted ;
-    skos:hasTopConcept compass:Access_ByPartnership ;
-    dct:isPartOf <http://example.org/ocean-org/ontology> .
-
-compass:Access_Open a skos:Concept ;
-    skos:prefLabel "Open"@en ;
-    skos:prefLabel "Offen"@de ;
-    skos:definition "Data and facilities are openly accessible to any researcher."@en ;
-    skos:definition "Daten und Einrichtungen sind für alle Forscher frei zugänglich."@de ;
-    skos:topConceptOf compass:AccessTypeScheme ;
-    skos:inScheme compass:AccessTypeScheme .
-
-compass:Access_Restricted a skos:Concept ;
-    skos:prefLabel "Restricted"@en ;
-    skos:prefLabel "Eingeschränkt"@de ;
-    skos:definition "Access is restricted and requires formal approval."@en ;
-    skos:definition "Der Zugang ist eingeschränkt und erfordert eine formelle Genehmigung."@de ;
-    skos:topConceptOf compass:AccessTypeScheme ;
-    skos:inScheme compass:AccessTypeScheme .
-
-compass:Access_ByPartnership a skos:Concept ;
-    skos:prefLabel "By Partnership"@en ;
-    skos:prefLabel "Durch Partnerschaft"@de ;
-    skos:definition "Access is available through institutional partnership agreements."@en ;
-    skos:definition "Der Zugang ist durch institutionelle Partnerschaftsvereinbarungen möglich."@de ;
-    skos:topConceptOf compass:AccessTypeScheme ;
-    skos:inScheme compass:AccessTypeScheme .
-
-# ============================================================
-# Concept Scheme: Funding Source
-# ============================================================
-
-compass:FundingSourceScheme a skos:ConceptScheme ;
-    skos:prefLabel "Funding Source"@en ;
-    skos:prefLabel "Finanzierungsquelle"@de ;
-    skos:definition "Controlled vocabulary for the primary source of an organization's funding."@en ;
-    skos:definition "Kontrolliertes Vokabular für die primäre Finanzierungsquelle einer Organisation."@de ;
-    skos:hasTopConcept compass:Funding_Public ;
-    skos:hasTopConcept compass:Funding_Private ;
-    skos:hasTopConcept compass:Funding_Mixed ;
-    skos:hasTopConcept compass:Funding_International ;
-    dct:isPartOf <http://example.org/ocean-org/ontology> .
-
-compass:Funding_Public a skos:Concept ;
-    skos:prefLabel "Public"@en ;
-    skos:prefLabel "Öffentlich"@de ;
-    skos:definition "Primarily funded by government or public bodies."@en ;
-    skos:definition "Hauptsächlich durch staatliche oder öffentliche Stellen finanziert."@de ;
-    skos:topConceptOf compass:FundingSourceScheme ;
-    skos:inScheme compass:FundingSourceScheme .
-
-compass:Funding_Private a skos:Concept ;
-    skos:prefLabel "Private"@en ;
-    skos:prefLabel "Privat"@de ;
-    skos:definition "Primarily funded by private organizations or individuals."@en ;
-    skos:definition "Hauptsächlich durch private Organisationen oder Einzelpersonen finanziert."@de ;
-    skos:topConceptOf compass:FundingSourceScheme ;
-    skos:inScheme compass:FundingSourceScheme .
-
-compass:Funding_Mixed a skos:Concept ;
-    skos:prefLabel "Mixed"@en ;
-    skos:prefLabel "Gemischt"@de ;
-    skos:definition "Funded by a combination of public and private sources."@en ;
-    skos:definition "Durch eine Kombination aus öffentlichen und privaten Quellen finanziert."@de ;
-    skos:topConceptOf compass:FundingSourceScheme ;
-    skos:inScheme compass:FundingSourceScheme .
-
-compass:Funding_International a skos:Concept ;
-    skos:prefLabel "International"@en ;
-    skos:prefLabel "International"@de ;
-    skos:definition "Primarily funded by international bodies such as the EU, UN, or similar."@en ;
-    skos:definition "Hauptsächlich durch internationale Einrichtungen wie EU, UN oder ähnliche finanziert."@de ;
-    skos:topConceptOf compass:FundingSourceScheme ;
-    skos:inScheme compass:FundingSourceScheme .
-
-# ============================================================
-# Concept Scheme: Ocean Region
-# ============================================================
-
-compass:OceanRegionScheme a skos:ConceptScheme ;
-    skos:prefLabel "Ocean Region"@en ;
-    skos:prefLabel "Meeresregion"@de ;
-    skos:definition "Controlled vocabulary for the primary ocean basin or region an organization focuses on."@en ;
-    skos:definition "Kontrolliertes Vokabular für das primäre Meeresbecken oder die Region, auf die sich eine Organisation konzentriert."@de ;
-    skos:hasTopConcept compass:Region_Atlantic ;
-    skos:hasTopConcept compass:Region_Pacific ;
-    skos:hasTopConcept compass:Region_Indian ;
-    skos:hasTopConcept compass:Region_Arctic ;
-    skos:hasTopConcept compass:Region_Southern ;
-    skos:hasTopConcept compass:Region_Global ;
-    dct:isPartOf <http://example.org/ocean-org/ontology> .
-
-compass:Region_Atlantic a skos:Concept ;
-    skos:prefLabel "Atlantic"@en ;
-    skos:prefLabel "Atlantik"@de ;
-    skos:definition "The Atlantic Ocean, including North and South Atlantic."@en ;
-    skos:topConceptOf compass:OceanRegionScheme ;
-    skos:inScheme compass:OceanRegionScheme .
-
-compass:Region_Pacific a skos:Concept ;
-    skos:prefLabel "Pacific"@en ;
-    skos:prefLabel "Pazifik"@de ;
-    skos:definition "The Pacific Ocean, including North and South Pacific."@en ;
-    skos:topConceptOf compass:OceanRegionScheme ;
-    skos:inScheme compass:OceanRegionScheme .
-
-compass:Region_Indian a skos:Concept ;
-    skos:prefLabel "Indian"@en ;
-    skos:prefLabel "Indischer Ozean"@de ;
-    skos:definition "The Indian Ocean."@en ;
-    skos:topConceptOf compass:OceanRegionScheme ;
-    skos:inScheme compass:OceanRegionScheme .
-
-compass:Region_Arctic a skos:Concept ;
-    skos:prefLabel "Arctic"@en ;
-    skos:prefLabel "Arktischer Ozean"@de ;
-    skos:definition "The Arctic Ocean and surrounding polar seas."@en ;
-    skos:topConceptOf compass:OceanRegionScheme ;
-    skos:inScheme compass:OceanRegionScheme .
-
-compass:Region_Southern a skos:Concept ;
-    skos:prefLabel "Southern"@en ;
-    skos:prefLabel "Südlicher Ozean"@de ;
-    skos:definition "The Southern Ocean surrounding Antarctica."@en ;
-    skos:topConceptOf compass:OceanRegionScheme ;
-    skos:inScheme compass:OceanRegionScheme .
-
-compass:Region_Global a skos:Concept ;
-    skos:prefLabel "Global"@en ;
-    skos:prefLabel "Global"@de ;
-    skos:definition "Global scope, not limited to a single ocean basin."@en ;
-    skos:definition "Globaler Geltungsbereich, nicht auf ein einzelnes Meeresbecken beschränkt."@de ;
-    skos:topConceptOf compass:OceanRegionScheme ;
-    skos:inScheme compass:OceanRegionScheme .
 
 # ============================================================
 # Concept Scheme: Focus Area
+# Each leaf concept carries schema:url pointing to its OceanCare story page.
 # ============================================================
 
 compass:FocusAreaScheme a skos:ConceptScheme ;
@@ -178,148 +35,133 @@ compass:MarineBiology a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Meeresbiologie"@de ;
     skos:definition "Research focused on the organisms and ecosystems of the ocean."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/marine-biology/"^^xsd:anyURI .
 
 compass:PhysicalOceanography a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Physical Oceanography"@en ;
     skos:prefLabel "Physikalische Ozeanographie"@de ;
     skos:definition "Study of ocean currents, waves, tides, and physical properties of seawater."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/physical-oceanography/"^^xsd:anyURI .
 
 compass:ClimateScience a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Climate Science"@en ;
     skos:prefLabel "Klimawissenschaft"@de ;
     skos:definition "Research on climate systems, change, and ocean-atmosphere interactions."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/climate-science/"^^xsd:anyURI .
 
 compass:DeepSeaExploration a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Deep-Sea Exploration"@en ;
     skos:prefLabel "Tiefsee-Exploration"@de ;
     skos:definition "Exploration and study of deep-ocean environments and organisms."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/deep-sea-exploration/"^^xsd:anyURI .
 
 compass:CoastalManagement a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Coastal Management"@en ;
     skos:prefLabel "Küstenmanagement"@de ;
     skos:definition "Sustainable management of coastal zones and nearshore environments."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/coastal-management/"^^xsd:anyURI .
 
 compass:MarineGeology a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Marine Geology"@en ;
     skos:prefLabel "Meeresgeologie"@de ;
     skos:definition "Study of seafloor geology, sediments, and tectonic processes."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/marine-geology/"^^xsd:anyURI .
 
 compass:FisheriesScience a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Fisheries Science"@en ;
     skos:prefLabel "Fischereiwissenschaft"@de ;
     skos:definition "Research on fish populations, fisheries management, and aquaculture."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/fisheries-science/"^^xsd:anyURI .
 
 compass:PolarResearch a skos:Concept, compass:FocusArea ;
     skos:prefLabel "Polar Research"@en ;
     skos:prefLabel "Polarforschung"@de ;
     skos:definition "Research in Arctic and Antarctic ocean and ice environments."@en ;
     skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme .
+    skos:inScheme compass:FocusAreaScheme ;
+    schema:url "https://www.oceancare.org/en/stories/polar-research/"^^xsd:anyURI .
 
 # ============================================================
-# Concept Scheme: Species
+# Concept Scheme: Theme
+# compass:isPublic distinguishes publicly visible themes from internal ones.
 # ============================================================
 
-compass:SpeciesScheme a skos:ConceptScheme ;
-    skos:prefLabel "Species"@en ;
-    skos:prefLabel "Arten"@de ;
-    skos:definition "Controlled vocabulary for species studied in projects."@en ;
-    skos:definition "Kontrolliertes Vokabular für in Projekten untersuchte Arten."@de ;
-    skos:hasTopConcept compass:Species_NorthAtlanticRightWhale ;
-    skos:hasTopConcept compass:Species_EubalaenaGlacialis ;
-    skos:hasTopConcept compass:Species_GiantPacificOctopus ;
-    skos:hasTopConcept compass:Species_VampireSquid ;
-    skos:hasTopConcept compass:Species_BottlenoseDolphin ;
-    skos:hasTopConcept compass:Species_ShortBeakedCommonDolphin ;
-    skos:hasTopConcept compass:Species_StripedDolphin ;
-    skos:hasTopConcept compass:Species_GiantTubeWorm ;
-    skos:hasTopConcept compass:Species_PompeiiWorm ;
-    skos:hasTopConcept compass:Species_RingedSeal ;
-    skos:hasTopConcept compass:Species_PolarBear ;
-    skos:hasTopConcept compass:Species_ArcticCod ;
+compass:ThemeScheme a skos:ConceptScheme ;
+    skos:prefLabel "Theme"@en ;
+    skos:prefLabel "Thema"@de ;
+    skos:definition "Controlled vocabulary for cross-cutting themes used to categorize entities."@en ;
+    skos:definition "Kontrolliertes Vokabular für übergreifende Themen zur Kategorisierung von Entitäten."@de ;
+    skos:hasTopConcept compass:Theme_OceanHealth ;
+    skos:hasTopConcept compass:Theme_MarinePolicy ;
+    skos:hasTopConcept compass:Theme_Biodiversity ;
+    skos:hasTopConcept compass:Theme_ClimateResilience ;
+    skos:hasTopConcept compass:Theme_CapacityBuilding ;
+    skos:hasTopConcept compass:Theme_OceanGovernance ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
-compass:Species_NorthAtlanticRightWhale a skos:Concept ;
-    skos:prefLabel "North Atlantic Right Whale"@en ;
-    skos:prefLabel "Nordatlantischer Glattwal"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
+compass:Theme_OceanHealth a skos:Concept, compass:Theme ;
+    skos:prefLabel "Ocean Health"@en ;
+    skos:prefLabel "Meeresgesundheit"@de ;
+    skos:definition "Initiatives and research addressing the overall health and resilience of ocean ecosystems."@en ;
+    skos:definition "Initiativen und Forschung zur Gesundheit und Widerstandsfähigkeit von Meeresökosystemen."@de ;
+    skos:topConceptOf compass:ThemeScheme ;
+    skos:inScheme compass:ThemeScheme ;
+    compass:isPublic true .
 
-compass:Species_EubalaenaGlacialis a skos:Concept ;
-    skos:prefLabel "Eubalaena glacialis"@en ;
-    skos:prefLabel "Eubalaena glacialis"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
+compass:Theme_MarinePolicy a skos:Concept, compass:Theme ;
+    skos:prefLabel "Marine Policy"@en ;
+    skos:prefLabel "Meerespolitik"@de ;
+    skos:definition "Policy development, advocacy, and governance for ocean protection."@en ;
+    skos:definition "Politikentwicklung, Interessenvertretung und Steuerung für den Meeresschutz."@de ;
+    skos:topConceptOf compass:ThemeScheme ;
+    skos:inScheme compass:ThemeScheme ;
+    compass:isPublic true .
 
-compass:Species_GiantPacificOctopus a skos:Concept ;
-    skos:prefLabel "Giant Pacific Octopus"@en ;
-    skos:prefLabel "Riesenpazifikkrake"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
+compass:Theme_Biodiversity a skos:Concept, compass:Theme ;
+    skos:prefLabel "Biodiversity"@en ;
+    skos:prefLabel "Biodiversität"@de ;
+    skos:definition "Conservation and study of marine species diversity and ecosystems."@en ;
+    skos:definition "Erhaltung und Erforschung der marinen Artenvielfalt und Ökosysteme."@de ;
+    skos:topConceptOf compass:ThemeScheme ;
+    skos:inScheme compass:ThemeScheme ;
+    compass:isPublic true .
 
-compass:Species_VampireSquid a skos:Concept ;
-    skos:prefLabel "Vampire Squid"@en ;
-    skos:prefLabel "Vampirtintenfisch"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
+compass:Theme_ClimateResilience a skos:Concept, compass:Theme ;
+    skos:prefLabel "Climate Resilience"@en ;
+    skos:prefLabel "Klimaresilienz"@de ;
+    skos:definition "Building ocean and coastal resilience in the face of climate change."@en ;
+    skos:definition "Aufbau der Widerstands- und Anpassungsfähigkeit von Meer und Küste angesichts des Klimawandels."@de ;
+    skos:topConceptOf compass:ThemeScheme ;
+    skos:inScheme compass:ThemeScheme ;
+    compass:isPublic true .
 
-compass:Species_BottlenoseDolphin a skos:Concept ;
-    skos:prefLabel "Bottlenose Dolphin"@en ;
-    skos:prefLabel "Großer Tümmler"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
+compass:Theme_CapacityBuilding a skos:Concept, compass:Theme ;
+    skos:prefLabel "Capacity Building"@en ;
+    skos:prefLabel "Kapazitätsaufbau"@de ;
+    skos:definition "Internal programmes for training, partnership development, and institutional strengthening."@en ;
+    skos:definition "Interne Programme für Ausbildung, Partnerschaftsentwicklung und institutionelle Stärkung."@de ;
+    skos:topConceptOf compass:ThemeScheme ;
+    skos:inScheme compass:ThemeScheme ;
+    compass:isPublic false .
 
-compass:Species_ShortBeakedCommonDolphin a skos:Concept ;
-    skos:prefLabel "Short-beaked Common Dolphin"@en ;
-    skos:prefLabel "Kurzschnäuziger Gemeiner Delfin"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
-
-compass:Species_StripedDolphin a skos:Concept ;
-    skos:prefLabel "Striped Dolphin"@en ;
-    skos:prefLabel "Streifendelfin"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
-
-compass:Species_GiantTubeWorm a skos:Concept ;
-    skos:prefLabel "Giant Tube Worm"@en ;
-    skos:prefLabel "Riesenröhrenwurm"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
-
-compass:Species_PompeiiWorm a skos:Concept ;
-    skos:prefLabel "Pompeii Worm"@en ;
-    skos:prefLabel "Pompejiwurm"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
-
-compass:Species_RingedSeal a skos:Concept ;
-    skos:prefLabel "Ringed Seal"@en ;
-    skos:prefLabel "Ringelrobbe"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
-
-compass:Species_PolarBear a skos:Concept ;
-    skos:prefLabel "Polar Bear"@en ;
-    skos:prefLabel "Eisbär"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
-
-compass:Species_ArcticCod a skos:Concept ;
-    skos:prefLabel "Arctic Cod"@en ;
-    skos:prefLabel "Polardorsch"@de ;
-    skos:topConceptOf compass:SpeciesScheme ;
-    skos:inScheme compass:SpeciesScheme .
+compass:Theme_OceanGovernance a skos:Concept, compass:Theme ;
+    skos:prefLabel "Ocean Governance"@en ;
+    skos:prefLabel "Meeresgovernance"@de ;
+    skos:definition "International frameworks, treaties, and bodies governing the use and protection of the ocean."@en ;
+    skos:definition "Internationale Rahmenwerke, Verträge und Gremien zur Steuerung und zum Schutz des Meeres."@de ;
+    skos:topConceptOf compass:ThemeScheme ;
+    skos:inScheme compass:ThemeScheme ;
+    compass:isPublic true .

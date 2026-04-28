@@ -4,7 +4,7 @@ Validates that get_filters_schema() and get_property_specs() produce
 consistent, complete output from the real ontology shapes.
 """
 from app.schema import get_filters_schema, get_property_specs, _SKIP_PROPS, _DISPLAY_ONLY
-from app.namespaces import COMPASS
+from app.namespaces import COMPASS, GEO
 
 
 class TestGetFiltersSchema:
@@ -17,11 +17,6 @@ class TestGetFiltersSchema:
         ids = [f["id"] for f in filters]
         assert len(ids) == len(set(ids)), f"Duplicate filter IDs: {ids}"
 
-    def test_species_filter_present(self, rdflib_graph):
-        filters = get_filters_schema(rdflib_graph, "en")
-        ids = {f["id"] for f in filters}
-        assert "species" in ids, "Species filter missing — check Project instances have compass:species"
-
     def test_entity_type_filter_present(self, rdflib_graph):
         filters = get_filters_schema(rdflib_graph, "en")
         ids = {f["id"] for f in filters}
@@ -32,9 +27,8 @@ class TestGetFiltersSchema:
         et_filter = next(f for f in filters if f["id"] == "entityType")
         type_iris = {opt["value"] for opt in et_filter["options"]}
         expected = {
-            str(COMPASS.ResearchInstitute), str(COMPASS.University),
-            str(COMPASS.GovernmentAgency), str(COMPASS.NGO),
-            str(COMPASS.Network), str(COMPASS.InternationalForum), str(COMPASS.Project),
+            str(COMPASS.InternationalForum), str(COMPASS.Network),
+            str(COMPASS.PartnerOrganization), str(COMPASS.Project),
         }
         assert expected <= type_iris, (
             f"Missing entity types in filter: {expected - type_iris}"
@@ -74,18 +68,19 @@ class TestGetPropertySpecs:
         """Properties handled in the SPARQL preamble should not appear in specs."""
         specs = get_property_specs(rdflib_graph)
         spec_iris = {s["path_iri"] for s in specs}
-        from app.namespaces import GEO
-        for prop in [GEO.lat, GEO.long, COMPASS.organizationName]:
+        for prop in [GEO.lat, GEO.long, COMPASS.name]:
             assert str(prop) not in spec_iris, (
                 f"{prop} should be excluded from specs (handled in preamble)"
             )
 
-    def test_no_nested_props_in_specs(self, rdflib_graph):
-        specs = get_property_specs(rdflib_graph)
-        spec_iris = {s["path_iri"] for s in specs}
-        assert str(COMPASS.hasProject) not in spec_iris, (
-            "hasProject should be excluded (handled by _special_optionals)"
-        )
+    def test_no_preamble_props_in_filter_schema(self, rdflib_graph):
+        """Preamble properties must not appear as filter dimensions."""
+        filters = get_filters_schema(rdflib_graph, "en")
+        filter_iris = {f["path"] for f in filters}
+        for prop in [str(GEO.lat), str(GEO.long), str(COMPASS.name)]:
+            assert prop not in filter_iris, (
+                f"{prop} should not be a filter (it is in the SPARQL preamble)"
+            )
 
     def test_spec_categories_valid(self, rdflib_graph):
         valid = {"lang_literal", "simple_literal", "uri_literal", "iri_with_label", "boolean"}
