@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import filters, entities, states
+from .routers import filters, entities, states, stories
 from .rdf import get_store
 
 
@@ -30,3 +30,4 @@ async def root():
 app.include_router(filters.router, prefix="/api/filters", tags=["Filters"])
 app.include_router(entities.router, prefix="/api/entities", tags=["Entities"])
 app.include_router(states.router, prefix="/api/states", tags=["States"])
+app.include_router(stories.router, prefix="/api", tags=["Stories"])

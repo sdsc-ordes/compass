@@ -32,8 +32,8 @@ class TestParseSpecialProperties:
 
 class TestExtractProperty:
     def test_multi_iri_with_label(self):
-        spec = {"id": "focusArea", "category": "iri_with_label", "is_multi": True}
-        res = {"focusAreaRaw": "http://ex.org/A|LabelA;;http://ex.org/B|LabelB"}
+        spec = {"id": "workArea", "category": "iri_with_label", "is_multi": True}
+        res = {"workAreaRaw": "http://ex.org/A|LabelA;;http://ex.org/B|LabelB"}
         result = extract_property(spec, res)
         assert len(result) == 2
         assert result[0] == {"iri": "http://ex.org/A", "label": "LabelA"}

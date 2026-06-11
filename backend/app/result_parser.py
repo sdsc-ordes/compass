@@ -57,6 +57,8 @@ def _parse_special_properties(res: dict) -> dict:
     return {
         "startDate": res.get("selfStart", ""),
         "endDate": res.get("selfEnd", ""),
+        "wpEntityTagIdEn": res.get("wpEntityTagIdEn", ""),
+        "wpEntityTagIdDe": res.get("wpEntityTagIdDe", ""),
     }
 
 

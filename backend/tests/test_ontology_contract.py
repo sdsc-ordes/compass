@@ -131,48 +131,72 @@ class TestNamedPropertyShapes:
         )
 
 
-# -- Theme concepts exist and are properly typed --
+# -- Tag dimension vocabularies exist and have labels --
 
-class TestThemeVocabulary:
-    """compass:publicTheme references require Theme instances to exist."""
+class TestTagVocabularies:
+    """All 6 SKOS-based tag dimension classes must have instances with prefLabels."""
 
-    def test_theme_instances_exist(self, rdflib_graph):
-        themes = list(rdflib_graph.subjects(RDF.type, COMPASS.Theme))
-        assert len(themes) > 0, (
-            "No compass:Theme instances found in vocab.ttl. "
-            "publicTheme filter will have no options."
+    TAG_CLASSES = [
+        COMPASS.WorkArea,
+        COMPASS.Conservation,
+        COMPASS.Topic,
+        COMPASS.Pollution,
+        COMPASS.Species,
+        COMPASS.CountryArea,
+    ]
+
+    def test_tag_classes_have_instances(self, rdflib_graph):
+        for cls in self.TAG_CLASSES:
+            subjects = list(rdflib_graph.subjects(RDF.type, cls))
+            assert len(subjects) > 0, (
+                f"No instances of {cls} found. "
+                f"The corresponding filter will have no options."
+            )
+
+    def test_tag_instances_have_en_prefLabel(self, rdflib_graph):
+        for cls in self.TAG_CLASSES:
+            for s in rdflib_graph.subjects(RDF.type, cls):
+                labels = [
+                    l for l in rdflib_graph.objects(s, SKOS.prefLabel)
+                    if hasattr(l, 'language') and l.language == "en"
+                ]
+                assert labels, f"{s} (a {cls}) has no English skos:prefLabel"
+
+    def test_tag_instances_have_de_prefLabel(self, rdflib_graph):
+        for cls in self.TAG_CLASSES:
+            for s in rdflib_graph.subjects(RDF.type, cls):
+                labels = [
+                    l for l in rdflib_graph.objects(s, SKOS.prefLabel)
+                    if hasattr(l, 'language') and l.language == "de"
+                ]
+                assert labels, f"{s} (a {cls}) has no German skos:prefLabel"
+
+
+# -- Forum/Project entities have rdfs:label for tag label discovery --
+
+class TestForumProjectLabels:
+    """InternationalForum and Project entities are used as tag values.
+    build_optional() looks up labels via skos:prefLabel / rdfs:label,
+    so every Forum/Project entity must have rdfs:label."""
+
+    def test_forums_have_rdfs_label(self, rdflib_graph):
+        missing = []
+        for s in rdflib_graph.subjects(RDF.type, COMPASS.InternationalForum):
+            labels = list(rdflib_graph.objects(s, RDFS.label))
+            if not labels:
+                missing.append(str(s))
+        assert not missing, (
+            f"InternationalForum entities missing rdfs:label (tag labels will be blank): {missing}"
         )
 
-    def test_theme_instances_have_prefLabel(self, rdflib_graph):
-        for theme in rdflib_graph.subjects(RDF.type, COMPASS.Theme):
-            labels = list(rdflib_graph.objects(theme, SKOS.prefLabel))
-            assert labels, f"Theme {theme} has no skos:prefLabel"
-
-    def test_theme_instances_have_isPublic(self, rdflib_graph):
-        for theme in rdflib_graph.subjects(RDF.type, COMPASS.Theme):
-            is_public = list(rdflib_graph.objects(theme, COMPASS.isPublic))
-            assert is_public, f"Theme {theme} has no compass:isPublic property"
-
-
-# -- FocusArea concepts exist and have story URLs --
-
-class TestFocusAreaVocabulary:
-    """compass:focusArea references require FocusArea instances with schema:url."""
-
-    SCHEMA = Namespace("https://schema.org/")
-
-    def test_focus_area_instances_exist(self, rdflib_graph):
-        areas = list(rdflib_graph.subjects(RDF.type, COMPASS.FocusArea))
-        assert len(areas) > 0, "No compass:FocusArea instances found."
-
-    def test_focus_areas_have_story_url(self, rdflib_graph):
+    def test_projects_have_rdfs_label(self, rdflib_graph):
         missing = []
-        for area in rdflib_graph.subjects(RDF.type, COMPASS.FocusArea):
-            urls = list(rdflib_graph.objects(area, self.SCHEMA.url))
-            if not urls:
-                missing.append(str(area))
+        for s in rdflib_graph.subjects(RDF.type, COMPASS.Project):
+            labels = list(rdflib_graph.objects(s, RDFS.label))
+            if not labels:
+                missing.append(str(s))
         assert not missing, (
-            f"FocusArea concepts missing schema:url (story page): {missing}"
+            f"Project entities missing rdfs:label (tag labels will be blank): {missing}"
         )
 
 

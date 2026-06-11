@@ -98,6 +98,8 @@ def _special_optionals(lang: str) -> str:
     return f"""
         OPTIONAL {{ ?s compass:startDate ?selfStart . }}
         OPTIONAL {{ ?s compass:endDate ?selfEnd . }}
+        OPTIONAL {{ ?s compass:wpEntityTagIdEn ?wpEntityTagIdEn . }}
+        OPTIONAL {{ ?s compass:wpEntityTagIdDe ?wpEntityTagIdDe . }}
 """
 
 
@@ -106,6 +108,8 @@ def _special_selects() -> str:
     return (
         '           (SAMPLE(?selfStart) AS ?selfStart)\n'
         '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
+        '           (SAMPLE(?wpEntityTagIdEn) AS ?wpEntityTagIdEn)\n'
+        '           (SAMPLE(?wpEntityTagIdDe) AS ?wpEntityTagIdDe)\n'
     )
 
 

@@ -3,7 +3,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Map from './map/Map.svelte';
-  import FilterPanel from './filters/FilterPanel.svelte';
+  import TagPanel from './shared/TagPanel.svelte';
   import ListView from './shared/ListView.svelte';
   import EntitySidebar from './shared/EntitySidebar.svelte';
   import ShareModal from './shared/ShareModal.svelte';
@@ -139,6 +139,43 @@
   let shareLink = '';
   let showShareModal = false;
 
+  // Story count state
+  let storyCount: { count: number; url: string } | null = null;
+  let storyCountLoading = false;
+  let storyCountTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // All tag IRIs currently active (excludes entityType and non-IRI values)
+  $: storyTagIris = Object.entries(activeFilters)
+    .filter(([k]) => k !== 'entityType')
+    .flatMap(([, v]) => (Array.isArray(v) ? v : []))
+    .filter((v) => typeof v === 'string' && v.startsWith('http'));
+
+  $: {
+    if (storyCountTimer) clearTimeout(storyCountTimer);
+    if (mounted && apiurl && storyTagIris.length > 0) {
+      storyCountLoading = true;
+      storyCountTimer = setTimeout(() => fetchStoryCount(apiurl, lang, storyTagIris), 300);
+    } else {
+      storyCount = null;
+      storyCountLoading = false;
+    }
+  }
+
+  async function fetchStoryCount(url: string, l: string, iris: string[]) {
+    try {
+      const params = new URLSearchParams({ lang: l });
+      iris.forEach((iri) => params.append('tag', iri));
+      const resp = await fetch(`${url}/api/stories/count?${params.toString()}`);
+      if (resp.ok) {
+        storyCount = await resp.json();
+      }
+    } catch (e) {
+      console.error('[Compass] Story count fetch error:', e);
+    } finally {
+      storyCountLoading = false;
+    }
+  }
+
   function saveMapState() {
     shareLink = window.location.href;
     showShareModal = true;
@@ -174,12 +211,14 @@
       // MapLibre flattens GeoJSON feature properties to strings when rendering,
       // so nested objects (arrays, objects) must be re-serialised here and
       // parsed back in EntitySidebar via safeParseJson.
-      selectedEntity = {
-        ...p,
-        focusArea: JSON.stringify(p.focusArea || []),
-        projects: JSON.stringify(p.projects || []),
-        species: JSON.stringify(p.species || []),
-      };
+      const serialized: Record<string, any> = {};
+      for (const [key, val] of Object.entries(p)) {
+        // Only stringify arrays of objects (tag dimensions like {iri, label}).
+        // Leave scalar values and simple strings untouched.
+        const isTagArray = Array.isArray(val) && val.length > 0 && typeof val[0] === 'object';
+        serialized[key] = isTagArray ? JSON.stringify(val) : val;
+      }
+      selectedEntity = serialized;
     }
   }
 
@@ -237,12 +276,14 @@
       </button>
     {/if}
     <div class="sidebar" class:closed={!filterOpen}>
-      <FilterPanel
+      <TagPanel
         {apiurl}
         {lang}
         initialFilters={activeFilters}
-        onFilterChange={handleFilterChange}
+        onTagChange={handleFilterChange}
         onToggle={() => (filterOpen = false)}
+        {storyCount}
+        {storyCountLoading}
       />
     </div>
     <div class="main-area">

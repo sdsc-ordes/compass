@@ -26,7 +26,7 @@ _NESTED_PROPS: set = set()
 # Fetched for display but not exposed as filter dimensions
 _DISPLAY_ONLY = {
     SCHEMA.url, SCHEMA.image, COMPASS.keySentence, COMPASS.activities,
-    COMPASS.location, COMPASS.secretTheme,
+    COMPASS.location,
 }
 
 # All properties excluded from the standard per-property loop

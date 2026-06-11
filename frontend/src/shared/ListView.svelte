@@ -35,16 +35,18 @@
                 {/if}
               </div>
               <div class="prop-rows">
-                {#if (entity.properties.focusArea || []).length > 0}
-                  <div class="prop-row">
-                    <span class="prop-label">{t.propFocusArea}</span>
-                    <div class="prop-chips">
-                      {#each (entity.properties.focusArea || []) as fa}
-                        <a class="chip chip-focus" href={fa.iri} target="_blank" rel="noopener noreferrer">{fa.label}</a>
-                      {/each}
+                {#each ['workArea', 'topic', 'species', 'countryArea'] as dimId}
+                  {#if (entity.properties[dimId] || []).length > 0}
+                    <div class="prop-row">
+                      <span class="prop-label">{dimId}</span>
+                      <div class="prop-chips">
+                        {#each (entity.properties[dimId] || []) as tag}
+                          <span class="chip chip-focus">{tag.label || tag}</span>
+                        {/each}
+                      </div>
                     </div>
-                  </div>
-                {/if}
+                  {/if}
+                {/each}
               </div>
               {#if entity.properties.foundingDate}
                 <span class="founded-year">Est. {entity.properties.foundingDate}</span>

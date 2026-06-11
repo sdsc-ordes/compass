@@ -3,165 +3,386 @@
 @prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct:   <http://purl.org/dc/terms/> .
 @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-@prefix schema: <https://schema.org/> .
 @prefix compass: <http://example.org/ocean-org/ontology#> .
 
 # ============================================================
-# SKOS Controlled Vocabularies: OceanCare Compass
+# SKOS Controlled Vocabularies: OceanCare Compass Tag Dimensions
 # ============================================================
 
 # ============================================================
-# Concept Scheme: Focus Area
-# Each leaf concept carries schema:url pointing to its OceanCare story page.
+# 1. Work Area (4 concepts)
 # ============================================================
 
-compass:FocusAreaScheme a skos:ConceptScheme ;
-    skos:prefLabel "Focus Area"@en ;
-    skos:prefLabel "Schwerpunktbereich"@de ;
-    skos:definition "Controlled vocabulary for thematic research or activity focus areas."@en ;
-    skos:definition "Kontrolliertes Vokabular für thematische Forschungs- oder Tätigkeitsschwerpunkte."@de ;
-    skos:hasTopConcept compass:MarineBiology ;
-    skos:hasTopConcept compass:PhysicalOceanography ;
-    skos:hasTopConcept compass:ClimateScience ;
-    skos:hasTopConcept compass:DeepSeaExploration ;
-    skos:hasTopConcept compass:CoastalManagement ;
-    skos:hasTopConcept compass:MarineGeology ;
-    skos:hasTopConcept compass:FisheriesScience ;
-    skos:hasTopConcept compass:PolarResearch ;
+compass:WorkAreaScheme a skos:ConceptScheme ;
+    skos:prefLabel "Work Area"@en ;
+    skos:prefLabel "Arbeitsbereich"@de ;
+    skos:definition "Types of work OceanCare performs."@en ;
+    skos:hasTopConcept compass:AdvocacyWork ;
+    skos:hasTopConcept compass:ScientificResearch ;
+    skos:hasTopConcept compass:RescueActivities ;
+    skos:hasTopConcept compass:CommunityInvolvement ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
-compass:MarineBiology a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Marine Biology"@en ;
-    skos:prefLabel "Meeresbiologie"@de ;
-    skos:definition "Research focused on the organisms and ecosystems of the ocean."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/marine-biology/"^^xsd:anyURI .
+compass:AdvocacyWork a skos:Concept, compass:WorkArea ;
+    skos:prefLabel "Advocacy Work"@en ;
+    skos:prefLabel "Lobbyarbeit"@de ;
+    skos:inScheme compass:WorkAreaScheme ;
+    skos:topConceptOf compass:WorkAreaScheme .
 
-compass:PhysicalOceanography a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Physical Oceanography"@en ;
-    skos:prefLabel "Physikalische Ozeanographie"@de ;
-    skos:definition "Study of ocean currents, waves, tides, and physical properties of seawater."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/physical-oceanography/"^^xsd:anyURI .
+compass:ScientificResearch a skos:Concept, compass:WorkArea ;
+    skos:prefLabel "Scientific Research"@en ;
+    skos:prefLabel "Wissenschaftliche Forschung"@de ;
+    skos:inScheme compass:WorkAreaScheme ;
+    skos:topConceptOf compass:WorkAreaScheme .
 
-compass:ClimateScience a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Climate Science"@en ;
-    skos:prefLabel "Klimawissenschaft"@de ;
-    skos:definition "Research on climate systems, change, and ocean-atmosphere interactions."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/climate-science/"^^xsd:anyURI .
+compass:RescueActivities a skos:Concept, compass:WorkArea ;
+    skos:prefLabel "Rescue Activities"@en ;
+    skos:prefLabel "Rettungsaktivitäten"@de ;
+    skos:inScheme compass:WorkAreaScheme ;
+    skos:topConceptOf compass:WorkAreaScheme .
 
-compass:DeepSeaExploration a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Deep-Sea Exploration"@en ;
-    skos:prefLabel "Tiefsee-Exploration"@de ;
-    skos:definition "Exploration and study of deep-ocean environments and organisms."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/deep-sea-exploration/"^^xsd:anyURI .
-
-compass:CoastalManagement a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Coastal Management"@en ;
-    skos:prefLabel "Küstenmanagement"@de ;
-    skos:definition "Sustainable management of coastal zones and nearshore environments."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/coastal-management/"^^xsd:anyURI .
-
-compass:MarineGeology a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Marine Geology"@en ;
-    skos:prefLabel "Meeresgeologie"@de ;
-    skos:definition "Study of seafloor geology, sediments, and tectonic processes."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/marine-geology/"^^xsd:anyURI .
-
-compass:FisheriesScience a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Fisheries Science"@en ;
-    skos:prefLabel "Fischereiwissenschaft"@de ;
-    skos:definition "Research on fish populations, fisheries management, and aquaculture."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/fisheries-science/"^^xsd:anyURI .
-
-compass:PolarResearch a skos:Concept, compass:FocusArea ;
-    skos:prefLabel "Polar Research"@en ;
-    skos:prefLabel "Polarforschung"@de ;
-    skos:definition "Research in Arctic and Antarctic ocean and ice environments."@en ;
-    skos:topConceptOf compass:FocusAreaScheme ;
-    skos:inScheme compass:FocusAreaScheme ;
-    schema:url "https://www.oceancare.org/en/stories/polar-research/"^^xsd:anyURI .
+compass:CommunityInvolvement a skos:Concept, compass:WorkArea ;
+    skos:prefLabel "Community Involvement"@en ;
+    skos:prefLabel "Gemeinschaftsbeteiligung"@de ;
+    skos:inScheme compass:WorkAreaScheme ;
+    skos:topConceptOf compass:WorkAreaScheme .
 
 # ============================================================
-# Concept Scheme: Theme
-# compass:isPublic distinguishes publicly visible themes from internal ones.
+# 2. Conservation (2 concepts)
 # ============================================================
 
-compass:ThemeScheme a skos:ConceptScheme ;
-    skos:prefLabel "Theme"@en ;
+compass:ConservationScheme a skos:ConceptScheme ;
+    skos:prefLabel "Conservation"@en ;
+    skos:prefLabel "Schutz"@de ;
+    skos:definition "Conservation focus areas."@en ;
+    skos:hasTopConcept compass:OceanConservation ;
+    skos:hasTopConcept compass:AnimalAndSpeciesConservation ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:OceanConservation a skos:Concept, compass:Conservation ;
+    skos:prefLabel "Ocean Conservation"@en ;
+    skos:prefLabel "Meeresschutz"@de ;
+    skos:inScheme compass:ConservationScheme ;
+    skos:topConceptOf compass:ConservationScheme .
+
+compass:AnimalAndSpeciesConservation a skos:Concept, compass:Conservation ;
+    skos:prefLabel "Animal and Species Conservation"@en ;
+    skos:prefLabel "Tier- und Artenschutz"@de ;
+    skos:inScheme compass:ConservationScheme ;
+    skos:topConceptOf compass:ConservationScheme ;
+    compass:wpTagId "455"^^xsd:integer .
+
+# ============================================================
+# 3. Topic (7 concepts)
+# ============================================================
+
+compass:TopicScheme a skos:ConceptScheme ;
+    skos:prefLabel "Topic"@en ;
     skos:prefLabel "Thema"@de ;
-    skos:definition "Controlled vocabulary for cross-cutting themes used to categorize entities."@en ;
-    skos:definition "Kontrolliertes Vokabular für übergreifende Themen zur Kategorisierung von Entitäten."@de ;
-    skos:hasTopConcept compass:Theme_OceanHealth ;
-    skos:hasTopConcept compass:Theme_MarinePolicy ;
-    skos:hasTopConcept compass:Theme_Biodiversity ;
-    skos:hasTopConcept compass:Theme_ClimateResilience ;
-    skos:hasTopConcept compass:Theme_CapacityBuilding ;
-    skos:hasTopConcept compass:Theme_OceanGovernance ;
+    skos:definition "Thematic topics addressed by OceanCare."@en ;
+    skos:hasTopConcept compass:ClimateProtection ;
+    skos:hasTopConcept compass:DeepSeaMining ;
+    skos:hasTopConcept compass:Geoengineering ;
+    skos:hasTopConcept compass:Hunting ;
+    skos:hasTopConcept compass:Fisheries ;
+    skos:hasTopConcept compass:Shipping ;
+    skos:hasTopConcept compass:FossilFuels ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
-compass:Theme_OceanHealth a skos:Concept, compass:Theme ;
-    skos:prefLabel "Ocean Health"@en ;
-    skos:prefLabel "Meeresgesundheit"@de ;
-    skos:definition "Initiatives and research addressing the overall health and resilience of ocean ecosystems."@en ;
-    skos:definition "Initiativen und Forschung zur Gesundheit und Widerstandsfähigkeit von Meeresökosystemen."@de ;
-    skos:topConceptOf compass:ThemeScheme ;
-    skos:inScheme compass:ThemeScheme ;
-    compass:isPublic true .
+compass:ClimateProtection a skos:Concept, compass:Topic ;
+    skos:prefLabel "Climate Protection"@en ;
+    skos:prefLabel "Klimaschutz"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
-compass:Theme_MarinePolicy a skos:Concept, compass:Theme ;
-    skos:prefLabel "Marine Policy"@en ;
-    skos:prefLabel "Meerespolitik"@de ;
-    skos:definition "Policy development, advocacy, and governance for ocean protection."@en ;
-    skos:definition "Politikentwicklung, Interessenvertretung und Steuerung für den Meeresschutz."@de ;
-    skos:topConceptOf compass:ThemeScheme ;
-    skos:inScheme compass:ThemeScheme ;
-    compass:isPublic true .
+compass:DeepSeaMining a skos:Concept, compass:Topic ;
+    skos:prefLabel "Deep-Sea Mining"@en ;
+    skos:prefLabel "Tiefseebergbau"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
-compass:Theme_Biodiversity a skos:Concept, compass:Theme ;
-    skos:prefLabel "Biodiversity"@en ;
-    skos:prefLabel "Biodiversität"@de ;
-    skos:definition "Conservation and study of marine species diversity and ecosystems."@en ;
-    skos:definition "Erhaltung und Erforschung der marinen Artenvielfalt und Ökosysteme."@de ;
-    skos:topConceptOf compass:ThemeScheme ;
-    skos:inScheme compass:ThemeScheme ;
-    compass:isPublic true .
+compass:Geoengineering a skos:Concept, compass:Topic ;
+    skos:prefLabel "Geoengineering"@en ;
+    skos:prefLabel "Geoengineering"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
-compass:Theme_ClimateResilience a skos:Concept, compass:Theme ;
-    skos:prefLabel "Climate Resilience"@en ;
-    skos:prefLabel "Klimaresilienz"@de ;
-    skos:definition "Building ocean and coastal resilience in the face of climate change."@en ;
-    skos:definition "Aufbau der Widerstands- und Anpassungsfähigkeit von Meer und Küste angesichts des Klimawandels."@de ;
-    skos:topConceptOf compass:ThemeScheme ;
-    skos:inScheme compass:ThemeScheme ;
-    compass:isPublic true .
+compass:Hunting a skos:Concept, compass:Topic ;
+    skos:prefLabel "Hunting"@en ;
+    skos:prefLabel "Jagd"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
-compass:Theme_CapacityBuilding a skos:Concept, compass:Theme ;
-    skos:prefLabel "Capacity Building"@en ;
-    skos:prefLabel "Kapazitätsaufbau"@de ;
-    skos:definition "Internal programmes for training, partnership development, and institutional strengthening."@en ;
-    skos:definition "Interne Programme für Ausbildung, Partnerschaftsentwicklung und institutionelle Stärkung."@de ;
-    skos:topConceptOf compass:ThemeScheme ;
-    skos:inScheme compass:ThemeScheme ;
-    compass:isPublic false .
+compass:Fisheries a skos:Concept, compass:Topic ;
+    skos:prefLabel "Fisheries"@en ;
+    skos:prefLabel "Fischerei"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
-compass:Theme_OceanGovernance a skos:Concept, compass:Theme ;
-    skos:prefLabel "Ocean Governance"@en ;
-    skos:prefLabel "Meeresgovernance"@de ;
-    skos:definition "International frameworks, treaties, and bodies governing the use and protection of the ocean."@en ;
-    skos:definition "Internationale Rahmenwerke, Verträge und Gremien zur Steuerung und zum Schutz des Meeres."@de ;
-    skos:topConceptOf compass:ThemeScheme ;
-    skos:inScheme compass:ThemeScheme ;
-    compass:isPublic true .
+compass:Shipping a skos:Concept, compass:Topic ;
+    skos:prefLabel "Shipping"@en ;
+    skos:prefLabel "Schifffahrt"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:FossilFuels a skos:Concept, compass:Topic ;
+    skos:prefLabel "Fossil Fuels"@en ;
+    skos:prefLabel "Fossile Brennstoffe"@de ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+# ============================================================
+# 4. Pollution (3 concepts)
+# ============================================================
+
+compass:PollutionScheme a skos:ConceptScheme ;
+    skos:prefLabel "Pollution"@en ;
+    skos:prefLabel "Verschmutzung"@de ;
+    skos:definition "Types of ocean pollution."@en ;
+    skos:hasTopConcept compass:OceanNoisePollution ;
+    skos:hasTopConcept compass:PlasticPollution ;
+    skos:hasTopConcept compass:ChemicalPollution ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:OceanNoisePollution a skos:Concept, compass:Pollution ;
+    skos:prefLabel "Ocean Noise Pollution"@en ;
+    skos:prefLabel "Unterwasserlärm"@de ;
+    skos:inScheme compass:PollutionScheme ;
+    skos:topConceptOf compass:PollutionScheme .
+
+compass:PlasticPollution a skos:Concept, compass:Pollution ;
+    skos:prefLabel "Plastic Pollution"@en ;
+    skos:prefLabel "Plastikverschmutzung"@de ;
+    skos:inScheme compass:PollutionScheme ;
+    skos:topConceptOf compass:PollutionScheme .
+
+compass:ChemicalPollution a skos:Concept, compass:Pollution ;
+    skos:prefLabel "Chemical Pollution"@en ;
+    skos:prefLabel "Chemische Verschmutzung"@de ;
+    skos:inScheme compass:PollutionScheme ;
+    skos:topConceptOf compass:PollutionScheme .
+
+# ============================================================
+# 5. Species (9 concepts)
+# ============================================================
+
+compass:SpeciesScheme a skos:ConceptScheme ;
+    skos:prefLabel "Species"@en ;
+    skos:prefLabel "Arten"@de ;
+    skos:definition "Marine and aquatic species relevant to OceanCare's work."@en ;
+    skos:hasTopConcept compass:Dolphins ;
+    skos:hasTopConcept compass:Whales ;
+    skos:hasTopConcept compass:Orcas ;
+    skos:hasTopConcept compass:SeaTurtles ;
+    skos:hasTopConcept compass:Seals ;
+    skos:hasTopConcept compass:PolarBears ;
+    skos:hasTopConcept compass:Manatees ;
+    skos:hasTopConcept compass:Sharks ;
+    skos:hasTopConcept compass:Fish ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:Dolphins a skos:Concept, compass:Species ;
+    skos:prefLabel "Dolphins"@en ;
+    skos:prefLabel "Delfine"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    compass:wpTagId "148"^^xsd:integer .
+
+compass:Whales a skos:Concept, compass:Species ;
+    skos:prefLabel "Whales"@en ;
+    skos:prefLabel "Wale"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme ;
+    compass:wpTagId "147"^^xsd:integer .
+
+compass:Orcas a skos:Concept, compass:Species ;
+    skos:prefLabel "Orcas"@en ;
+    skos:prefLabel "Orcas"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:SeaTurtles a skos:Concept, compass:Species ;
+    skos:prefLabel "Sea Turtles"@en ;
+    skos:prefLabel "Meeresschildkröten"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:Seals a skos:Concept, compass:Species ;
+    skos:prefLabel "Seals"@en ;
+    skos:prefLabel "Robben"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:PolarBears a skos:Concept, compass:Species ;
+    skos:prefLabel "Polar Bears"@en ;
+    skos:prefLabel "Eisbären"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:Manatees a skos:Concept, compass:Species ;
+    skos:prefLabel "Manatees"@en ;
+    skos:prefLabel "Manatis"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:Sharks a skos:Concept, compass:Species ;
+    skos:prefLabel "Sharks"@en ;
+    skos:prefLabel "Haie"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:Fish a skos:Concept, compass:Species ;
+    skos:prefLabel "Fish"@en ;
+    skos:prefLabel "Fische"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+# ============================================================
+# 6. Country / Area (20 concepts)
+# ============================================================
+
+compass:CountryAreaScheme a skos:ConceptScheme ;
+    skos:prefLabel "Country / Area"@en ;
+    skos:prefLabel "Land / Gebiet"@de ;
+    skos:definition "Countries and geographic areas relevant to OceanCare's work."@en ;
+    skos:hasTopConcept compass:Arctic ;
+    skos:hasTopConcept compass:Benin ;
+    skos:hasTopConcept compass:Bulgaria ;
+    skos:hasTopConcept compass:England ;
+    skos:hasTopConcept compass:FaroeIslands ;
+    skos:hasTopConcept compass:France ;
+    skos:hasTopConcept compass:Greece ;
+    skos:hasTopConcept compass:Iceland ;
+    skos:hasTopConcept compass:Italy ;
+    skos:hasTopConcept compass:Japan ;
+    skos:hasTopConcept compass:Maldives ;
+    skos:hasTopConcept compass:Mauritania ;
+    skos:hasTopConcept compass:NorthSeaBalticSea ;
+    skos:hasTopConcept compass:Norway ;
+    skos:hasTopConcept compass:Slovenia ;
+    skos:hasTopConcept compass:Spain ;
+    skos:hasTopConcept compass:Switzerland ;
+    skos:hasTopConcept compass:Venezuela ;
+    skos:hasTopConcept compass:EasternMediterraneanSea ;
+    skos:hasTopConcept compass:WesternMediterraneanSea ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:Arctic a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Arctic"@en ;
+    skos:prefLabel "Arktis"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Benin a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Benin"@en ;
+    skos:prefLabel "Benin"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Bulgaria a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Bulgaria"@en ;
+    skos:prefLabel "Bulgarien"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:England a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "England"@en ;
+    skos:prefLabel "England"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:FaroeIslands a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Faroe Islands"@en ;
+    skos:prefLabel "Färöer-Inseln"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:France a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "France"@en ;
+    skos:prefLabel "Frankreich"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Greece a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Greece"@en ;
+    skos:prefLabel "Griechenland"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Iceland a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Iceland"@en ;
+    skos:prefLabel "Island"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Italy a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Italy"@en ;
+    skos:prefLabel "Italien"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Japan a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Japan"@en ;
+    skos:prefLabel "Japan"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Maldives a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Maldives"@en ;
+    skos:prefLabel "Malediven"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Mauritania a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Mauritania"@en ;
+    skos:prefLabel "Mauretanien"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:NorthSeaBalticSea a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "North Sea / Baltic Sea"@en ;
+    skos:prefLabel "Nordsee / Ostsee"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Norway a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Norway"@en ;
+    skos:prefLabel "Norwegen"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Slovenia a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Slovenia"@en ;
+    skos:prefLabel "Slowenien"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Spain a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Spain"@en ;
+    skos:prefLabel "Spanien"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Switzerland a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Switzerland"@en ;
+    skos:prefLabel "Schweiz"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Venezuela a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Venezuela"@en ;
+    skos:prefLabel "Venezuela"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:EasternMediterraneanSea a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Eastern Mediterranean Sea"@en ;
+    skos:prefLabel "Östliches Mittelmeer"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:WesternMediterraneanSea a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Western Mediterranean Sea"@en ;
+    skos:prefLabel "Westliches Mittelmeer"@de ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .

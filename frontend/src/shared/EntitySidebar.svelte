@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X, ExternalLink, Heart, Compass } from 'lucide-svelte';
+  import { X, ExternalLink, Heart, Compass, BookOpen } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
 
   // Raw MapLibre feature properties (nested objects arrive as JSON strings)
@@ -15,9 +15,28 @@
     try { return JSON.parse(raw) as T; } catch { return fallback; }
   }
 
-  $: focusAreas = safeParseJson(entity?.focusArea, [] as any[]);
-  $: projects   = safeParseJson(entity?.projects, [] as any[]);
-  $: species    = safeParseJson(entity?.species, [] as string[]);
+  // Tag dimensions: each arrives as a JSON-stringified array of {iri, label} objects.
+  // The list of tag property IDs matches the SHACL property shapes in shapes.ttl.
+  const tagDimensions: {id: string, labelEn: string, labelDe: string, chipClass: string}[] = [
+    { id: 'workArea',       labelEn: 'Work Area',       labelDe: 'Arbeitsbereich',    chipClass: 'chip-tag' },
+    { id: 'conservation',   labelEn: 'Conservation',    labelDe: 'Schutz',            chipClass: 'chip-tag' },
+    { id: 'topic',          labelEn: 'Topic',           labelDe: 'Thema',             chipClass: 'chip-focus' },
+    { id: 'pollution',      labelEn: 'Pollution',       labelDe: 'Verschmutzung',     chipClass: 'chip-species' },
+    { id: 'species',        labelEn: 'Species',         labelDe: 'Arten',             chipClass: 'chip-species' },
+    { id: 'countryArea',    labelEn: 'Country / Area',  labelDe: 'Land / Gebiet',     chipClass: 'chip-region' },
+    { id: 'forum',          labelEn: 'Forum',           labelDe: 'Forum',             chipClass: 'chip-focus' },
+    { id: 'relatedProject', labelEn: 'Related Project', labelDe: 'Verwandtes Projekt', chipClass: 'chip-focus' },
+  ];
+
+  function getTagLabel(dim: typeof tagDimensions[0]): string {
+    return lang === 'de' ? dim.labelDe : dim.labelEn;
+  }
+
+  // Parse all tag dimensions reactively
+  $: parsedTags = tagDimensions.map(dim => ({
+    ...dim,
+    values: safeParseJson(entity?.[dim.id], [] as any[]),
+  })).filter(dim => dim.values.length > 0);
 </script>
 
 <aside class="entity-sidebar">
@@ -57,58 +76,22 @@
       <span class="chip chip-trips"><Compass size={12} /> {t.researchTripsYes}</span>
     {/if}
 
-    {#if focusAreas.length > 0}
+    {#if parsedTags.length > 0}
       <div class="props-section">
-        {#if focusAreas.length > 0}
+        {#each parsedTags as dim}
           <div class="prop-row">
-            <span class="prop-label">{t.propFocusArea}</span>
+            <span class="prop-label">{getTagLabel(dim)}</span>
             <div class="chips">
-              {#each focusAreas as fa}
-                <a class="chip chip-focus" href={fa.iri} target="_blank" rel="noopener noreferrer">{fa.label}</a>
+              {#each dim.values as tag}
+                {#if tag.iri}
+                  <span class="chip {dim.chipClass}">{tag.label}</span>
+                {:else}
+                  <span class="chip {dim.chipClass}">{tag}</span>
+                {/if}
               {/each}
             </div>
           </div>
-        {/if}
-
-      </div>
-    {/if}
-
-    {#if projects.length > 0}
-      <div class="props-section">
-        <span class="prop-label">{t.propProjects}</span>
-        {#each projects as proj}
-          <div class="project-card">
-            {#if proj.imageUrl}
-              <img class="project-img" src={proj.imageUrl} alt={proj.name} />
-            {/if}
-            <div class="project-info">
-              {#if proj.projectUrl}
-                <a class="project-link" href={proj.projectUrl} target="_blank" rel="noopener noreferrer">
-                  <strong>{proj.name}</strong>
-                  <ExternalLink size={11} />
-                </a>
-              {:else}
-                <strong>{proj.name}</strong>
-              {/if}
-              {#if proj.startDate || proj.endDate}
-                <span class="project-dates">{proj.startDate || '?'} — {proj.endDate || '?'}</span>
-              {/if}
-            </div>
-          </div>
         {/each}
-      </div>
-    {/if}
-
-    {#if species.length > 0}
-      <div class="props-section">
-        <div class="prop-row">
-          <span class="prop-label">{t.propSpecies}</span>
-          <div class="chips">
-            {#each species as sp}
-              <span class="chip chip-species">{sp}</span>
-            {/each}
-          </div>
-        </div>
       </div>
     {/if}
 
@@ -135,6 +118,19 @@
         <a class="visit-btn secondary" href={entity.id} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} />
           {t.details}
+        </a>
+      {/if}
+      {#if entity?.wpEntityTagIdEn || entity?.wpEntityTagIdDe}
+        {@const tagId = lang === 'de' ? (entity.wpEntityTagIdDe || entity.wpEntityTagIdEn) : (entity.wpEntityTagIdEn || entity.wpEntityTagIdDe)}
+        {@const baseUrl = lang === 'de' ? 'https://www.oceancare.org/de/storys-and-news/' : 'https://www.oceancare.org/en/stories-and-news/'}
+        <a
+          class="visit-btn stories"
+          href="{baseUrl}?tag={tagId}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <BookOpen size={15} />
+          {t.entityStories}
         </a>
       {/if}
     </div>
@@ -269,8 +265,7 @@
 
   .chip-focus   { background: #dbeafe; color: #1d4ed8; }
   .chip-region  { background: #ccfbf1; color: #0f766e; }
-  .chip-funding  { background: #fef3c7; color: #b45309; }
-  .chip-access   { background: #dcfce7; color: #15803d; }
+  .chip-tag     { background: #f1f5f9; color: #475569; }
   .chip-species  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
   .chip-trips    { background: #ede9fe; color: #7c3aed; display: inline-flex; align-items: center; gap: 4px; margin-top: 0.5rem; }
 
@@ -377,5 +372,14 @@
   .visit-btn.secondary:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
+  }
+  .visit-btn.stories {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  .visit-btn.stories:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
   }
 </style>

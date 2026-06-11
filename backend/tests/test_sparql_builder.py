@@ -17,7 +17,7 @@ from app.namespaces import COMPASS
 
 class TestToPrefixed:
     def test_known_namespace(self):
-        assert to_prefixed(str(COMPASS.focusArea)) == "compass:focusArea"
+        assert to_prefixed(str(COMPASS.workArea)) == "compass:workArea"
 
     def test_unknown_namespace(self):
         assert to_prefixed("http://unknown.org/foo") == "<http://unknown.org/foo>"
@@ -31,7 +31,7 @@ class TestBuildOptional:
         assert "OPTIONAL" in result
 
     def test_iri_with_label(self):
-        spec = {"id": "focusArea", "path_iri": str(COMPASS.focusArea), "category": "iri_with_label"}
+        spec = {"id": "workArea", "path_iri": str(COMPASS.workArea), "category": "iri_with_label"}
         result = build_optional(spec, "en")
         assert "skos:prefLabel" in result
         assert "rdfs:label" in result
@@ -45,10 +45,10 @@ class TestBuildOptional:
 
 class TestBuildSelectExpr:
     def test_multi_iri(self):
-        spec = {"id": "focusArea", "category": "iri_with_label", "is_multi": True}
+        spec = {"id": "workArea", "category": "iri_with_label", "is_multi": True}
         result = build_select_expr(spec)
         assert "GROUP_CONCAT" in result
-        assert "focusAreaNode" in result
+        assert "workAreaNode" in result
 
     def test_single_iri(self):
         spec = {"id": "funding", "category": "iri_with_label", "is_multi": False}

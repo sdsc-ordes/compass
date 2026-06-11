@@ -14,7 +14,6 @@ export const i18n = {
     loading: "Loading entities...",
     results: "Results",
     details: "View Details",
-    propFocusArea: "Focus areas",
     propProjects: "Projects",
     propDonation: "Donate",
     propResearchTrips: "Research trips",
@@ -27,6 +26,10 @@ export const i18n = {
     shareTitle: "Share this view",
     shareHint: "Scan the QR code or copy the link below.",
     copyLink: "Copy link",
+    exploreTags: "Explore by Theme",
+    storiesCount: "stories match your selection",
+    storiesNone: "No stories found for these tags",
+    entityStories: "Read related stories",
   },
   de: {
     filters: "Filter",
@@ -43,7 +46,6 @@ export const i18n = {
     loading: "Einträge werden geladen...",
     results: "Ergebnisse",
     details: "Details anzeigen",
-    propFocusArea: "Schwerpunkte",
     propProjects: "Projekte",
     propDonation: "Spenden",
     propResearchTrips: "Forschungsreisen",
@@ -56,6 +58,10 @@ export const i18n = {
     shareTitle: "Ansicht teilen",
     shareHint: "QR-Code scannen oder Link kopieren.",
     copyLink: "Link kopieren",
+    exploreTags: "Nach Thema erkunden",
+    storiesCount: "Storys zu deiner Auswahl",
+    storiesNone: "Keine Storys für diese Tags gefunden",
+    entityStories: "Verwandte Storys lesen",
   }
 };
 
