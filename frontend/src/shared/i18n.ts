@@ -33,6 +33,9 @@ export const i18n = {
     entityStories: "Read related stories",
     filterByRegion: "Show organisations working here",
     searchPlaceholder: "Search…",
+    resultsCount: "results",
+    noResults: "No results match your filters",
+    clearToSeeAll: "Clear filters to see all",
   },
   de: {
     filters: "Filter",
@@ -68,6 +71,9 @@ export const i18n = {
     entityStories: "Verwandte Storys lesen",
     filterByRegion: "Organisationen in diesem Gebiet anzeigen",
     searchPlaceholder: "Suchen…",
+    resultsCount: "Ergebnisse",
+    noResults: "Keine Ergebnisse für deine Filter",
+    clearToSeeAll: "Filter zurücksetzen, um alle zu sehen",
   }
 };
 

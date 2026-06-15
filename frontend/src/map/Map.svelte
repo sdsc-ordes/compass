@@ -83,6 +83,12 @@
   export let onEntitySelect: (props: any) => void = () => {};
   export let activeTypeFilters: string[] = [];
   export let onTypeFilterChange: (iris: string[]) => void = () => {};
+  /** Number of real results (point features) — shared with the panel badge. */
+  export let resultCount: number | undefined = undefined;
+  /** Whether the entity detail sidebar is open, so the legend can dodge it. */
+  export let detailOpen = false;
+  /** When a thematic filter is active, include matched regions when framing. */
+  export let frameRegions = false;
 
   /** Expose the WebGL canvas for screenshot capture. */
   export function getMapCanvas(): HTMLCanvasElement | null {
@@ -213,6 +219,17 @@
     });
   }
 
+  // Extend a bounds object by every coordinate in a GeoJSON geometry
+  // (handles Polygon / MultiPolygon nesting via recursion).
+  function extendBounds(bounds: maplibregl.LngLatBounds, geometry: any) {
+    if (!geometry?.coordinates) return;
+    const walk = (arr: any) => {
+      if (typeof arr[0] === 'number') bounds.extend(arr as [number, number]);
+      else arr.forEach(walk);
+    };
+    walk(geometry.coordinates);
+  }
+
   function updateMarkers() {
     if (!map || !mapLoaded) return;
 
@@ -267,11 +284,20 @@
       cluster: false
     });
 
-    // Auto-fit bounds to point features (regions are background context)
-    if (pointFeatures.length > 0) {
-      const bounds = new maplibregl.LngLatBounds();
-      pointFeatures.forEach(f => bounds.extend(f.geometry.coordinates));
-      map.fitBounds(bounds, { padding: 40, maxZoom: 12, duration: 1000 });
+    // Auto-fit bounds to point features. When a thematic filter is active, also
+    // include matched region polygons so the view frames the relevant area
+    // (e.g. a single pin inside the Faroe Islands frames the whole region).
+    const bounds = new maplibregl.LngLatBounds();
+    pointFeatures.forEach(f => bounds.extend(f.geometry.coordinates));
+    if (frameRegions) {
+      regionFeatures.forEach(f => extendBounds(bounds, f.geometry));
+    }
+    if (!bounds.isEmpty()) {
+      // Cap zoom-in at a regional level. A lone pin has zero extent and would
+      // otherwise snap to street level, while a matched region frames at ~z6-8 —
+      // capping keeps single-result framing visually consistent with regions
+      // instead of "some filters zoom way in, others only a little".
+      map.fitBounds(bounds, { padding: 40, maxZoom: 6, duration: 1000 });
     }
 
     // Color-coded clusters
@@ -656,10 +682,10 @@
   <div bind:this={mapContainer} class="map-container"></div>
   
   <div class="map-badge">
-    {entities.length} {t.results}
+    {resultCount ?? entities.length} {t.results}
   </div>
 
-  <div class="map-legend">
+  <div class="map-legend" class:shifted={detailOpen}>
     {#each Object.entries(TYPE_COLORS) as [iri, color]}
       <button
         class="legend-item legend-type-btn"
@@ -763,6 +789,11 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
+    transition: right 0.25s ease;
+  }
+  /* Dodge the 320px detail sidebar so the legend stays visible. */
+  .map-legend.shifted {
+    right: 336px;
   }
 
   .legend-item {

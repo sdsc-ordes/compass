@@ -244,7 +244,11 @@ def build_facet_query(
         query_params, filter_map, range_filters, date_filters, exclude_key=target_id
     )
 
+    # Country/Area regions are background context, not results (see the map's
+    # result badge, which counts point features only) — exclude them so facet
+    # counts match what the map reports.
     sparql_where = preamble + f"        ?s {target_path} ?val .\n"
+    sparql_where += "        FILTER(?type != compass:CountryArea)\n"
     if where_clauses:
         sparql_where += "        " + "\n        ".join(where_clauses) + "\n"
 

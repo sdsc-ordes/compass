@@ -28,6 +28,15 @@
 
   $: t = i18n[lang] || i18n.en;
 
+  // Real results = point features; Country/Area regions are always-on background
+  // context (see ontology/DECISIONS.md), so they don't count toward the total.
+  $: resultCount = entities.filter((e: any) => !e?.properties?.is_region).length;
+
+  // A thematic (non-legend) filter is active — used to frame matched regions.
+  $: thematicFilterActive = Object.entries(activeFilters).some(
+    ([k, v]) => k !== 'entityType' && Array.isArray(v) && v.length > 0
+  );
+
   // Sync with URL on mount
   onMount(async () => {
     console.log("[Compass] Component mounted. Initial apiurl:", apiurl);
@@ -317,6 +326,7 @@
         onTagChange={handleFilterChange}
         onToggle={() => (filterOpen = false)}
         {facetCounts}
+        {resultCount}
         {storyCount}
         {storyCountLoading}
       />
@@ -328,11 +338,15 @@
           <div class="url-hint">{apiurl}/api/entities</div>
           <button on:click={() => fetchEntities(apiurl, lang, activeFilters)}>Retry</button>
         </div>
-      {:else if isLoading}
+      {:else if isLoading && entities.length === 0}
+        <!-- First load only: nothing on screen yet, so show the full overlay. -->
         <div class="status-overlay loading">
            <div class="spinner"></div>
            <p>{t.loading}</p>
         </div>
+      {:else if isLoading}
+        <!-- Subsequent filter changes: keep the map visible, show a thin bar. -->
+        <div class="loading-bar" aria-label={t.loading}></div>
       {/if}
 
       {#if selectedEntity && !sidebarVisible}
@@ -342,7 +356,7 @@
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {apiurl} {lang} {entities} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} />
+        <Map {apiurl} {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} />
       {:else}
         <ListView {entities} {lang} />
       {/if}
@@ -512,7 +526,7 @@
     min-width: 340px;
     border-right: 1px solid #e2e8f0;
     background: #f8fafc;
-    overflow-y: auto;
+    overflow: hidden;
     transition: min-width 0.25s ease, width 0.25s ease, opacity 0.2s ease, border 0.25s ease;
   }
   .sidebar.closed {
@@ -578,6 +592,29 @@
 
   @keyframes spin {
     to { transform: rotate(360deg); }
+  }
+
+  .loading-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 100;
+    overflow: hidden;
+    background: rgba(2, 132, 199, 0.15);
+  }
+  .loading-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    background: var(--primary);
+    animation: indeterminate 1.1s ease-in-out infinite;
+  }
+  @keyframes indeterminate {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
   }
 
   .placeholder-list {

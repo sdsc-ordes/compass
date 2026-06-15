@@ -143,15 +143,40 @@ class TestFacetsEndpoint:
                 assert n <= base[other_dim].get(iri, 0)
 
     def test_count_matches_filtered_entities(self, client):
-        """A facet count for a value equals the entities the map renders when
-        that value is the only active filter — same domain, same constraint."""
+        """A facet count for a value equals the point features the map renders
+        when that value is the only active filter. Regions are background
+        context and excluded from both the facet count and the result badge."""
         base = client.get("/api/entities/facets?lang=en").json()
         dim = "species"
         value, count = next(iter(base[dim].items()))
         entities = client.get(
             "/api/entities", params={"lang": "en", dim: value}
         ).json()
-        assert count == len(entities["features"])
+        non_region = [
+            f for f in entities["features"] if not f["properties"].get("is_region")
+        ]
+        assert count == len(non_region)
+
+    def test_counts_exclude_regions(self, client):
+        """Faroe Islands carries compass:pollution ChemicalPollution as a region,
+        but the pollution facet must not count it — only the project pin."""
+        data = client.get(
+            "/api/entities/facets",
+            params={"lang": "en", "countryArea": "http://example.org/ocean-org/ontology#FaroeIslands"},
+        ).json()
+        chem = "http://example.org/ocean-org/ontology#ChemicalPollution"
+        entities = client.get(
+            "/api/entities",
+            params={
+                "lang": "en",
+                "countryArea": "http://example.org/ocean-org/ontology#FaroeIslands",
+                "pollution": chem,
+            },
+        ).json()
+        non_region = [
+            f for f in entities["features"] if not f["properties"].get("is_region")
+        ]
+        assert data["pollution"].get(chem, 0) == len(non_region)
 
 
 class TestStatesEndpoint:

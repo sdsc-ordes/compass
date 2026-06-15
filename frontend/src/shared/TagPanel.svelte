@@ -11,6 +11,7 @@
   export let onToggle: (() => void) | undefined = undefined;
   export let initialFilters: Record<string, any> = {};
   export let facetCounts: Record<string, Record<string, number>> = {};
+  export let resultCount: number | undefined = undefined;
   export let storyCount: { count: number; url: string } | null = null;
   export let storyCountLoading = false;
 
@@ -92,8 +93,10 @@
   }
 
   // Options filtered by the section's search term (case-insensitive substring).
-  function visibleOptions(filter: any): any[] {
-    const term = (sectionSearch[filter.id] ?? '').trim().toLowerCase();
+  // The term is passed in (not read from sectionSearch here) so Svelte tracks it
+  // as a dependency of the {#each} and re-renders as you type.
+  function visibleOptions(filter: any, search: string): any[] {
+    const term = (search ?? '').trim().toLowerCase();
     if (!term) return filter.options;
     return filter.options.filter((o: any) => o.label.toLowerCase().includes(term));
   }
@@ -137,6 +140,20 @@
     </div>
   {/if}
 
+  <!-- Result count / empty state -->
+  {#if resultCount !== undefined}
+    {#if resultCount === 0}
+      <div class="results-empty">
+        <p>{t.noResults}</p>
+        {#if hasActiveTags}
+          <button class="results-reset" on:click={clearAll}>{t.clearToSeeAll}</button>
+        {/if}
+      </div>
+    {:else}
+      <div class="results-line">{resultCount} {t.resultsCount}</div>
+    {/if}
+  {/if}
+
   <!-- Tag dimension sections -->
   <div class="sections">
     {#each tagSchema as filter}
@@ -165,7 +182,7 @@
             />
           {/if}
           <div class="chips">
-            {#each visibleOptions(filter) as opt}
+            {#each visibleOptions(filter, sectionSearch[filter.id]) as opt}
               {@const selected = selectedTags[filter.id]?.includes(opt.value)}
               {@const dimCounts = facetCounts[filter.id]}
               {@const count = dimCounts?.[opt.value] ?? 0}
@@ -283,6 +300,46 @@
     padding-bottom: 0.25rem;
     border-bottom: 1px solid #e2e8f0;
     flex-shrink: 0;
+  }
+
+  /* Result count / empty state */
+  .results-line {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .results-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .results-empty p {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #9a3412;
+    font-weight: 500;
+  }
+  .results-reset {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #c2410c;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .results-reset:hover {
+    color: #9a3412;
   }
 
   /* Dimension sections */
