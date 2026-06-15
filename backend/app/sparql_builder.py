@@ -70,7 +70,13 @@ def build_select_expr(spec: dict) -> str:
 # ---------------------------------------------------------------------------
 
 def _sparql_preamble(lang: str) -> str:
-    """Fixed WHERE preamble covering type resolution, geometry, and name binding."""
+    """Fixed WHERE preamble covering type resolution, geometry, and name binding.
+
+    The four entity classes carry coordinates and a compass:name. Country/Area
+    concepts are additionally surfaced as map *regions*: they have no coordinates
+    and label themselves with skos:prefLabel, so geometry is OPTIONAL and the
+    label is COALESCEd across both naming properties.
+    """
     return f"""
         {{
             ?s a compass:InternationalForum .
@@ -84,10 +90,15 @@ def _sparql_preamble(lang: str) -> str:
         }} UNION {{
             ?s a compass:PartnerOrganization .
             BIND(compass:PartnerOrganization AS ?type)
+        }} UNION {{
+            ?s a compass:CountryArea .
+            BIND(compass:CountryArea AS ?type)
         }}
-        ?s geo:lat ?lat .
-        ?s geo:long ?long .
-        OPTIONAL {{ ?s compass:name ?label . FILTER(lang(?label) = "{lang}") }}
+        OPTIONAL {{ ?s geo:lat ?lat . }}
+        OPTIONAL {{ ?s geo:long ?long . }}
+        OPTIONAL {{ ?s compass:name ?nameLabel . FILTER(lang(?nameLabel) = "{lang}") }}
+        OPTIONAL {{ ?s skos:prefLabel ?prefLabel . FILTER(lang(?prefLabel) = "{lang}") }}
+        BIND(COALESCE(?nameLabel, ?prefLabel) AS ?label)
         FILTER(BOUND(?label))
         OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
 """
@@ -129,12 +140,17 @@ def _build_where_clauses(
     filter_map: Dict[str, str],
     range_filters: Dict[str, str],
     date_filters: Dict[str, str],
+    exclude_key: str = None,
 ) -> List[str]:
-    """Convert request query params into SPARQL WHERE clause fragments."""
+    """Convert request query params into SPARQL WHERE clause fragments.
+
+    exclude_key drops that dimension's own constraints — used by facet counts so
+    a dimension does not shrink its own sibling counts (drill-down faceting).
+    """
     where_clauses = []
 
     for key, val in query_params.items():
-        if key == "lang" or not val:
+        if key == "lang" or key == exclude_key or not val:
             continue
         values = query_params.getlist(key)
 
@@ -163,7 +179,11 @@ def _build_where_clauses(
                 f"<{v}>" for v in values if v.startswith("http") and ">" not in v
             )
             if iri_list:
-                where_clauses.append(f"FILTER(?type IN ({iri_list}))")
+                # Regions (CountryArea) are a separate visual layer and stay
+                # visible regardless of the entity-type (pin) filter.
+                where_clauses.append(
+                    f"FILTER(?type IN ({iri_list}) || ?type = compass:CountryArea)"
+                )
 
         elif key in range_filters:
             prop, datatype = range_filters[key]
@@ -190,6 +210,52 @@ def _build_where_clauses(
 # Main entry point
 # ---------------------------------------------------------------------------
 
+def _categorize_specs(specs: List[Dict[str, Any]]):
+    """Split property specs into filter/range/date maps keyed by spec id."""
+    filter_map: Dict[str, str] = {}
+    range_filters: Dict[str, str] = {}
+    date_filters: Dict[str, str] = {}
+    for spec in specs:
+        prefixed = to_prefixed(spec["path_iri"])
+        if spec["filter_type"] in ("multiselect", "toggle"):
+            filter_map[spec["id"]] = prefixed
+        elif spec["filter_type"] == "slider":
+            range_filters[spec["id"]] = (prefixed, spec.get("datatype"))
+        elif spec["filter_type"] == "datepicker":
+            date_filters[spec["id"]] = prefixed
+    return filter_map, range_filters, date_filters
+
+
+def build_facet_query(
+    specs: List[Dict[str, Any]], lang: str, query_params, target_id: str
+) -> str:
+    """Assemble a count-per-value query for one tag dimension.
+
+    Applies every active filter EXCEPT target_id's own (drill-down faceting),
+    then groups the matching entities by the target dimension's value. The
+    preamble is shared with build_entities_query so ?s ranges over exactly the
+    same entity set the map renders.
+    """
+    filter_map, range_filters, date_filters = _categorize_specs(specs)
+    target_path = filter_map[target_id]
+
+    preamble = _sparql_preamble(lang)
+    where_clauses = _build_where_clauses(
+        query_params, filter_map, range_filters, date_filters, exclude_key=target_id
+    )
+
+    sparql_where = preamble + f"        ?s {target_path} ?val .\n"
+    if where_clauses:
+        sparql_where += "        " + "\n        ".join(where_clauses) + "\n"
+
+    return (
+        SPARQL_PREFIXES
+        + "    SELECT ?val (COUNT(DISTINCT ?s) AS ?n)\n"
+        + "    WHERE {\n" + sparql_where + "    }\n"
+        + "    GROUP BY ?val\n"
+    )
+
+
 def build_entities_query(
     specs: List[Dict[str, Any]], lang: str, query_params
 ) -> str:
@@ -203,17 +269,7 @@ def build_entities_query(
     Returns:
         A complete SPARQL SELECT query string.
     """
-    filter_map: Dict[str, str] = {}
-    range_filters: Dict[str, str] = {}
-    date_filters: Dict[str, str] = {}
-    for spec in specs:
-        prefixed = to_prefixed(spec["path_iri"])
-        if spec["filter_type"] in ("multiselect", "toggle"):
-            filter_map[spec["id"]] = prefixed
-        elif spec["filter_type"] == "slider":
-            range_filters[spec["id"]] = (prefixed, spec.get("datatype"))
-        elif spec["filter_type"] == "datepicker":
-            date_filters[spec["id"]] = prefixed
+    filter_map, range_filters, date_filters = _categorize_specs(specs)
 
     preamble = _sparql_preamble(lang)
     auto_optionals = "\n        ".join(build_optional(spec, lang) for spec in specs)

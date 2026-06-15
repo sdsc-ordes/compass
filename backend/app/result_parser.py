@@ -15,6 +15,11 @@ from geojson import Feature, FeatureCollection, Point
 from .namespaces import ITEM_SEP, FIELD_SEP
 
 
+def _local_name(iri: str) -> str:
+    """Return the local name of an IRI (after the last '#' or '/')."""
+    return iri.split("#")[-1] if "#" in iri else iri.split("/")[-1]
+
+
 
 def extract_property(spec: dict, res: dict) -> Any:
     """Extract a typed property value from a SPARQL result row.
@@ -78,16 +83,10 @@ def results_to_geojson(
     features = []
     for res in results:
         try:
-            lat = float(res["lat"])
-            lng = float(res["long"])
-
             properties: Dict[str, Any] = {
                 "id": res["s"],
                 "label": res["label"],
-                "type": str(res.get("typeLabelResult") or (
-                    res["type"].split("#")[-1] if "#" in res["type"]
-                    else res["type"].split("/")[-1]
-                )),
+                "type": str(res.get("typeLabelResult") or _local_name(res["type"])),
                 "typeIri": res["type"],
             }
 
@@ -96,6 +95,19 @@ def results_to_geojson(
 
             properties.update(_parse_special_properties(res))
 
+            # Country/Area concepts carry no coordinates — emit them as
+            # geometry-less *region* features. The frontend joins the polygon
+            # boundary by regionKey and renders them as shaded areas.
+            lat_raw = res.get("lat")
+            long_raw = res.get("long")
+            if not lat_raw or not long_raw:
+                properties["is_region"] = True
+                properties["regionKey"] = _local_name(res["s"])
+                features.append(Feature(geometry=None, properties=properties))
+                continue
+
+            lat = float(lat_raw)
+            lng = float(long_raw)
             features.append(Feature(geometry=Point((lng, lat)), properties=properties))
         except (ValueError, KeyError):
             continue

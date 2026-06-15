@@ -6,6 +6,15 @@
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { i18n, type Lang } from '../shared/i18n';
   import { Globe as GlobeIcon, Map as MapIcon } from 'lucide-svelte';
+  import regionsData from './regions.json';
+
+  // Region boundary polygons keyed by regionKey, built by
+  // scripts/build-regions.mjs. The backend emits Country/Area entities as
+  // geometry-less region features; we join their polygon here at render time.
+  const REGION_GEOMETRY: Record<string, any> = {};
+  for (const f of (regionsData as any).features) {
+    REGION_GEOMETRY[f.properties.regionKey] = f.geometry;
+  }
 
   // Map entity type IRIs to distinct pin colors
   const TYPE_COLORS: Record<string, string> = {
@@ -24,6 +33,7 @@
       Network: { en: 'Network', de: 'Netzwerk' },
       InternationalForum: { en: 'International Forum', de: 'Internationales Forum' },
       Project: { en: 'Project', de: 'Projekt' },
+      CountryArea: { en: 'Country / Area', de: 'Land / Gebiet' },
     };
     const found = labels[key];
     if (!found) return key.replace(/([A-Z])/g, ' $1').trim();
@@ -214,29 +224,53 @@
 
     if (map.getSource('connections')) map.removeSource('connections');
     if (map.getSource('entities-connections')) map.removeSource('entities-connections');
+    if (map.getSource('regions')) map.removeSource('regions');
     if (map.getSource('entities')) {
       map.removeSource('entities');
     }
 
+    // Split incoming features: points (clustered pins) vs. Country/Area regions
+    // (shaded polygons). Regions carry no geometry over the wire — join their
+    // boundary polygon from the bundled asset by regionKey.
+    const pointFeatures = entities.filter(f => f.geometry && f.geometry.type === 'Point');
+    const regionFeatures = entities
+      .filter(f => f.properties?.is_region)
+      .map(f => {
+        const geometry = REGION_GEOMETRY[f.properties.regionKey];
+        if (!geometry) {
+          console.warn('[Compass] no boundary polygon for region', f.properties?.regionKey);
+          return null;
+        }
+        return { ...f, geometry };
+      })
+      .filter(Boolean);
+
+    // Clustered point source (polygons cannot live in a clustered source)
     map.addSource('entities', {
       type: 'geojson',
       data: {
         type: 'FeatureCollection',
-        features: entities
+        features: pointFeatures
       },
       cluster: true,
       clusterMaxZoom: 14,
       clusterRadius: 50
     });
 
-    // Auto-fit bounds if we have features
-    if (entities && entities.length > 0) {
+    // Non-clustered region source for shaded Country/Area polygons
+    map.addSource('regions', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: regionFeatures
+      },
+      cluster: false
+    });
+
+    // Auto-fit bounds to point features (regions are background context)
+    if (pointFeatures.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
-      entities.forEach(f => {
-        if (f.geometry && f.geometry.type === 'Point') {
-          bounds.extend(f.geometry.coordinates);
-        }
-      });
+      pointFeatures.forEach(f => bounds.extend(f.geometry.coordinates));
       map.fitBounds(bounds, { padding: 40, maxZoom: 12, duration: 1000 });
     }
 
@@ -371,29 +405,27 @@
       }
     });
 
-    // Region Highlighting Layers
+    // Region Highlighting Layers — shaded Country/Area polygons (non-clustered)
     map.addLayer({
       id: 'region-fill',
       type: 'fill',
-      source: 'entities',
-      filter: ['all', ['has', 'is_region']],
+      source: 'regions',
       paint: {
         'fill-color': '#0284c7',
         'fill-opacity': 0.1
       }
-    });
+    }, 'clusters'); // keep region shading beneath the pins
 
     map.addLayer({
       id: 'region-outline',
       type: 'line',
-      source: 'entities',
-      filter: ['all', ['has', 'is_region']],
+      source: 'regions',
       paint: {
         'line-color': '#0284c7',
         'line-width': 2,
         'line-dasharray': [2, 2]
       }
-    });
+    }, 'clusters');
 
     // Build hover connection index from current entities
     buildIndex();
@@ -509,7 +541,7 @@
       } else {
         selectedIri = props.id;
         selectedTypeIri = props.typeIri;
-        showConnections(selectedIri, selectedTypeIri!);
+        showConnections(selectedIri!, selectedTypeIri!);
       }
       onEntitySelect(props);
     });
@@ -524,14 +556,14 @@
       } else {
         selectedIri = props.id;
         selectedTypeIri = props.typeIri;
-        showConnections(selectedIri, selectedTypeIri!);
+        showConnections(selectedIri!, selectedTypeIri!);
       }
       onEntitySelect(props);
     });
 
     // Click on empty map — clear selection
     map.on('click', (e) => {
-      const hit = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point', 'featured-star', 'cta-points', 'clusters'] });
+      const hit = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point', 'featured-star', 'cta-points', 'clusters', 'region-fill'] });
       if (!hit.length && selectedIri) {
         selectedIri = null;
         selectedTypeIri = null;
@@ -550,7 +582,7 @@
       } else {
         selectedIri = props.id;
         selectedTypeIri = props.typeIri;
-        showConnections(selectedIri, selectedTypeIri!);
+        showConnections(selectedIri!, selectedTypeIri!);
       }
       onEntitySelect(props);
     });
@@ -594,6 +626,20 @@
         clearConnections();
       }
     });
+
+    // Shaded Country/Area regions — open the detail panel on click.
+    // Regions have no project connections, so no connection lines are drawn.
+    // Pins sit visually on top, so defer to them: if a pin is under the
+    // cursor, let its own handler win instead of selecting the region.
+    map.on('click', 'region-fill', (e) => {
+      const pinHit = map.queryRenderedFeatures(e.point, {
+        layers: ['unclustered-point', 'featured-star', 'cta-points', 'clusters']
+      });
+      if (pinHit.length) return;
+      onEntitySelect(e.features![0].properties);
+    });
+    map.on('mouseenter', 'region-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'region-fill', () => { map.getCanvas().style.cursor = ''; });
   }
 
   function toggleProjection() {
@@ -635,6 +681,10 @@
     <div class="legend-item">
       <span class="legend-dash"></span>
       <span class="legend-label">{t.orgProjectLink}</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-region-swatch"></span>
+      <span class="legend-label">{t.legendRegion}</span>
     </div>
   </div>
 
@@ -761,6 +811,16 @@
     height: 1px;
     background: #e2e8f0;
     margin: 3px 0;
+  }
+
+  .legend-region-swatch {
+    width: 16px;
+    height: 11px;
+    border-radius: 2px;
+    background: rgba(2, 132, 199, 0.1);
+    border: 1.5px dashed #0284c7;
+    flex-shrink: 0;
+    align-self: center;
   }
 
   .legend-dash {

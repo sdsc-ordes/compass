@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { X, ExternalLink, Heart, Compass, BookOpen } from 'lucide-svelte';
+  import { X, ExternalLink, Heart, Compass, BookOpen, MapPin } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
 
   // Raw MapLibre feature properties (nested objects arrive as JSON strings)
   export let entity: any;
   export let lang: Lang = 'en';
+  export let regionCount: number | undefined = undefined;
+  export let onFilterByRegion: (iri: string) => void = () => {};
   export let onClose: () => void = () => {};
 
   $: t = i18n[lang] || i18n.en;
@@ -96,6 +98,12 @@
     {/if}
 
     <div class="actions">
+      {#if entity?.is_region && entity?.id}
+        <button class="visit-btn primary" on:click={() => onFilterByRegion(entity.id)}>
+          <MapPin size={15} />
+          {t.filterByRegion}{#if regionCount}&nbsp;({regionCount}){/if}
+        </button>
+      {/if}
       {#if entity?.donationUrl}
         <a class="visit-btn donate" href={entity.donationUrl} target="_blank" rel="noopener noreferrer">
           <Heart size={15} />

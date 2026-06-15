@@ -23,6 +23,7 @@ export const i18n = {
     established: "Established",
     website: "Website",
     orgProjectLink: "Org ↔ Project",
+    legendRegion: "Country / Area",
     shareTitle: "Share this view",
     shareHint: "Scan the QR code or copy the link below.",
     copyLink: "Copy link",
@@ -30,6 +31,8 @@ export const i18n = {
     storiesCount: "stories match your selection",
     storiesNone: "No stories found for these tags",
     entityStories: "Read related stories",
+    filterByRegion: "Show organisations working here",
+    searchPlaceholder: "Search…",
   },
   de: {
     filters: "Filter",
@@ -55,6 +58,7 @@ export const i18n = {
     established: "Gegründet",
     website: "Website",
     orgProjectLink: "Org ↔ Projekt",
+    legendRegion: "Land / Gebiet",
     shareTitle: "Ansicht teilen",
     shareHint: "QR-Code scannen oder Link kopieren.",
     copyLink: "Link kopieren",
@@ -62,6 +66,8 @@ export const i18n = {
     storiesCount: "Storys zu deiner Auswahl",
     storiesNone: "Keine Storys für diese Tags gefunden",
     entityStories: "Verwandte Storys lesen",
+    filterByRegion: "Organisationen in diesem Gebiet anzeigen",
+    searchPlaceholder: "Suchen…",
   }
 };
 

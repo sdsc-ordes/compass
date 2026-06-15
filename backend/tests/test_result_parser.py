@@ -80,7 +80,26 @@ class TestResultsToGeojsonIntegration:
             assert "label" in props
             assert "type" in props
             assert "typeIri" in props
+            if props.get("is_region"):
+                # Region features carry no coordinates — geometry is joined
+                # client-side from the bundled boundary file by regionKey.
+                assert feature["geometry"] is None
+                assert props.get("regionKey")
+                continue
             assert feature["geometry"]["type"] == "Point"
             coords = feature["geometry"]["coordinates"]
             assert -180 <= coords[0] <= 180, f"Invalid longitude: {coords[0]}"
             assert -90 <= coords[1] <= 90, f"Invalid latitude: {coords[1]}"
+
+    def test_country_areas_emitted_as_regions(self, store, property_specs):
+        """Every CountryArea concept should surface as a geometry-less region."""
+        sparql = build_entities_query(property_specs, "en", QueryParams(""))
+        results = store.query(sparql)
+        geojson = results_to_geojson(results, property_specs)
+
+        regions = [f for f in geojson["features"] if f["properties"].get("is_region")]
+        assert len(regions) >= 20, f"Expected >=20 region features, got {len(regions)}"
+        for region in regions:
+            assert region["geometry"] is None
+            assert region["properties"]["regionKey"]
+            assert region["properties"]["typeIri"].endswith("CountryArea")

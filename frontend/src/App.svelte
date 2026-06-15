@@ -21,6 +21,7 @@
   let error: string | null = null;
   let selectedEntity: any = null;
   let selectedEntityId: string | null = null;
+  let facetCounts: Record<string, Record<string, number>> = {};
   let filterOpen = true;
   let sidebarVisible = false;
   let mounted = false;
@@ -76,6 +77,30 @@
     console.log("[Compass] Reactive check - apiurl:", apiurl, "lang:", lang);
     if (mounted && apiurl) {
       fetchEntities(apiurl, lang, activeFilters);
+      fetchFacets(apiurl, lang, activeFilters);
+    }
+  }
+
+  // Build the API query string shared by /entities and /entities/facets.
+  function buildEntityParams(f: any, l: string): URLSearchParams {
+    const params = new URLSearchParams({ lang: l });
+    for (const [key, val] of Object.entries(f)) {
+      if (Array.isArray(val)) {
+        val.forEach((v) => params.append(key, String(v)));
+      } else if (val !== undefined && val !== '') {
+        params.append(key, String(val));
+      }
+    }
+    return params;
+  }
+
+  async function fetchFacets(url: string, l: string, f: any) {
+    if (!url) return;
+    try {
+      const resp = await fetch(`${url}/api/entities/facets?${buildEntityParams(f, l).toString()}`);
+      if (resp.ok) facetCounts = await resp.json();
+    } catch (e) {
+      console.error('[Compass] Facet fetch error:', e);
     }
   }
 
@@ -124,12 +149,12 @@
       const data = await resp.json();
       entities = data.features || [];
       console.log('[Compass] Loaded entities:', entities.length);
-    } catch (e) {
+    } catch (e: any) {
       console.error('[Compass] Fetch Error:', e);
-      if (e.name === 'AbortError') {
+      if (e?.name === 'AbortError') {
         error = "Connection timed out. Is the backend running at " + url + "?";
       } else {
-        error = "Failed to connect to backend: " + e.message;
+        error = "Failed to connect to backend: " + (e?.message ?? e);
       }
     } finally {
       isLoading = false;
@@ -187,6 +212,15 @@
       ...filters,
       ...(legendTypeFilters.length ? { entityType: legendTypeFilters } : {}),
     };
+  }
+
+  function handleFilterByRegion(iri: string) {
+    // Add the region to the countryArea dimension (preserving other filters)
+    // and close the region detail panel — the region is now the active filter.
+    const existing = Array.isArray(activeFilters.countryArea) ? activeFilters.countryArea : [];
+    const next = existing.includes(iri) ? existing : [...existing, iri];
+    activeFilters = { ...activeFilters, countryArea: next };
+    sidebarVisible = false;
   }
 
   function handleTypeFilterChange(iris: string[]) {
@@ -282,6 +316,7 @@
         initialFilters={activeFilters}
         onTagChange={handleFilterChange}
         onToggle={() => (filterOpen = false)}
+        {facetCounts}
         {storyCount}
         {storyCountLoading}
       />
@@ -316,6 +351,8 @@
         <EntitySidebar
           entity={selectedEntity}
           {lang}
+          regionCount={selectedEntity?.id ? facetCounts.countryArea?.[selectedEntity.id] : undefined}
+          onFilterByRegion={handleFilterByRegion}
           onClose={() => { sidebarVisible = false; }}
         />
       {/if}

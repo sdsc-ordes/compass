@@ -16,6 +16,11 @@ compass:wpTagId a rdf:Property ;
     rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the OceanCare website."@en ;
     rdfs:range xsd:integer .
 
+compass:isoCode a rdf:Property ;
+    rdfs:label "ISO / boundary code"@en ;
+    rdfs:comment "Boundary lookup key for a Country/Area concept (ISO 3166-1 alpha-3, or a custom code for sub-national/marine areas). Used by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
+    rdfs:range xsd:string .
+
 compass:wpEntityTagIdEn a rdf:Property ;
     rdfs:label "WordPress Entity Tag ID (English)"@en ;
     rdfs:comment "Numeric WP term ID of the English per-entity tag on OceanCare (used to link to English stories about this entity)."@en ;

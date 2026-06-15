@@ -10,13 +10,17 @@
   export let onTagChange: (filters: Record<string, string[]>) => void;
   export let onToggle: (() => void) | undefined = undefined;
   export let initialFilters: Record<string, any> = {};
+  export let facetCounts: Record<string, Record<string, number>> = {};
   export let storyCount: { count: number; url: string } | null = null;
   export let storyCountLoading = false;
 
+  // Sections with more options than this get an inline search box.
+  const SEARCH_THRESHOLD = 8;
+
   let schema: any[] = [];
   let selectedTags: Record<string, string[]> = {};
-  let initialApplied = false;
   let collapsedSections: Record<string, boolean> = {};
+  let sectionSearch: Record<string, string> = {};
 
   $: t = i18n[lang] || i18n.en;
   $: fetchSchema(apiurl, lang);
@@ -26,18 +30,23 @@
   const EXCLUDED_DIMENSIONS = new Set(['entityType', 'relatedProject', 'forum']);
   $: tagSchema = schema.filter((f: any) => f.type === 'multiselect' && !EXCLUDED_DIMENSIONS.has(f.id));
 
-  // Apply initial filters once schema is loaded
-  $: if (tagSchema.length > 0 && !initialApplied && Object.keys(initialFilters).length > 0) {
-    const applied: Record<string, string[]> = {};
-    for (const f of tagSchema) {
-      if (Array.isArray(initialFilters[f.id]) && initialFilters[f.id].length > 0) {
-        applied[f.id] = initialFilters[f.id];
+  // Sync selection from externally-set filters (URL restore, region CTA, etc.).
+  // Runs whenever initialFilters changes; the round-trip through onTagChange →
+  // App.activeFilters → initialFilters reproduces the same value, so a local
+  // toggle settles without clobbering. Guarded by a value comparison to avoid loops.
+  $: syncFromExternal(initialFilters, tagSchema);
+
+  function syncFromExternal(filters: Record<string, any>, schema: any[]) {
+    if (schema.length === 0) return;
+    const next: Record<string, string[]> = {};
+    for (const f of schema) {
+      if (Array.isArray(filters[f.id]) && filters[f.id].length > 0) {
+        next[f.id] = filters[f.id];
       }
     }
-    if (Object.keys(applied).length > 0) {
-      selectedTags = applied;
+    if (JSON.stringify(next) !== JSON.stringify(selectedTags)) {
+      selectedTags = next;
     }
-    initialApplied = true;
   }
 
   // Initialise all sections as open on first schema load
@@ -80,6 +89,13 @@
 
   function toggleSection(id: string) {
     collapsedSections = { ...collapsedSections, [id]: !collapsedSections[id] };
+  }
+
+  // Options filtered by the section's search term (case-insensitive substring).
+  function visibleOptions(filter: any): any[] {
+    const term = (sectionSearch[filter.id] ?? '').trim().toLowerCase();
+    if (!term) return filter.options;
+    return filter.options.filter((o: any) => o.label.toLowerCase().includes(term));
   }
 
   $: hasActiveTags = Object.values(selectedTags).some((v) => v.length > 0);
@@ -140,14 +156,29 @@
         </button>
 
         {#if !collapsedSections[filter.id]}
+          {#if filter.options.length > SEARCH_THRESHOLD}
+            <input
+              class="section-search"
+              type="text"
+              placeholder={t.searchPlaceholder}
+              bind:value={sectionSearch[filter.id]}
+            />
+          {/if}
           <div class="chips">
-            {#each filter.options as opt}
+            {#each visibleOptions(filter) as opt}
+              {@const selected = selectedTags[filter.id]?.includes(opt.value)}
+              {@const dimCounts = facetCounts[filter.id]}
+              {@const count = dimCounts?.[opt.value] ?? 0}
+              {@const disabled = dimCounts !== undefined && count === 0 && !selected}
               <button
                 class="chip"
-                class:chip-active={selectedTags[filter.id]?.includes(opt.value)}
-                on:click={() => toggleTag(filter.id, opt.value)}
+                class:chip-active={selected}
+                class:chip-disabled={disabled}
+                aria-disabled={disabled}
+                on:click={() => { if (!disabled) toggleTag(filter.id, opt.value); }}
               >
-                {opt.label}
+                <span>{opt.label}</span>
+                {#if count > 0}<span class="chip-count">{count}</span>{/if}
               </button>
             {/each}
           </div>
@@ -341,6 +372,46 @@
     background: #0369a1;
     border-color: #0369a1;
     color: white;
+  }
+  .chip-count {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #94a3b8;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 0 5px;
+    line-height: 1.5;
+  }
+  .chip-active .chip-count {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .chip-disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .chip-disabled:hover {
+    background: white;
+    border-color: #e2e8f0;
+    color: #475569;
+  }
+
+  .section-search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 10px;
+    margin-bottom: 0.375rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    color: #475569;
+    background: white;
+  }
+  .section-search:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
   }
 
   /* Story widget */

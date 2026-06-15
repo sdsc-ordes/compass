@@ -253,6 +253,7 @@ compass:CountryAreaScheme a skos:ConceptScheme ;
     skos:prefLabel "Land / Gebiet"@de ;
     skos:definition "Countries and geographic areas relevant to OceanCare's work."@en ;
     skos:hasTopConcept compass:Arctic ;
+    skos:hasTopConcept compass:Australia ;
     skos:hasTopConcept compass:Benin ;
     skos:hasTopConcept compass:Bulgaria ;
     skos:hasTopConcept compass:England ;
@@ -280,116 +281,213 @@ compass:Arctic a skos:Concept, compass:CountryArea ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
+compass:Australia a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Australia"@en ;
+    skos:prefLabel "Australien"@de ;
+    compass:isoCode "AUS" ;
+    compass:topic compass:ClimateProtection ;
+    compass:species compass:Corals ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
 compass:Benin a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Benin"@en ;
     skos:prefLabel "Benin"@de ;
+    compass:isoCode "BEN" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:topic compass:Fisheries, compass:Hunting ;
+    compass:species compass:Dolphins, compass:Manatees, compass:SeaTurtles, compass:Sharks ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Bulgaria a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Bulgaria"@en ;
     skos:prefLabel "Bulgarien"@de ;
+    compass:isoCode "BGR" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:ScientificResearch ;
+    compass:species compass:Dolphins ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:England a skos:Concept, compass:CountryArea ;
     skos:prefLabel "England"@en ;
     skos:prefLabel "England"@de ;
+    compass:isoCode "GBR-ENG" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:RescueActivities ;
+    compass:species compass:Dolphins, compass:Seals, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:FaroeIslands a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Faroe Islands"@en ;
     skos:prefLabel "Färöer-Inseln"@de ;
+    compass:isoCode "FRO" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement ;
+    compass:topic compass:Hunting ;
+    compass:species compass:Dolphins, compass:Whales ;
+    compass:pollution compass:ChemicalPollution ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:France a skos:Concept, compass:CountryArea ;
     skos:prefLabel "France"@en ;
     skos:prefLabel "Frankreich"@de ;
+    compass:isoCode "FRA" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:RescueActivities ;
+    compass:species compass:Seals ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Greece a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Greece"@en ;
     skos:prefLabel "Griechenland"@de ;
+    compass:isoCode "GRC" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
+    compass:topic compass:Shipping ;
+    compass:species compass:Dolphins, compass:Seals, compass:Sharks, compass:Whales ;
+    compass:pollution compass:PlasticPollution ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Iceland a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Iceland"@en ;
     skos:prefLabel "Island"@de ;
+    compass:isoCode "ISL" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:topic compass:Hunting ;
+    compass:species compass:Dolphins, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Italy a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Italy"@en ;
     skos:prefLabel "Italien"@de ;
+    compass:isoCode "ITA" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:CommunityInvolvement, compass:ScientificResearch ;
+    compass:species compass:Dolphins, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Japan a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Japan"@en ;
     skos:prefLabel "Japan"@de ;
+    compass:isoCode "JPN" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:topic compass:Hunting ;
+    compass:species compass:Dolphins, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Maldives a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Maldives"@en ;
     skos:prefLabel "Malediven"@de ;
+    compass:isoCode "MDV" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:Fisheries, compass:Hunting ;
+    compass:species compass:Dolphins, compass:Manatees, compass:SeaTurtles, compass:Sharks ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Mauritania a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Mauritania"@en ;
     skos:prefLabel "Mauretanien"@de ;
+    compass:isoCode "MRT" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
+    compass:species compass:Seals ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:NorthSeaBalticSea a skos:Concept, compass:CountryArea ;
     skos:prefLabel "North Sea / Baltic Sea"@en ;
     skos:prefLabel "Nordsee / Ostsee"@de ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:species compass:Dolphins, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Norway a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Norway"@en ;
     skos:prefLabel "Norwegen"@de ;
+    compass:isoCode "NOR" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:topic compass:Hunting ;
+    compass:species compass:Dolphins, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Slovenia a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Slovenia"@en ;
     skos:prefLabel "Slowenien"@de ;
+    compass:isoCode "SVN" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:ScientificResearch ;
+    compass:species compass:Dolphins ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Spain a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Spain"@en ;
     skos:prefLabel "Spanien"@de ;
+    compass:isoCode "ESP" ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:Fisheries, compass:Shipping ;
+    compass:species compass:Dolphins, compass:Whales ;
+    compass:pollution compass:PlasticPollution ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Switzerland a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Switzerland"@en ;
     skos:prefLabel "Schweiz"@de ;
+    compass:isoCode "CHE" ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:Venezuela a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Venezuela"@en ;
     skos:prefLabel "Venezuela"@de ;
+    compass:isoCode "VEN" ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:Fisheries, compass:Hunting ;
+    compass:species compass:Sharks ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:EasternMediterraneanSea a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Eastern Mediterranean Sea"@en ;
     skos:prefLabel "Östliches Mittelmeer"@de ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels, compass:Shipping ;
+    compass:species compass:Dolphins, compass:Orcas, compass:Whales ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
 compass:WesternMediterraneanSea a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Western Mediterranean Sea"@en ;
     skos:prefLabel "Westliches Mittelmeer"@de ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:ClimateProtection, compass:Fisheries, compass:FossilFuels, compass:Shipping ;
+    compass:species compass:Dolphins, compass:Orcas, compass:Whales ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .

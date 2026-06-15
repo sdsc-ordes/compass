@@ -43,19 +43,24 @@ def test_count_story_cards_real_response():
 
 
 def test_build_stories_url_no_ids():
-    url = _build_stories_url([])
-    assert url.endswith("/storys-and-news/")
+    url = _build_stories_url([], "en")
+    assert url.endswith("/stories-and-news/")
     assert "?" not in url
 
 
 def test_build_stories_url_single():
-    url = _build_stories_url([148])
+    url = _build_stories_url([148], "en")
     assert "?tag=148" in url
 
 
 def test_build_stories_url_multiple():
-    url = _build_stories_url([147, 148, 455])
+    url = _build_stories_url([147, 148, 455], "en")
     assert "?tag=147,148,455" in url
+
+
+def test_build_stories_url_lang_specific_base():
+    assert "/de/" in _build_stories_url([148], "de")
+    assert "/en/" in _build_stories_url([148], "en")
 
 
 def test_resolve_wp_tag_ids_no_iris():
