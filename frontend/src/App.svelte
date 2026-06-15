@@ -8,7 +8,7 @@
   import EntitySidebar from './shared/EntitySidebar.svelte';
   import ShareModal from './shared/ShareModal.svelte';
   import { i18n, type Lang } from './shared/i18n';
-  import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft } from 'lucide-svelte';
+  import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft, Share2 } from 'lucide-svelte';
 
   export let apiurl = '';
   export let lang: Lang = 'en';
@@ -40,6 +40,8 @@
   // Sync with URL on mount
   onMount(async () => {
     console.log("[Compass] Component mounted. Initial apiurl:", apiurl);
+    // Start with filters collapsed on small screens so the map is visible first.
+    if (typeof window !== 'undefined' && window.innerWidth < 900) filterOpen = false;
     const params = new URLSearchParams(window.location.search);
     if (params.has('lang')) lang = params.get('lang') as Lang;
     
@@ -266,9 +268,17 @@
   }
 
   function handleEntitySelect(props: any) {
-    // Store the ID — the reactive block above will populate selectedEntity from the entities array
-    selectedEntityId = props?.id ?? null;
-    if (props?.id) sidebarVisible = true;
+    const id = props?.id ?? null;
+    if (!id) return;
+    if (selectedEntityId === id && sidebarVisible) {
+      // Clicking the already-open entity toggles it closed.
+      selectedEntity = null;
+      selectedEntityId = null;
+      sidebarVisible = false;
+    } else {
+      selectedEntityId = id;
+      sidebarVisible = true;
+    }
   }
 
   function toggleLang() {
@@ -287,21 +297,19 @@
     
     <div class="controls">
       <div class="view-toggle">
-        <button class:active={viewMode === 'map'} on:click={() => viewMode = 'map'}>
+        <button class:active={viewMode === 'map'} aria-pressed={viewMode === 'map'} on:click={() => viewMode = 'map'}>
           <MapIcon size={16} />
           <span>{t.mapView}</span>
         </button>
-        <button class:active={viewMode === 'list'} on:click={() => viewMode = 'list'}>
+        <button class:active={viewMode === 'list'} aria-pressed={viewMode === 'list'} on:click={() => viewMode = 'list'}>
           <List size={16} />
           <span>{t.listView}</span>
         </button>
       </div>
-      
-      <button type="button" class="lang-toggle" on:click|preventDefault|stopPropagation={saveMapState} title="Save current map state">
-        <div style="display:flex; align-items:center; gap:0.5rem">
-           <svg xmlns="http://www.w3.org/2000/01/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-           <span>Share</span>
-        </div>
+
+      <button type="button" class="lang-toggle" on:click|preventDefault|stopPropagation={saveMapState} title={t.shareTitle}>
+        <Share2 size={16} />
+        <span>{t.share}</span>
       </button>
 
       <button class="lang-toggle" on:click={toggleLang}>
@@ -470,6 +478,14 @@
     color: #475569;
   }
 
+  .view-toggle button:focus-visible,
+  .lang-toggle:focus-visible,
+  .filter-reopen-tab:focus-visible,
+  .sidebar-reopen-tab:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
   .filter-reopen-tab {
     display: flex;
     align-items: center;
@@ -519,6 +535,7 @@
     display: flex;
     flex-grow: 1;
     overflow: hidden;
+    position: relative;
   }
 
   .sidebar {
@@ -623,20 +640,22 @@
     overflow-y: auto;
   }
 
+  /* On small screens the filter panel becomes an overlay drawer (collapsed by
+     default, see onMount) so the map is the first thing visible. */
   @media (max-width: 900px) {
-    .content {
-      flex-direction: column;
-      overflow-y: auto;
-    }
     .sidebar {
-      width: 100%;
-      height: auto;
-      border-right: none;
-      border-bottom: 1px solid #e2e8f0;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 30;
+      width: 86%;
+      max-width: 340px;
+      min-width: 0;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
     }
     .main-area {
-      height: 500px;
-      flex-shrink: 0;
+      height: 100%;
     }
   }
 </style>

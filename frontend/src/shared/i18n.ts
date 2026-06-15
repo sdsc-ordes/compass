@@ -36,6 +36,8 @@ export const i18n = {
     resultsCount: "results",
     noResults: "No results match your filters",
     clearToSeeAll: "Clear filters to see all",
+    share: "Share",
+    filtersLabel: "Filters",
   },
   de: {
     filters: "Filter",
@@ -74,6 +76,8 @@ export const i18n = {
     resultsCount: "Ergebnisse",
     noResults: "Keine Ergebnisse für deine Filter",
     clearToSeeAll: "Filter zurücksetzen, um alle zu sehen",
+    share: "Teilen",
+    filtersLabel: "Filter",
   }
 };
 

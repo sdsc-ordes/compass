@@ -178,6 +178,7 @@
               class="section-search"
               type="text"
               placeholder={t.searchPlaceholder}
+              aria-label={`${t.searchPlaceholder} ${filter.label}`}
               bind:value={sectionSearch[filter.id]}
             />
           {/if}
@@ -191,6 +192,7 @@
                 class="chip"
                 class:chip-active={selected}
                 class:chip-disabled={disabled}
+                aria-pressed={selected}
                 aria-disabled={disabled}
                 on:click={() => { if (!disabled) toggleTag(filter.id, opt.value); }}
               >
@@ -418,6 +420,11 @@
     background: #f1f5f9;
     border-color: #94a3b8;
     color: #0f172a;
+  }
+  .chip:focus-visible,
+  .section-header:focus-visible {
+    outline: 2px solid #0284c7;
+    outline-offset: 2px;
   }
   .chip-active {
     background: #0284c7;

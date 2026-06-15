@@ -1,5 +1,7 @@
 <script lang="ts">
   import { X, ExternalLink, Heart, Compass, BookOpen, MapPin } from 'lucide-svelte';
+  import { fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import { i18n, type Lang } from './i18n';
 
   // Raw MapLibre feature properties (nested objects arrive as JSON strings)
@@ -41,7 +43,7 @@
   })).filter(dim => dim.values.length > 0);
 </script>
 
-<aside class="entity-sidebar">
+<aside class="entity-sidebar" transition:fly={{ x: 340, duration: 220, easing: cubicOut }}>
   <div class="sidebar-header">
     <div class="header-meta">
       {#if entity?.typeIri}
@@ -158,12 +160,6 @@
     flex-direction: column;
     z-index: 50;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
-    animation: slideIn 0.2s ease-out;
-  }
-
-  @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
   }
 
   /* ── Header ── */

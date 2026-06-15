@@ -691,6 +691,7 @@
         class="legend-item legend-type-btn"
         class:legend-inactive={selectedTypeIris.size > 0 && !selectedTypeIris.has(iri)}
         class:legend-active={selectedTypeIris.has(iri)}
+        aria-pressed={selectedTypeIris.has(iri)}
         on:click={() => toggleTypeLegend(iri)}
         title={getTypeLabel(iri, lang)}
       >
@@ -820,6 +821,15 @@
   }
   .legend-type-btn.legend-active {
     background: rgba(0,0,0,0.07);
+  }
+  /* Non-color cue: active type label is bold, so state isn't conveyed by
+     opacity/background alone. */
+  .legend-type-btn.legend-active .legend-label {
+    font-weight: 700;
+  }
+  .legend-type-btn:focus-visible {
+    outline: 2px solid #0284c7;
+    outline-offset: 1px;
   }
 
   .legend-dot {
