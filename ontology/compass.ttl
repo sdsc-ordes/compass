@@ -150,7 +150,7 @@ ocinst:ASCOBANS a compass:InternationalForum ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Whales ;
+    compass:species compass:Whales, compass:Dolphins ;
     compass:countryArea compass:NorthSeaBalticSea ;
     geo:lat "50.7353"^^xsd:float ;
     geo:long "7.0984"^^xsd:float .
@@ -423,10 +423,11 @@ ocinst:AlnitakResearchInstitute a compass:PartnerOrganization ;
     schema:foundingDate "2015"^^xsd:gYear ;
     compass:keySentence "MEDTOP / LIFE OASIS"@en ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:AdvocacyWork ;
+    compass:workArea compass:ScientificResearch, compass:AdvocacyWork, compass:RescueActivities, compass:CommunityInvolvement ;
     compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Shipping ;
-    compass:species compass:Whales ;
+    compass:topic compass:Shipping, compass:Fisheries ;
+    compass:pollution compass:PlasticPollution ;
+    compass:species compass:Whales, compass:Dolphins ;
     compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
     compass:forum ocinst:ACCOBAMS, ocinst:IMO, ocinst:UNEPMAP ;
     compass:relatedProject ocinst:SAVEWhales ;
@@ -486,6 +487,186 @@ ocinst:CBDHabitat a compass:PartnerOrganization ;
     compass:countryArea compass:Mauritania ;
     geo:lat "20.7701"^^xsd:float ;
     geo:long "-17.0488"^^xsd:float .
+
+# ============================================================
+# Partner Organisations (continued)
+# ============================================================
+
+ocinst:GreenBalcans a compass:PartnerOrganization ;
+    compass:name "Green Balkans"@en ;
+    compass:name "Green Balkans"@de ;
+    compass:location "Plovdiv, Bulgaria"@en ;
+    compass:keySentence "Wildlife conservation NGO protecting nature and marine biodiversity in Bulgaria."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins ;
+    compass:countryArea compass:Bulgaria ;
+    geo:lat "42.1500"^^xsd:float ;
+    geo:long "24.7500"^^xsd:float .
+
+ocinst:IonianDolphinProject a compass:PartnerOrganization ;
+    compass:name "Ionian Dolphin Project"@en ;
+    compass:name "Ionian Dolphin Project"@de ;
+    compass:location "Lefkada, Greece"@en ;
+    compass:keySentence "Long-term research programme monitoring cetaceans in the Ionian Sea."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Seals ;
+    compass:countryArea compass:Greece ;
+    geo:lat "38.7000"^^xsd:float ;
+    geo:long "20.7000"^^xsd:float .
+
+ocinst:iSeas a compass:PartnerOrganization ;
+    compass:name "iSeas"@en ;
+    compass:name "iSeas"@de ;
+    compass:location "Athens, Greece"@en ;
+    compass:keySentence "Marine NGO working on ocean conservation and plastic pollution reduction in Greece."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:pollution compass:PlasticPollution ;
+    compass:species compass:Sharks ;
+    compass:countryArea compass:Greece ;
+    geo:lat "37.9700"^^xsd:float ;
+    geo:long "23.7300"^^xsd:float .
+
+ocinst:LPACalais a compass:PartnerOrganization ;
+    compass:name "LPA Calais"@en ;
+    compass:name "LPA Calais"@de ;
+    compass:location "Calais, France"@en ;
+    compass:keySentence "Marine mammal rescue and rehabilitation on the northern French coast."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Seals ;
+    compass:countryArea compass:France ;
+    geo:lat "50.9500"^^xsd:float ;
+    geo:long "1.8500"^^xsd:float .
+
+ocinst:Morigenos a compass:PartnerOrganization ;
+    compass:name "Morigenos"@en ;
+    compass:name "Morigenos"@de ;
+    compass:location "Piran, Slovenia"@en ;
+    compass:keySentence "Slovenian Marine Mammal Society — research and conservation of Mediterranean dolphins."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins ;
+    compass:countryArea compass:Slovenia ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "45.5300"^^xsd:float ;
+    geo:long "13.5700"^^xsd:float .
+
+ocinst:OliveRidleyProject a compass:PartnerOrganization ;
+    compass:name "Olive Ridley Project"@en ;
+    compass:name "Olive Ridley Project"@de ;
+    compass:location "Maldives"@en ;
+    compass:keySentence "Sea turtle conservation in the Indian Ocean, focusing on ghost gear entanglement."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:RescueActivities, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting ;
+    compass:species compass:SeaTurtles ;
+    compass:countryArea compass:Maldives ;
+    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention ;
+    geo:lat "3.2000"^^xsd:float ;
+    geo:long "73.2200"^^xsd:float .
+
+ocinst:PelagosCetaceanResearchInstitute a compass:PartnerOrganization ;
+    compass:name "Pelagos Cetacean Research Institute"@en ;
+    compass:name "Pelagos Cetacean Research Institute"@de ;
+    compass:location "Athens, Greece"@en ;
+    compass:keySentence "Cetacean research and conservation in the Mediterranean Sea."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "37.9800"^^xsd:float ;
+    geo:long "23.7300"^^xsd:float .
+
+ocinst:SaveTheMed a compass:PartnerOrganization ;
+    compass:name "Save The Med"@en ;
+    compass:name "Save The Med"@de ;
+    compass:location "Palma de Mallorca, Spain"@en ;
+    compass:keySentence "Marine conservation NGO protecting the Mediterranean ecosystem."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:OceanConservation ;
+    compass:pollution compass:PlasticPollution ;
+    compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
+    geo:lat "39.5700"^^xsd:float ;
+    geo:long "2.6500"^^xsd:float .
+
+ocinst:TethysResearchInstitute a compass:PartnerOrganization ;
+    compass:name "Tethys Research Institute"@en ;
+    compass:name "Tethys Research Institute"@de ;
+    compass:location "Milan, Italy"@en ;
+    compass:keySentence "Cetacean research in the Mediterranean Sea since 1986."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales ;
+    compass:countryArea compass:Italy, compass:WesternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "45.4700"^^xsd:float ;
+    geo:long "9.1900"^^xsd:float .
+
+# ============================================================
+# Networks (continued)
+# ============================================================
+
+ocinst:FossilFreeOceanInitiative a compass:Network ;
+    compass:name "Fossil-Free Ocean Initiative"@en ;
+    compass:name "Fossil-Free Ocean Initiative"@de ;
+    compass:location "Wädenswil, Switzerland"@en ;
+    compass:keySentence "Initiative advocating to keep fossil fuels out of our oceans."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "47.2290"^^xsd:float ;
+    geo:long "8.6760"^^xsd:float .
+
+ocinst:FossilFuelNonProliferationTreaty a compass:Network ;
+    compass:name "Fossil Fuel Non-Proliferation Treaty Initiative"@en ;
+    compass:name "Fossil Fuel Non-Proliferation Treaty Initiative"@de ;
+    compass:location "Geneva, Switzerland"@en ;
+    compass:keySentence "Global initiative for an international treaty to phase out fossil fuels."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "46.2044"^^xsd:float ;
+    geo:long "6.1432"^^xsd:float .
+
+ocinst:SeasAtRisk a compass:Network ;
+    compass:name "Seas at Risk"@en ;
+    compass:name "Seas at Risk"@de ;
+    compass:location "Brussels, Belgium"@en ;
+    compass:keySentence "European network advocating for healthy marine ecosystems."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    geo:lat "50.8503"^^xsd:float ;
+    geo:long "4.3517"^^xsd:float .
+
+ocinst:SpeciesSurvivalNetwork a compass:Network ;
+    compass:name "Species Survival Network (SSN)"@en ;
+    compass:name "Species Survival Network (SSN)"@de ;
+    compass:location "Washington D.C., USA"@en ;
+    compass:keySentence "Coalition of NGOs promoting conservation of wild species through policy advocacy."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales, compass:Seals, compass:Manatees, compass:Sharks ;
+    geo:lat "38.9029"^^xsd:float ;
+    geo:long "-77.0302"^^xsd:float .
 
 # ============================================================
 # Projects (4)

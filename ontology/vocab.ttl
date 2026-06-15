@@ -179,6 +179,7 @@ compass:SpeciesScheme a skos:ConceptScheme ;
     skos:hasTopConcept compass:Manatees ;
     skos:hasTopConcept compass:Sharks ;
     skos:hasTopConcept compass:Fish ;
+    skos:hasTopConcept compass:Corals ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
 compass:Dolphins a skos:Concept, compass:Species ;
@@ -234,6 +235,12 @@ compass:Sharks a skos:Concept, compass:Species ;
 compass:Fish a skos:Concept, compass:Species ;
     skos:prefLabel "Fish"@en ;
     skos:prefLabel "Fische"@de ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:Corals a skos:Concept, compass:Species ;
+    skos:prefLabel "Corals"@en ;
+    skos:prefLabel "Korallen"@de ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
