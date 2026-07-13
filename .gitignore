@@ -29,3 +29,5 @@ yarn-error.log*
 .DS_Store
 .vscode/
 .idea/
+sheet-data.tsv
+todo.md

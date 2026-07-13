@@ -168,7 +168,7 @@ ocinst:BBNJ a compass:InternationalForum ;
     compass:location "UN Headquarters, New York, USA"@en ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     geo:lat "40.7488"^^xsd:float ;
     geo:long "-73.9680"^^xsd:float .
@@ -225,7 +225,7 @@ ocinst:IMO a compass:InternationalForum ;
     compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:topic compass:ClimateProtection, compass:Shipping, compass:FossilFuels ;
-    compass:pollution compass:OceanNoisePollution ;
+    compass:pollution compass:OceanNoisePollution, compass:ChemicalPollution ;
     compass:species compass:Whales ;
     geo:lat "51.4950"^^xsd:float ;
     geo:long "-0.1168"^^xsd:float .
@@ -238,7 +238,7 @@ ocinst:ISA a compass:InternationalForum ;
     compass:location "Kingston, Jamaica"@en ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
     compass:topic compass:ClimateProtection, compass:DeepSeaMining ;
     compass:pollution compass:OceanNoisePollution ;
     geo:lat "18.0179"^^xsd:float ;
@@ -279,7 +279,7 @@ ocinst:UNEPMAP a compass:InternationalForum ;
     compass:managedByOceanCare false ;
     compass:conservation compass:OceanConservation ;
     compass:topic compass:Shipping ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution, compass:ChemicalPollution ;
     geo:lat "37.9838"^^xsd:float ;
     geo:long "23.7275"^^xsd:float .
 
@@ -303,7 +303,7 @@ ocinst:UNEPUNEA a compass:InternationalForum ;
     rdfs:label "UNEP/UNEA"@de ;
     compass:location "Nairobi, Kenya"@en ;
     compass:managedByOceanCare false ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution, compass:ChemicalPollution ;
     geo:lat "-1.2340"^^xsd:float ;
     geo:long "36.8180"^^xsd:float .
 
@@ -346,6 +346,7 @@ ocinst:DSCC a compass:Network ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:topic compass:DeepSeaMining ;
+    compass:pollution compass:OceanNoisePollution ;
     compass:forum ocinst:ISA ;
     geo:lat "52.3529"^^xsd:float ;
     geo:long "4.8701"^^xsd:float .
@@ -360,6 +361,7 @@ ocinst:GGGI a compass:Network ;
     compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
     compass:topic compass:Fisheries ;
     compass:pollution compass:PlasticPollution ;
+    compass:species compass:Fish ;
     geo:lat "38.9029"^^xsd:float ;
     geo:long "-77.0302"^^xsd:float .
 
@@ -371,6 +373,7 @@ ocinst:HSA a compass:Network ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:forum ocinst:BBNJ ;
     geo:lat "52.3702"^^xsd:float ;
     geo:long "4.8952"^^xsd:float .
@@ -416,6 +419,7 @@ ocinst:DolphinBiologyAndConservation a compass:PartnerOrganization ;
     compass:managedByOceanCare false ;
     compass:workArea compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
     compass:species compass:Dolphins ;
     compass:countryArea compass:Italy, compass:EasternMediterraneanSea ;
     compass:forum ocinst:ACCOBAMS ;
@@ -432,7 +436,7 @@ ocinst:AlnitakResearchInstitute a compass:PartnerOrganization ;
     compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
     compass:topic compass:Shipping, compass:Fisheries ;
     compass:pollution compass:PlasticPollution ;
-    compass:species compass:Whales, compass:Dolphins ;
+    compass:species compass:Whales, compass:Dolphins, compass:SeaTurtles, compass:Fish ;
     compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
     compass:forum ocinst:ACCOBAMS, ocinst:IMO, ocinst:UNEPMAP ;
     compass:relatedProject ocinst:SAVEWhales ;
@@ -461,7 +465,7 @@ ocinst:BritishDiversMarineLifeRescue a compass:PartnerOrganization ;
     schema:foundingDate "2012"^^xsd:gYear ;
     compass:keySentence "Marine Life Rescue"@en ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:RescueActivities ;
+    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:species compass:Dolphins, compass:Whales, compass:Seals ;
     compass:countryArea compass:England ;
@@ -476,7 +480,7 @@ ocinst:CIT a compass:PartnerOrganization ;
     compass:workArea compass:ScientificResearch, compass:RescueActivities ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:topic compass:Hunting, compass:Fisheries ;
-    compass:species compass:Sharks ;
+    compass:species compass:Dolphins, compass:Manatees, compass:Sharks ;
     compass:countryArea compass:Venezuela ;
     geo:lat "10.488"^^xsd:float ;
     geo:long "-66.879"^^xsd:float .
@@ -489,7 +493,7 @@ ocinst:CBDHabitat a compass:PartnerOrganization ;
     compass:workArea compass:ScientificResearch, compass:RescueActivities ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:species compass:Seals ;
-    compass:countryArea compass:Mauritania ;
+    compass:countryArea compass:Mauritania, compass:Spain ;
     geo:lat "20.7701"^^xsd:float ;
     geo:long "-17.0488"^^xsd:float .
 
@@ -519,7 +523,7 @@ ocinst:IonianDolphinProject a compass:PartnerOrganization ;
     compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:species compass:Dolphins, compass:Seals ;
-    compass:countryArea compass:Greece ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
     geo:lat "38.7000"^^xsd:float ;
     geo:long "20.7000"^^xsd:float .
 
@@ -533,7 +537,7 @@ ocinst:iSeas a compass:PartnerOrganization ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:pollution compass:PlasticPollution ;
     compass:species compass:Sharks ;
-    compass:countryArea compass:Greece ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
     geo:lat "37.9700"^^xsd:float ;
     geo:long "23.7300"^^xsd:float .
 
@@ -576,6 +580,7 @@ ocinst:OliveRidleyProject a compass:PartnerOrganization ;
     compass:species compass:SeaTurtles ;
     compass:countryArea compass:Maldives ;
     compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention ;
+    compass:relatedProject ocinst:AquaticWildMeat ;
     geo:lat "3.2000"^^xsd:float ;
     geo:long "73.2200"^^xsd:float .
 
@@ -658,6 +663,7 @@ ocinst:SeasAtRisk a compass:Network ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
+    compass:forum ocinst:BBNJ ;
     geo:lat "50.8503"^^xsd:float ;
     geo:long "4.3517"^^xsd:float .
 
@@ -669,7 +675,7 @@ ocinst:SpeciesSurvivalNetwork a compass:Network ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins, compass:Whales, compass:Seals, compass:Manatees, compass:Sharks ;
+    compass:species compass:Dolphins, compass:Whales, compass:Seals, compass:Manatees, compass:Sharks, compass:SeaTurtles, compass:PolarBears, compass:Fish ;
     geo:lat "38.9029"^^xsd:float ;
     geo:long "-77.0302"^^xsd:float .
 

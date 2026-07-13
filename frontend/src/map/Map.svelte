@@ -5,7 +5,7 @@
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { i18n, type Lang } from '../shared/i18n';
-  import { Globe as GlobeIcon, Map as MapIcon } from 'lucide-svelte';
+  import { Globe as GlobeIcon, Map as MapIcon, BookOpen } from 'lucide-svelte';
   import regionsData from './regions.json';
 
   // Region boundary polygons keyed by regionKey, built by
@@ -89,6 +89,11 @@
   export let detailOpen = false;
   /** When a thematic filter is active, include matched regions when framing. */
   export let frameRegions = false;
+  /** Story-count CTA, shown as a flat pill by the projection toggle. */
+  export let storyCount: { count: number; url: string } | null = null;
+  export let storyCountLoading = false;
+  /** True when ≥1 thematic tag is active (drives whether the pill shows). */
+  export let storyActive = false;
 
   /** Expose the WebGL canvas for screenshot capture. */
   export function getMapCanvas(): HTMLCanvasElement | null {
@@ -715,15 +720,31 @@
     </div>
   </div>
 
-  <button class="projection-toggle" on:click={toggleProjection}>
-    {#if projection === 'mercator'}
-      <GlobeIcon size={16} />
-      <span>{t.globe}</span>
-    {:else}
-      <MapIcon size={16} />
-      <span>{t.flat}</span>
+  <div class="bottom-left-controls">
+    <button class="projection-toggle" on:click={toggleProjection}>
+      {#if projection === 'mercator'}
+        <GlobeIcon size={16} />
+        <span>{t.globe}</span>
+      {:else}
+        <MapIcon size={16} />
+        <span>{t.flat}</span>
+      {/if}
+    </button>
+
+    {#if storyActive}
+      {#if storyCountLoading}
+        <div class="story-pill story-pill-loading">
+          <span class="mini-spinner"></span>
+        </div>
+      {:else if storyCount !== null && storyCount.count > 0}
+        <a href={storyCount.url} target="_blank" rel="noopener noreferrer" class="story-pill">
+          <BookOpen size={15} />
+          <span><strong>{storyCount.count}</strong> {t.storiesCount}</span>
+          <span class="story-arrow">→</span>
+        </a>
+      {/if}
     {/if}
-  </button>
+  </div>
 </div>
 
 <style>
@@ -737,11 +758,18 @@
     width: 100%;
     height: 100%;
   }
-  .projection-toggle {
+  .bottom-left-controls {
     position: absolute;
     bottom: 24px;
     left: 24px;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100% - 48px);
+  }
+  .projection-toggle {
+    flex-shrink: 0;
     padding: 8px 14px;
     background: white;
     border: 1px solid #e2e8f0;
@@ -760,6 +788,56 @@
     background: #f8fafc;
     border-color: #cbd5e1;
     transform: translateY(-1px);
+  }
+
+  /* Flat stories CTA pill, sits beside the projection toggle */
+  .story-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    padding: 8px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    color: #1d4ed8;
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .story-pill:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+  }
+  .story-pill span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .story-pill strong {
+    font-weight: 700;
+  }
+  .story-arrow {
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .story-pill-loading {
+    cursor: default;
+  }
+  .mini-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #bfdbfe;
+    border-top-color: #1d4ed8;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .map-badge {

@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Tags, X, ChevronDown, ChevronRight, ChevronLeft, BookOpen } from 'lucide-svelte';
+  import { Tags, X, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
 
   export let apiurl = '';
@@ -12,8 +12,6 @@
   export let initialFilters: Record<string, any> = {};
   export let facetCounts: Record<string, Record<string, number>> = {};
   export let resultCount: number | undefined = undefined;
-  export let storyCount: { count: number; url: string } | null = null;
-  export let storyCountLoading = false;
 
   // Sections with more options than this get an inline search box.
   const SEARCH_THRESHOLD = 8;
@@ -154,8 +152,9 @@
     {/if}
   {/if}
 
-  <!-- Tag dimension sections -->
-  <div class="sections">
+  <!-- Tag dimension sections (only this region scrolls) -->
+  <div class="sections-scroll">
+    <div class="sections">
     {#each tagSchema as filter}
       <div class="section">
         <button class="section-header" on:click={() => toggleSection(filter.id)}>
@@ -204,30 +203,8 @@
         {/if}
       </div>
     {/each}
-  </div>
-
-  <!-- Story count widget (only shown when ≥1 tag selected) -->
-  {#if hasActiveTags}
-    <div class="story-widget">
-      {#if storyCountLoading}
-        <div class="story-loading">
-          <span class="mini-spinner"></span>
-          <span class="story-label">...</span>
-        </div>
-      {:else if storyCount !== null && storyCount.count > 0}
-        <a href={storyCount.url} target="_blank" rel="noopener noreferrer" class="story-link">
-          <BookOpen size={15} />
-          <span>
-            <strong>{storyCount.count}</strong>
-            {t.storiesCount}
-          </span>
-          <span class="story-arrow">→</span>
-        </a>
-      {:else if storyCount !== null && storyCount.count === 0}
-        <p class="story-none">{t.storiesNone}</p>
-      {/if}
     </div>
-  {/if}
+  </div>
 </div>
 
 <style>
@@ -235,7 +212,8 @@
     background: transparent;
     padding: 1.5rem;
     height: 100%;
-    overflow-y: auto;
+    box-sizing: border-box;
+    overflow: hidden;
     font-family: inherit;
     display: flex;
     flex-direction: column;
@@ -344,12 +322,22 @@
     color: #9a3412;
   }
 
+  /* Only the sections region scrolls; the header/chips/results stay pinned
+     above. min-height:0 lets it shrink within the flex column so overflow works. */
+  .sections-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    /* negative margin + matching padding so the scrollbar sits at the panel
+       edge rather than inset by the panel's padding. */
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
+  }
   /* Dimension sections */
   .sections {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    flex: 1;
   }
   .section {
     display: flex;
@@ -478,67 +466,4 @@
     box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
   }
 
-  /* Story widget */
-  .story-widget {
-    margin-top: auto;
-    padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
-    flex-shrink: 0;
-  }
-  .story-loading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #94a3b8;
-    font-size: 0.875rem;
-    padding: 8px 0;
-  }
-  .mini-spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid #e2e8f0;
-    border-top-color: #0284c7;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  .story-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 10px 14px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    color: #1d4ed8;
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: background 0.15s, border-color 0.15s;
-    line-height: 1.4;
-  }
-  .story-link:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
-  }
-  .story-link span {
-    flex: 1;
-  }
-  .story-link strong {
-    font-weight: 700;
-  }
-  .story-arrow {
-    font-size: 1rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .story-none {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: #94a3b8;
-    padding: 8px 0;
-  }
 </style>

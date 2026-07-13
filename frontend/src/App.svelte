@@ -335,8 +335,6 @@
         onToggle={() => (filterOpen = false)}
         {facetCounts}
         {resultCount}
-        {storyCount}
-        {storyCountLoading}
       />
     </div>
     <div class="main-area">
@@ -364,7 +362,7 @@
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {apiurl} {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} />
+        <Map {apiurl} {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
       {:else}
         <ListView {entities} {lang} />
       {/if}
@@ -552,6 +550,14 @@
     overflow: hidden;
     opacity: 0;
     border-right: none;
+  }
+  /* TagPanel renders as the <compass-tags-inner> custom element, which defaults
+     to inline/auto height. Force it to fill the sidebar so its internal
+     overflow-y:auto scrolls instead of overflowing and being clipped. */
+  .sidebar :global(compass-tags-inner) {
+    display: block;
+    height: 100%;
+    min-height: 0;
   }
 
   .main-area {
