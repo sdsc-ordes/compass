@@ -1,0 +1,754 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:    <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix schema: <https://schema.org/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix compass: <http://example.org/ocean-org/ontology#> .
+@prefix ocinst:  <http://example.org/ocean-org/data#> .
+
+# ============================================================
+# Property Declarations
+# ============================================================
+
+compass:wpTagId a rdf:Property ;
+    rdfs:label "WordPress Tag ID"@en ;
+    rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the OceanCare website."@en ;
+    rdfs:range xsd:integer .
+
+compass:isoCode a rdf:Property ;
+    rdfs:label "ISO / boundary code"@en ;
+    rdfs:comment "Boundary lookup key for a Country/Area concept (ISO 3166-1 alpha-3, or a custom code for sub-national/marine areas). Used by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
+    rdfs:range xsd:string .
+
+compass:wpEntityTagIdEn a rdf:Property ;
+    rdfs:label "WordPress Entity Tag ID (English)"@en ;
+    rdfs:comment "Numeric WP term ID of the English per-entity tag on OceanCare (used to link to English stories about this entity)."@en ;
+    rdfs:range xsd:integer .
+
+compass:wpEntityTagIdDe a rdf:Property ;
+    rdfs:label "WordPress Entity Tag ID (German)"@en ;
+    rdfs:comment "Numeric WP term ID of the German per-entity tag on OceanCare (used to link to German stories about this entity)."@en ;
+    rdfs:range xsd:integer .
+
+# ============================================================
+# Instance Data: OceanCare Compass Entities
+# ============================================================
+
+# ============================================================
+# International Forums (20)
+# ============================================================
+
+ocinst:UnitedNations a compass:InternationalForum ;
+    compass:name "United Nations"@en ;
+    compass:name "Vereinte Nationen"@de ;
+    rdfs:label "United Nations"@en ;
+    rdfs:label "Vereinte Nationen"@de ;
+    compass:location "UN Headquarters, New York, USA"@en ;
+    schema:foundingDate "2011"^^xsd:gYear ;
+    compass:keySentence "UN Special Consultative Status"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    geo:lat "40.7490"^^xsd:float ;
+    geo:long "-73.9670"^^xsd:float .
+
+ocinst:UNEP a compass:InternationalForum ;
+    compass:name "UN Environment Programme (UNEP)"@en ;
+    compass:name "UN-Umweltprogramm"@de ;
+    rdfs:label "UN Environment Programme (UNEP)"@en ;
+    rdfs:label "UN-Umweltprogramm"@de ;
+    compass:location "UN Office Nairobi, Kenya"@en ;
+    schema:foundingDate "2015"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:OceanConservation ;
+    geo:lat "-1.2346"^^xsd:float ;
+    geo:long "36.8164"^^xsd:float .
+
+ocinst:CMSBonnConvention a compass:InternationalForum ;
+    compass:name "CMS/Bonn Convention"@en ;
+    compass:name "CMS/Bonner Konvention"@de ;
+    rdfs:label "CMS/Bonn Convention"@en ;
+    rdfs:label "CMS/Bonner Konvention"@de ;
+    compass:location "Bonn, Germany"@en ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:keySentence "Partnerorganisation of CMS/Bonn Convention"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting ;
+    compass:pollution compass:OceanNoisePollution ;
+    compass:species compass:Dolphins, compass:Whales, compass:SeaTurtles, compass:Sharks, compass:Fish ;
+    geo:lat "50.7181"^^xsd:float ;
+    geo:long "7.1272"^^xsd:float .
+
+ocinst:FAOGFCM a compass:InternationalForum ;
+    compass:name "FAO/GFCM"@en ;
+    rdfs:label "FAO/GFCM"@en ;
+    rdfs:label "FAO/GFCM"@de ;
+    compass:location "Rome, Italy"@en ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:keySentence "Partnerorganisation of FAO/GFCM"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:pollution compass:PlasticPollution, compass:OceanNoisePollution ;
+    compass:species compass:Fish ;
+    geo:lat "41.9063"^^xsd:float ;
+    geo:long "12.4703"^^xsd:float .
+
+ocinst:IWC a compass:InternationalForum ;
+    compass:name "International Whaling Commission (IWC)"@en ;
+    compass:name "Internationale Walfangkommission (IWC)"@de ;
+    rdfs:label "International Whaling Commission (IWC)"@en ;
+    rdfs:label "Internationale Walfangkommission (IWC)"@de ;
+    compass:location "Cambridge, UK"@en ;
+    schema:foundingDate "1992"^^xsd:gYear ;
+    compass:keySentence "Observer status at the meetings of the International Whaling Commission (IWC)"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting ;
+    compass:species compass:Whales, compass:Dolphins ;
+    compass:countryArea compass:Japan, compass:Iceland, compass:Norway ;
+    geo:lat "52.2486"^^xsd:float ;
+    geo:long "0.0930"^^xsd:float .
+
+ocinst:AbidjanConvention a compass:InternationalForum ;
+    compass:name "Abidjan Convention"@en ;
+    compass:name "Abidjan-Konvention"@de ;
+    rdfs:label "Abidjan Convention"@en ;
+    rdfs:label "Abidjan-Konvention"@de ;
+    compass:location "Abidjan, Ivory Coast"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting, compass:Fisheries ;
+    compass:species compass:Dolphins, compass:SeaTurtles, compass:Manatees, compass:Sharks ;
+    compass:countryArea compass:Benin ;
+    geo:lat "5.3600"^^xsd:float ;
+    geo:long "-4.0083"^^xsd:float .
+
+ocinst:ACCOBAMS a compass:InternationalForum ;
+    compass:name "ACCOBAMS"@en ;
+    compass:name "ACCOBAMS"@de ;
+    rdfs:label "ACCOBAMS"@en ;
+    rdfs:label "ACCOBAMS"@de ;
+    compass:location "Monaco"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:ClimateProtection, compass:Shipping, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:species compass:Dolphins, compass:Whales, compass:Orcas ;
+    compass:countryArea compass:EasternMediterraneanSea, compass:WesternMediterraneanSea ;
+    geo:lat "43.7384"^^xsd:float ;
+    geo:long "7.4246"^^xsd:float .
+
+ocinst:ASCOBANS a compass:InternationalForum ;
+    compass:name "ASCOBANS"@en ;
+    compass:name "ASCOBANS"@de ;
+    rdfs:label "ASCOBANS"@en ;
+    rdfs:label "ASCOBANS"@de ;
+    compass:location "Bonn, Germany"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Whales, compass:Dolphins ;
+    compass:countryArea compass:NorthSeaBalticSea ;
+    geo:lat "50.7353"^^xsd:float ;
+    geo:long "7.0984"^^xsd:float .
+
+ocinst:BBNJ a compass:InternationalForum ;
+    compass:name "BBNJ"@en ;
+    compass:name "BBNJ"@de ;
+    rdfs:label "BBNJ"@en ;
+    rdfs:label "BBNJ"@de ;
+    compass:location "UN Headquarters, New York, USA"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    geo:lat "40.7488"^^xsd:float ;
+    geo:long "-73.9680"^^xsd:float .
+
+ocinst:CBD a compass:InternationalForum ;
+    compass:name "CBD/Biodiversity Convention"@en ;
+    compass:name "CBD/Biodiversitätskonvention"@de ;
+    rdfs:label "CBD/Biodiversity Convention"@en ;
+    rdfs:label "CBD/Biodiversitätskonvention"@de ;
+    compass:location "Montreal, Canada"@en ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:pollution compass:OceanNoisePollution ;
+    compass:species compass:Dolphins, compass:Whales, compass:SeaTurtles, compass:Seals, compass:PolarBears, compass:Manatees, compass:Sharks, compass:Fish ;
+    geo:lat "45.5017"^^xsd:float ;
+    geo:long "-73.5673"^^xsd:float .
+
+ocinst:EUCommission a compass:InternationalForum ;
+    compass:name "EU Commission"@en ;
+    compass:name "EU-Kommission"@de ;
+    rdfs:label "EU Commission"@en ;
+    rdfs:label "EU-Kommission"@de ;
+    compass:location "Brussels, Belgium"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:ClimateProtection, compass:DeepSeaMining, compass:Hunting, compass:Fisheries, compass:Shipping, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:species compass:Dolphins, compass:Whales, compass:Fish ;
+    geo:lat "50.8503"^^xsd:float ;
+    geo:long "4.3517"^^xsd:float .
+
+ocinst:FAOCOFI a compass:InternationalForum ;
+    compass:name "FAO/COFI"@en ;
+    compass:name "FAO/COFI"@de ;
+    rdfs:label "FAO/COFI"@en ;
+    rdfs:label "FAO/COFI"@de ;
+    compass:location "Rome, Italy"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:species compass:Fish ;
+    geo:lat "41.8842"^^xsd:float ;
+    geo:long "12.4886"^^xsd:float .
+
+ocinst:IMO a compass:InternationalForum ;
+    compass:name "IMO"@en ;
+    compass:name "IMO"@de ;
+    rdfs:label "IMO"@en ;
+    rdfs:label "IMO"@de ;
+    compass:location "London, UK"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:ClimateProtection, compass:Shipping, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution, compass:ChemicalPollution ;
+    compass:species compass:Whales ;
+    geo:lat "51.4950"^^xsd:float ;
+    geo:long "-0.1168"^^xsd:float .
+
+ocinst:ISA a compass:InternationalForum ;
+    compass:name "International Seabed Authority (ISA)"@en ;
+    compass:name "Internationale Meeresbodenbehörde (ISA)"@de ;
+    rdfs:label "International Seabed Authority (ISA)"@en ;
+    rdfs:label "Internationale Meeresbodenbehörde (ISA)"@de ;
+    compass:location "Kingston, Jamaica"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:ClimateProtection, compass:DeepSeaMining ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "18.0179"^^xsd:float ;
+    geo:long "-76.8099"^^xsd:float .
+
+ocinst:LondonConvention a compass:InternationalForum ;
+    compass:name "London Convention / London Protocol"@en ;
+    compass:name "Londoner Übereinkommen / Londoner Protokoll"@de ;
+    rdfs:label "London Convention / London Protocol"@en ;
+    rdfs:label "Londoner Übereinkommen / Londoner Protokoll"@de ;
+    compass:location "London, UK"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:Geoengineering ;
+    geo:lat "51.4975"^^xsd:float ;
+    geo:long "-0.1145"^^xsd:float .
+
+ocinst:UNCLOS a compass:InternationalForum ;
+    compass:name "UNCLOS"@en ;
+    compass:name "UNCLOS"@de ;
+    rdfs:label "UNCLOS"@en ;
+    rdfs:label "UNCLOS"@de ;
+    compass:location "Hamburg, Germany"@en ;
+    compass:keySentence "United Nations Convention on the Law of the Sea"@en ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:OceanConservation ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "53.5511"^^xsd:float ;
+    geo:long "9.9937"^^xsd:float .
+
+ocinst:UNEPMAP a compass:InternationalForum ;
+    compass:name "UNEP/MAP"@en ;
+    compass:name "UNEP/MAP"@de ;
+    rdfs:label "UNEP/MAP"@en ;
+    rdfs:label "UNEP/MAP"@de ;
+    compass:location "Athens, Greece"@en ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:Shipping ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution, compass:ChemicalPollution ;
+    geo:lat "37.9838"^^xsd:float ;
+    geo:long "23.7275"^^xsd:float .
+
+ocinst:UNEPGPML a compass:InternationalForum ;
+    compass:name "UNEP/GPML"@en ;
+    compass:name "UNEP/GPML"@de ;
+    rdfs:label "UNEP/GPML"@en ;
+    rdfs:label "UNEP/GPML"@de ;
+    compass:location "Nairobi, Kenya"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:pollution compass:PlasticPollution ;
+    geo:lat "-1.2350"^^xsd:float ;
+    geo:long "36.8170"^^xsd:float .
+
+ocinst:UNEPUNEA a compass:InternationalForum ;
+    compass:name "UNEP/UNEA"@en ;
+    compass:name "UNEP/UNEA"@de ;
+    rdfs:label "UNEP/UNEA"@en ;
+    rdfs:label "UNEP/UNEA"@de ;
+    compass:location "Nairobi, Kenya"@en ;
+    compass:managedByOceanCare false ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution, compass:ChemicalPollution ;
+    geo:lat "-1.2340"^^xsd:float ;
+    geo:long "36.8180"^^xsd:float .
+
+ocinst:UNFCCC a compass:InternationalForum ;
+    compass:name "UNFCCC"@en ;
+    compass:name "UNFCCC"@de ;
+    rdfs:label "UNFCCC"@en ;
+    rdfs:label "UNFCCC"@de ;
+    compass:location "Bonn, Germany"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection ;
+    geo:lat "50.7089"^^xsd:float ;
+    geo:long "7.1194"^^xsd:float .
+
+# ============================================================
+# Networks (5)
+# ============================================================
+
+ocinst:BFFP a compass:Network ;
+    compass:name "Break Free From Plastic (BFFP)"@en ;
+    compass:location "Quezon City, Philippines"@en ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:keySentence "Core member of BFFP since 2019."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:FossilFuels ;
+    compass:pollution compass:PlasticPollution ;
+    geo:lat "14.6393"^^xsd:float ;
+    geo:long "121.0424"^^xsd:float .
+
+ocinst:DSCC a compass:Network ;
+    compass:name "Deep Sea Conservation Coalition (DSCC)"@en ;
+    compass:location "Amsterdam, Netherlands"@en ;
+    schema:foundingDate "2021"^^xsd:gYear ;
+    compass:keySentence "Member of DSCC since 2021"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:DeepSeaMining ;
+    compass:pollution compass:OceanNoisePollution ;
+    compass:forum ocinst:ISA ;
+    geo:lat "52.3529"^^xsd:float ;
+    geo:long "4.8701"^^xsd:float .
+
+ocinst:GGGI a compass:Network ;
+    compass:name "Global Ghost Gear Initiative (GGGI)"@en ;
+    compass:location "Washington D.C., USA"@en ;
+    schema:foundingDate "2019"^^xsd:gYear ;
+    compass:keySentence "Member of GGGI since 2019"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:pollution compass:PlasticPollution ;
+    compass:species compass:Fish ;
+    geo:lat "38.9029"^^xsd:float ;
+    geo:long "-77.0302"^^xsd:float .
+
+ocinst:HSA a compass:Network ;
+    compass:name "High Seas Alliance (HSA)"@en ;
+    compass:location "Amsterdam, Netherlands"@en ;
+    schema:foundingDate "2011"^^xsd:gYear ;
+    compass:keySentence "Member of HSA since 2011"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:forum ocinst:BBNJ ;
+    geo:lat "52.3702"^^xsd:float ;
+    geo:long "4.8952"^^xsd:float .
+
+ocinst:STRA a compass:Network ;
+    compass:name "Sea Turtle Rescue Alliance (STRA)"@en ;
+    compass:location "Bristol, UK"@en ;
+    schema:foundingDate "2021"^^xsd:gYear ;
+    compass:keySentence "Founding member of STRA"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:SeaTurtles ;
+    geo:lat "51.4516"^^xsd:float ;
+    geo:long "-2.5930"^^xsd:float .
+
+# ============================================================
+# Partner Organisations (7)
+# ============================================================
+
+ocinst:OceanCare a compass:PartnerOrganization ;
+    compass:name "OceanCare"@en ;
+    compass:name "OceanCare"@de ;
+    compass:location "Wädenswil, Switzerland"@en ;
+    compass:location "Wädenswil, Schweiz"@de ;
+    schema:foundingDate "1989"^^xsd:gYear ;
+    schema:url "https://www.oceancare.org"^^xsd:anyURI ;
+    schema:image "https://www.oceancare.org/wp-content/uploads/2022/01/OceanCare_logo.svg"^^xsd:anyURI ;
+    compass:managedByOceanCare true ;
+    compass:keySentence "A Swiss marine conservation organization protecting ocean biodiversity through science and advocacy."@en ;
+    compass:keySentence "Eine Schweizer Meeresschutzorganisation, die durch Wissenschaft und Lobbyarbeit die Meeresbiodiversität schützt."@de ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch, compass:RescueActivities, compass:CommunityInvolvement ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:countryArea compass:Switzerland ;
+    geo:lat "47.2290"^^xsd:float ;
+    geo:long "8.6760"^^xsd:float .
+
+ocinst:DolphinBiologyAndConservation a compass:PartnerOrganization ;
+    compass:name "Dolphin Biology and Conservation"@en ;
+    compass:location "Cordenons (PN), Italy"@en ;
+    schema:foundingDate "2018"^^xsd:gYear ;
+    compass:keySentence "Adriatic Dolphins"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:species compass:Dolphins ;
+    compass:countryArea compass:Italy, compass:EasternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "43.18"^^xsd:float ;
+    geo:long "13.80"^^xsd:float .
+
+ocinst:AlnitakResearchInstitute a compass:PartnerOrganization ;
+    compass:name "Alnitak Research Institute"@en ;
+    compass:location "Madrid, Spain"@en ;
+    schema:foundingDate "2015"^^xsd:gYear ;
+    compass:keySentence "MEDTOP / LIFE OASIS"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:AdvocacyWork, compass:RescueActivities, compass:CommunityInvolvement ;
+    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Shipping, compass:Fisheries ;
+    compass:pollution compass:PlasticPollution ;
+    compass:species compass:Whales, compass:Dolphins, compass:SeaTurtles, compass:Fish ;
+    compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS, ocinst:IMO, ocinst:UNEPMAP ;
+    compass:relatedProject ocinst:SAVEWhales ;
+    geo:lat "39.75"^^xsd:float ;
+    geo:long "2.9"^^xsd:float .
+
+ocinst:BEES a compass:PartnerOrganization ;
+    compass:name "BEES"@en ;
+    compass:location "Porto Novo, Benin"@en ;
+    schema:foundingDate "2019"^^xsd:gYear ;
+    compass:keySentence "Aquatic Wild Meat"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting, compass:Fisheries ;
+    compass:species compass:Dolphins, compass:SeaTurtles, compass:Manatees, compass:Sharks ;
+    compass:countryArea compass:Benin ;
+    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention, ocinst:CBD ;
+    compass:relatedProject ocinst:AquaticWildMeat ;
+    geo:lat "6.4965"^^xsd:float ;
+    geo:long "2.6036"^^xsd:float .
+
+ocinst:BritishDiversMarineLifeRescue a compass:PartnerOrganization ;
+    compass:name "British Divers Marine Life Rescue"@en ;
+    compass:location "Cornwall, UK"@en ;
+    schema:foundingDate "2012"^^xsd:gYear ;
+    compass:keySentence "Marine Life Rescue"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales, compass:Seals ;
+    compass:countryArea compass:England ;
+    geo:lat "50.20263"^^xsd:float ;
+    geo:long "-5.20263"^^xsd:float .
+
+ocinst:CIT a compass:PartnerOrganization ;
+    compass:name "CIT"@en ;
+    compass:location "Caracas, Venezuela"@en ;
+    schema:foundingDate "2017"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting, compass:Fisheries ;
+    compass:species compass:Dolphins, compass:Manatees, compass:Sharks ;
+    compass:countryArea compass:Venezuela ;
+    geo:lat "10.488"^^xsd:float ;
+    geo:long "-66.879"^^xsd:float .
+
+ocinst:CBDHabitat a compass:PartnerOrganization ;
+    compass:name "CBD-Hábitat"@en ;
+    compass:location "Cap Blanc, Mauritania"@en ;
+    schema:foundingDate "2005"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Seals ;
+    compass:countryArea compass:Mauritania, compass:Spain ;
+    geo:lat "20.7701"^^xsd:float ;
+    geo:long "-17.0488"^^xsd:float .
+
+# ============================================================
+# Partner Organisations (continued)
+# ============================================================
+
+ocinst:GreenBalcans a compass:PartnerOrganization ;
+    compass:name "Green Balkans"@en ;
+    compass:name "Green Balkans"@de ;
+    compass:location "Plovdiv, Bulgaria"@en ;
+    compass:keySentence "Wildlife conservation NGO protecting nature and marine biodiversity in Bulgaria."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins ;
+    compass:countryArea compass:Bulgaria ;
+    geo:lat "42.1500"^^xsd:float ;
+    geo:long "24.7500"^^xsd:float .
+
+ocinst:IonianDolphinProject a compass:PartnerOrganization ;
+    compass:name "Ionian Dolphin Project"@en ;
+    compass:name "Ionian Dolphin Project"@de ;
+    compass:location "Lefkada, Greece"@en ;
+    compass:keySentence "Long-term research programme monitoring cetaceans in the Ionian Sea."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Seals ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
+    geo:lat "38.7000"^^xsd:float ;
+    geo:long "20.7000"^^xsd:float .
+
+ocinst:iSeas a compass:PartnerOrganization ;
+    compass:name "iSeas"@en ;
+    compass:name "iSeas"@de ;
+    compass:location "Athens, Greece"@en ;
+    compass:keySentence "Marine NGO working on ocean conservation and plastic pollution reduction in Greece."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:pollution compass:PlasticPollution ;
+    compass:species compass:Sharks ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
+    geo:lat "37.9700"^^xsd:float ;
+    geo:long "23.7300"^^xsd:float .
+
+ocinst:LPACalais a compass:PartnerOrganization ;
+    compass:name "LPA Calais"@en ;
+    compass:name "LPA Calais"@de ;
+    compass:location "Calais, France"@en ;
+    compass:keySentence "Marine mammal rescue and rehabilitation on the northern French coast."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Seals ;
+    compass:countryArea compass:France ;
+    geo:lat "50.9500"^^xsd:float ;
+    geo:long "1.8500"^^xsd:float .
+
+ocinst:Morigenos a compass:PartnerOrganization ;
+    compass:name "Morigenos"@en ;
+    compass:name "Morigenos"@de ;
+    compass:location "Piran, Slovenia"@en ;
+    compass:keySentence "Slovenian Marine Mammal Society — research and conservation of Mediterranean dolphins."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins ;
+    compass:countryArea compass:Slovenia ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "45.5300"^^xsd:float ;
+    geo:long "13.5700"^^xsd:float .
+
+ocinst:OliveRidleyProject a compass:PartnerOrganization ;
+    compass:name "Olive Ridley Project"@en ;
+    compass:name "Olive Ridley Project"@de ;
+    compass:location "Maldives"@en ;
+    compass:keySentence "Sea turtle conservation in the Indian Ocean, focusing on ghost gear entanglement."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:RescueActivities, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting ;
+    compass:species compass:SeaTurtles ;
+    compass:countryArea compass:Maldives ;
+    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention ;
+    compass:relatedProject ocinst:AquaticWildMeat ;
+    geo:lat "3.2000"^^xsd:float ;
+    geo:long "73.2200"^^xsd:float .
+
+ocinst:PelagosCetaceanResearchInstitute a compass:PartnerOrganization ;
+    compass:name "Pelagos Cetacean Research Institute"@en ;
+    compass:name "Pelagos Cetacean Research Institute"@de ;
+    compass:location "Athens, Greece"@en ;
+    compass:keySentence "Cetacean research and conservation in the Mediterranean Sea."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "37.9800"^^xsd:float ;
+    geo:long "23.7300"^^xsd:float .
+
+ocinst:SaveTheMed a compass:PartnerOrganization ;
+    compass:name "Save The Med"@en ;
+    compass:name "Save The Med"@de ;
+    compass:location "Palma de Mallorca, Spain"@en ;
+    compass:keySentence "Marine conservation NGO protecting the Mediterranean ecosystem."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:OceanConservation ;
+    compass:pollution compass:PlasticPollution ;
+    compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
+    geo:lat "39.5700"^^xsd:float ;
+    geo:long "2.6500"^^xsd:float .
+
+ocinst:TethysResearchInstitute a compass:PartnerOrganization ;
+    compass:name "Tethys Research Institute"@en ;
+    compass:name "Tethys Research Institute"@de ;
+    compass:location "Milan, Italy"@en ;
+    compass:keySentence "Cetacean research in the Mediterranean Sea since 1986."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales ;
+    compass:countryArea compass:Italy, compass:WesternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS ;
+    geo:lat "45.4700"^^xsd:float ;
+    geo:long "9.1900"^^xsd:float .
+
+# ============================================================
+# Networks (continued)
+# ============================================================
+
+ocinst:FossilFreeOceanInitiative a compass:Network ;
+    compass:name "Fossil-Free Ocean Initiative"@en ;
+    compass:name "Fossil-Free Ocean Initiative"@de ;
+    compass:location "Wädenswil, Switzerland"@en ;
+    compass:keySentence "Initiative advocating to keep fossil fuels out of our oceans."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "47.2290"^^xsd:float ;
+    geo:long "8.6760"^^xsd:float .
+
+ocinst:FossilFuelNonProliferationTreaty a compass:Network ;
+    compass:name "Fossil Fuel Non-Proliferation Treaty Initiative"@en ;
+    compass:name "Fossil Fuel Non-Proliferation Treaty Initiative"@de ;
+    compass:location "Geneva, Switzerland"@en ;
+    compass:keySentence "Global initiative for an international treaty to phase out fossil fuels."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "46.2044"^^xsd:float ;
+    geo:long "6.1432"^^xsd:float .
+
+ocinst:SeasAtRisk a compass:Network ;
+    compass:name "Seas at Risk"@en ;
+    compass:name "Seas at Risk"@de ;
+    compass:location "Brussels, Belgium"@en ;
+    compass:keySentence "European network advocating for healthy marine ecosystems."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:forum ocinst:BBNJ ;
+    geo:lat "50.8503"^^xsd:float ;
+    geo:long "4.3517"^^xsd:float .
+
+ocinst:SpeciesSurvivalNetwork a compass:Network ;
+    compass:name "Species Survival Network (SSN)"@en ;
+    compass:name "Species Survival Network (SSN)"@de ;
+    compass:location "Washington D.C., USA"@en ;
+    compass:keySentence "Coalition of NGOs promoting conservation of wild species through policy advocacy."@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Dolphins, compass:Whales, compass:Seals, compass:Manatees, compass:Sharks, compass:SeaTurtles, compass:PolarBears, compass:Fish ;
+    geo:lat "38.9029"^^xsd:float ;
+    geo:long "-77.0302"^^xsd:float .
+
+# ============================================================
+# Projects (4)
+# ============================================================
+
+ocinst:SAVEWhales a compass:Project ;
+    compass:name "SAvE Whales"@en ;
+    compass:name "SAvE Whales"@de ;
+    rdfs:label "SAvE Whales"@en ;
+    rdfs:label "SAvE Whales"@de ;
+    compass:location "Kythira Strait, Greece"@en ;
+    compass:keySentence "OceanCare enables the development of the SAvE Whales warning system"@en ;
+    compass:managedByOceanCare true ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Shipping ;
+    compass:species compass:Whales ;
+    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
+    compass:forum ocinst:ACCOBAMS ;
+    compass:wpEntityTagIdEn "921"^^xsd:integer ;
+    geo:lat "35.8428"^^xsd:float ;
+    geo:long "23.2325"^^xsd:float .
+
+ocinst:WhaleDolphinHuntFaroeIslands a compass:Project ;
+    compass:name "Whale & Dolphin Hunt Faroe Islands"@en ;
+    compass:name "Wal- und Delfinjagd Färöer-Inseln"@de ;
+    rdfs:label "Whale & Dolphin Hunt Faroe Islands"@en ;
+    rdfs:label "Wal- und Delfinjagd Färöer-Inseln"@de ;
+    compass:location "Faroe Islands"@en ;
+    compass:startDate "1992-01-01"^^xsd:date ;
+    compass:keySentence "Campaign against Faroese whale and dolphin hunts"@en ;
+    compass:managedByOceanCare true ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting ;
+    compass:pollution compass:ChemicalPollution ;
+    compass:species compass:Whales, compass:Dolphins ;
+    compass:countryArea compass:FaroeIslands ;
+    compass:forum ocinst:IWC ;
+    compass:wpEntityTagIdEn "90002"^^xsd:integer ;
+    geo:lat "62.0000"^^xsd:float ;
+    geo:long "-6.7830"^^xsd:float .
+
+ocinst:OutOfHabitat a compass:Project ;
+    compass:name "Out of Habitat"@en ;
+    compass:name "Ausserhalb des Lebensraums"@de ;
+    rdfs:label "Out of Habitat"@en ;
+    rdfs:label "Ausserhalb des Lebensraums"@de ;
+    compass:location "Wädenswil, Switzerland"@en ;
+    compass:keySentence "Tracking marine species found outside their natural habitats due to climate change"@en ;
+    compass:managedByOceanCare true ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:ClimateProtection ;
+    compass:species compass:Dolphins, compass:Whales, compass:PolarBears, compass:Seals ;
+    geo:lat "47.2295"^^xsd:float ;
+    geo:long "8.6755"^^xsd:float .
+
+ocinst:AquaticWildMeat a compass:Project ;
+    compass:name "Aquatic Wild Meat"@en ;
+    compass:name "Aquatic Wild Meat"@de ;
+    rdfs:label "Aquatic Wild Meat"@en ;
+    rdfs:label "Aquatic Wild Meat"@de ;
+    compass:location "West Africa"@en ;
+    compass:keySentence "Addressing unsustainable hunting and trade of aquatic wildlife for food"@en ;
+    compass:managedByOceanCare true ;
+    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Hunting, compass:Fisheries ;
+    compass:species compass:Dolphins, compass:SeaTurtles, compass:Manatees, compass:Sharks ;
+    compass:countryArea compass:Benin, compass:Maldives ;
+    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention, ocinst:CBD ;
+    geo:lat "6.5000"^^xsd:float ;
+    geo:long "2.6000"^^xsd:float .
