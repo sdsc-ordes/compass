@@ -8,8 +8,10 @@
   import EntitySidebar from './shared/EntitySidebar.svelte';
   import ShareModal from './shared/ShareModal.svelte';
   import { i18n, type Lang } from './shared/i18n';
+  import { getEntities, getFacets } from './engine';
   import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft, Share2 } from 'lucide-svelte';
 
+  /** Only used by the story-count proxy and ?state= links. */
   export let apiurl = '';
   export let lang: Lang = 'en';
 
@@ -39,7 +41,6 @@
 
   // Sync with URL on mount
   onMount(async () => {
-    console.log("[Compass] Component mounted. Initial apiurl:", apiurl);
     // Start with filters collapsed on small screens so the map is visible first.
     if (typeof window !== 'undefined' && window.innerWidth < 900) filterOpen = false;
     const params = new URLSearchParams(window.location.search);
@@ -72,104 +73,59 @@
        if (Object.keys(restoredFilters).length > 0) {
          activeFilters = restoredFilters;
          legendTypeFilters = Array.isArray(activeFilters.entityType) ? activeFilters.entityType : [];
-         console.log("[Compass] Restored filters from URL:", activeFilters);
-       }
-       console.log("[Compass] No saved state. Running initial fetch...");
-       if (apiurl) {
-         fetchEntities(apiurl, lang, activeFilters);
-       } else {
-         console.warn("[Compass] No apiurl on mount. Waiting for attribute...");
        }
     }
-    mounted = true;
+    mounted = true; // triggers the reactive block below, which runs the first query
   });
 
-  $: {
-    console.log("[Compass] Reactive check - apiurl:", apiurl, "lang:", lang);
-    if (mounted && apiurl) {
-      fetchEntities(apiurl, lang, activeFilters);
-      fetchFacets(apiurl, lang, activeFilters);
-    }
-  }
+  $: if (mounted) loadData(lang, activeFilters);
 
-  // Build the API query string shared by /entities and /entities/facets.
-  function buildEntityParams(f: any, l: string): URLSearchParams {
-    const params = new URLSearchParams({ lang: l });
-    for (const [key, val] of Object.entries(f)) {
-      if (Array.isArray(val)) {
-        val.forEach((v) => params.append(key, String(v)));
-      } else if (val !== undefined && val !== '') {
-        params.append(key, String(val));
-      }
-    }
-    return params;
-  }
+  // Discards the results of a query that a newer one has superseded.
+  let loadSeq = 0;
 
-  async function fetchFacets(url: string, l: string, f: any) {
-    if (!url) return;
-    try {
-      const resp = await fetch(`${url}/api/entities/facets?${buildEntityParams(f, l).toString()}`);
-      if (resp.ok) facetCounts = await resp.json();
-    } catch (e) {
-      console.error('[Compass] Facet fetch error:', e);
-    }
-  }
+  // The SPARQL calls are synchronous wasm; yielding lets Svelte paint first.
+  const nextTick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-  async function fetchEntities(url: string, l: string, f: any) {
-    if (!url) return;
+  async function loadData(l: Lang, f: any) {
+    const seq = ++loadSeq;
     isLoading = true;
     error = null;
-    
-    // Construct query string for API
-    const params = new URLSearchParams({ lang: l });
-    for (const [key, val] of Object.entries(f)) {
-      if (Array.isArray(val)) {
-        val.forEach(v => params.append(key, v));
-      } else {
-        params.append(key, String(val));
-      }
+    syncUrl(f, l);
+    await nextTick();
+
+    try {
+      const data = await getEntities(l, f);
+      if (seq !== loadSeq) return;
+      entities = data.features;
+      isLoading = false;
+
+      // Facets only drive chip counts, so let the map paint before running them.
+      await nextTick();
+      const counts = await getFacets(l, f);
+      if (seq !== loadSeq) return;
+      facetCounts = counts;
+    } catch (e: any) {
+      if (seq !== loadSeq) return;
+      console.error('[Compass] Query failed:', e);
+      error = 'Failed to load map data: ' + (e?.message ?? e);
+    } finally {
+      if (seq === loadSeq) isLoading = false;
     }
+  }
 
-    const API_FETCH_TIMEOUT_MS = 8_000;
-
-  // Update Browser URL without page reload (stateless sync)
+  // Mirrors the active filters into the address bar; the share button hands out
+  // whatever this produces.
+  function syncUrl(f: any, l: string) {
     const urlObj = new URL(window.location.origin + window.location.pathname);
     for (const [key, val] of Object.entries(f)) {
       if (Array.isArray(val)) {
-        val.forEach(v => urlObj.searchParams.append(key, v));
+        val.forEach((v) => urlObj.searchParams.append(key, String(v)));
       } else if (val !== undefined && val !== '') {
         urlObj.searchParams.set(key, String(val));
       }
     }
     urlObj.searchParams.set('lang', l);
     window.history.replaceState({}, '', urlObj.toString());
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_FETCH_TIMEOUT_MS);
-    const fullUrl = `${url}/api/entities/?${params.toString()}`;
-    console.log('[Compass] Fetching:', fullUrl);
-
-    try {
-      const resp = await fetch(fullUrl, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      
-      console.log('[Compass] Response status:', resp.status);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      entities = data.features || [];
-      console.log('[Compass] Loaded entities:', entities.length);
-    } catch (e: any) {
-      console.error('[Compass] Fetch Error:', e);
-      if (e?.name === 'AbortError') {
-        error = "Connection timed out. Is the backend running at " + url + "?";
-      } else {
-        error = "Failed to connect to backend: " + (e?.message ?? e);
-      }
-    } finally {
-      isLoading = false;
-    }
   }
 
   let shareLink = '';
@@ -328,7 +284,6 @@
     {/if}
     <div class="sidebar" class:closed={!filterOpen}>
       <TagPanel
-        {apiurl}
         {lang}
         initialFilters={activeFilters}
         onTagChange={handleFilterChange}
@@ -341,8 +296,7 @@
       {#if error}
         <div class="status-overlay error">
           <p>{error}</p>
-          <div class="url-hint">{apiurl}/api/entities</div>
-          <button on:click={() => fetchEntities(apiurl, lang, activeFilters)}>Retry</button>
+          <button on:click={() => loadData(lang, activeFilters)}>Retry</button>
         </div>
       {:else if isLoading && entities.length === 0}
         <!-- First load only: nothing on screen yet, so show the full overlay. -->
@@ -362,7 +316,7 @@
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {apiurl} {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
+        <Map {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
       {:else}
         <ListView {entities} {lang} />
       {/if}
@@ -567,14 +521,6 @@
     overflow: hidden;
   }
 
-  .url-hint {
-    font-family: monospace;
-    font-size: 12px;
-    color: #64748b;
-    margin-bottom: 8px;
-    word-break: break-all;
-  }
-
   .status-overlay {
     position: absolute;
     inset: 0;
@@ -638,12 +584,6 @@
   @keyframes indeterminate {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(350%); }
-  }
-
-  .placeholder-list {
-    padding: 2rem;
-    height: 100%;
-    overflow-y: auto;
   }
 
   /* On small screens the filter panel becomes an overlay drawer (collapsed by

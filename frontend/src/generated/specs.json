@@ -1,0 +1,122 @@
+[
+  {
+    "id": "location",
+    "path_iri": "http://example.org/ocean-org/ontology#location",
+    "category": "lang_literal",
+    "is_multi": true,
+    "filter_type": "none",
+    "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
+  },
+  {
+    "id": "url",
+    "path_iri": "https://schema.org/url",
+    "category": "uri_literal",
+    "is_multi": false,
+    "filter_type": "none",
+    "datatype": "http://www.w3.org/2001/XMLSchema#anyURI"
+  },
+  {
+    "id": "image",
+    "path_iri": "https://schema.org/image",
+    "category": "uri_literal",
+    "is_multi": false,
+    "filter_type": "none",
+    "datatype": "http://www.w3.org/2001/XMLSchema#anyURI"
+  },
+  {
+    "id": "keySentence",
+    "path_iri": "http://example.org/ocean-org/ontology#keySentence",
+    "category": "lang_literal",
+    "is_multi": true,
+    "filter_type": "none",
+    "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString"
+  },
+  {
+    "id": "managedByOceanCare",
+    "path_iri": "http://example.org/ocean-org/ontology#managedByOceanCare",
+    "category": "boolean",
+    "is_multi": false,
+    "filter_type": "toggle",
+    "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+  },
+  {
+    "id": "foundingDate",
+    "path_iri": "https://schema.org/foundingDate",
+    "category": "simple_literal",
+    "is_multi": false,
+    "filter_type": "slider",
+    "datatype": "http://www.w3.org/2001/XMLSchema#gYear"
+  },
+  {
+    "id": "workArea",
+    "path_iri": "http://example.org/ocean-org/ontology#workArea",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "conservation",
+    "path_iri": "http://example.org/ocean-org/ontology#conservation",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "topic",
+    "path_iri": "http://example.org/ocean-org/ontology#topic",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "pollution",
+    "path_iri": "http://example.org/ocean-org/ontology#pollution",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "species",
+    "path_iri": "http://example.org/ocean-org/ontology#species",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "countryArea",
+    "path_iri": "http://example.org/ocean-org/ontology#countryArea",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "relatedProject",
+    "path_iri": "http://example.org/ocean-org/ontology#relatedProject",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "forum",
+    "path_iri": "http://example.org/ocean-org/ontology#forum",
+    "category": "iri_with_label",
+    "is_multi": true,
+    "filter_type": "multiselect",
+    "datatype": null
+  },
+  {
+    "id": "startDate",
+    "path_iri": "http://example.org/ocean-org/ontology#startDate",
+    "category": "simple_literal",
+    "is_multi": false,
+    "filter_type": "datepicker",
+    "datatype": "http://www.w3.org/2001/XMLSchema#date"
+  }
+]

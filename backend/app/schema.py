@@ -1,12 +1,9 @@
 """
-SHACL shape introspection: filter schema and property specs.
+SHACL shape introspection — the filter UI and the SPARQL query are both derived
+from shapes.ttl, so adding a property shape is enough to make it filterable.
 
-Reads the OrganizationShape from shapes.ttl and produces:
-  - get_filters_schema(): UI filter definitions (multiselect/slider/datepicker)
-  - get_property_specs(): property metadata used to auto-generate SPARQL and parse results
-
-Both functions accept a pre-parsed rdflib Graph so the Turtle files are only
-parsed once (see RDFStore.rdflib_graph in rdf.py).
+  get_filters_schema(): filter definitions for the UI
+  get_property_specs(): property metadata driving SPARQL generation and parsing
 """
 from typing import Any, Dict, List
 
@@ -17,11 +14,8 @@ from rdflib.namespace import SKOS, XSD
 from .namespaces import COMPASS, GEO, SCHEMA
 
 
-# Properties excluded from filters because they are handled in the SPARQL preamble
+# Handled by hand in the SPARQL preamble, so not filter dimensions
 _PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.name}
-
-# Nested relationships that require special OPTIONAL handling in queries
-_NESTED_PROPS: set = set()
 
 # Fetched for display but not exposed as filter dimensions
 _DISPLAY_ONLY = {
@@ -29,13 +23,11 @@ _DISPLAY_ONLY = {
     COMPASS.location,
 }
 
-# All properties excluded from the standard per-property loop
-_SKIP_PROPS = _PREAMBLE_PROPS | _NESTED_PROPS | _DISPLAY_ONLY
+_SKIP_PROPS = _PREAMBLE_PROPS | _DISPLAY_ONLY
 
 
 def _entity_property_nodes(g: Graph):
-    """Yield each named sh:Shape (IRI) referenced via sh:property from any
-    entity NodeShape (a NodeShape that has sh:targetClass)."""
+    """Yield every sh:property IRI of every NodeShape that has a sh:targetClass."""
     seen: set = set()
     for node_shape in g.subjects(SH.targetClass, None):
         for p in g.objects(node_shape, SH.property):
@@ -61,12 +53,8 @@ def get_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
     return str(subject).split("#")[-1].split("/")[-1]
 
 
-# ---------------------------------------------------------------------------
-# Filter schema (used by /api/filters/schema)
-# ---------------------------------------------------------------------------
-
 def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
-    """Build the filter UI schema by traversing the SHACL ForumShape."""
+    """Build the filter UI schema from the SHACL property shapes."""
     filters: List[Dict[str, Any]] = []
 
     for prop in _entity_property_nodes(g):
@@ -83,7 +71,7 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
         path_str = str(path)
         local_name = path_str.split("#")[-1].split("/")[-1]
 
-        widget = _infer_widget(datatype, target_class, sh_in_list)
+        widget = _infer_widget(datatype)
         filter_item: Dict[str, Any] = {
             "id": local_name,
             "path": path_str,
@@ -94,7 +82,7 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
 
         if widget == "multiselect":
             filter_item["options"] = _multiselect_options(
-                g, prop, path, target_class, sh_in_list, lang
+                g, path, target_class, sh_in_list, lang
             )
         elif widget == "slider":
             filter_item.update(_slider_bounds(g, prop, path, datatype))
@@ -107,7 +95,7 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
     return sorted(filters, key=lambda x: x["label"])
 
 
-def _infer_widget(datatype, target_class, sh_in_list) -> str:
+def _infer_widget(datatype) -> str:
     if datatype in {XSD.integer, XSD.float, XSD.gYear}:
         return "slider"
     if datatype == XSD.date:
@@ -117,7 +105,7 @@ def _infer_widget(datatype, target_class, sh_in_list) -> str:
     return "multiselect"
 
 
-def _multiselect_options(g, prop, path, target_class, sh_in_list, lang) -> list:
+def _multiselect_options(g, path, target_class, sh_in_list, lang) -> list:
     options = []
     if target_class:
         for s in g.subjects(RDF.type, target_class):
@@ -183,18 +171,13 @@ def _add_entity_type_filter(g: Graph, filters: list, lang: str) -> None:
     })
 
 
-# ---------------------------------------------------------------------------
-# Property specs (used by /api/entities to auto-generate SPARQL + parse results)
-# ---------------------------------------------------------------------------
-
 def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
-    """Return property metadata for every SHACL property in ForumShape
-    that needs a SPARQL OPTIONAL clause and a GeoJSON output field."""
+    """Metadata for every property needing an OPTIONAL clause and an output field."""
     specs = []
 
     for prop_node in _entity_property_nodes(g):
         path = g.value(prop_node, SH.path)
-        if path is None or path in _PREAMBLE_PROPS or path in _NESTED_PROPS:
+        if path is None or path in _PREAMBLE_PROPS:
             continue
 
         path_str = str(path)

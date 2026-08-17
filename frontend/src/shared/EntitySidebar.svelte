@@ -281,60 +281,6 @@
     font-style: italic;
   }
 
-  .last-update {
-    margin: 0 0 0.25rem;
-    font-size: 0.75rem;
-    color: #94a3b8;
-  }
-
-  .activities-list {
-    margin: 0;
-    padding-left: 1.1rem;
-    font-size: 0.8125rem;
-    color: #475569;
-    line-height: 1.5;
-  }
-  .activities-list li { margin-bottom: 0.25rem; }
-
-  .project-card {
-    display: flex;
-    gap: 0.625rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  .project-card:last-child { border-bottom: none; }
-  .project-img {
-    width: 56px;
-    height: 56px;
-    border-radius: 6px;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-  .project-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .project-info strong {
-    font-size: 0.8125rem;
-    color: #0f172a;
-  }
-  .project-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.8125rem;
-    color: #0284c7;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.15s;
-  }
-  .project-link:hover { color: #0369a1; text-decoration: underline; }
-  .project-dates {
-    font-size: 0.72rem;
-    color: #94a3b8;
-  }
-
   /* ── Action buttons ── */
   .actions {
     margin-top: auto;

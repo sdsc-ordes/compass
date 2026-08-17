@@ -1,11 +1,10 @@
 <svelte:options customElement="compass-tags-inner" />
 
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Tags, X, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
+  import { getFiltersSchema } from '../engine';
 
-  export let apiurl = '';
   export let lang: Lang = 'en';
   export let onTagChange: (filters: Record<string, string[]>) => void;
   export let onToggle: (() => void) | undefined = undefined;
@@ -16,13 +15,12 @@
   // Sections with more options than this get an inline search box.
   const SEARCH_THRESHOLD = 8;
 
-  let schema: any[] = [];
   let selectedTags: Record<string, string[]> = {};
   let collapsedSections: Record<string, boolean> = {};
   let sectionSearch: Record<string, string> = {};
 
   $: t = i18n[lang] || i18n.en;
-  $: fetchSchema(apiurl, lang);
+  $: schema = getFiltersSchema(lang);
 
   // Only show SKOS taxonomy dimensions; entityType is handled by the legend,
   // relatedProject and forum are entity relationships not thematic tags.
@@ -51,16 +49,6 @@
   // Initialise all sections as open on first schema load
   $: if (tagSchema.length > 0 && Object.keys(collapsedSections).length === 0) {
     collapsedSections = Object.fromEntries(tagSchema.map((f) => [f.id, false]));
-  }
-
-  async function fetchSchema(url: string, l: string) {
-    if (!url) return;
-    try {
-      const resp = await fetch(`${url}/api/filters/schema?lang=${l}`);
-      schema = await resp.json();
-    } catch (e) {
-      console.error('TagPanel: failed to fetch schema:', e);
-    }
   }
 
   function toggleTag(dimensionId: string, value: string) {

@@ -14,7 +14,7 @@ export default defineConfig({
     lib: {
       entry: './src/main.ts',
       name: 'CompassMap',
-      fileName: 'compass-map',
+      fileName: () => 'compass-map.js',
       formats: ['iife'],
     },
     rollupOptions: {

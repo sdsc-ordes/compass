@@ -1,0 +1,408 @@
+[
+  {
+    "id": "conservation",
+    "path": "http://example.org/ocean-org/ontology#conservation",
+    "label": "Conservation",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#AnimalAndSpeciesConservation",
+        "label": "Animal and Species Conservation"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#OceanConservation",
+        "label": "Ocean Conservation"
+      }
+    ]
+  },
+  {
+    "id": "countryArea",
+    "path": "http://example.org/ocean-org/ontology#countryArea",
+    "label": "Country / Area",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#Arctic",
+        "label": "Arctic"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Australia",
+        "label": "Australia"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Benin",
+        "label": "Benin"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Bulgaria",
+        "label": "Bulgaria"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#EasternMediterraneanSea",
+        "label": "Eastern Mediterranean Sea"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#England",
+        "label": "England"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#FaroeIslands",
+        "label": "Faroe Islands"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#France",
+        "label": "France"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Greece",
+        "label": "Greece"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Iceland",
+        "label": "Iceland"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Italy",
+        "label": "Italy"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Japan",
+        "label": "Japan"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Maldives",
+        "label": "Maldives"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Mauritania",
+        "label": "Mauritania"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#NorthSeaBalticSea",
+        "label": "North Sea / Baltic Sea"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Norway",
+        "label": "Norway"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Slovenia",
+        "label": "Slovenia"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Spain",
+        "label": "Spain"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Switzerland",
+        "label": "Switzerland"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Venezuela",
+        "label": "Venezuela"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#WesternMediterraneanSea",
+        "label": "Western Mediterranean Sea"
+      }
+    ]
+  },
+  {
+    "id": "entityType",
+    "path": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+    "label": "Entity Type",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#InternationalForum",
+        "label": "International Forum"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Network",
+        "label": "Network"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#PartnerOrganization",
+        "label": "Partner Organization"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Project",
+        "label": "Project"
+      }
+    ]
+  },
+  {
+    "id": "forum",
+    "path": "http://example.org/ocean-org/ontology#forum",
+    "label": "Forum",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/data#ACCOBAMS",
+        "label": "ACCOBAMS"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#ASCOBANS",
+        "label": "ASCOBANS"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#AbidjanConvention",
+        "label": "Abidjan Convention"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#BBNJ",
+        "label": "BBNJ"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#CBD",
+        "label": "CBD/Biodiversity Convention"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#CMSBonnConvention",
+        "label": "CMS/Bonn Convention"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#EUCommission",
+        "label": "EU Commission"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#FAOCOFI",
+        "label": "FAO/COFI"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#FAOGFCM",
+        "label": "FAO/GFCM"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#IMO",
+        "label": "IMO"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#ISA",
+        "label": "International Seabed Authority (ISA)"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#IWC",
+        "label": "International Whaling Commission (IWC)"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#LondonConvention",
+        "label": "London Convention / London Protocol"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UNEP",
+        "label": "UN Environment Programme (UNEP)"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UNCLOS",
+        "label": "UNCLOS"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UNEPGPML",
+        "label": "UNEP/GPML"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UNEPMAP",
+        "label": "UNEP/MAP"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UNEPUNEA",
+        "label": "UNEP/UNEA"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UNFCCC",
+        "label": "UNFCCC"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#UnitedNations",
+        "label": "United Nations"
+      }
+    ]
+  },
+  {
+    "id": "foundingDate",
+    "path": "https://schema.org/foundingDate",
+    "label": "Founded Year",
+    "type": "slider",
+    "order": 0,
+    "min": 1989.0,
+    "max": 2021.0
+  },
+  {
+    "id": "managedByOceanCare",
+    "path": "http://example.org/ocean-org/ontology#managedByOceanCare",
+    "label": "Managed by OceanCare",
+    "type": "toggle",
+    "order": 0
+  },
+  {
+    "id": "pollution",
+    "path": "http://example.org/ocean-org/ontology#pollution",
+    "label": "Pollution",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#ChemicalPollution",
+        "label": "Chemical Pollution"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#OceanNoisePollution",
+        "label": "Ocean Noise Pollution"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#PlasticPollution",
+        "label": "Plastic Pollution"
+      }
+    ]
+  },
+  {
+    "id": "relatedProject",
+    "path": "http://example.org/ocean-org/ontology#relatedProject",
+    "label": "Related Project",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/data#AquaticWildMeat",
+        "label": "Aquatic Wild Meat"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#OutOfHabitat",
+        "label": "Out of Habitat"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#SAVEWhales",
+        "label": "SAvE Whales"
+      },
+      {
+        "value": "http://example.org/ocean-org/data#WhaleDolphinHuntFaroeIslands",
+        "label": "Whale & Dolphin Hunt Faroe Islands"
+      }
+    ]
+  },
+  {
+    "id": "species",
+    "path": "http://example.org/ocean-org/ontology#species",
+    "label": "Species",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#Corals",
+        "label": "Corals"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Dolphins",
+        "label": "Dolphins"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Fish",
+        "label": "Fish"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Manatees",
+        "label": "Manatees"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Orcas",
+        "label": "Orcas"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#PolarBears",
+        "label": "Polar Bears"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#SeaTurtles",
+        "label": "Sea Turtles"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Seals",
+        "label": "Seals"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Sharks",
+        "label": "Sharks"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Whales",
+        "label": "Whales"
+      }
+    ]
+  },
+  {
+    "id": "startDate",
+    "path": "http://example.org/ocean-org/ontology#startDate",
+    "label": "Start Date",
+    "type": "datepicker",
+    "order": 0,
+    "min": "1992-01-01",
+    "max": "1992-01-01"
+  },
+  {
+    "id": "topic",
+    "path": "http://example.org/ocean-org/ontology#topic",
+    "label": "Topic",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#ClimateProtection",
+        "label": "Climate Protection"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#DeepSeaMining",
+        "label": "Deep-Sea Mining"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Fisheries",
+        "label": "Fisheries"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#FossilFuels",
+        "label": "Fossil Fuels"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Geoengineering",
+        "label": "Geoengineering"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Hunting",
+        "label": "Hunting"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Shipping",
+        "label": "Shipping"
+      }
+    ]
+  },
+  {
+    "id": "workArea",
+    "path": "http://example.org/ocean-org/ontology#workArea",
+    "label": "Work Area",
+    "type": "multiselect",
+    "order": 0,
+    "options": [
+      {
+        "value": "http://example.org/ocean-org/ontology#AdvocacyWork",
+        "label": "Advocacy Work"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#CommunityInvolvement",
+        "label": "Community Involvement"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#RescueActivities",
+        "label": "Rescue Activities"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#ScientificResearch",
+        "label": "Scientific Research"
+      }
+    ]
+  }
+]

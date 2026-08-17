@@ -1,15 +1,5 @@
-"""
-SPARQL query builder for the entities endpoint.
-
-The main entry point is build_entities_query(), which assembles a full SPARQL
-SELECT query from SHACL property specs and the current request query params.
-
-Helper functions are grouped by concern:
-  - to_prefixed / build_optional / build_select_expr: per-property SPARQL fragments
-  - _sparql_preamble / _special_optionals / _special_selects: fixed query sections
-  - _union_or_single / _build_where_clauses: dynamic filter application
-"""
-from typing import Any, Dict, List
+"""SPARQL generation from SHACL property specs plus the active filters."""
+from typing import Any, Dict, List, Optional
 
 from .namespaces import PREFIX_MAP, SPARQL_PREFIXES, ITEM_SEP, FIELD_SEP
 
@@ -23,7 +13,6 @@ def to_prefixed(iri: str) -> str:
 
 
 def build_optional(spec: dict, lang: str) -> str:
-    """Generate the SPARQL OPTIONAL clause for a single property spec."""
     sid = spec["id"]
     path = to_prefixed(spec["path_iri"])
     cat = spec["category"]
@@ -45,7 +34,7 @@ def build_optional(spec: dict, lang: str) -> str:
 
 
 def build_select_expr(spec: dict) -> str:
-    """Generate the SPARQL SELECT expression (GROUP_CONCAT or SAMPLE) for a property spec."""
+    """GROUP_CONCAT for multi-valued properties, SAMPLE for single-valued ones."""
     sid = spec["id"]
     cat = spec["category"]
     is_multi = spec["is_multi"]
@@ -65,12 +54,8 @@ def build_select_expr(spec: dict) -> str:
     return f'(SAMPLE(?{sid}) AS ?{sid}Result)'
 
 
-# ---------------------------------------------------------------------------
-# Fixed query sections
-# ---------------------------------------------------------------------------
-
 def _sparql_preamble(lang: str) -> str:
-    """Fixed WHERE preamble covering type resolution, geometry, and name binding.
+    """Type resolution, geometry and label binding, shared by both queries.
 
     The four entity classes carry coordinates and a compass:name. Country/Area
     concepts are additionally surfaced as map *regions*: they have no coordinates
@@ -104,18 +89,17 @@ def _sparql_preamble(lang: str) -> str:
 """
 
 
-def _special_optionals(lang: str) -> str:
-    """OPTIONAL clauses for type-specific properties not in entity NodeShapes."""
-    return f"""
-        OPTIONAL {{ ?s compass:startDate ?selfStart . }}
-        OPTIONAL {{ ?s compass:endDate ?selfEnd . }}
-        OPTIONAL {{ ?s compass:wpEntityTagIdEn ?wpEntityTagIdEn . }}
-        OPTIONAL {{ ?s compass:wpEntityTagIdDe ?wpEntityTagIdDe . }}
+def _special_optionals() -> str:
+    """Properties fetched for display that no entity NodeShape declares."""
+    return """
+        OPTIONAL { ?s compass:startDate ?selfStart . }
+        OPTIONAL { ?s compass:endDate ?selfEnd . }
+        OPTIONAL { ?s compass:wpEntityTagIdEn ?wpEntityTagIdEn . }
+        OPTIONAL { ?s compass:wpEntityTagIdDe ?wpEntityTagIdDe . }
 """
 
 
 def _special_selects() -> str:
-    """SELECT expressions for type-specific variables not in entity NodeShape specs."""
     return (
         '           (SAMPLE(?selfStart) AS ?selfStart)\n'
         '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
@@ -124,12 +108,7 @@ def _special_selects() -> str:
     )
 
 
-# ---------------------------------------------------------------------------
-# Dynamic WHERE clause construction from request query params
-# ---------------------------------------------------------------------------
-
 def _union_or_single(parts: List[str]) -> str:
-    """Wrap multiple filter parts in UNION blocks, or return the single part as-is."""
     if len(parts) > 1:
         return "{ " + " } UNION { ".join(parts) + " }"
     return parts[0]
@@ -140,13 +119,10 @@ def _build_where_clauses(
     filter_map: Dict[str, str],
     range_filters: Dict[str, str],
     date_filters: Dict[str, str],
-    exclude_key: str = None,
+    exclude_key: Optional[str] = None,
 ) -> List[str]:
-    """Convert request query params into SPARQL WHERE clause fragments.
-
-    exclude_key drops that dimension's own constraints — used by facet counts so
-    a dimension does not shrink its own sibling counts (drill-down faceting).
-    """
+    """exclude_key drops that dimension's own constraints, so facet counts for a
+    dimension are not shrunk by the selection within it (drill-down faceting)."""
     where_clauses = []
 
     for key, val in query_params.items():
@@ -206,12 +182,7 @@ def _build_where_clauses(
     return where_clauses
 
 
-# ---------------------------------------------------------------------------
-# Main entry point
-# ---------------------------------------------------------------------------
-
 def _categorize_specs(specs: List[Dict[str, Any]]):
-    """Split property specs into filter/range/date maps keyed by spec id."""
     filter_map: Dict[str, str] = {}
     range_filters: Dict[str, str] = {}
     date_filters: Dict[str, str] = {}
@@ -229,12 +200,10 @@ def _categorize_specs(specs: List[Dict[str, Any]]):
 def build_facet_query(
     specs: List[Dict[str, Any]], lang: str, query_params, target_id: str
 ) -> str:
-    """Assemble a count-per-value query for one tag dimension.
+    """Count entities per value of one tag dimension.
 
-    Applies every active filter EXCEPT target_id's own (drill-down faceting),
-    then groups the matching entities by the target dimension's value. The
-    preamble is shared with build_entities_query so ?s ranges over exactly the
-    same entity set the map renders.
+    The preamble is shared with build_entities_query so ?s ranges over exactly
+    the same entity set the map renders.
     """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
     target_path = filter_map[target_id]
@@ -263,16 +232,6 @@ def build_facet_query(
 def build_entities_query(
     specs: List[Dict[str, Any]], lang: str, query_params
 ) -> str:
-    """Assemble the full SPARQL SELECT query for the entities endpoint.
-
-    Args:
-        specs: Property specs from RDFStore.get_property_specs().
-        lang: Requested language code (e.g. "en", "de").
-        query_params: Starlette QueryParams from the current request.
-
-    Returns:
-        A complete SPARQL SELECT query string.
-    """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
 
     preamble = _sparql_preamble(lang)
@@ -280,7 +239,7 @@ def build_entities_query(
     auto_selects = "\n           ".join(build_select_expr(spec) for spec in specs)
     where_clauses = _build_where_clauses(query_params, filter_map, range_filters, date_filters)
 
-    sparql_where = preamble + "        " + auto_optionals + "\n" + _special_optionals(lang)
+    sparql_where = preamble + "        " + auto_optionals + "\n" + _special_optionals()
     if where_clauses:
         sparql_where += "        " + "\n        ".join(where_clauses) + "\n"
 
