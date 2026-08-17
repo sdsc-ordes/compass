@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OceanCare Compass</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #f1f5f9; }
+    compass-map { display: block; height: 100vh; }
+  </style>
+</head>
+<body>
+  <compass-map lang="en"></compass-map>
+
+  <script src="/compass-map.js"></script>
+  <script>
+    // nginx proxies /api to the backend, so the API lives on this same origin —
+    // which is only known at runtime, not at build time.
+    document.querySelector('compass-map').setAttribute('apiurl', location.origin);
+  </script>
+</body>
+</html>
