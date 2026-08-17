@@ -1,7 +1,6 @@
 <svelte:options customElement="compass-tags-inner" />
 
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Tags, X, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
 

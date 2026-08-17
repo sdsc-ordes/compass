@@ -1,13 +1,4 @@
-"""
-RDF store wrapper and singleton accessor.
-
-RDFStore loads the three Turtle files (data, shapes, vocab) into an Oxigraph
-in-memory store for SPARQL queries, and a lazily-parsed rdflib Graph for
-SHACL shape introspection (shared by schema.py).
-
-Schema introspection (get_filters_schema, get_property_specs) is delegated to
-schema.py. The public method signatures are preserved so calling code is unchanged.
-"""
+"""RDF store wrapper: Oxigraph for SPARQL, rdflib for SHACL introspection."""
 import logging
 import os
 import time
@@ -33,7 +24,6 @@ class RDFStore:
         self.load_data()
 
     def load_data(self) -> None:
-        """Load the three Turtle files into the Oxigraph store."""
         with open(self.data_path, "rb") as f:
             self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
         with open(self.shapes_path, "rb") as f:
@@ -43,7 +33,7 @@ class RDFStore:
 
     @property
     def rdflib_graph(self) -> Graph:
-        """Lazily parsed rdflib Graph, shared by all schema introspection calls."""
+        """Parsed once and shared — rdflib parsing of all three files is slow."""
         if self._rdflib_graph is None:
             g = Graph()
             g.parse(self.shapes_path, format="turtle")
@@ -53,7 +43,7 @@ class RDFStore:
         return self._rdflib_graph
 
     def query(self, sparql: str) -> List[Dict[str, Any]]:
-        """Execute a SPARQL SELECT query and return results as a list of dicts."""
+        """Run a SPARQL SELECT; one dict per row, unbound variables omitted."""
         start = time.time()
         try:
             results = self.store.query(sparql)
@@ -71,24 +61,14 @@ class RDFStore:
             traceback.print_exc()
             raise
 
-    # ------------------------------------------------------------------
-    # Schema introspection — delegated to schema.py
-    # ------------------------------------------------------------------
-
     def get_filters_schema(self, lang: str = "en") -> List[Dict[str, Any]]:
-        """Return the filter UI schema derived from SHACL shapes."""
         return _schema.get_filters_schema(self.rdflib_graph, lang)
 
     def get_property_specs(self) -> List[Dict[str, Any]]:
-        """Return cached property specs for SPARQL generation and GeoJSON output."""
         if self._property_specs_cache is None:
             self._property_specs_cache = _schema.get_property_specs(self.rdflib_graph)
         return self._property_specs_cache
 
-
-# ---------------------------------------------------------------------------
-# Singleton accessor
-# ---------------------------------------------------------------------------
 
 store_instance: Optional[RDFStore] = None
 

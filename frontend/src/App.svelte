@@ -39,7 +39,6 @@
 
   // Sync with URL on mount
   onMount(async () => {
-    console.log("[Compass] Component mounted. Initial apiurl:", apiurl);
     // Start with filters collapsed on small screens so the map is visible first.
     if (typeof window !== 'undefined' && window.innerWidth < 900) filterOpen = false;
     const params = new URLSearchParams(window.location.search);
@@ -48,7 +47,6 @@
     // Restore saved state if 'state' param exists
     if (params.has('state')) {
       const stateId = params.get('state');
-      console.log("[Compass] Restoring state:", stateId);
       if (apiurl && stateId) {
         try {
           const resp = await fetch(`${apiurl}/api/states/${stateId}`);
@@ -72,25 +70,18 @@
        if (Object.keys(restoredFilters).length > 0) {
          activeFilters = restoredFilters;
          legendTypeFilters = Array.isArray(activeFilters.entityType) ? activeFilters.entityType : [];
-         console.log("[Compass] Restored filters from URL:", activeFilters);
-       }
-       console.log("[Compass] No saved state. Running initial fetch...");
-       if (apiurl) {
-         fetchEntities(apiurl, lang, activeFilters);
-       } else {
-         console.warn("[Compass] No apiurl on mount. Waiting for attribute...");
        }
     }
-    mounted = true;
+    mounted = true; // triggers the reactive block below, which runs the first fetch
   });
 
-  $: {
-    console.log("[Compass] Reactive check - apiurl:", apiurl, "lang:", lang);
-    if (mounted && apiurl) {
-      fetchEntities(apiurl, lang, activeFilters);
-      fetchFacets(apiurl, lang, activeFilters);
-    }
+  $: if (mounted && apiurl) {
+    fetchEntities(apiurl, lang, activeFilters);
+    fetchFacets(apiurl, lang, activeFilters);
   }
+
+  // Discards the results of a request that a newer one has superseded.
+  let loadSeq = 0;
 
   // Build the API query string shared by /entities and /entities/facets.
   function buildEntityParams(f: any, l: string): URLSearchParams {
@@ -115,60 +106,51 @@
     }
   }
 
-  async function fetchEntities(url: string, l: string, f: any) {
-    if (!url) return;
-    isLoading = true;
-    error = null;
-    
-    // Construct query string for API
-    const params = new URLSearchParams({ lang: l });
-    for (const [key, val] of Object.entries(f)) {
-      if (Array.isArray(val)) {
-        val.forEach(v => params.append(key, v));
-      } else {
-        params.append(key, String(val));
-      }
-    }
-
-    const API_FETCH_TIMEOUT_MS = 8_000;
-
-  // Update Browser URL without page reload (stateless sync)
+  // Mirrors the active filters into the address bar; the share button hands out
+  // whatever this produces.
+  function syncUrl(f: any, l: string) {
     const urlObj = new URL(window.location.origin + window.location.pathname);
     for (const [key, val] of Object.entries(f)) {
       if (Array.isArray(val)) {
-        val.forEach(v => urlObj.searchParams.append(key, v));
+        val.forEach((v) => urlObj.searchParams.append(key, String(v)));
       } else if (val !== undefined && val !== '') {
         urlObj.searchParams.set(key, String(val));
       }
     }
     urlObj.searchParams.set('lang', l);
     window.history.replaceState({}, '', urlObj.toString());
+  }
+
+  const API_FETCH_TIMEOUT_MS = 8_000;
+
+  async function fetchEntities(url: string, l: string, f: any) {
+    if (!url) return;
+    const seq = ++loadSeq;
+    isLoading = true;
+    error = null;
+    syncUrl(f, l);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_FETCH_TIMEOUT_MS);
-    const fullUrl = `${url}/api/entities/?${params.toString()}`;
-    console.log('[Compass] Fetching:', fullUrl);
 
     try {
-      const resp = await fetch(fullUrl, {
-        signal: controller.signal
+      const resp = await fetch(`${url}/api/entities/?${buildEntityParams(f, l).toString()}`, {
+        signal: controller.signal,
       });
       clearTimeout(timeoutId);
-      
-      console.log('[Compass] Response status:', resp.status);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
+      if (seq !== loadSeq) return;
       entities = data.features || [];
-      console.log('[Compass] Loaded entities:', entities.length);
     } catch (e: any) {
-      console.error('[Compass] Fetch Error:', e);
-      if (e?.name === 'AbortError') {
-        error = "Connection timed out. Is the backend running at " + url + "?";
-      } else {
-        error = "Failed to connect to backend: " + (e?.message ?? e);
-      }
+      clearTimeout(timeoutId);
+      if (seq !== loadSeq) return;
+      console.error('[Compass] Fetch error:', e);
+      error = e?.name === 'AbortError'
+        ? `Connection timed out. Is the backend running at ${url}?`
+        : 'Failed to connect to backend: ' + (e?.message ?? e);
     } finally {
-      isLoading = false;
+      if (seq === loadSeq) isLoading = false;
     }
   }
 
@@ -362,7 +344,7 @@
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {apiurl} {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
+        <Map {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
       {:else}
         <ListView {entities} {lang} />
       {/if}
@@ -638,12 +620,6 @@
   @keyframes indeterminate {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(350%); }
-  }
-
-  .placeholder-list {
-    padding: 2rem;
-    height: 100%;
-    overflow-y: auto;
   }
 
   /* On small screens the filter panel becomes an overlay drawer (collapsed by

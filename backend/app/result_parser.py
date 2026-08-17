@@ -1,13 +1,4 @@
-"""
-SPARQL result parsing and GeoJSON conversion for the entities endpoint.
-
-The main entry point is results_to_geojson(), which converts a list of SPARQL
-result rows (from RDFStore.query) into a GeoJSON FeatureCollection.
-
-Helper functions are grouped by concern:
-  - extract_property: per-property value extraction from a result row
-  - _parse_projects / _parse_species / _parse_special_properties: special-case fields
-"""
+"""SPARQL result rows -> GeoJSON FeatureCollection."""
 from typing import Any, Dict, List
 
 from geojson import Feature, FeatureCollection, Point
@@ -16,16 +7,11 @@ from .namespaces import ITEM_SEP, FIELD_SEP
 
 
 def _local_name(iri: str) -> str:
-    """Return the local name of an IRI (after the last '#' or '/')."""
     return iri.split("#")[-1] if "#" in iri else iri.split("/")[-1]
 
 
-
 def extract_property(spec: dict, res: dict) -> Any:
-    """Extract a typed property value from a SPARQL result row.
-
-    Handles iri_with_label, boolean, multi-valued, and scalar cases.
-    """
+    """Extract one property value from a result row, typed per its spec."""
     sid = spec["id"]
     cat = spec["category"]
     is_multi = spec["is_multi"]
@@ -58,7 +44,7 @@ def extract_property(spec: dict, res: dict) -> Any:
 
 
 def _parse_special_properties(res: dict) -> dict:
-    """Extract type-specific fields (Project) from a result row."""
+    """Fields queried outside the SHACL-driven specs (see sparql_builder)."""
     return {
         "startDate": res.get("selfStart", ""),
         "endDate": res.get("selfEnd", ""),
@@ -71,15 +57,7 @@ def results_to_geojson(
     results: List[Dict[str, Any]],
     specs: List[Dict[str, Any]],
 ) -> FeatureCollection:
-    """Convert SPARQL result rows into a GeoJSON FeatureCollection.
-
-    Args:
-        results: List of result dicts from RDFStore.query().
-        specs: Property specs from RDFStore.get_property_specs().
-
-    Returns:
-        A GeoJSON FeatureCollection with one Feature per valid result row.
-    """
+    """One Feature per result row; rows missing required fields are skipped."""
     features = []
     for res in results:
         try:

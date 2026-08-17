@@ -49,7 +49,7 @@
                 {/each}
               </div>
               {#if entity.properties.foundingDate}
-                <span class="founded-year">Est. {entity.properties.foundingDate}</span>
+                <span class="founded-year">{t.established} {entity.properties.foundingDate}</span>
               {/if}
             </div>
           </td>
@@ -60,7 +60,7 @@
             <button class="action-btn" title={t.details}>
               <Info size={18} />
             </button>
-            <button class="action-btn primary" title="Visit">
+            <button class="action-btn primary" title={t.website}>
               <ExternalLink size={18} />
             </button>
           </td>
@@ -69,7 +69,7 @@
       {#if entities.length === 0}
         <tr>
           <td colspan="3" class="empty-state">
-            No results found for current filters.
+            {t.noResults}
           </td>
         </tr>
       {/if}
@@ -179,10 +179,7 @@
     text-decoration: underline;
   }
 
-  .chip-focus   { background: #dbeafe; color: #1d4ed8; }
-  .chip-region  { background: #ccfbf1; color: #0f766e; }
-  .chip-funding { background: #fef3c7; color: #b45309; }
-  .chip-access  { background: #dcfce7; color: #15803d; }
+  .chip-focus { background: #dbeafe; color: #1d4ed8; }
 
   .key-sentence {
     font-size: 0.8rem;

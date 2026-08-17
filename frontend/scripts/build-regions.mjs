@@ -1,6 +1,6 @@
 // Builds src/map/regions.json — one boundary polygon per compass:CountryArea
 // concept, keyed by `properties.regionKey` (the concept IRI local name).
-// Map.svelte joins these onto the geometry-less region features from the API.
+// Map.svelte joins these onto the geometry-less Country/Area features.
 //
 //   node scripts/build-regions.mjs   (needs network)
 //

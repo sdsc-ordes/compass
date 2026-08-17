@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OceanCare Compass Test</title>
-    <!-- MapLibre CSS is required if not bundled, but we include it in the component -->
     <style>
         body {
             margin: 0;
@@ -27,7 +26,6 @@
             overflow: hidden;
             border: 1px solid #e2e8f0;
         }
-        /* Custom styling for the web component wrapper if needed */
         compass-map {
             display: block;
             height: 700px;
@@ -38,12 +36,11 @@
     <div class="container">
         <h1>OceanCare Compass Embed Test</h1>
         <div class="card">
-            <!-- The compiled web component -->
             <compass-map apiurl="http://localhost:8000" lang="en"></compass-map>
         </div>
     </div>
 
     <!-- Include the compiled component script -->
-    <script src="frontend/dist/compass-map.iife.js"></script>
+    <script src="frontend/dist/compass-map.js"></script>
 </body>
 </html>

@@ -3,20 +3,21 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import maplibregl from 'maplibre-gl';
-  import 'maplibre-gl/dist/maplibre-gl.css';
+  // Inlined so it can be injected into the shadow root below, which
+  // document-level stylesheets never reach.
+  import maplibreCss from 'maplibre-gl/dist/maplibre-gl.css?inline';
   import { i18n, type Lang } from '../shared/i18n';
   import { Globe as GlobeIcon, Map as MapIcon, BookOpen } from 'lucide-svelte';
   import regionsData from './regions.json';
 
   // Region boundary polygons keyed by regionKey, built by
-  // scripts/build-regions.mjs. The backend emits Country/Area entities as
-  // geometry-less region features; we join their polygon here at render time.
+  // scripts/build-regions.mjs. Country/Area entities arrive without geometry;
+  // their polygon is joined here at render time.
   const REGION_GEOMETRY: Record<string, any> = {};
   for (const f of (regionsData as any).features) {
     REGION_GEOMETRY[f.properties.regionKey] = f.geometry;
   }
 
-  // Map entity type IRIs to distinct pin colors
   const TYPE_COLORS: Record<string, string> = {
     'http://example.org/ocean-org/ontology#PartnerOrganization': '#10b981', // emerald
     'http://example.org/ocean-org/ontology#Network':             '#06b6d4', // cyan
@@ -67,17 +68,15 @@
     }
   }
 
-  // Build a MapLibre match expression from the type color map
   function typeColorExpression(): maplibregl.ExpressionSpecification {
     const expr: any[] = ['match', ['get', 'typeIri']];
     for (const [iri, color] of Object.entries(TYPE_COLORS)) {
       expr.push(iri, color);
     }
-    expr.push(DEFAULT_PIN_COLOR); // fallback
+    expr.push(DEFAULT_PIN_COLOR);
     return expr as maplibregl.ExpressionSpecification;
   }
 
-  export let apiurl = '';
   export let lang: Lang = 'en';
   export let entities: any[] = [];
   export let onEntitySelect: (props: any) => void = () => {};
@@ -94,11 +93,6 @@
   export let storyCountLoading = false;
   /** True when ≥1 thematic tag is active (drives whether the pill shows). */
   export let storyActive = false;
-
-  /** Expose the WebGL canvas for screenshot capture. */
-  export function getMapCanvas(): HTMLCanvasElement | null {
-    return map?.getCanvas() ?? null;
-  }
 
   let mapContainer: HTMLElement;
   let map: maplibregl.Map;
@@ -117,7 +111,6 @@
     onTypeFilterChange([...selectedTypeIris]);
   }
 
-  // Hover/click connection index
   const PROJECT_IRI = 'http://example.org/ocean-org/ontology#Project';
   let coordByIri = new Map<string, [number, number]>();
   let orgToProjectIris = new Map<string, string[]>();
@@ -153,11 +146,6 @@
         addOceanLayers();
       } catch (e) {
         console.warn('[Compass] Ocean layers failed to initialize:', e);
-      }
-      // Enable canvas buffer preservation for screenshot export
-      const canvas = map.getCanvas();
-      if (canvas) {
-        (canvas as any).getContext('webgl', { preserveDrawingBuffer: true });
       }
       mapLoaded = true;
       applyBasemapLanguage(lang);
@@ -239,7 +227,7 @@
     if (!map || !mapLoaded) return;
 
     // Remove all layers that depend on 'entities' source before removal
-    const layers = ['connections-line', 'connections-nodes', 'clusters', 'cluster-count', 'unclustered-point', 'featured-star', 'cta-points', 'region-fill', 'region-outline'];
+    const layers = ['connections-line', 'connections-nodes', 'clusters', 'cluster-count', 'unclustered-point', 'featured-star', 'region-fill', 'region-outline'];
     layers.forEach(l => {
       if (map.getLayer(l)) map.removeLayer(l);
     });
@@ -298,10 +286,8 @@
       regionFeatures.forEach(f => extendBounds(bounds, f.geometry));
     }
     if (!bounds.isEmpty()) {
-      // Cap zoom-in at a regional level. A lone pin has zero extent and would
-      // otherwise snap to street level, while a matched region frames at ~z6-8 —
-      // capping keeps single-result framing visually consistent with regions
-      // instead of "some filters zoom way in, others only a little".
+      // maxZoom keeps a lone pin, which has zero extent, from snapping to
+      // street level while a matched region frames at ~z6-8.
       map.fitBounds(bounds, { padding: 40, maxZoom: 6, duration: 1000 });
     }
 
@@ -367,9 +353,8 @@
       }
     });
 
-    // Separate non-clustered source for connection endpoint nodes.
-    // This ensures lines always terminate on precisely-placed individual dots
-    // instead of off-center on a cluster bubble.
+    // Non-clustered, so connection lines terminate on individual dots rather
+    // than off-center on a cluster bubble.
     map.addSource('entities-connections', {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
@@ -393,7 +378,7 @@
       id: 'unclustered-point',
       type: 'circle',
       source: 'entities',
-      filter: ['all', ['!', ['has', 'point_count']], ['!', ['has', 'is_cta']], ['!=', ['get', 'id'], FEATURED_IRI]],
+      filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'id'], FEATURED_IRI]],
       paint: {
         'circle-color': typeColorExpression(),
         'circle-radius': 12, // 24px diameter — meets WCAG 2.5.8 touch target minimum
@@ -421,22 +406,7 @@
       }
     });
 
-    // CTA Points (Neon/Action)
-    map.addLayer({
-      id: 'cta-points',
-      type: 'circle',
-      source: 'entities',
-      filter: ['all', ['!', ['has', 'point_count']], ['has', 'is_cta']],
-      paint: {
-        'circle-color': '#f43f5e',
-        'circle-radius': 12, // 24px diameter — meets WCAG 2.5.8 touch target minimum
-        'circle-stroke-width': 3,
-        'circle-stroke-color': '#ffe4e6',
-        'circle-blur': 0.1
-      }
-    });
-
-    // Region Highlighting Layers — shaded Country/Area polygons (non-clustered)
+    // Shaded Country/Area polygons (non-clustered)
     map.addLayer({
       id: 'region-fill',
       type: 'fill',
@@ -458,8 +428,18 @@
       }
     }, 'clusters');
 
-    // Build hover connection index from current entities
     buildIndex();
+  }
+
+  // relatedProject is [{iri, label}] on the raw features, and a JSON string on
+  // features read back off the rendered map.
+  function projectIrisOf(raw: any): string[] {
+    let list = raw;
+    if (typeof raw === 'string') {
+      try { list = JSON.parse(raw); } catch { return []; }
+    }
+    if (!Array.isArray(list)) return [];
+    return list.map((p: any) => (typeof p === 'string' ? p : p?.iri)).filter(Boolean);
   }
 
   function buildIndex() {
@@ -468,28 +448,16 @@
     projectToOrgIri = new Map();
     for (const feature of entities) {
       if (!feature.geometry?.coordinates) continue;
-      const { id: iri, typeIri, projectIris: rawProjectIris } = feature.properties;
+      const { id: iri, typeIri, relatedProject } = feature.properties;
       if (!iri) continue;
-      const coords: [number, number] = [feature.geometry.coordinates[0], feature.geometry.coordinates[1]];
-      coordByIri.set(iri, coords);
-      if (typeIri !== PROJECT_IRI) {
-        // projectIris is an array on the raw feature, JSON string when stringified
-        let pIris: string[] = [];
-        try {
-          pIris = Array.isArray(rawProjectIris)
-            ? rawProjectIris
-            : rawProjectIris ? JSON.parse(rawProjectIris) : [];
-        } catch { /* ignore */ }
-        if (pIris.length) {
-          orgToProjectIris.set(iri, pIris);
-          for (const pIri of pIris) projectToOrgIri.set(pIri, iri);
-        }
+      coordByIri.set(iri, [feature.geometry.coordinates[0], feature.geometry.coordinates[1]]);
+      if (typeIri === PROJECT_IRI) continue;
+      const pIris = projectIrisOf(relatedProject);
+      if (pIris.length) {
+        orgToProjectIris.set(iri, pIris);
+        for (const pIri of pIris) projectToOrgIri.set(pIri, iri);
       }
     }
-    console.log('[Compass] Connection index built —',
-      'orgs with projects:', orgToProjectIris.size,
-      'project→org entries:', projectToOrgIri.size,
-      'total coords:', coordByIri.size);
     updateConnectionsSource();
   }
 
@@ -523,7 +491,6 @@
         if (pCoords) lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: [srcCoords, pCoords] }, properties: {} });
       }
     }
-    console.log('[Compass] showConnections', featureIri, '→', lines.length, 'line(s)');
     src.setData({ type: 'FeatureCollection', features: lines });
 
     // Show the connection endpoint nodes from the non-clustered source so
@@ -549,123 +516,65 @@
     }
   }
 
+  const PIN_LAYERS = ['unclustered-point', 'featured-star', 'clusters'];
+
+  function clearSelection() {
+    selectedIri = null;
+    selectedTypeIri = null;
+    clearConnections();
+  }
+
+  // Clicking the already-selected pin toggles it closed.
+  function selectPin(props: any) {
+    if (props.is_region) return;
+    if (selectedIri === props.id) {
+      clearSelection();
+    } else {
+      selectedIri = props.id;
+      selectedTypeIri = props.typeIri;
+      showConnections(selectedIri!, selectedTypeIri!);
+    }
+    onEntitySelect(props);
+  }
+
+  // Hovering previews a pin's connections; leaving falls back to the pinned one.
+  function setupPinHandlers(layer: string) {
+    map.on('click', layer, (e) => selectPin(e.features![0].properties));
+    map.on('mouseenter', layer, (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const props = e.features![0].properties;
+      showConnections(props.id, props.typeIri);
+    });
+    map.on('mouseleave', layer, () => {
+      map.getCanvas().style.cursor = '';
+      if (selectedIri && selectedTypeIri) showConnections(selectedIri, selectedTypeIri);
+      else clearConnections();
+    });
+  }
+
   function setupEventHandlers() {
     map.on('click', 'clusters', async (e) => {
       const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
       if (!features.length) return;
       const clusterId = features[0].properties.cluster_id;
       const zoom = await (map.getSource('entities') as any).getClusterExpansionZoom(clusterId);
-      map.easeTo({
-        center: (features[0].geometry as any).coordinates,
-        zoom
-      });
+      map.easeTo({ center: (features[0].geometry as any).coordinates, zoom });
     });
-
-    map.on('click', 'unclustered-point', (e) => {
-      const props = e.features![0].properties;
-      if (props.is_region) return;
-      if (selectedIri === props.id) {
-        // Second click on the same node — deselect
-        selectedIri = null;
-        selectedTypeIri = null;
-        clearConnections();
-      } else {
-        selectedIri = props.id;
-        selectedTypeIri = props.typeIri;
-        showConnections(selectedIri!, selectedTypeIri!);
-      }
-      onEntitySelect(props);
-    });
-
-    map.on('click', 'cta-points', (e) => {
-      const props = e.features![0].properties;
-      if (props.is_region) return;
-      if (selectedIri === props.id) {
-        selectedIri = null;
-        selectedTypeIri = null;
-        clearConnections();
-      } else {
-        selectedIri = props.id;
-        selectedTypeIri = props.typeIri;
-        showConnections(selectedIri!, selectedTypeIri!);
-      }
-      onEntitySelect(props);
-    });
-
-    // Click on empty map — clear selection
-    map.on('click', (e) => {
-      const hit = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point', 'featured-star', 'cta-points', 'clusters', 'region-fill'] });
-      if (!hit.length && selectedIri) {
-        selectedIri = null;
-        selectedTypeIri = null;
-        clearConnections();
-      }
-    });
-
     map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
-    map.on('click', 'featured-star', (e) => {
-      const props = e.features![0].properties;
-      if (selectedIri === props.id) {
-        selectedIri = null;
-        selectedTypeIri = null;
-        clearConnections();
-      } else {
-        selectedIri = props.id;
-        selectedTypeIri = props.typeIri;
-        showConnections(selectedIri!, selectedTypeIri!);
-      }
-      onEntitySelect(props);
-    });
-    map.on('mouseenter', 'featured-star', (e) => {
-      map.getCanvas().style.cursor = 'pointer';
-      const props = e.features![0].properties;
-      showConnections(props.id, props.typeIri);
-    });
-    map.on('mouseleave', 'featured-star', () => {
-      map.getCanvas().style.cursor = '';
-      if (selectedIri && selectedTypeIri) {
-        showConnections(selectedIri, selectedTypeIri);
-      } else {
-        clearConnections();
-      }
-    });
-    map.on('mouseenter', 'unclustered-point', (e) => {
-      map.getCanvas().style.cursor = 'pointer';
-      const props = e.features![0].properties;
-      showConnections(props.id, props.typeIri);
-    });
-    map.on('mouseleave', 'unclustered-point', () => {
-      map.getCanvas().style.cursor = '';
-      // Restore pinned selection if one is active
-      if (selectedIri && selectedTypeIri) {
-        showConnections(selectedIri, selectedTypeIri);
-      } else {
-        clearConnections();
-      }
-    });
-    map.on('mouseenter', 'cta-points', (e) => {
-      map.getCanvas().style.cursor = 'pointer';
-      const props = e.features![0].properties;
-      showConnections(props.id, props.typeIri);
-    });
-    map.on('mouseleave', 'cta-points', () => {
-      map.getCanvas().style.cursor = '';
-      if (selectedIri && selectedTypeIri) {
-        showConnections(selectedIri, selectedTypeIri);
-      } else {
-        clearConnections();
-      }
+
+    setupPinHandlers('unclustered-point');
+    setupPinHandlers('featured-star');
+
+    map.on('click', (e) => {
+      const hit = map.queryRenderedFeatures(e.point, { layers: [...PIN_LAYERS, 'region-fill'] });
+      if (!hit.length && selectedIri) clearSelection();
     });
 
-    // Shaded Country/Area regions — open the detail panel on click.
-    // Regions have no project connections, so no connection lines are drawn.
-    // Pins sit visually on top, so defer to them: if a pin is under the
-    // cursor, let its own handler win instead of selecting the region.
+    // Regions open the detail panel but draw no connection lines. Pins sit on
+    // top, so if one is under the cursor let its handler win.
     map.on('click', 'region-fill', (e) => {
-      const pinHit = map.queryRenderedFeatures(e.point, {
-        layers: ['unclustered-point', 'featured-star', 'cta-points', 'clusters']
-      });
+      const pinHit = map.queryRenderedFeatures(e.point, { layers: PIN_LAYERS });
       if (pinHit.length) return;
       onEntitySelect(e.features![0].properties);
     });
@@ -681,11 +590,10 @@
 </script>
 
 <div class="map-wrapper">
-  <!-- Inject MapLibre CSS directly into Shadow DOM for reliability (v5) -->
-  <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css' />
-  
+  {@html `<style>${maplibreCss}</style>`}
+
   <div bind:this={mapContainer} class="map-container"></div>
-  
+
   <div class="map-badge">
     {resultCount ?? entities.length} {t.results}
   </div>

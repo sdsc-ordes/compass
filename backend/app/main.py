@@ -8,17 +8,15 @@ from .rdf import get_store
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    store = get_store()
-    print("Oxigraph Store Initialized with Ontology.")
+    get_store()  # load the ontology before the first request
     yield
 
 
 app = FastAPI(title="OceanCare Compass API", lifespan=lifespan)
 
-# CORS for WordPress or other embed domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict to domain
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
