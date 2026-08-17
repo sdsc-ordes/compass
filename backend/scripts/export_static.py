@@ -1,14 +1,13 @@
 """
-Export what the browser engine needs into frontend/src/generated/: the SHACL
-introspection results (specs.json, filters.<lang>.json) plus copies of the three
-runtime Turtle files, which Vite inlines at build time.
+Write the SHACL introspection results the frontend cannot derive on its own into
+frontend/src/generated/: specs.json and filters.<lang>.json. The Turtle files
+themselves are read straight from ontology/ by the frontend.
 
 Re-run after every ontology change, then rebuild the frontend:
 
     cd backend && uv run python scripts/export_static.py
 """
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -20,8 +19,6 @@ from app.rdf import RDFStore  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ONTOLOGY = REPO_ROOT / "ontology"
 OUT_DIR = REPO_ROOT / "frontend" / "src" / "generated"
-
-TTL_FILES = ["compass.ttl", "vocab.ttl", "shapes.ttl"]
 
 
 def main() -> None:
@@ -42,10 +39,7 @@ def main() -> None:
             json.dumps(schema, indent=2, ensure_ascii=False)
         )
 
-    for name in TTL_FILES:
-        shutil.copyfile(ONTOLOGY / name, OUT_DIR / name)
-
-    print(f"Wrote specs.json, filters.en.json, filters.de.json and {len(TTL_FILES)} TTL files to {OUT_DIR}")
+    print(f"Wrote specs.json, filters.en.json, filters.de.json to {OUT_DIR}")
     print(f"  {len(specs)} property specs")
 
 

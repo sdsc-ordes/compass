@@ -8,9 +8,9 @@
 // before `new Store()`. The package's default types (node.d.ts) omit it.
 import init, { Store } from 'oxigraph/web.js';
 
-import compassTtl from '../generated/compass.ttl?raw';
-import vocabTtl from '../generated/vocab.ttl?raw';
-import shapesTtl from '../generated/shapes.ttl?raw';
+import compassTtl from '../../../ontology/compass.ttl?raw';
+import vocabTtl from '../../../ontology/vocab.ttl?raw';
+import shapesTtl from '../../../ontology/shapes.ttl?raw';
 
 export type Row = Record<string, string>;
 

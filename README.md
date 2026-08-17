@@ -103,8 +103,3 @@ Then open [test_embed.html](test_embed.html), which passes `apiurl="http://local
 cd backend && uv run pytest tests/ -v   # API, SHACL schema, SPARQL builder, ontology contract
 cd frontend && npm run check            # Svelte + TypeScript
 ```
-
-## Architecture
-
-- [compass-architecture.html](compass-architecture.html) — component diagram, open in a browser
-
