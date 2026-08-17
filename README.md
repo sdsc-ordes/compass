@@ -28,7 +28,7 @@ node --version                                     # expect v20 or newer
 
 No system Python needed — uv fetches its own Python 3.11, pinned in `backend/.python-version`.
 
-### Option B — Nix
+### Option B — Nix on Linux
 
 Supplies uv, Node 22 and Python 3.11 in one shell:
 
