@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "compass"
+abstract: "An interactive map of ocean-focused research institutes, NGOs and intergovernmental bodies, driven by a SHACL-validated RDF ontology."
+authors:
+  - family-names: "Franken"
+    given-names: "Robin"
+    orcid: ""
+    affiliation: "SDSC - Swiss Data Science Center"
+date-released: 2026-08-17
+version: "0.1.0"
+doi: ""
+url: ""
+repository-code: "https://github.com/sdsc-ordes/compass"
+keywords:
+  - ontology
+  - shacl
+  - sparql
+  - interactive map
+license: "apache-2.0"

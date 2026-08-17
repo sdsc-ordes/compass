@@ -26,6 +26,6 @@ Use workspace skills from `.github/skills`.
 
 1. Load up to three skills by default.
 2. Use more skills only when the user explicitly asks for cross-domain synthesis.
-3. Prefer concrete, executable examples tied to this repository (`ontology/`, `backend/`, `frontend/`).
+3. Prefer concrete, executable examples tied to this repository (`src/ontology/`, `src/backend/`, `src/frontend/`).
 4. When editing Turtle, preserve existing prefixes and naming conventions.
 5. When suggesting commands, use reproducible project-local steps.

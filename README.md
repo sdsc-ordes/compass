@@ -5,9 +5,12 @@ An interactive map of ocean-focused research institutes, NGOs, and intergovernme
 This branch is the **client–server version**: a FastAPI backend answers SPARQL queries over the ontology and serves GeoJSON, and the widget fetches from it at runtime. The `serverless` branch does the same work in the browser with no backend — pick whichever is easier to host.
 
 ```
-ontology/   – Turtle files: instance data, SHACL shapes, SKOS vocabularies (source of truth)
-backend/    – FastAPI + Oxigraph; serves GeoJSON, filter schema and facet counts
-frontend/   – Svelte + MapLibre widget, built as a web component
+src/ontology/   – Turtle files: instance data, SHACL shapes, SKOS vocabularies (source of truth)
+src/backend/    – FastAPI + Oxigraph; serves GeoJSON, filter schema and facet counts
+src/frontend/   – Svelte + MapLibre widget, built as a web component
+docker/         – Dockerfiles and nginx config for the Compose stack
+tools/nix/      – the Nix flake providing the dev shell
+docs/           – contribution and development guides
 ```
 
 ## Setup
@@ -24,20 +27,20 @@ uv --version
 node --version                                     # expect v20 or newer
 ```
 
-No system Python needed — uv fetches its own Python 3.11, pinned in `backend/.python-version`.
+No system Python needed — uv fetches its own Python 3.11, pinned in `src/backend/.python-version`.
 
 ### Option B — Nix
 
 Supplies uv, Node 22 and Python 3.11 in one shell:
 
 ```bash
-nix develop        # from the repo root, then run the commands below normally
+nix develop ./tools/nix        # then run the commands below normally
 ```
 
-To run a single command without entering the shell, point at the flake directory:
+To run a single command without entering the shell:
 
 ```bash
-cd frontend && nix develop .. --command npm run dev
+cd src/frontend && nix develop ../../tools/nix --command npm run dev
 ```
 
 On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel that links `libstdc++.so.6`, which NixOS does not provide globally; the flake sets the `LD_LIBRARY_PATH` that makes it loadable. Outside the shell, any Python command fails.
@@ -47,12 +50,12 @@ On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel th
 Two terminals. Backend first — the map is blank without it:
 
 ```bash
-cd backend
+cd src/backend
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
 ```bash
-cd frontend
+cd src/frontend
 npm install
 npm run dev
 ```
@@ -62,7 +65,7 @@ Open <http://localhost:5173>.
 ## Build it
 
 ```bash
-cd frontend
+cd src/frontend
 npm run build         # → dist/compass-map.js
 ```
 
@@ -79,7 +82,7 @@ Deploying this branch means hosting the FastAPI app somewhere the browser can re
 
 ## Change the map data
 
-Edit `ontology/compass.ttl` — copy an existing instance block and adjust it. The backend reads the Turtle files at startup, so restart uvicorn to pick up changes.
+Edit `src/ontology/compass.ttl` — copy an existing instance block and adjust it. The backend reads the Turtle files at startup, so restart uvicorn to pick up changes.
 
 | File | Purpose |
 |---|---|
@@ -90,11 +93,11 @@ Edit `ontology/compass.ttl` — copy an existing instance block and adjust it. T
 
 Adding a filter dimension means adding a property shape to `shapes.ttl` — the filter panel and the query follow automatically.
 
-Country and marine boundary polygons come from `frontend/scripts/build-regions.mjs` (needs network); re-run it only after adding a Country/Area concept.
+Country and marine boundary polygons come from `src/frontend/scripts/build-regions.mjs` (needs network); re-run it only after adding a Country/Area concept.
 
 ## Tests
 
 ```bash
-cd backend && uv run pytest tests/ -v   # API, SHACL schema, SPARQL builder, ontology contract
-cd frontend && npm run check            # Svelte + TypeScript
+cd src/backend && uv run pytest tests/ -v   # API, SHACL schema, SPARQL builder, ontology contract
+cd src/frontend && npm run check            # Svelte + TypeScript
 ```
