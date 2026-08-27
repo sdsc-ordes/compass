@@ -111,10 +111,10 @@
     onTypeFilterChange([...selectedTypeIris]);
   }
 
-  const PROJECT_IRI = 'http://example.org/ocean-org/ontology#Project';
   let coordByIri = new Map<string, [number, number]>();
-  let orgToProjectIris = new Map<string, string[]>();
-  let projectToOrgIri = new Map<string, string>();
+  // Symmetric: a link declared on either side connects both, so clicking either
+  // end draws the same lines.
+  let neighboursByIri = new Map<string, Set<string>>();
 
   // Pinned selection (click-to-persist connections)
   let selectedIri: string | null = null;
@@ -433,7 +433,7 @@
 
   // relatedProject is [{iri, label}] on the raw features, and a JSON string on
   // features read back off the rendered map.
-  function projectIrisOf(raw: any): string[] {
+  function linkedIrisOf(raw: any): string[] {
     let list = raw;
     if (typeof raw === 'string') {
       try { list = JSON.parse(raw); } catch { return []; }
@@ -442,20 +442,29 @@
     return list.map((p: any) => (typeof p === 'string' ? p : p?.iri)).filter(Boolean);
   }
 
+  function connect(a: string, b: string) {
+    if (!neighboursByIri.has(a)) neighboursByIri.set(a, new Set());
+    neighboursByIri.get(a)!.add(b);
+  }
+
   function buildIndex() {
     coordByIri = new Map();
-    orgToProjectIris = new Map();
-    projectToOrgIri = new Map();
+    neighboursByIri = new Map();
     for (const feature of entities) {
-      if (!feature.geometry?.coordinates) continue;
-      const { id: iri, typeIri, relatedProject } = feature.properties;
-      if (!iri) continue;
+      const iri = feature.properties?.id;
+      if (!iri || !feature.geometry?.coordinates) continue;
       coordByIri.set(iri, [feature.geometry.coordinates[0], feature.geometry.coordinates[1]]);
-      if (typeIri === PROJECT_IRI) continue;
-      const pIris = projectIrisOf(relatedProject);
-      if (pIris.length) {
-        orgToProjectIris.set(iri, pIris);
-        for (const pIri of pIris) projectToOrgIri.set(pIri, iri);
+    }
+    // Second pass: coordinates for both ends must be known before linking, and
+    // regions carry links but no geometry, so they can never be an endpoint.
+    for (const feature of entities) {
+      const { id: iri, relatedProject, relatedOrganization } = feature.properties ?? {};
+      if (!iri || !coordByIri.has(iri)) continue;
+      const linked = [...linkedIrisOf(relatedProject), ...linkedIrisOf(relatedOrganization)];
+      for (const other of linked) {
+        if (other === iri || !coordByIri.has(other)) continue;
+        connect(iri, other);
+        connect(other, iri);
       }
     }
     updateConnectionsSource();
@@ -465,43 +474,29 @@
     const src = map.getSource('entities-connections') as any;
     if (!src) return;
     // Collect all features that participate in at least one connection
-    const connectedIris = new Set<string>([
-      ...orgToProjectIris.keys(),
-      ...projectToOrgIri.keys()
-    ]);
+    const connectedIris = new Set<string>(neighboursByIri.keys());
     const features = entities.filter(f => connectedIris.has(f.properties?.id));
     src.setData({ type: 'FeatureCollection', features });
   }
 
-  function showConnections(featureIri: string, typeIri: string) {
+  function showConnections(featureIri: string) {
     const src = map.getSource('connections') as any;
     if (!src) { console.warn('[Compass] connections source not found'); return; }
     const srcCoords = coordByIri.get(featureIri);
-    if (!srcCoords) { console.warn('[Compass] no coords for', featureIri); return; }
-    const lines: any[] = [];
-    if (typeIri === PROJECT_IRI) {
-      const orgIri = projectToOrgIri.get(featureIri);
-      if (orgIri) {
-        const orgCoords = coordByIri.get(orgIri);
-        if (orgCoords) lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: [srcCoords, orgCoords] }, properties: {} });
-      }
-    } else {
-      for (const pIri of orgToProjectIris.get(featureIri) ?? []) {
-        const pCoords = coordByIri.get(pIri);
-        if (pCoords) lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: [srcCoords, pCoords] }, properties: {} });
-      }
-    }
-    src.setData({ type: 'FeatureCollection', features: lines });
+    if (!srcCoords) return;
 
-    // Show the connection endpoint nodes from the non-clustered source so
-    // lines terminate on individual dots rather than cluster bubbles.
-    let endpointIris: string[] = [];
-    if (typeIri === PROJECT_IRI) {
-      const orgIri = projectToOrgIri.get(featureIri);
-      if (orgIri) endpointIris = [orgIri];
-    } else {
-      endpointIris = orgToProjectIris.get(featureIri) ?? [];
-    }
+    const endpointIris = [...(neighboursByIri.get(featureIri) ?? [])];
+    src.setData({
+      type: 'FeatureCollection',
+      features: endpointIris.map((iri) => ({
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: [srcCoords, coordByIri.get(iri)] },
+        properties: {},
+      })),
+    });
+
+    // Endpoint dots come from the non-clustered source so lines terminate on
+    // individual pins rather than cluster bubbles.
     if (endpointIris.length) {
       map.setFilter('connections-nodes', ['in', ['get', 'id'], ['literal', endpointIris]]);
       map.setLayoutProperty('connections-nodes', 'visibility', 'visible');
@@ -518,6 +513,32 @@
 
   const PIN_LAYERS = ['unclustered-point', 'featured-star', 'clusters'];
 
+  // A 24px dot sits on top of a country polygon, so a click a few pixels off
+  // centre used to fall through and select the region instead. Hit-test pins in
+  // a padded box around the click rather than on the exact pixel.
+  const PIN_HIT_PADDING = 12;
+
+  function pinsNear(point: any) {
+    const box: any = [
+      [point.x - PIN_HIT_PADDING, point.y - PIN_HIT_PADDING],
+      [point.x + PIN_HIT_PADDING, point.y + PIN_HIT_PADDING],
+    ];
+    const found = map.queryRenderedFeatures(box, { layers: PIN_LAYERS });
+    if (found.length < 2) return found;
+    // Several pins in the box: the one nearest the actual click wins.
+    const squaredDistance = (f: any) => {
+      const projected = map.project(f.geometry.coordinates);
+      return (projected.x - point.x) ** 2 + (projected.y - point.y) ** 2;
+    };
+    return [...found].sort((a, b) => squaredDistance(a) - squaredDistance(b));
+  }
+
+  async function expandCluster(feature: any) {
+    const zoom = await (map.getSource('entities') as any)
+      .getClusterExpansionZoom(feature.properties.cluster_id);
+    map.easeTo({ center: feature.geometry.coordinates, zoom });
+  }
+
   function clearSelection() {
     selectedIri = null;
     selectedTypeIri = null;
@@ -532,52 +553,50 @@
     } else {
       selectedIri = props.id;
       selectedTypeIri = props.typeIri;
-      showConnections(selectedIri!, selectedTypeIri!);
+      showConnections(selectedIri!);
     }
     onEntitySelect(props);
   }
 
   // Hovering previews a pin's connections; leaving falls back to the pinned one.
   function setupPinHandlers(layer: string) {
-    map.on('click', layer, (e) => selectPin(e.features![0].properties));
     map.on('mouseenter', layer, (e) => {
       map.getCanvas().style.cursor = 'pointer';
       const props = e.features![0].properties;
-      showConnections(props.id, props.typeIri);
+      showConnections(props.id);
     });
     map.on('mouseleave', layer, () => {
       map.getCanvas().style.cursor = '';
-      if (selectedIri && selectedTypeIri) showConnections(selectedIri, selectedTypeIri);
+      if (selectedIri) showConnections(selectedIri);
       else clearConnections();
     });
   }
 
   function setupEventHandlers() {
-    map.on('click', 'clusters', async (e) => {
-      const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
-      if (!features.length) return;
-      const clusterId = features[0].properties.cluster_id;
-      const zoom = await (map.getSource('entities') as any).getClusterExpansionZoom(clusterId);
-      map.easeTo({ center: (features[0].geometry as any).coordinates, zoom });
-    });
     map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = ''; });
 
     setupPinHandlers('unclustered-point');
     setupPinHandlers('featured-star');
 
+    // One click handler for the whole map, so pins, clusters and regions cannot
+    // disagree about who was clicked. Pins win within PIN_HIT_PADDING; regions
+    // only get the click when nothing is near.
     map.on('click', (e) => {
-      const hit = map.queryRenderedFeatures(e.point, { layers: [...PIN_LAYERS, 'region-fill'] });
-      if (!hit.length && selectedIri) clearSelection();
+      const [nearest] = pinsNear(e.point);
+      if (nearest) {
+        if (nearest.layer.id === 'clusters') expandCluster(nearest);
+        else selectPin(nearest.properties);
+        return;
+      }
+      const [region] = map.queryRenderedFeatures(e.point, { layers: ['region-fill'] });
+      if (region) {
+        onEntitySelect(region.properties);
+        return;
+      }
+      if (selectedIri) clearSelection();
     });
 
-    // Regions open the detail panel but draw no connection lines. Pins sit on
-    // top, so if one is under the cursor let its handler win.
-    map.on('click', 'region-fill', (e) => {
-      const pinHit = map.queryRenderedFeatures(e.point, { layers: PIN_LAYERS });
-      if (pinHit.length) return;
-      onEntitySelect(e.features![0].properties);
-    });
     map.on('mouseenter', 'region-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'region-fill', () => { map.getCanvas().style.cursor = ''; });
   }
