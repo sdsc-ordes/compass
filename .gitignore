@@ -36,9 +36,7 @@ yarn-error.log*
 .idea/
 sheet-data.tsv
 todo.md
-
-# Built from the taxonomy tables by `just sheet`
-src/ontology/taxonomy/taxonomy.ods
+.~lock.*#
 
 .agents/
 AGENTS.md

@@ -1,7 +1,6 @@
 # GENERATED FILE -- do not edit.
 #
-# Regenerate with `just data` after editing the tables in
-# src/ontology/taxonomy/.
+# Regenerate with `just data` after editing src/ontology/source-data.ods.
 
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -426,6 +425,7 @@ compass:EuropeanUnion
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "European Union"@en ;
     skos:prefLabel "Europäische Union"@de ;
+    compass:isoCode "AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX MLT NLD POL PRT ROU SVK SVN ESP SWE" ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -568,7 +568,7 @@ compass:Spain
     compass:topic compass:FossilFuels, compass:Shipping ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:species compass:Orcas, compass:SeaTurtles, compass:Whales ;
-    compass:forum ocinst:ACCOBAMS, ocinst:EUCommission, ocinst:IMO, ocinst:UNEPMAP ;
+    compass:forum ocinst:ACCOBAMS, ocinst:EUCommission, ocinst:UNEPMAP ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -614,6 +614,7 @@ compass:WestAfrica
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "West Africa"@en ;
     skos:prefLabel "Westafrika"@de ;
+    compass:isoCode "BEN BFA CPV CIV GMB GHA GIN GNB LBR MLI MRT NER NGA SEN SLE TGO" ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -626,6 +627,6 @@ compass:WesternMediterraneanSea
     compass:topic compass:Fisheries, compass:FossilFuels, compass:Shipping ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:species compass:Orcas, compass:SeaTurtles, compass:Whales ;
-    compass:forum ocinst:ACCOBAMS, ocinst:IMO ;
+    compass:forum ocinst:ACCOBAMS ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .

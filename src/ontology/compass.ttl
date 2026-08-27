@@ -1,7 +1,6 @@
 # GENERATED FILE -- do not edit.
 #
-# Regenerate with `just data` after editing the tables in
-# src/ontology/taxonomy/.
+# Regenerate with `just data` after editing src/ontology/source-data.ods.
 
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -15,7 +14,7 @@
 @prefix ocinst: <http://example.org/ocean-org/data#> .
 
 # ============================================================
-# International Forums (20)
+# International Forums (19)
 # ============================================================
 
 ocinst:ACCOBAMS
@@ -190,26 +189,6 @@ ocinst:FAOGFCM
     compass:species compass:Fish ;
     geo:lat "41.88395"^^xsd:float ;
     geo:long "12.48332"^^xsd:float .
-
-ocinst:IMO
-    a compass:InternationalForum ;
-    compass:name "IMO"@en ;
-    compass:name "IMO"@de ;
-    rdfs:label "IMO"@en ;
-    rdfs:label "IMO"@de ;
-    skos:altLabel "International Maritime Organization"@en ;
-    skos:altLabel "Internationale Seeschifffahrts-Organisation"@de ;
-    compass:location "Secretariat in London, UK"@en ;
-    compass:description "Bitte Text ergänzen"@en ;
-    compass:description "Bitte Text ergänzen"@de ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection, compass:FossilFuels, compass:Shipping ;
-    compass:pollution compass:ChemicalPollution, compass:OceanNoisePollution ;
-    compass:species compass:Whales ;
-    geo:lat "51.49075"^^xsd:float ;
-    geo:long "-0.12457"^^xsd:float .
 
 ocinst:ISA
     a compass:InternationalForum ;
@@ -386,7 +365,7 @@ ocinst:UNOC
     geo:long "-73.96806"^^xsd:float .
 
 # ============================================================
-# Networks (9)
+# Networks (7)
 # ============================================================
 
 ocinst:BFFP
@@ -422,38 +401,6 @@ ocinst:DSCC
     compass:forum ocinst:ISA ;
     geo:lat "52.37309"^^xsd:float ;
     geo:long "4.89220"^^xsd:float .
-
-ocinst:FossilFreeOceanInitiative
-    a compass:Network ;
-    compass:name "Fossil-Free Ocean Initiative"@en ;
-    compass:name "Fossil-Free Ocean Initiative"@de ;
-    rdfs:label "Fossil-Free Ocean Initiative"@en ;
-    rdfs:label "Fossil-Free Ocean Initiative"@de ;
-    compass:location "Wädenswil, Switzerland"@en ;
-    compass:description "OceanCare has been part of this initiative since 2025, which campaigns to end offshore oil and gas exploration and exploitation."@en ;
-    compass:description "OceanCare ist seit 2025 Teil dieser Initiative, die sich dafür einsetzt, die Suche und Förderung von Öl und Gas im Meer zu beenden."@de ;
-    compass:managedByOceanCare false ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:ClimateProtection, compass:FossilFuels ;
-    compass:pollution compass:OceanNoisePollution ;
-    geo:lat "47.22900"^^xsd:float ;
-    geo:long "8.67600"^^xsd:float .
-
-ocinst:FossilFuelNonProliferationTreaty
-    a compass:Network ;
-    compass:name "Fossil Fuel Treaty Initiative"@en ;
-    compass:name "Fossil Fuel Treaty Initiative"@de ;
-    rdfs:label "Fossil Fuel Treaty Initiative"@en ;
-    rdfs:label "Fossil Fuel Treaty Initiative"@de ;
-    compass:location "Geneva, Switzerland"@en ;
-    compass:description "OceanCare joined this initiative in 2025, in which more than 4,000 international organisations are calling for a non-proliferation treaty on fossil fuel."@en ;
-    compass:description "OceanCare trat dieser Initiative 2025 bei, in der mehr als 4 000 internationale Organisationen einen Nichtverbreitungsvertrag für fossile Brennstoffe fordern."@de ;
-    compass:managedByOceanCare false ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:ClimateProtection, compass:FossilFuels ;
-    compass:pollution compass:OceanNoisePollution ;
-    geo:lat "46.20440"^^xsd:float ;
-    geo:long "6.14320"^^xsd:float .
 
 ocinst:GGGI
     a compass:Network ;
@@ -537,7 +484,7 @@ ocinst:SpeciesSurvivalNetwork
     geo:long "-77.05044"^^xsd:float .
 
 # ============================================================
-# Partner Organizations (17)
+# Partner Organizations (16)
 # ============================================================
 
 ocinst:AlnitakResearchInstitute
@@ -795,21 +742,6 @@ ocinst:PelagosCetaceanResearchInstitute
     compass:species compass:DolphinsAndSmallCetaceans, compass:Whales ;
     geo:lat "35.32500"^^xsd:float ;
     geo:long "25.13060"^^xsd:float .
-
-ocinst:SaveTheMed
-    a compass:PartnerOrganization ;
-    compass:name "Save The Med"@en ;
-    compass:name "Save The Med"@de ;
-    rdfs:label "Save The Med"@en ;
-    rdfs:label "Save The Med"@de ;
-    compass:location "Mallorca, Spain"@en ;
-    compass:description "Marine conservation NGO protecting the Mediterranean ecosystem."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch ;
-    compass:pollution compass:PlasticPollution ;
-    compass:countryArea compass:Spain ;
-    geo:lat "39.57000"^^xsd:float ;
-    geo:long "2.65000"^^xsd:float .
 
 ocinst:TethysResearchInstitute
     a compass:PartnerOrganization ;

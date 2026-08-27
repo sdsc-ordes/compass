@@ -1,4 +1,4 @@
-"""Tests for the taxonomy table to RDF generator."""
+"""Tests for the source-data to RDF generator."""
 import sys
 from pathlib import Path
 
@@ -68,9 +68,9 @@ def test_class_membership(tables):
     for pin in pins:
         counts[pin["class"]] = counts.get(pin["class"], 0) + 1
     assert counts == {
-        "InternationalForum": 20,
-        "Network": 9,
-        "PartnerOrganization": 17,
+        "InternationalForum": 19,
+        "Network": 7,
+        "PartnerOrganization": 16,
         "Project": 2,
     }
 
@@ -156,11 +156,41 @@ def test_non_numeric_cell_is_reported():
     assert len(problems.items) == 1
 
 
-def test_a_wrong_header_names_the_columns(tmp_path):
-    table = tmp_path / "concepts.tsv"
-    table.write_text("id\tdimension\tname_en\n", encoding="utf-8")
+def test_a_wrong_header_names_the_columns():
     with pytest.raises(gen.SheetError, match="missing"):
-        gen.read_table(table, gen.CONCEPT_COLUMNS)
+        gen.read_table(gen.CONCEPTS, gen.CONCEPT_COLUMNS + ["no_such_column"])
+
+
+def test_an_unknown_sheet_is_named():
+    with pytest.raises(gen.SheetError, match="no sheet named"):
+        gen.read_table("nope", gen.SCHEME_COLUMNS)
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [("47.22953", "47.22953"), ("148.0", "148"), ("", "")],
+)
+def test_stored_numbers_beat_displayed_text(text, expected):
+    """A spreadsheet may display a rounded number; the stored value is authoritative."""
+    from odf.table import TableCell
+    from odf.text import P
+
+    cell = TableCell(valuetype="float", value=text) if text else TableCell(valuetype="string")
+    cell.addElement(P(text="rounded"))
+    assert gen._cell_text(cell) == (expected if text else "rounded")
+
+
+def test_repeated_cells_expand():
+    """Spreadsheets pack runs of identical cells; the reader must unpack them."""
+    from odf.table import TableCell, TableRow
+    from odf.text import P
+
+    row = TableRow()
+    first = TableCell(valuetype="string")
+    first.addElement(P(text="a"))
+    row.addElement(first)
+    row.addElement(TableCell(valuetype="string", numbercolumnsrepeated=3))
+    assert gen._row_values(row, 5) == ["a", "", "", "", ""]
 
 
 # ============================================================

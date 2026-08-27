@@ -4,8 +4,8 @@
 //
 //   node scripts/build-regions.mjs   (needs network)
 //
-// Country shapes come from Natural Earth Admin-0, keyed by the taxonomy sheet's
-// iso_codes column; a cell with several codes is dissolved from its members.
+// Country shapes come from Natural Earth Admin-0, keyed by compass:isoCode in
+// vocab.ttl; several codes on one concept are dissolved into one region.
 // MARINE below is composed from named sea polygons, so it follows coastlines.
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -21,21 +21,19 @@ const COUNTRY_TIERS = [
 ];
 const MARINE_URL = `${NE}/ne_10m_geography_marine_polys.geojson`;
 
-const CONCEPTS = join(
-  dirname(fileURLToPath(import.meta.url)), '..', '..', 'ontology', 'taxonomy', 'concepts.tsv',
+const VOCAB = join(
+  dirname(fileURLToPath(import.meta.url)), '..', '..', 'ontology', 'vocab.ttl',
 );
 
 // regionKey -> ISO3 codes, one entry per Country/Area concept that has any.
 // Concepts with no code (Arctic, the seas) are covered by MARINE instead.
 function countryRegions() {
-  const [header, ...lines] = readFileSync(CONCEPTS, 'utf8').trim().split('\n');
-  const column = Object.fromEntries(header.split('\t').map((name, i) => [name, i]));
   const regions = [];
-  for (const line of lines) {
-    const cells = line.split('\t');
-    if (cells[column.dimension] !== 'CountryArea') continue;
-    const codes = (cells[column.iso_codes] || '').trim().split(/\s+/).filter(Boolean);
-    if (codes.length) regions.push([cells[column.id], codes]);
+  for (const block of readFileSync(VOCAB, 'utf8').split('\n\n')) {
+    if (!block.includes('compass:CountryArea ;')) continue;
+    const id = block.match(/^compass:(\w+)/m)?.[1];
+    const codes = block.match(/compass:isoCode "([^"]+)"/)?.[1];
+    if (id && codes) regions.push([id, codes.trim().split(/\s+/)]);
   }
   return regions;
 }

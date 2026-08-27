@@ -1,9 +1,10 @@
 [project]
 name = "compass-tools"
 version = "0.1.0"
-description = "Ontology generation from the taxonomy sheet"
+description = "Ontology generation from the source-data workbook"
 requires-python = ">=3.11"
 dependencies = [
+    "odfpy>=1.4",
     "pyshacl>=0.31.0",
     "rdflib>=7.6.0",
 ]
@@ -11,7 +12,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "hypothesis>=6.100",
-    "odfpy>=1.4",
     "pytest>=8.0",
 ]
 

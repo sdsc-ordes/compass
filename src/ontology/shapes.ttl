@@ -168,7 +168,7 @@ compass:wpEntityTagIdDe a rdf:Property ;
 
 compass:isoCode a rdf:Property ;
     rdfs:label "ISO / boundary code"@en ;
-    rdfs:comment "Boundary lookup key for a Country/Area concept (ISO 3166-1 alpha-3, or a custom code for sub-national/marine areas). Mirrored by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
+    rdfs:comment "Boundary lookup key for a Country/Area concept: an ISO 3166-1 alpha-3 code, or several separated by spaces for a region dissolved from its members. Read by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
     rdfs:range xsd:string .
 
 # -- External properties (stub declarations) --

@@ -5,12 +5,11 @@ An interactive map of ocean-focused research institutes, NGOs, and intergovernme
 This branch is the **client–server version**: a FastAPI backend answers SPARQL queries over the ontology and serves GeoJSON, and the widget fetches from it at runtime. The `serverless` branch does the same work in the browser with no backend — pick whichever is easier to host.
 
 ```
-src/ontology/   – SHACL shapes, and the Turtle files generated from taxonomy/
-src/ontology/taxonomy/ – the three tables the content lives in (source of truth)
+src/ontology/   – source-data.ods (source of truth), SHACL shapes, generated Turtle
 src/backend/    – FastAPI + Oxigraph; serves GeoJSON, filter schema and facet counts
 src/frontend/   – Svelte + MapLibre widget, built as a web component
 docker/         – Dockerfiles and nginx config for the Compose stack
-tools/scripts/  – the ontology generator, the workbook builder, and their tests
+tools/scripts/  – the ontology generator and its tests
 tools/nix/      – the Nix flake providing the dev shell
 docs/           – contribution and development guides
 ```
@@ -84,8 +83,8 @@ Deploying this branch means hosting the FastAPI app somewhere the browser can re
 
 ## Change the map data
 
-`compass.ttl` and `vocab.ttl` are **generated** from three tab-separated tables in
-`src/ontology/taxonomy/`. Edit a table, regenerate, review the diff:
+`compass.ttl` and `vocab.ttl` are **generated** from `src/ontology/source-data.ods`,
+a spreadsheet with three sheets. Edit it, regenerate, review the diff:
 
 ```bash
 just data          # regenerate; SHACL validation gates it
@@ -96,9 +95,7 @@ The backend reads the Turtle files at startup, so restart uvicorn to pick up cha
 
 | File | Purpose |
 |---|---|
-| `src/ontology/taxonomy/schemes.tsv` | **Source of truth** — the six tag dimensions and what to call them |
-| `src/ontology/taxonomy/concepts.tsv` | **Source of truth** — one row per tag term |
-| `src/ontology/taxonomy/pins.tsv` | **Source of truth** — one row per thing on the map |
+| `src/ontology/source-data.ods` | **Source of truth** — `schemes` (the six tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
 | `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
 | `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
 | `src/ontology/compass.ttl` | *Generated* — instance data (the pins on the map) |
@@ -111,32 +108,25 @@ becomes `compass:forum`. So adding a tag to a pin means adding an id to its
 `links` cell — nothing else. There is no configuration file and no mapping to
 keep in step.
 
-A link to an id that does not exist fails the run, naming the table, the row and
+A link to an id that does not exist fails the run, naming the sheet, the row and
 the id. Mistakes are collected across the whole run rather than reported one per
 attempt.
 
 `just data-check` fails if the committed Turtle differs from a fresh run, which
-catches a hand-edit of a generated file.
+catches an edit that was never regenerated.
 
-### Editing in Google Sheets
+Upload the workbook to Google Sheets to edit it (the three sheets import as tabs),
+then download it back as `.ods` over the committed file and run `just data`.
 
-The `.tsv` files are the source of truth because they diff usefully in review, but
-nobody has to edit them by hand:
-
-```bash
-just sheet         # → src/ontology/taxonomy/taxonomy.xlsx (not committed)
-```
-
-Import that workbook into Google Sheets — it arrives as three tabs with the header
-frozen, columns sized, and dropdowns on `dimension` and `class`. Edit, then export
-each tab back over its `.tsv` and run `just data`.
-
-Adding a filter dimension means adding a property shape to `shapes.ttl` — the filter panel and the query follow automatically.
+Git cannot diff a spreadsheet, so review happens on the generated Turtle: it is
+deterministic and line-diffable, and every change in the workbook shows up there
+as a changed triple. The one exception is the `notes` column, which is editorial
+and never reaches the RDF.
 
 Country and marine boundary polygons are built separately by `just regions`
-(needs network). Its `COUNTRY`/`COUNTRY_GROUP`/`MARINE` tables mirror the
-Country/Area concepts by hand, so after `just data` adds or renames a region,
-update `src/frontend/scripts/build-regions.mjs` to match and re-run it.
+(needs network). It reads `compass:isoCode` out of `vocab.ttl`, so adding a
+region with a code needs no change there; the `MARINE` table for seas is still
+maintained by hand in `src/frontend/scripts/build-regions.mjs`.
 
 ## Tests
 

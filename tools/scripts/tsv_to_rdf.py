@@ -1,9 +1,9 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["rdflib>=7.0,<8", "pyshacl>=0.30,<0.32"]
+# dependencies = ["rdflib>=7.0,<8", "pyshacl>=0.30,<0.32", "odfpy>=1.4"]
 # ///
-"""Generate compass.ttl and vocab.ttl from the tables in src/ontology/taxonomy/.
+"""Generate compass.ttl and vocab.ttl from src/ontology/source-data.ods.
 
 Rows carry their own `id` and link by id in a `links` column; a link's predicate
 follows what it points at, so there is no mapping to configure.
@@ -17,7 +17,6 @@ input produces byte-identical output.
 from __future__ import annotations
 
 import argparse
-import csv
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -26,10 +25,10 @@ from rdflib import Graph
 
 REPO = Path(__file__).resolve().parents[2]
 ONTOLOGY_DIR = REPO / "src" / "ontology"
-TAXONOMY_DIR = ONTOLOGY_DIR / "taxonomy"
-SCHEMES = TAXONOMY_DIR / "schemes.tsv"
-CONCEPTS = TAXONOMY_DIR / "concepts.tsv"
-PINS = TAXONOMY_DIR / "pins.tsv"
+WORKBOOK = ONTOLOGY_DIR / "source-data.ods"
+SCHEMES = "schemes"
+CONCEPTS = "concepts"
+PINS = "pins"
 SHAPES = ONTOLOGY_DIR / "shapes.ttl"
 OUT_DATA = ONTOLOGY_DIR / "compass.ttl"
 OUT_VOCAB = ONTOLOGY_DIR / "vocab.ttl"
@@ -116,8 +115,7 @@ LANGUAGE_ORDER = ["@en", "@de"]
 BANNER = (
     "# GENERATED FILE -- do not edit.\n"
     "#\n"
-    "# Regenerate with `just data` after editing the tables in\n"
-    "# src/ontology/taxonomy/.\n"
+    "# Regenerate with `just data` after editing src/ontology/source-data.ods.\n"
 )
 
 PREFIXES = [
@@ -151,8 +149,8 @@ class Problems:
 
     items: list[str] = field(default_factory=list)
 
-    def add(self, table: Path, row: int, message: str) -> None:
-        self.items.append(f"  {table.name}:{row}  {message}")
+    def add(self, table: str, row: int, message: str) -> None:
+        self.items.append(f"  {table}:{row}  {message}")
 
     def raise_if_any(self) -> None:
         if self.items:
@@ -167,40 +165,84 @@ class Problems:
 @dataclass(frozen=True)
 class Row:
     number: int  # 1-based, matching what a spreadsheet shows
-    table: Path
+    table: str  # sheet name
     cells: dict[str, str]
 
     def __getitem__(self, column: str) -> str:
         return self.cells.get(column, "")
 
 
-def read_table(path: Path, columns: list[str]) -> list[Row]:
-    """Read one tab-separated table, requiring exactly the expected header."""
-    if not path.exists():
-        raise SheetError(f"{display(path)} is missing")
-    with path.open(encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        header = reader.fieldnames or []
-        if header != columns:
-            missing = [c for c in columns if c not in header]
-            extra = [c for c in header if c not in columns]
-            detail = ", ".join(
-                part
-                for part in (
-                    f"missing {missing}" if missing else "",
-                    f"unexpected {extra}" if extra else "",
-                    "" if (missing or extra) else "columns are in the wrong order",
-                )
-                if part
+def _cell_text(cell) -> str:
+    """A cell's value, preferring the stored number over its displayed form."""
+    from odf.text import P
+
+    if cell.getAttribute("valuetype") == "float":
+        stored = cell.getAttribute("value")
+        if stored is not None:
+            # Trim the trailing .0 a spreadsheet adds to whole numbers.
+            return stored[:-2] if stored.endswith(".0") else stored
+    return "\n".join(str(p) for p in cell.getElementsByType(P)).strip()
+
+
+def _row_values(row, width: int) -> list[str]:
+    """Expand a row's cells, honouring the repeat counts spreadsheets pack with."""
+    from odf.table import TableCell
+
+    values: list[str] = []
+    for cell in row.getElementsByType(TableCell):
+        if len(values) >= width:
+            break
+        repeat = int(cell.getAttribute("numbercolumnsrepeated") or 1)
+        values.extend([_cell_text(cell)] * min(repeat, width - len(values)))
+    return values + [""] * (width - len(values))
+
+
+def _sheet(name: str):
+    from odf.opendocument import load
+    from odf.table import Table
+
+    if not WORKBOOK.exists():
+        raise SheetError(f"{display(WORKBOOK)} is missing")
+    for table in load(WORKBOOK).spreadsheet.getElementsByType(Table):
+        if table.getAttribute("name") == name:
+            return table
+    raise SheetError(f"{display(WORKBOOK)} has no sheet named {name!r}")
+
+
+def read_table(name: str, columns: list[str]) -> list[Row]:
+    """Read one sheet of the workbook, requiring exactly the expected header."""
+    from odf.table import TableRow
+
+    sheet_rows = _sheet(name).getElementsByType(TableRow)
+    if not sheet_rows:
+        raise SheetError(f"sheet {name!r} is empty")
+
+    header = [h for h in _row_values(sheet_rows[0], len(columns) + 8) if h]
+    if header != columns:
+        missing = [c for c in columns if c not in header]
+        extra = [c for c in header if c not in columns]
+        detail = ", ".join(
+            part
+            for part in (
+                f"missing {missing}" if missing else "",
+                f"unexpected {extra}" if extra else "",
+                "" if (missing or extra) else "columns are in the wrong order",
             )
-            raise SheetError(f"{display(path)}: {detail}")
-        rows = []
-        for number, cells in enumerate(reader, start=2):
-            stripped = {k: (v or "").strip() for k, v in cells.items() if k is not None}
-            if not any(stripped.values()):
-                continue  # a blank spacer row
-            rows.append(Row(number=number, table=path, cells=stripped))
-        return rows
+            if part
+        )
+        raise SheetError(f"sheet {name!r}: {detail}")
+
+    rows = []
+    number = 1
+    for sheet_row in sheet_rows[1:]:
+        repeat = int(sheet_row.getAttribute("numberrowsrepeated") or 1)
+        values = _row_values(sheet_row, len(columns))
+        # A repeated row is spreadsheet padding, so only a filled one counts.
+        for _ in range(repeat if any(values) else 1):
+            number += 1
+            if any(values):
+                rows.append(Row(number=number, table=name, cells=dict(zip(columns, values))))
+    return rows
 
 
 # ============================================================
@@ -222,7 +264,7 @@ def index_terms(concepts: list[Row], pins: list[Row], problems: Problems) -> dic
                 problems.add(
                     row.table, row.number,
                     f"id {identifier!r} is already used by "
-                    f"{seen[identifier].table.name}:{seen[identifier].number}",
+                    f"{seen[identifier].table}:{seen[identifier].number}",
                 )
                 continue
             if row[column] not in allowed:
@@ -309,8 +351,7 @@ def concept_triples(row: Row, kinds: dict[str, str], problems: Problems) -> Trip
     wp_tag_id = number(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
-    # Only a single code is a boundary key; several means a dissolved region.
-    if row["iso_codes"] and " " not in row["iso_codes"]:
+    if row["iso_codes"]:
         triples.append(("compass:isoCode", f'"{row["iso_codes"]}"'))
     triples += link_triples(parse_links(row, kinds, problems))
     triples += [("skos:inScheme", scheme), ("skos:topConceptOf", scheme)]

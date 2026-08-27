@@ -8,17 +8,13 @@ root_dir := `git rev-parse --show-toplevel`
 default:
     just --list
 
-# Regenerate compass.ttl and vocab.ttl from the taxonomy tables.
+# Regenerate compass.ttl and vocab.ttl from the source-data workbook.
 data:
     cd "{{root_dir}}/tools/scripts" && uv run tsv_to_rdf.py
 
 # Fail if the committed ontology differs from a fresh run.
 data-check:
     cd "{{root_dir}}/tools/scripts" && uv run tsv_to_rdf.py --check
-
-# Pack the taxonomy tables into a workbook for editing in Google Sheets.
-sheet:
-    cd "{{root_dir}}/tools/scripts" && uv run --group dev build_workbook.py
 
 # Rebuild the region boundary polygons from Natural Earth (needs network).
 regions:
