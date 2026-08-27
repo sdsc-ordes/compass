@@ -1,9 +1,9 @@
 FROM node:22-alpine AS build
 
 WORKDIR /app
-COPY frontend/package.json frontend/package-lock.json ./
+COPY src/frontend/package.json src/frontend/package-lock.json ./
 RUN npm ci
-COPY frontend/ ./
+COPY src/frontend/ ./
 RUN npm run build && gzip -9 -k dist/compass-map.js
 
 FROM nginx:alpine

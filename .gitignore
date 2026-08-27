@@ -4,13 +4,14 @@
 
 # Node / frontend
 node_modules/
-frontend/node_modules/
-frontend/dist/
+src/frontend/node_modules/
+src/frontend/dist/
+share/compass-map.js
 
 # Python / backend
 .venv/
-backend/.venv/
-backend/states.db
+src/backend/.venv/
+src/backend/states.db
 __pycache__/
 *.py[cod]
 *.pyo
@@ -18,6 +19,11 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.hypothesis/
+
+# Nix / direnv
+.direnv/
+.output/
 
 # Logs
 *.log
@@ -31,3 +37,9 @@ yarn-error.log*
 .idea/
 sheet-data.tsv
 todo.md
+.~lock.*#
+
+.agents/
+AGENTS.md
+CLAUDE.md
+.claude/skills
