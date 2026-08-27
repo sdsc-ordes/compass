@@ -78,6 +78,11 @@
   $: if (mounted && apiurl) {
     fetchEntities(apiurl, lang, activeFilters);
     fetchFacets(apiurl, lang, activeFilters);
+  } else if (mounted && !apiurl) {
+    // Without a backend there is nothing to wait for; say so rather than
+    // spinning forever on the initial isLoading.
+    isLoading = false;
+    error = 'No backend configured. Set the apiurl attribute on <compass-map>.';
   }
 
   // Discards the results of a request that a newer one has superseded.
@@ -352,6 +357,7 @@
       {#if selectedEntity && sidebarVisible}
         <EntitySidebar
           entity={selectedEntity}
+          {apiurl}
           {lang}
           regionCount={selectedEntity?.id ? facetCounts.countryArea?.[selectedEntity.id] : undefined}
           onFilterByRegion={handleFilterByRegion}

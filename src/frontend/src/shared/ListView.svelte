@@ -1,6 +1,6 @@
 <script lang="ts">
   import { i18n, type Lang } from './i18n';
-  import { ExternalLink, Info, Heart, Compass } from 'lucide-svelte';
+  import { ExternalLink, Info } from 'lucide-svelte';
 
   export let entities: any[] = [];
   export let lang: Lang = 'en';
@@ -23,17 +23,6 @@
           <td>
             <div class="title-cell">
               <strong>{entity.properties.label}</strong>
-              {#if entity.properties.keySentence}
-                <span class="key-sentence">{entity.properties.keySentence}</span>
-              {/if}
-              <div class="badges-row">
-                {#if entity.properties.offersResearchTrips}
-                  <span class="mini-badge badge-trips"><Compass size={11} /> {t.propResearchTrips}</span>
-                {/if}
-                {#if entity.properties.donationUrl}
-                  <a class="mini-badge badge-donate" href={entity.properties.donationUrl} target="_blank" rel="noopener noreferrer"><Heart size={11} /> {t.propDonation}</a>
-                {/if}
-              </div>
               <div class="prop-rows">
                 {#each ['workArea', 'topic', 'species', 'countryArea'] as dimId}
                   {#if (entity.properties[dimId] || []).length > 0}
@@ -180,34 +169,6 @@
   }
 
   .chip-focus { background: #dbeafe; color: #1d4ed8; }
-
-  .key-sentence {
-    font-size: 0.8rem;
-    color: #475569;
-    font-style: italic;
-    line-height: 1.4;
-  }
-
-  .badges-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 4px;
-  }
-
-  .mini-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 1px 7px;
-    border-radius: 100px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-decoration: none;
-  }
-  .badge-trips  { background: #ede9fe; color: #7c3aed; }
-  .badge-donate { background: #fce7f3; color: #db2777; }
-  .badge-donate:hover { opacity: 0.8; }
 
   .founded-year {
     font-size: 0.72rem;

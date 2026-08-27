@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { X, ExternalLink, Heart, Compass, BookOpen, MapPin } from 'lucide-svelte';
+  import { X, ExternalLink, BookOpen, MapPin } from 'lucide-svelte';
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { i18n, type Lang } from './i18n';
+  import { loadDimensions, type Dimension } from './dimensions';
 
   // Raw MapLibre feature properties (nested objects arrive as JSON strings)
   export let entity: any;
+  export let apiurl = '';
   export let lang: Lang = 'en';
   export let regionCount: number | undefined = undefined;
   export let onFilterByRegion: (iri: string) => void = () => {};
@@ -19,28 +21,31 @@
     try { return JSON.parse(raw) as T; } catch { return fallback; }
   }
 
-  // Tag dimensions: each arrives as a JSON-stringified array of {iri, label} objects.
-  // The list of tag property IDs matches the SHACL property shapes in shapes.ttl.
-  const tagDimensions: {id: string, labelEn: string, labelDe: string, chipClass: string}[] = [
-    { id: 'workArea',       labelEn: 'Work Area',       labelDe: 'Arbeitsbereich',    chipClass: 'chip-tag' },
-    { id: 'conservation',   labelEn: 'Conservation',    labelDe: 'Schutz',            chipClass: 'chip-tag' },
-    { id: 'topic',          labelEn: 'Topic',           labelDe: 'Thema',             chipClass: 'chip-focus' },
-    { id: 'pollution',      labelEn: 'Pollution',       labelDe: 'Verschmutzung',     chipClass: 'chip-species' },
-    { id: 'species',        labelEn: 'Species',         labelDe: 'Arten',             chipClass: 'chip-species' },
-    { id: 'countryArea',    labelEn: 'Country / Area',  labelDe: 'Land / Gebiet',     chipClass: 'chip-region' },
-    { id: 'forum',          labelEn: 'Forum',           labelDe: 'Forum',             chipClass: 'chip-focus' },
-    { id: 'relatedProject', labelEn: 'Related Project', labelDe: 'Verwandtes Projekt', chipClass: 'chip-focus' },
-  ];
+  // Which dimensions exist, and their labels, come from the filter schema, so
+  // there is no second list to keep in step with the SHACL shapes. Only the
+  // chip colour is a presentational choice made here.
+  const CHIP_CLASS: Record<string, string> = {
+    workArea: 'chip-tag',
+    conservation: 'chip-tag',
+    topic: 'chip-focus',
+    pollution: 'chip-species',
+    species: 'chip-species',
+    countryArea: 'chip-region',
+    forum: 'chip-focus',
+    relatedProject: 'chip-focus',
+  };
 
-  function getTagLabel(dim: typeof tagDimensions[0]): string {
-    return lang === 'de' ? dim.labelDe : dim.labelEn;
-  }
+  let dimensions: Dimension[] = [];
+  $: loadDimensions(apiurl, lang).then((d) => (dimensions = d));
 
-  // Parse all tag dimensions reactively
-  $: parsedTags = tagDimensions.map(dim => ({
-    ...dim,
-    values: safeParseJson(entity?.[dim.id], [] as any[]),
-  })).filter(dim => dim.values.length > 0);
+  // Each value arrives as a JSON-stringified array of {iri, label} objects.
+  $: parsedTags = dimensions
+    .map((dim) => ({
+      ...dim,
+      chipClass: CHIP_CLASS[dim.id] ?? 'chip-tag',
+      values: safeParseJson(entity?.[dim.id], [] as any[]),
+    }))
+    .filter((dim) => dim.values.length > 0);
 </script>
 
 <aside class="entity-sidebar" transition:fly={{ x: 340, duration: 220, easing: cubicOut }}>
@@ -58,33 +63,21 @@
   </div>
 
   <div class="sidebar-body">
-    <h2 class="entity-name">{entity?.label}</h2>
+    <h2 class="entity-name" title={entity?.altLabel || ''}>{entity?.label}</h2>
 
-    {#if entity?.keySentence}
-      <p class="key-sentence">{entity.keySentence}</p>
+    {#if entity?.description}
+      <p class="description">{entity.description}</p>
     {/if}
 
     {#if entity?.foundingDate}
       <p class="founded">{t.established} {entity.foundingDate}</p>
     {/if}
 
-    {#if entity?.startDate || entity?.endDate}
-      <p class="founded">{entity.startDate || '?'} – {entity.endDate || '?'}</p>
-    {/if}
-
-    {#if entity?.country}
-      <p class="country">{entity.country}</p>
-    {/if}
-
-    {#if entity?.offersResearchTrips}
-      <span class="chip chip-trips"><Compass size={12} /> {t.researchTripsYes}</span>
-    {/if}
-
     {#if parsedTags.length > 0}
       <div class="props-section">
         {#each parsedTags as dim}
           <div class="prop-row">
-            <span class="prop-label">{getTagLabel(dim)}</span>
+            <span class="prop-label">{dim.label}</span>
             <div class="chips">
               {#each dim.values as tag}
                 {#if tag.iri}
@@ -106,19 +99,7 @@
           {t.filterByRegion}{#if regionCount}&nbsp;({regionCount}){/if}
         </button>
       {/if}
-      {#if entity?.donationUrl}
-        <a class="visit-btn donate" href={entity.donationUrl} target="_blank" rel="noopener noreferrer">
-          <Heart size={15} />
-          {t.propDonation}
-        </a>
-      {/if}
-      {#if entity?.projectUrl}
-        <a class="visit-btn primary" href={entity.projectUrl} target="_blank" rel="noopener noreferrer">
-          <ExternalLink size={15} />
-          {t.website}
-        </a>
-      {/if}
-      {#if entity?.url && !entity?.projectUrl}
+      {#if entity?.url}
         <a class="visit-btn primary" href={entity.url} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} />
           {t.website}
@@ -220,7 +201,7 @@
     line-height: 1.35;
   }
 
-  .founded, .country {
+  .founded {
     margin: 0 0 0.25rem;
     font-size: 0.8125rem;
     color: #94a3b8;
@@ -271,14 +252,12 @@
   .chip-region  { background: #ccfbf1; color: #0f766e; }
   .chip-tag     { background: #f1f5f9; color: #475569; }
   .chip-species  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-  .chip-trips    { background: #ede9fe; color: #7c3aed; display: inline-flex; align-items: center; gap: 4px; margin-top: 0.5rem; }
 
-  .key-sentence {
-    margin: 0 0 0.5rem;
-    font-size: 0.875rem;
-    color: #475569;
-    line-height: 1.45;
-    font-style: italic;
+  .description {
+    margin: 0 0 0.75rem;
+    font-size: 0.8125rem;
+    color: #334155;
+    line-height: 1.55;
   }
 
   /* ── Action buttons ── */
