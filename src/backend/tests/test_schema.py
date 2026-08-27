@@ -102,3 +102,15 @@ class TestGetPropertySpecs:
                     f"Display-only property {spec['id']} has filter_type='{spec['filter_type']}' "
                     f"instead of 'none'"
                 )
+
+    def test_unique_lang_literals_are_single_valued(self, rdflib_graph):
+        """A language-filtered rdf:langString yields one value, so the API must
+        return a plain string rather than a one-element list."""
+        specs = {s["id"]: s for s in get_property_specs(rdflib_graph)}
+        for name in ("description", "location", "altLabel"):
+            assert name in specs, f"{name} is not a property spec"
+            assert specs[name]["category"] == "lang_literal"
+            assert not specs[name]["is_multi"], (
+                f"{name} is marked multi-valued; the sidebar would render "
+                f"['text'] instead of text"
+            )

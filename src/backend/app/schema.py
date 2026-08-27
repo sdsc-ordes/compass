@@ -188,7 +188,15 @@ def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
         node_kind = g.value(prop_node, SH.nodeKind)
         max_count_val = g.value(prop_node, SH.maxCount)
 
-        is_multi = max_count_val is None or int(str(max_count_val)) != 1
+        # sh:uniqueLang allows one value per language, and the query filters to a
+        # single language, so such a property is single-valued in the result.
+        one_per_language = (
+            datatype == RDF.langString
+            and str(g.value(prop_node, SH.uniqueLang)).lower() == "true"
+        )
+        is_multi = not one_per_language and (
+            max_count_val is None or int(str(max_count_val)) != 1
+        )
         is_iri = (
             (node_kind is not None and str(node_kind) == str(SH.IRI))
             or target_class is not None
