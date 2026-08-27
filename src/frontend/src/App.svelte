@@ -350,7 +350,7 @@
       {#if viewMode === 'map'}
         <Map {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
       {:else}
-        <ListView {entities} {lang} />
+        <ListView {entities} {apiurl} {lang} />
       {/if}
 
       {#if selectedEntity && sidebarVisible}

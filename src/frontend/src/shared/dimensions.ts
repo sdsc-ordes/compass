@@ -5,6 +5,20 @@
  */
 export type Dimension = { id: string; label: string };
 
+// Chip colour per dimension; shared by the sidebar and the list view.
+const CHIP_CLASS: Record<string, string> = {
+  workArea: 'chip-tag',
+  conservation: 'chip-tag',
+  topic: 'chip-focus',
+  pollution: 'chip-species',
+  species: 'chip-species',
+  countryArea: 'chip-region',
+  forum: 'chip-focus',
+  relatedProject: 'chip-focus',
+};
+
+export const chipClass = (id: string) => CHIP_CLASS[id] ?? 'chip-tag';
+
 const EXCLUDED = new Set(['entityType']);
 
 // Preferred reading order; anything unlisted falls to the end.

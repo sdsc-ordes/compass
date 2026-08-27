@@ -3,7 +3,7 @@
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
   import { i18n, type Lang } from './i18n';
-  import { loadDimensions, type Dimension } from './dimensions';
+  import { chipClass, loadDimensions, type Dimension } from './dimensions';
 
   // Raw MapLibre feature properties (nested objects arrive as JSON strings)
   export let entity: any;
@@ -21,18 +21,7 @@
     try { return JSON.parse(raw) as T; } catch { return fallback; }
   }
 
-  // Dimensions and labels come from the filter schema; only the colour is local.
-  const CHIP_CLASS: Record<string, string> = {
-    workArea: 'chip-tag',
-    conservation: 'chip-tag',
-    topic: 'chip-focus',
-    pollution: 'chip-species',
-    species: 'chip-species',
-    countryArea: 'chip-region',
-    forum: 'chip-focus',
-    relatedProject: 'chip-focus',
-  };
-
+  // Dimensions and labels come from the filter schema.
   let dimensions: Dimension[] = [];
   $: loadDimensions(apiurl, lang).then((d) => (dimensions = d));
 
@@ -40,7 +29,7 @@
   $: parsedTags = dimensions
     .map((dim) => ({
       ...dim,
-      chipClass: CHIP_CLASS[dim.id] ?? 'chip-tag',
+      chipClass: chipClass(dim.id),
       values: safeParseJson(entity?.[dim.id], [] as any[]),
     }))
     .filter((dim) => dim.values.length > 0);

@@ -1,11 +1,17 @@
 <script lang="ts">
   import { i18n, type Lang } from './i18n';
-  import { ExternalLink, Info } from 'lucide-svelte';
+  import { chipClass, loadDimensions, type Dimension } from './dimensions';
 
   export let entities: any[] = [];
+  export let apiurl = '';
   export let lang: Lang = 'en';
 
   $: t = i18n[lang] || i18n.en;
+
+  let dimensions: Dimension[] = [];
+  $: loadDimensions(apiurl, lang).then((d) => (dimensions = d));
+
+  const tagsOf = (entity: any, id: string) => entity.properties[id] || [];
 </script>
 
 <div class="list-container">
@@ -14,7 +20,6 @@
       <tr>
         <th>{t.results} ({entities.length})</th>
         <th>{t.type}</th>
-        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -24,15 +29,13 @@
             <div class="title-cell">
               <strong>{entity.properties.label}</strong>
               <div class="prop-rows">
-                {#each ['workArea', 'topic', 'species', 'countryArea'] as dimId}
-                  {#if (entity.properties[dimId] || []).length > 0}
-                    <div class="prop-row">
-                      <span class="prop-label">{dimId}</span>
-                      <div class="prop-chips">
-                        {#each (entity.properties[dimId] || []) as tag}
-                          <span class="chip chip-focus">{tag.label || tag}</span>
-                        {/each}
-                      </div>
+                {#each dimensions as dim}
+                  {#if tagsOf(entity, dim.id).length > 0}
+                    <span class="prop-label">{dim.label}</span>
+                    <div class="prop-chips">
+                      {#each tagsOf(entity, dim.id) as tag}
+                        <span class="chip {chipClass(dim.id)}">{tag.label || tag}</span>
+                      {/each}
                     </div>
                   {/if}
                 {/each}
@@ -45,19 +48,11 @@
           <td>
             <a class="type-badge" href={entity.properties.typeIri} target="_blank" rel="noopener noreferrer">{entity.properties.type}</a>
           </td>
-          <td class="actions">
-            <button class="action-btn" title={t.details}>
-              <Info size={18} />
-            </button>
-            <button class="action-btn primary" title={t.website}>
-              <ExternalLink size={18} />
-            </button>
-          </td>
         </tr>
       {/each}
       {#if entities.length === 0}
         <tr>
-          <td colspan="3" class="empty-state">
+          <td colspan="2" class="empty-state">
             {t.noResults}
           </td>
         </tr>
@@ -93,6 +88,8 @@
     letter-spacing: 0.05em;
   }
 
+  th:last-child { width: 1%; white-space: nowrap; }
+
   .entity-row {
     transition: background 0.2s;
   }
@@ -119,20 +116,15 @@
     font-weight: 600;
   }
 
+  /* One grid for every row, so labels align and size to the longest. */
   .prop-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: baseline;
+    gap: 6px 12px;
     margin-top: 6px;
-    padding-top: 6px;
+    padding-top: 8px;
     border-top: 1px solid #f1f5f9;
-  }
-
-  .prop-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 4px;
-    margin: 2px 0;
   }
 
   .prop-label {
@@ -141,16 +133,13 @@
     color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    width: 68px;
-    flex-shrink: 0;
-    padding-top: 2px;
+    white-space: nowrap;
   }
 
   .prop-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    margin-top: 4px;
   }
 
   .chip {
@@ -159,16 +148,12 @@
     border-radius: 100px;
     font-size: 0.72rem;
     font-weight: 500;
-    text-decoration: none;
-    transition: opacity 0.15s;
   }
 
-  .chip:hover {
-    opacity: 0.75;
-    text-decoration: underline;
-  }
-
-  .chip-focus { background: #dbeafe; color: #1d4ed8; }
+  .chip-focus   { background: #dbeafe; color: #1d4ed8; }
+  .chip-region  { background: #ccfbf1; color: #0f766e; }
+  .chip-tag     { background: #f1f5f9; color: #475569; }
+  .chip-species { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 
   .founded-year {
     font-size: 0.72rem;
@@ -185,48 +170,13 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap;
   }
 
   .type-badge:hover {
     background: #e2e8f0;
     color: #334155;
     text-decoration: underline;
-  }
-
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-  }
-
-  .action-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e2e8f0;
-    background: white;
-    border-radius: 8px;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .action-btn:hover {
-    border-color: #cbd5e1;
-    color: #0f172a;
-    background: #f8fafc;
-  }
-
-  .action-btn.primary {
-    background: #0284c7;
-    border-color: #0284c7;
-    color: white;
-  }
-
-  .action-btn.primary:hover {
-    background: #0369a1;
   }
 
   .empty-state {
