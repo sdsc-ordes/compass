@@ -15,19 +15,14 @@ from app.sparql_builder import build_entities_query
 
 
 class TestParseSpecialProperties:
-    def test_extracts_project_dates(self):
-        res = {
-            "selfStart": "2010-01-01",
-            "selfEnd": "2020-12-31",
-        }
-        props = _parse_special_properties(res)
-        assert props["startDate"] == "2010-01-01"
-        assert props["endDate"] == "2020-12-31"
+    def test_extracts_entity_tag_ids(self):
+        props = _parse_special_properties({"wpEntityTagIdEn": "921"})
+        assert props["wpEntityTagIdEn"] == "921"
 
     def test_missing_fields_default_empty(self):
         props = _parse_special_properties({})
-        assert props["startDate"] == ""
-        assert props["endDate"] == ""
+        assert props["wpEntityTagIdEn"] == ""
+        assert props["wpEntityTagIdDe"] == ""
 
 
 class TestExtractProperty:

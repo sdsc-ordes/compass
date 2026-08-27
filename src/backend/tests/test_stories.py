@@ -81,7 +81,7 @@ def test_resolve_wp_tag_ids_known():
     store = MagicMock()
     store.query.return_value = [{"wpTagId": "148"}]
     result = _resolve_wp_tag_ids(
-        ["http://example.org/ocean-org/ontology#Dolphins"], store
+        ["http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"], store
     )
     assert result == [148]
 
@@ -91,7 +91,7 @@ def test_resolve_wp_tag_ids_multiple():
     store.query.return_value = [{"wpTagId": "148"}, {"wpTagId": "455"}]
     result = _resolve_wp_tag_ids(
         [
-            "http://example.org/ocean-org/ontology#Dolphins",
+            "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans",
             "http://example.org/ocean-org/ontology#AnimalAndSpeciesConservation",
         ],
         store,
@@ -143,7 +143,7 @@ def test_stories_count_mapped_tag(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#Dolphins"},
+            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
         )
 
     assert resp.status_code == 200
@@ -165,7 +165,7 @@ def test_stories_count_url_contains_tag_ids(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#Dolphins"},
+            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
         )
 
     assert resp.status_code == 200
@@ -183,7 +183,7 @@ def test_stories_count_proxy_error(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#Dolphins"},
+            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
         )
 
     assert resp.status_code == 200

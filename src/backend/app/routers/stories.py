@@ -34,7 +34,7 @@ def _resolve_wp_tag_ids(iris: List[str], store: RDFStore) -> List[int]:
     values_clause = " ".join(f"<{iri}>" for iri in iris)
     sparql = f"""
     PREFIX compass: <{COMPASS_NS}>
-    SELECT ?wpTagId WHERE {{
+    SELECT DISTINCT ?wpTagId WHERE {{
         VALUES ?concept {{ {values_clause} }}
         ?concept compass:wpTagId ?wpTagId .
     }}

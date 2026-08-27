@@ -92,8 +92,6 @@ def _sparql_preamble(lang: str) -> str:
 def _special_optionals() -> str:
     """Properties fetched for display that no entity NodeShape declares."""
     return """
-        OPTIONAL { ?s compass:startDate ?selfStart . }
-        OPTIONAL { ?s compass:endDate ?selfEnd . }
         OPTIONAL { ?s compass:wpEntityTagIdEn ?wpEntityTagIdEn . }
         OPTIONAL { ?s compass:wpEntityTagIdDe ?wpEntityTagIdDe . }
 """
@@ -101,8 +99,6 @@ def _special_optionals() -> str:
 
 def _special_selects() -> str:
     return (
-        '           (SAMPLE(?selfStart) AS ?selfStart)\n'
-        '           (SAMPLE(?selfEnd) AS ?selfEnd)\n'
         '           (SAMPLE(?wpEntityTagIdEn) AS ?wpEntityTagIdEn)\n'
         '           (SAMPLE(?wpEntityTagIdDe) AS ?wpEntityTagIdDe)\n'
     )

@@ -72,20 +72,6 @@ class TestRequiredPredicates:
         assert names, "No compass:name triples — all entities will be invisible on the map"
 
 
-class TestSpecialOptionalPredicates:
-    """Predicates referenced in _special_optionals() for type-specific fields."""
-
-    def test_project_startdate_predicate_exists(self, rdflib_graph):
-        projects = list(rdflib_graph.subjects(RDF.type, COMPASS.Project))
-        if not projects:
-            return
-        triples = list(rdflib_graph.triples((None, COMPASS.startDate, None)))
-        assert triples, (
-            "No compass:startDate triples found. "
-            "If renamed, update _special_optionals() and _parse_special_properties()."
-        )
-
-
 # -- Named property shapes drive schema.py (via entity NodeShapes) --
 
 class TestNamedPropertyShapes:
@@ -114,11 +100,11 @@ class TestNamedPropertyShapes:
             "filters will be empty and SPARQL will have no OPTIONAL clauses."
         )
 
-    def test_key_sentence_in_entity_shapes(self, rdflib_graph):
+    def test_description_in_entity_shapes(self, rdflib_graph):
         paths = self._entity_prop_paths(rdflib_graph)
-        assert COMPASS.keySentence in paths, (
-            "compass:keySentence not found in any entity NodeShape property — "
-            "key sentence field will be missing."
+        assert COMPASS.description in paths, (
+            "compass:description not found in any entity NodeShape property — "
+            "the sidebar description paragraph will be missing."
         )
 
     def test_founding_date_in_entity_shapes(self, rdflib_graph):
@@ -244,3 +230,30 @@ class TestShaclValidation:
             abort_on_first=False,
         )
         assert conforms, f"SHACL validation failed:\n{report_text}"
+
+    def test_shapes_conform_to_the_meta_shapes(self):
+        """shapes.ttl must itself satisfy shacl-shacl.ttl.
+
+        ordes:conceptShape there requires every declared rdf:Property and
+        rdfs:Class to carry a label and a comment, which is what the property
+        declarations at the top of shapes.ttl exist to satisfy.
+
+        No RDFS entailment here, unlike the instance-data check above: it would
+        infer every predicate used anywhere in the file to be an rdf:Property --
+        rdf:type, rdfs:label, the whole sh: vocabulary -- and then demand labels
+        for terms the specs own and this repo cannot annotate. Without it the
+        focus nodes are exactly what shapes.ttl declares.
+        """
+        meta_graph = Graph()
+        meta_graph.parse(os.path.join(_ONTOLOGY_DIR, "shacl-shacl.ttl"), format="turtle")
+
+        shapes_graph = Graph()
+        shapes_graph.parse(os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle")
+
+        conforms, _, report_text = pyshacl.validate(
+            shapes_graph,
+            shacl_graph=meta_graph,
+            inference="none",
+            abort_on_first=False,
+        )
+        assert conforms, f"shapes.ttl violates shacl-shacl.ttl:\n{report_text}"
