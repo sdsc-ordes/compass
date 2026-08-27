@@ -13,6 +13,7 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = [
+          pkgs.just
           pkgs.uv
           pkgs.nodejs_22
           pkgs.python311
