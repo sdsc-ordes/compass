@@ -4,14 +4,9 @@
 //
 //   node scripts/build-regions.mjs   (needs network)
 //
-// Countries come from Natural Earth Admin-0. Supranational and continental
-// regions are dissolved from their member states. Marine areas are composed from
-// Natural Earth's named sea polygons, so they follow coastlines.
-//
-// Country regions are read straight from the taxonomy sheet's iso_codes column,
-// so there is one list to maintain. A cell holding several codes is a region
-// dissolved from its member states (European Union, West Africa). MARINE below
-// is composed from named sea polygons instead, so it stays here.
+// Country shapes come from Natural Earth Admin-0, keyed by the taxonomy sheet's
+// iso_codes column; a cell with several codes is dissolved from its members.
+// MARINE below is composed from named sea polygons, so it follows coastlines.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

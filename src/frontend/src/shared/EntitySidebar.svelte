@@ -21,9 +21,7 @@
     try { return JSON.parse(raw) as T; } catch { return fallback; }
   }
 
-  // Which dimensions exist, and their labels, come from the filter schema, so
-  // there is no second list to keep in step with the SHACL shapes. Only the
-  // chip colour is a presentational choice made here.
+  // Dimensions and labels come from the filter schema; only the colour is local.
   const CHIP_CLASS: Record<string, string> = {
     workArea: 'chip-tag',
     conservation: 'chip-tag',

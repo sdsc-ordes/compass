@@ -79,8 +79,7 @@
     fetchEntities(apiurl, lang, activeFilters);
     fetchFacets(apiurl, lang, activeFilters);
   } else if (mounted && !apiurl) {
-    // Without a backend there is nothing to wait for; say so rather than
-    // spinning forever on the initial isLoading.
+    // Nothing to wait for, so clear the initial isLoading rather than spin.
     isLoading = false;
     error = 'No backend configured. Set the apiurl attribute on <compass-map>.';
   }

@@ -3,26 +3,16 @@
 # requires-python = ">=3.11"
 # dependencies = ["rdflib>=7.0,<8", "pyshacl>=0.30,<0.32"]
 # ///
-"""Generate the Compass ontology from the taxonomy tables.
+"""Generate compass.ttl and vocab.ttl from the tables in src/ontology/taxonomy/.
 
-`src/ontology/taxonomy/` holds three flat tables, each one header row followed by
-one row per thing:
+Rows carry their own `id` and link by id in a `links` column; a link's predicate
+follows what it points at, so there is no mapping to configure.
 
-    schemes.tsv   the six tag dimensions, and what to call them
-    concepts.tsv  one row per tag term
-    pins.tsv      one row per thing on the map
+    tsv_to_rdf.py            regenerate
+    tsv_to_rdf.py --check    exit 1 if the committed files are stale
 
-Rows carry their own `id`, and link to each other by id in a `links` column. The
-predicate a link becomes is decided by what the target *is*: a link to a Species
-concept becomes compass:species, a link to an InternationalForum becomes
-compass:forum. That is the whole mapping -- there is no configuration file.
-
-    tsv_to_rdf.py            regenerate compass.ttl and vocab.ttl
-    tsv_to_rdf.py --check    exit 1 if the committed files differ from a fresh run
-
-Output is a pure function of the tables: serialization pins subject order,
-predicate order and float precision, so unchanged input always produces
-byte-identical files.
+Subject order, predicate order and float precision are all pinned, so unchanged
+input produces byte-identical output.
 """
 from __future__ import annotations
 
@@ -319,8 +309,7 @@ def concept_triples(row: Row, kinds: dict[str, str], problems: Problems) -> Trip
     wp_tag_id = number(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
-    # A multi-code cell lists the member states a composite region is dissolved
-    # from; only a single code is a boundary lookup key for the map.
+    # Only a single code is a boundary key; several means a dissolved region.
     if row["iso_codes"] and " " not in row["iso_codes"]:
         triples.append(("compass:isoCode", f'"{row["iso_codes"]}"'))
     triples += link_triples(parse_links(row, kinds, problems))

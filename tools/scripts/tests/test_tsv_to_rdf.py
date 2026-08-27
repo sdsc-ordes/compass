@@ -1,9 +1,4 @@
-"""Tests for the taxonomy table to RDF generator.
-
-Two things matter most here: that the committed Turtle is exactly what a fresh run
-produces (which is what makes `just data-check` a real guard), and that a mistake
-in the tables is reported rather than silently dropped.
-"""
+"""Tests for the taxonomy table to RDF generator."""
 import sys
 from pathlib import Path
 

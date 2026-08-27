@@ -358,8 +358,7 @@ compass:RelatedProjectPropertyShape a sh:Shape ;
     sh:description "A related project."@en ;
     sh:class compass:Project .
 
-# No sh:class: the sheet links entities to both partner organizations and
-# networks, which are separate classes.
+# No sh:class: targets are partner organizations or networks, separate classes.
 compass:RelatedOrganizationPropertyShape a sh:Shape ;
     sh:path compass:relatedOrganization ;
     sh:name "Related Organization"@en ;

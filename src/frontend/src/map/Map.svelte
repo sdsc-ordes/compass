@@ -112,8 +112,7 @@
   }
 
   let coordByIri = new Map<string, [number, number]>();
-  // Symmetric: a link declared on either side connects both, so clicking either
-  // end draws the same lines.
+  // Symmetric, so a link declared on either side draws from both ends.
   let neighboursByIri = new Map<string, Set<string>>();
 
   // Pinned selection (click-to-persist connections)
@@ -455,8 +454,7 @@
       if (!iri || !feature.geometry?.coordinates) continue;
       coordByIri.set(iri, [feature.geometry.coordinates[0], feature.geometry.coordinates[1]]);
     }
-    // Second pass: coordinates for both ends must be known before linking, and
-    // regions carry links but no geometry, so they can never be an endpoint.
+    // Both ends need coordinates, so regions (links but no geometry) drop out.
     for (const feature of entities) {
       const { id: iri, relatedProject, relatedOrganization } = feature.properties ?? {};
       if (!iri || !coordByIri.has(iri)) continue;
@@ -495,8 +493,7 @@
       })),
     });
 
-    // Endpoint dots come from the non-clustered source so lines terminate on
-    // individual pins rather than cluster bubbles.
+    // Non-clustered source, so lines end on pins rather than cluster bubbles.
     if (endpointIris.length) {
       map.setFilter('connections-nodes', ['in', ['get', 'id'], ['literal', endpointIris]]);
       map.setLayoutProperty('connections-nodes', 'visibility', 'visible');
@@ -513,9 +510,8 @@
 
   const PIN_LAYERS = ['unclustered-point', 'featured-star', 'clusters'];
 
-  // A 24px dot sits on top of a country polygon, so a click a few pixels off
-  // centre used to fall through and select the region instead. Hit-test pins in
-  // a padded box around the click rather than on the exact pixel.
+  // Pins sit on top of region polygons, so an off-centre click would otherwise
+  // fall through to the country underneath.
   const PIN_HIT_PADDING = 12;
 
   function pinsNear(point: any) {
@@ -525,7 +521,7 @@
     ];
     const found = map.queryRenderedFeatures(box, { layers: PIN_LAYERS });
     if (found.length < 2) return found;
-    // Several pins in the box: the one nearest the actual click wins.
+    // Nearest to the actual click wins.
     const squaredDistance = (f: any) => {
       const projected = map.project(f.geometry.coordinates);
       return (projected.x - point.x) ** 2 + (projected.y - point.y) ** 2;
@@ -579,9 +575,8 @@
     setupPinHandlers('unclustered-point');
     setupPinHandlers('featured-star');
 
-    // One click handler for the whole map, so pins, clusters and regions cannot
-    // disagree about who was clicked. Pins win within PIN_HIT_PADDING; regions
-    // only get the click when nothing is near.
+    // One handler for the whole map: pins win within PIN_HIT_PADDING, regions
+    // only when nothing is near.
     map.on('click', (e) => {
       const [nearest] = pinsNear(e.point);
       if (nearest) {

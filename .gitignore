@@ -38,7 +38,7 @@ sheet-data.tsv
 todo.md
 
 # Built from the taxonomy tables by `just sheet`
-src/ontology/taxonomy/taxonomy.xlsx
+src/ontology/taxonomy/taxonomy.ods
 
 .agents/
 AGENTS.md

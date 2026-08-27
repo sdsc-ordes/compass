@@ -234,15 +234,9 @@ class TestShaclValidation:
     def test_shapes_conform_to_the_meta_shapes(self):
         """shapes.ttl must itself satisfy shacl-shacl.ttl.
 
-        ordes:conceptShape there requires every declared rdf:Property and
-        rdfs:Class to carry a label and a comment, which is what the property
-        declarations at the top of shapes.ttl exist to satisfy.
-
-        No RDFS entailment here, unlike the instance-data check above: it would
-        infer every predicate used anywhere in the file to be an rdf:Property --
-        rdf:type, rdfs:label, the whole sh: vocabulary -- and then demand labels
-        for terms the specs own and this repo cannot annotate. Without it the
-        focus nodes are exactly what shapes.ttl declares.
+        No RDFS entailment, unlike the instance-data check: it would infer every
+        predicate used in the file to be an rdf:Property and then demand labels
+        for rdf:type, rdfs:label and the sh: vocabulary.
         """
         meta_graph = Graph()
         meta_graph.parse(os.path.join(_ONTOLOGY_DIR, "shacl-shacl.ttl"), format="turtle")

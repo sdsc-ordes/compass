@@ -1,12 +1,7 @@
 /**
- * The tag dimensions an entity can be described by.
- *
- * These come from `/api/filters/schema`, which the backend derives from the
- * SHACL property shapes — so adding a property shape gives both a filter and a
- * sidebar row, with no list to keep in step by hand. Only multiselect widgets
- * are tag dimensions; sliders, toggles and the synthetic entity-type filter are
- * not. Display-only properties (description, altLabel, relatedOrganization) are
- * absent from the schema by design and so never appear as chips.
+ * Tag dimensions, taken from the filter schema the backend derives from the
+ * SHACL shapes. Only multiselect widgets qualify; sliders, toggles and the
+ * synthetic entity-type filter do not.
  */
 export type Dimension = { id: string; label: string };
 
@@ -23,7 +18,7 @@ const rank = (id: string) => {
   return index === -1 ? ORDER.length : index;
 };
 
-// One request per (backend, language); the sidebar mounts and unmounts often.
+// The sidebar mounts and unmounts often; fetch once per backend and language.
 const cache = new Map<string, Promise<Dimension[]>>();
 
 export function loadDimensions(apiurl: string, lang: string): Promise<Dimension[]> {

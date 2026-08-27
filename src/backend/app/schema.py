@@ -17,8 +17,8 @@ from .namespaces import COMPASS, GEO, SCHEMA
 # Handled by hand in the SPARQL preamble, so not filter dimensions
 _PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.name}
 
-# Fetched for display but not exposed as filter dimensions.
-# relatedOrganization draws links between pins on the map; it is not a filter.
+# Fetched for display but not filterable. relatedOrganization connects pins on
+# the map rather than filtering.
 _DISPLAY_ONLY = {
     SCHEMA.url, SCHEMA.image, COMPASS.description, COMPASS.location,
     SKOS.altLabel, COMPASS.relatedOrganization,
