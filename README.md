@@ -5,10 +5,12 @@ An interactive map of ocean-focused research institutes, NGOs, and intergovernme
 This branch is the **client–server version**: a FastAPI backend answers SPARQL queries over the ontology and serves GeoJSON, and the widget fetches from it at runtime. The `serverless` branch does the same work in the browser with no backend — pick whichever is easier to host.
 
 ```
-src/ontology/   – Turtle files: instance data, SHACL shapes, SKOS vocabularies (source of truth)
+src/ontology/   – SHACL shapes, and the Turtle files generated from taxonomy/
+src/ontology/taxonomy/ – the three tables the content lives in (source of truth)
 src/backend/    – FastAPI + Oxigraph; serves GeoJSON, filter schema and facet counts
 src/frontend/   – Svelte + MapLibre widget, built as a web component
 docker/         – Dockerfiles and nginx config for the Compose stack
+tools/scripts/  – the ontology generator, the workbook builder, and their tests
 tools/nix/      – the Nix flake providing the dev shell
 docs/           – contribution and development guides
 ```
@@ -82,22 +84,63 @@ Deploying this branch means hosting the FastAPI app somewhere the browser can re
 
 ## Change the map data
 
-Edit `src/ontology/compass.ttl` — copy an existing instance block and adjust it. The backend reads the Turtle files at startup, so restart uvicorn to pick up changes.
+`compass.ttl` and `vocab.ttl` are **generated** from three tab-separated tables in
+`src/ontology/taxonomy/`. Edit a table, regenerate, review the diff:
+
+```bash
+just data          # regenerate; SHACL validation gates it
+git diff src/ontology/
+```
+
+The backend reads the Turtle files at startup, so restart uvicorn to pick up changes.
 
 | File | Purpose |
 |---|---|
-| `compass.ttl` | Instance data (the pins on the map) |
-| `shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
-| `vocab.ttl` | SKOS controlled vocabularies (topics, species, regions, …) |
-| `shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
+| `src/ontology/taxonomy/schemes.tsv` | **Source of truth** — the six tag dimensions and what to call them |
+| `src/ontology/taxonomy/concepts.tsv` | **Source of truth** — one row per tag term |
+| `src/ontology/taxonomy/pins.tsv` | **Source of truth** — one row per thing on the map |
+| `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
+| `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
+| `src/ontology/compass.ttl` | *Generated* — instance data (the pins on the map) |
+| `src/ontology/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
+
+Every row carries its own `id`, and rows link to each other by id in a `links`
+column. **The predicate a link becomes is decided by what it points at**: a link
+to a Species concept becomes `compass:species`, one to an InternationalForum
+becomes `compass:forum`. So adding a tag to a pin means adding an id to its
+`links` cell — nothing else. There is no configuration file and no mapping to
+keep in step.
+
+A link to an id that does not exist fails the run, naming the table, the row and
+the id. Mistakes are collected across the whole run rather than reported one per
+attempt.
+
+`just data-check` fails if the committed Turtle differs from a fresh run, which
+catches a hand-edit of a generated file.
+
+### Editing in Google Sheets
+
+The `.tsv` files are the source of truth because they diff usefully in review, but
+nobody has to edit them by hand:
+
+```bash
+just sheet         # → src/ontology/taxonomy/taxonomy.xlsx (not committed)
+```
+
+Import that workbook into Google Sheets — it arrives as three tabs with the header
+frozen, columns sized, and dropdowns on `dimension` and `class`. Edit, then export
+each tab back over its `.tsv` and run `just data`.
 
 Adding a filter dimension means adding a property shape to `shapes.ttl` — the filter panel and the query follow automatically.
 
-Country and marine boundary polygons come from `src/frontend/scripts/build-regions.mjs` (needs network); re-run it only after adding a Country/Area concept.
+Country and marine boundary polygons are built separately by `just regions`
+(needs network). Its `COUNTRY`/`COUNTRY_GROUP`/`MARINE` tables mirror the
+Country/Area concepts by hand, so after `just data` adds or renames a region,
+update `src/frontend/scripts/build-regions.mjs` to match and re-run it.
 
 ## Tests
 
 ```bash
-cd src/backend && uv run pytest tests/ -v   # API, SHACL schema, SPARQL builder, ontology contract
-cd src/frontend && npm run check            # Svelte + TypeScript
+just test          # backend (API, SHACL, SPARQL builder, ontology contract) and generator
+just check         # Svelte + TypeScript
 ```

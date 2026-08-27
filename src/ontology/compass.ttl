@@ -1,754 +1,884 @@
-@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
-@prefix geo:    <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+# GENERATED FILE -- do not edit.
+#
+# Regenerate with `just data` after editing the tables in
+# src/ontology/taxonomy/.
+
+
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix schema: <https://schema.org/> .
-@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct: <http://purl.org/dc/terms/> .
 @prefix compass: <http://example.org/ocean-org/ontology#> .
-@prefix ocinst:  <http://example.org/ocean-org/data#> .
-
-# ============================================================
-# Property Declarations
-# ============================================================
-
-compass:wpTagId a rdf:Property ;
-    rdfs:label "WordPress Tag ID"@en ;
-    rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the OceanCare website."@en ;
-    rdfs:range xsd:integer .
-
-compass:isoCode a rdf:Property ;
-    rdfs:label "ISO / boundary code"@en ;
-    rdfs:comment "Boundary lookup key for a Country/Area concept (ISO 3166-1 alpha-3, or a custom code for sub-national/marine areas). Used by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
-    rdfs:range xsd:string .
-
-compass:wpEntityTagIdEn a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (English)"@en ;
-    rdfs:comment "Numeric WP term ID of the English per-entity tag on OceanCare (used to link to English stories about this entity)."@en ;
-    rdfs:range xsd:integer .
-
-compass:wpEntityTagIdDe a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (German)"@en ;
-    rdfs:comment "Numeric WP term ID of the German per-entity tag on OceanCare (used to link to German stories about this entity)."@en ;
-    rdfs:range xsd:integer .
-
-# ============================================================
-# Instance Data: OceanCare Compass Entities
-# ============================================================
+@prefix ocinst: <http://example.org/ocean-org/data#> .
 
 # ============================================================
 # International Forums (20)
 # ============================================================
 
-ocinst:UnitedNations a compass:InternationalForum ;
-    compass:name "United Nations"@en ;
-    compass:name "Vereinte Nationen"@de ;
-    rdfs:label "United Nations"@en ;
-    rdfs:label "Vereinte Nationen"@de ;
-    compass:location "UN Headquarters, New York, USA"@en ;
-    schema:foundingDate "2011"^^xsd:gYear ;
-    compass:keySentence "UN Special Consultative Status"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    geo:lat "40.7490"^^xsd:float ;
-    geo:long "-73.9670"^^xsd:float .
-
-ocinst:UNEP a compass:InternationalForum ;
-    compass:name "UN Environment Programme (UNEP)"@en ;
-    compass:name "UN-Umweltprogramm"@de ;
-    rdfs:label "UN Environment Programme (UNEP)"@en ;
-    rdfs:label "UN-Umweltprogramm"@de ;
-    compass:location "UN Office Nairobi, Kenya"@en ;
-    schema:foundingDate "2015"^^xsd:gYear ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation ;
-    geo:lat "-1.2346"^^xsd:float ;
-    geo:long "36.8164"^^xsd:float .
-
-ocinst:CMSBonnConvention a compass:InternationalForum ;
-    compass:name "CMS/Bonn Convention"@en ;
-    compass:name "CMS/Bonner Konvention"@de ;
-    rdfs:label "CMS/Bonn Convention"@en ;
-    rdfs:label "CMS/Bonner Konvention"@de ;
-    compass:location "Bonn, Germany"@en ;
-    schema:foundingDate "2016"^^xsd:gYear ;
-    compass:keySentence "Partnerorganisation of CMS/Bonn Convention"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:pollution compass:OceanNoisePollution ;
-    compass:species compass:Dolphins, compass:Whales, compass:SeaTurtles, compass:Sharks, compass:Fish ;
-    geo:lat "50.7181"^^xsd:float ;
-    geo:long "7.1272"^^xsd:float .
-
-ocinst:FAOGFCM a compass:InternationalForum ;
-    compass:name "FAO/GFCM"@en ;
-    rdfs:label "FAO/GFCM"@en ;
-    rdfs:label "FAO/GFCM"@de ;
-    compass:location "Rome, Italy"@en ;
-    schema:foundingDate "2016"^^xsd:gYear ;
-    compass:keySentence "Partnerorganisation of FAO/GFCM"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Fisheries ;
-    compass:pollution compass:PlasticPollution, compass:OceanNoisePollution ;
-    compass:species compass:Fish ;
-    geo:lat "41.9063"^^xsd:float ;
-    geo:long "12.4703"^^xsd:float .
-
-ocinst:IWC a compass:InternationalForum ;
-    compass:name "International Whaling Commission (IWC)"@en ;
-    compass:name "Internationale Walfangkommission (IWC)"@de ;
-    rdfs:label "International Whaling Commission (IWC)"@en ;
-    rdfs:label "Internationale Walfangkommission (IWC)"@de ;
-    compass:location "Cambridge, UK"@en ;
-    schema:foundingDate "1992"^^xsd:gYear ;
-    compass:keySentence "Observer status at the meetings of the International Whaling Commission (IWC)"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:species compass:Whales, compass:Dolphins ;
-    compass:countryArea compass:Japan, compass:Iceland, compass:Norway ;
-    geo:lat "52.2486"^^xsd:float ;
-    geo:long "0.0930"^^xsd:float .
-
-ocinst:AbidjanConvention a compass:InternationalForum ;
-    compass:name "Abidjan Convention"@en ;
-    compass:name "Abidjan-Konvention"@de ;
-    rdfs:label "Abidjan Convention"@en ;
-    rdfs:label "Abidjan-Konvention"@de ;
-    compass:location "Abidjan, Ivory Coast"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting, compass:Fisheries ;
-    compass:species compass:Dolphins, compass:SeaTurtles, compass:Manatees, compass:Sharks ;
-    compass:countryArea compass:Benin ;
-    geo:lat "5.3600"^^xsd:float ;
-    geo:long "-4.0083"^^xsd:float .
-
-ocinst:ACCOBAMS a compass:InternationalForum ;
+ocinst:ACCOBAMS
+    a compass:InternationalForum ;
     compass:name "ACCOBAMS"@en ;
     compass:name "ACCOBAMS"@de ;
     rdfs:label "ACCOBAMS"@en ;
     rdfs:label "ACCOBAMS"@de ;
-    compass:location "Monaco"@en ;
+    skos:altLabel "Agreement on the Conservation of Cetaceans in the Black Sea, Mediterranean Sea and contiguous Atlantic Area"@en ;
+    skos:altLabel "Abkommen zur Erhaltung der Wale und Delfine im Schwarzen Meer, im Mittelmeer und im angrenzenden Atlantik"@de ;
+    compass:location "Secretariat in Monaco"@en ;
+    compass:description "Since 2004, OceanCare has been a partner organisation of the Agreement on the Conservation of Cetaceans in the Black Sea, Mediterranean Sea and contiguous Atlantic Area (ACCOBAMS), contributing its expertise in the areas of species conservation, underwater noise, plastic pollution and bycatch."@en ;
+    compass:description "Seit 2004 ist OceanCare Partnerorganisation des Abkommens zur Erhaltung der Wale und Delfine im Schwarzen Meer, im Mittelmeer und im angrenzenden Atlantik (ACCOBAMS) und bringt ihre Expertise in den Bereichen Artenschutz, Unterwasserlärm, Plastikverschmutzung und Beifang ein."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection, compass:Shipping, compass:FossilFuels ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels, compass:Shipping ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
-    compass:species compass:Dolphins, compass:Whales, compass:Orcas ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Orcas, compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:WesternMediterraneanSea ;
-    geo:lat "43.7384"^^xsd:float ;
-    geo:long "7.4246"^^xsd:float .
+    compass:relatedProject ocinst:SAVEWhales ;
+    geo:lat "43.73090"^^xsd:float ;
+    geo:long "7.41650"^^xsd:float .
 
-ocinst:ASCOBANS a compass:InternationalForum ;
+ocinst:ASCOBANS
+    a compass:InternationalForum ;
     compass:name "ASCOBANS"@en ;
     compass:name "ASCOBANS"@de ;
     rdfs:label "ASCOBANS"@en ;
     rdfs:label "ASCOBANS"@de ;
-    compass:location "Bonn, Germany"@en ;
+    skos:altLabel "Agreement on the Conservation of Small Cetaceans of the Baltic, North East Atlantic, Irish and North Seas"@en ;
+    skos:altLabel "Abkommen zur Erhaltung der Kleinwale der Ostsee, des Nordostatlantiks sowie der Irischen See und der Nordsee"@de ;
+    compass:location "Secretariat, UN Campus, Bonn, Germany"@en ;
+    compass:description "The Agreement on the Conservation of Small Cetaceans of the Baltic, North East Atlantic, Irish and North Seas (ASCOBANS) aims to promote close international cooperation among nations to achieve and maintain a favourable conservation status for small whales, dolphins, and porpoises. OceanCare contributes its expertise in the areas of species conservation, climate change impacts, animal welfare, the protection of marine habitats, and marine pollution."@en ;
+    compass:description "Das Abkommen zur Erhaltung der Kleinwale der Ostsee, des Nordostatlantiks sowie der Irischen See und der Nordsee (ASCOBANS) fördert die enge internationale Zusammenarbeit zwischen den Vertragsstaaten, um einen günstigen Erhaltungszustand von Kleinwalen, Delfinen und Schweinswalen zu erreichen und langfristig zu sichern. OceanCare bringt ihre Expertise in den Bereichen Artenschutz, Auswirkungen des Klimawandels, Tierwohl, Schutz mariner Lebensräume und Meeresverschmutzung ein."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Whales, compass:Dolphins ;
-    compass:countryArea compass:NorthSeaBalticSea ;
-    geo:lat "50.7353"^^xsd:float ;
-    geo:long "7.0984"^^xsd:float .
+    compass:species compass:Whales ;
+    compass:countryArea compass:BalticSea ;
+    geo:lat "50.71938"^^xsd:float ;
+    geo:long "7.12599"^^xsd:float .
 
-ocinst:BBNJ a compass:InternationalForum ;
-    compass:name "BBNJ"@en ;
-    compass:name "BBNJ"@de ;
-    rdfs:label "BBNJ"@en ;
-    rdfs:label "BBNJ"@de ;
-    compass:location "UN Headquarters, New York, USA"@en ;
+ocinst:AbidjanConvention
+    a compass:InternationalForum ;
+    compass:name "Abidjan Convention"@en ;
+    compass:name "Abidjan-Konvention"@de ;
+    rdfs:label "Abidjan Convention"@en ;
+    rdfs:label "Abidjan-Konvention"@de ;
+    compass:location "Headquartered Abidjan, Côte d'Ivoire"@en ;
+    compass:description "Since 2017, OceanCare has been involved in the Conference of the Parties to the Abidjan Convention, which addresses the state of the seas and coastal areas in West, Central and Southern Africa, as well as the protection of endangered marine animals from poaching"@en ;
+    compass:description "Seit 2017 engagiert sich OceanCare an Vertragsstaatenkonferenzen der Abidjan-Konvention, die sich um den Zustand der Meere und Küstengebiete in West-, Zentral- und Südafrika sowie um den Schutz gefährdeter Meerestiere vor Wilderei kümmert."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
-    geo:lat "40.7488"^^xsd:float ;
-    geo:long "-73.9680"^^xsd:float .
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:AquaticWildMeat, compass:Fisheries, compass:Hunting ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Manatees, compass:SeaTurtles, compass:Sharks ;
+    compass:countryArea compass:Benin ;
+    geo:lat "5.36756"^^xsd:float ;
+    geo:long "-3.98766"^^xsd:float .
 
-ocinst:CBD a compass:InternationalForum ;
-    compass:name "CBD/Biodiversity Convention"@en ;
-    compass:name "CBD/Biodiversitätskonvention"@de ;
-    rdfs:label "CBD/Biodiversity Convention"@en ;
-    rdfs:label "CBD/Biodiversitätskonvention"@de ;
-    compass:location "Montreal, Canada"@en ;
+ocinst:BBNJ
+    a compass:InternationalForum ;
+    compass:name "BBNJ Agreement"@en ;
+    compass:name "BBNJ-Abkommen"@de ;
+    rdfs:label "BBNJ Agreement"@en ;
+    rdfs:label "BBNJ-Abkommen"@de ;
+    skos:altLabel "Hochseeschutzabkommen"@de ;
+    compass:location "UN Headquarter, NY - ad interim"@en ;
+    compass:description "OceanCare has been monitoring the development of the BBNJ Agreement since 2007, actively supported the intergovernmental negotiations from 2018 to 2023, and has consistently advocated for its rapid ratification and implementation following the adoption of the treaty text."@en ;
+    compass:description "OceanCare verfolgt den Entstehungsprozess des BBNJ-Abkommens seit 2007, begleitete die zwischenstaatlichen Verhandlungen von 2018 bis 2023 aktiv und setzte sich nach der Verabschiedung des Vertragstextes konsequent für eine rasche Ratifizierung und Implementierung des Abkommens ein."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:relatedOrganization ocinst:HSA, ocinst:SeasAtRisk ;
+    geo:lat "40.74944"^^xsd:float ;
+    geo:long "-73.96806"^^xsd:float .
+
+ocinst:CBD
+    a compass:InternationalForum ;
+    compass:name "CBD"@en ;
+    compass:name "CBD"@de ;
+    rdfs:label "CBD"@en ;
+    rdfs:label "CBD"@de ;
+    skos:altLabel "Convention on Biological Diversity"@en ;
+    skos:altLabel "Übereinkommen über die biologische Vielfalt"@de ;
+    compass:location "Secretariat, Montreal, Canada"@en ;
+    compass:description "In 2021, OceanCare was granted observer status at the UN Convention on Biological Diversity and now contributes its expertise on various topics to the CBD and its global action plan, the Kunming-Montreal Global Biodiversity Framework."@en ;
+    compass:description "2021 erlangte OceanCare Beobachterstatus beim UN-Übereinkommen über die biologische Vielfalt und kann ihre Expertise zu diversen Themen bei CBD sowie dessen globalem Aktionsplan, dem Kunming-Montreal Global Biodiversity Framework, einbringen."@de ;
     compass:managedByOceanCare false ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:pollution compass:OceanNoisePollution ;
-    compass:species compass:Dolphins, compass:Whales, compass:SeaTurtles, compass:Seals, compass:PolarBears, compass:Manatees, compass:Sharks, compass:Fish ;
-    geo:lat "45.5017"^^xsd:float ;
-    geo:long "-73.5673"^^xsd:float .
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Fish, compass:Manatees, compass:PolarBears, compass:SeaTurtles, compass:Seals, compass:Sharks, compass:Whales ;
+    geo:lat "45.50178"^^xsd:float ;
+    geo:long "-73.56021"^^xsd:float .
 
-ocinst:EUCommission a compass:InternationalForum ;
+ocinst:CMSBonnConvention
+    a compass:InternationalForum ;
+    compass:name "CMS/Bonn Convention"@en ;
+    compass:name "CMS/Bonn Convention"@de ;
+    rdfs:label "CMS/Bonn Convention"@en ;
+    rdfs:label "CMS/Bonn Convention"@de ;
+    skos:altLabel "Convention on the Conservation of Migratory Species of Wild Animals"@en ;
+    skos:altLabel "Übereinkommen zur Erhaltung der wandernden wild lebenden Tierarten"@de ;
+    compass:location "UN Campus, Bonn, Germany"@en ;
+    compass:description "CMS is part of the UN Environment Programme and is dedicated to the conservation of migratory wildlife. OceanCare has been a partner organisation since 2016 and is committed to the protection of marine animals and the marine environment."@en ;
+    compass:description "CMS ist Teil des Umweltprogramms der Vereinten Nationen und widmet sich dem Schutz wandernder wildlebender Tierarten. OceanCare ist seit 2016 Partnerorganisation und setzt sich für den Schutz der Meerestiere und des Lebensraums Meer ein."@de ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:AquaticWildMeat, compass:Hunting ;
+    compass:pollution compass:OceanNoisePollution ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Fish, compass:SeaTurtles, compass:Sharks, compass:Whales ;
+    geo:lat "50.71938"^^xsd:float ;
+    geo:long "7.12599"^^xsd:float .
+
+ocinst:EUCommission
+    a compass:InternationalForum ;
     compass:name "EU Commission"@en ;
     compass:name "EU-Kommission"@de ;
     rdfs:label "EU Commission"@en ;
     rdfs:label "EU-Kommission"@de ;
     compass:location "Brussels, Belgium"@en ;
+    compass:description "Since 2014, OceanCare has been a member of the Marine Strategy Coordination Group and of the working group responsible for implementing the new Marine Strategy Framework Directive (MSFD), which requires European coastal states to improve the health of the marine environment within their territorial waters. Dr Lindy Weilgart and Nicolas Entrup are members of the EU’s technical working group on underwater noise."@en ;
+    compass:description "OceanCare ist seit 2014 Mitglied der Koordinierungsgruppe für die Meeresstrategie (MSCG) und der Arbeitsgruppe für die Implementierung der neuen Meeresstrategie-Rahmenrichtlinie (MSRL), die europäische Meeresanrainerstaaten dazu verpflichtet, in ihren Hoheitsgewässern den Zustand der Meereswelt zu verbessern. In der technischen EU-Arbeitsgruppe zu Unterwasserlärm arbeiten Dr. Lindy Weilgart und Nicolas Entrup mit."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection, compass:DeepSeaMining, compass:Hunting, compass:Fisheries, compass:Shipping, compass:FossilFuels ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:DeepSeaMining, compass:Fisheries, compass:FossilFuels, compass:Hunting, compass:Shipping ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
-    compass:species compass:Dolphins, compass:Whales, compass:Fish ;
-    geo:lat "50.8503"^^xsd:float ;
-    geo:long "4.3517"^^xsd:float .
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Fish, compass:Whales ;
+    geo:lat "50.84361"^^xsd:float ;
+    geo:long "4.38278"^^xsd:float .
 
-ocinst:FAOCOFI a compass:InternationalForum ;
+ocinst:FAOCOFI
+    a compass:InternationalForum ;
     compass:name "FAO/COFI"@en ;
     compass:name "FAO/COFI"@de ;
     rdfs:label "FAO/COFI"@en ;
     rdfs:label "FAO/COFI"@de ;
-    compass:location "Rome, Italy"@en ;
+    skos:altLabel "Committee on Fisheries of the Food and Agriculture Organization"@en ;
+    skos:altLabel "Fischereiausschuss der Welternährungsorganisation der Vereinten Nationen"@de ;
+    compass:location "FAO Headquarters, Rome, Italy"@en ;
+    compass:description "As part of the International Ocean Noise Coalition, OceanCare has been drawing attention to serious risks to fish within the Committee on Fisheries (COFI) of the Food and Agriculture Organisation (FAO) since 2009, and is working, amongst other things, to ensure that the socio-economic impacts of marine noise pollution on fish and fisheries are investigated."@en ;
+    compass:description "Im Rahmen der International Ocean Noise Coalition verweist OceanCare seit 2009 im Fischereiausschuss (COFI) der Welternährungsorganisation (FAO) auf schwerwiegende Gefahren für Fische und wirkt unter anderem darauf hin, dass die sozioökonomischen Auswirkungen der Lärmverschmutzung der Meere auf Fischbestände und auf die Fischerei untersucht werden."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
+    compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:topic compass:Fisheries ;
     compass:species compass:Fish ;
-    geo:lat "41.8842"^^xsd:float ;
-    geo:long "12.4886"^^xsd:float .
+    geo:lat "41.88395"^^xsd:float ;
+    geo:long "12.48332"^^xsd:float .
 
-ocinst:IMO a compass:InternationalForum ;
+ocinst:FAOGFCM
+    a compass:InternationalForum ;
+    compass:name "FAO/GFCM"@en ;
+    compass:name "FAO/GFCM"@de ;
+    rdfs:label "FAO/GFCM"@en ;
+    rdfs:label "FAO/GFCM"@de ;
+    skos:altLabel "General Fisheries Commission for the Mediterranean of the Food and Agriculture Organization"@en ;
+    skos:altLabel "Allgemeine Kommission für die Fischerei im Mittelmeer der Welternährungsorganisation der Vereinten Nationen"@de ;
+    compass:location "FAO Headquarters, Rome, Italy"@en ;
+    compass:description "Since 2016, OceanCare has been a partner organisation of the General Fisheries Commission for the Mediterranean (GFCM) of the Food and Agriculture Organization (FAO) and contributes its expertise in the areas of underwater noise, bycatch, plastic pollution, illegal fishing activities and ocean governance."@en ;
+    compass:description "Seit 2016 ist OceanCare Partnerorganisation der Allgemeine Kommission für die Fischerei im Mittelmeer (GFCM) der Welternährungsorganisation (FAO) und bringt ihre Expertise in den Bereichen Unter­wasserlärm, Beifang, Plastikverschmutzung sowie zu illegalen Fischereiaktivitäten und Meeresgovernance ein."@de ;
+    schema:foundingDate "2016"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:species compass:Fish ;
+    geo:lat "41.88395"^^xsd:float ;
+    geo:long "12.48332"^^xsd:float .
+
+ocinst:IMO
+    a compass:InternationalForum ;
     compass:name "IMO"@en ;
     compass:name "IMO"@de ;
     rdfs:label "IMO"@en ;
     rdfs:label "IMO"@de ;
-    compass:location "London, UK"@en ;
+    skos:altLabel "International Maritime Organization"@en ;
+    skos:altLabel "Internationale Seeschifffahrts-Organisation"@de ;
+    compass:location "Secretariat in London, UK"@en ;
+    compass:description "Bitte Text ergänzen"@en ;
+    compass:description "Bitte Text ergänzen"@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels, compass:Shipping ;
+    compass:pollution compass:ChemicalPollution, compass:OceanNoisePollution ;
+    compass:species compass:Whales ;
+    geo:lat "51.49075"^^xsd:float ;
+    geo:long "-0.12457"^^xsd:float .
+
+ocinst:ISA
+    a compass:InternationalForum ;
+    compass:name "ISA"@en ;
+    compass:name "ISA"@de ;
+    rdfs:label "ISA"@en ;
+    rdfs:label "ISA"@de ;
+    skos:altLabel "International Seabed Authority"@en ;
+    skos:altLabel "Internationale Meeresbodenbehörde"@de ;
+    compass:location "Secretariat in Kingston, Jamaica"@en ;
+    compass:description "In 2021, OceanCare was accredited as an observer organisation by the International Seabed Authority (ISA). The ISA manages the mineral resources of the seabed as the heritage of mankind and is the main point of contact for matters relating to deep-sea mining."@en ;
+    compass:description "2021 wurde OceanCare von der Internationalen Meeresbodenbehörde (ISA) als Beobachterorganisation akkreditiert. Die ISA verwaltet die Bodenschätze als Erbe der Menschheit und ist die wichtigste Anlaufstelle bezüglich Tiefseebergbau."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:DeepSeaMining ;
+    compass:pollution compass:OceanNoisePollution ;
+    compass:relatedOrganization ocinst:DSCC ;
+    geo:lat "17.96477"^^xsd:float ;
+    geo:long "-76.79171"^^xsd:float .
+
+ocinst:IWC
+    a compass:InternationalForum ;
+    compass:name "IWC"@en ;
+    compass:name "IWC"@de ;
+    rdfs:label "IWC"@en ;
+    rdfs:label "IWC"@de ;
+    skos:altLabel "International Whaling Commission"@en ;
+    skos:altLabel "Internationale Walfangkommission"@de ;
+    compass:location "Secretariat in Cambridge, UK"@en ;
+    compass:description "OceanCare has been advocating for the protection of whales at the meetings of the International Whaling Commission (IWC) since 1992. The organisation engaged in improving transparency and NGO participation at IWC and adresses environmental threats to whales. As an observer, OceanCare supports the IWC small cetacean and bycatch working groups and the strandings response network."@en ;
+    compass:description "Seit 1992 setzt sich OceanCare an den Tagungen der Internationalen Walfangkommission (IWC) für den Schutz der Wale ein. Die Organisation engagierte sich für mehr Transparenz innerhalb der IWC sowie für die Beteiligung von NGOs und adressiert Umweltgefahren, denen die Wale ausgesetzt sind. Als Beobachterorganisation unterstützt OceanCare die IWC-Arbeitsgruppen für Kleinwale und zur Verhinderung von Beifang sowie das Strandungsnetzwerk."@de ;
+    schema:foundingDate "1992"^^xsd:gYear ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection, compass:Shipping, compass:FossilFuels ;
-    compass:pollution compass:OceanNoisePollution, compass:ChemicalPollution ;
-    compass:species compass:Whales ;
-    geo:lat "51.4950"^^xsd:float ;
-    geo:long "-0.1168"^^xsd:float .
+    compass:topic compass:Hunting ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Whales ;
+    compass:countryArea compass:Iceland, compass:Japan, compass:Norway ;
+    geo:lat "52.24864"^^xsd:float ;
+    geo:long "0.10693"^^xsd:float .
 
-ocinst:ISA a compass:InternationalForum ;
-    compass:name "International Seabed Authority (ISA)"@en ;
-    compass:name "Internationale Meeresbodenbehörde (ISA)"@de ;
-    rdfs:label "International Seabed Authority (ISA)"@en ;
-    rdfs:label "Internationale Meeresbodenbehörde (ISA)"@de ;
-    compass:location "Kingston, Jamaica"@en ;
+ocinst:LondonConvention
+    a compass:InternationalForum ;
+    compass:name "LC/LP"@en ;
+    compass:name "LC/LP"@de ;
+    rdfs:label "LC/LP"@en ;
+    rdfs:label "LC/LP"@de ;
+    skos:altLabel "London Convention & Protocol"@en ;
+    skos:altLabel "Londoner Übereinkommen und Londoner Protokoll"@de ;
+    compass:location "Secretariat at IMO, London, UK"@en ;
+    compass:description "The London Convention and its 1996 Protocol regulate the dumping of wastes and other matter at sea. The Protocol, which entered into force in 2006, modernised and strengthened the original Convention. OceanCare was admitted as an observer to the London Convention and London Protocol meetings in 2024"@en ;
+    compass:description "Das Londoner Übereinkommen und das dazugehörige Protokoll von 1996 regeln die Einbringung von Abfällen und anderen Stoffen ins Meer. Das 2006 in Kraft getretene Protokoll modernisierte und stärkte das ursprüngliche Übereinkommen. OceanCare wurde 2024 als Beobachterorganisation zu den Treffen des Londoner Übereinkommens und des Londoner Protokolls zugelassen."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection, compass:DeepSeaMining ;
-    compass:pollution compass:OceanNoisePollution ;
-    geo:lat "18.0179"^^xsd:float ;
-    geo:long "-76.8099"^^xsd:float .
+    compass:topic compass:Geoengineering ;
+    geo:lat "51.49075"^^xsd:float ;
+    geo:long "-0.12457"^^xsd:float .
 
-ocinst:LondonConvention a compass:InternationalForum ;
-    compass:name "London Convention / London Protocol"@en ;
-    compass:name "Londoner Übereinkommen / Londoner Protokoll"@de ;
-    rdfs:label "London Convention / London Protocol"@en ;
-    rdfs:label "Londoner Übereinkommen / Londoner Protokoll"@de ;
-    compass:location "London, UK"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:ClimateProtection, compass:Geoengineering ;
-    geo:lat "51.4975"^^xsd:float ;
-    geo:long "-0.1145"^^xsd:float .
-
-ocinst:UNCLOS a compass:InternationalForum ;
+ocinst:UNCLOS
+    a compass:InternationalForum ;
     compass:name "UNCLOS"@en ;
     compass:name "UNCLOS"@de ;
     rdfs:label "UNCLOS"@en ;
     rdfs:label "UNCLOS"@de ;
-    compass:location "Hamburg, Germany"@en ;
-    compass:keySentence "United Nations Convention on the Law of the Sea"@en ;
+    skos:altLabel "United Nations Convention on the Law of the Sea"@en ;
+    skos:altLabel "UN-Seerechtsabkommens"@de ;
+    compass:location "UN Headquarter, NY"@en ;
+    compass:description "OceanCare has been participating in the Informal Consultative Process (ICP) meetings of the United Nations Convention on the Law of the Sea (UNCLOS) since 2004, raising awareness of the multiple threats to the ocean and emerging challenges in marine conservation."@en ;
+    compass:description "OceanCare nimmt seit 2004 am informellen Konsultationsprozess der Vereinten Nationen über das Seerecht (United Nations Convention on the Law of the Sea, UNCLOS) teil und sensibilisiert für multiple Gefahren für die Meere und für sich anbahnende Herausforderungen im Meeresschutz."@de ;
     compass:managedByOceanCare false ;
-    compass:conservation compass:OceanConservation ;
-    compass:pollution compass:OceanNoisePollution ;
-    geo:lat "53.5511"^^xsd:float ;
-    geo:long "9.9937"^^xsd:float .
+    geo:lat "40.74944"^^xsd:float ;
+    geo:long "-73.96806"^^xsd:float .
 
-ocinst:UNEPMAP a compass:InternationalForum ;
-    compass:name "UNEP/MAP"@en ;
-    compass:name "UNEP/MAP"@de ;
-    rdfs:label "UNEP/MAP"@en ;
-    rdfs:label "UNEP/MAP"@de ;
-    compass:location "Athens, Greece"@en ;
+ocinst:UNECOSOC
+    a compass:InternationalForum ;
+    compass:name "UN ECOSOC"@en ;
+    compass:name "UN ECOSOC"@de ;
+    rdfs:label "UN ECOSOC"@en ;
+    rdfs:label "UN ECOSOC"@de ;
+    skos:altLabel "United Nations Economic and Social Council"@en ;
+    skos:altLabel "Wirtschafts- und Sozialrat der Vereinten Nationen"@de ;
+    compass:location "UN Headquarter, NY"@en ;
+    compass:description "Since 2011, the United Nations Economic and Social Council (ECOSOC) has granted OceanCare Special Consultative Status on marine issues. This status gives OceanCare the opportunity to participate in UN processes and to speak in UN bodies on key aspects on oceans and the law of the sea."@en ;
+    compass:description "Seit 2011 anerkennt der Wirtschafts- und Sozialrat der Vereinten Nationen (ECOSOC) OceanCare als Organisation mit Sonderberaterstatus für Meeresfragen. Der Status eröffnet die Möglichkeit, an UN-Prozessen teilzunehmen und in UN-Gremien zu wichtigen Aspekten des Seerechts zu sprechen."@de ;
+    schema:foundingDate "2011"^^xsd:gYear ;
     compass:managedByOceanCare false ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:Shipping ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution, compass:ChemicalPollution ;
-    geo:lat "37.9838"^^xsd:float ;
-    geo:long "23.7275"^^xsd:float .
+    compass:relatedOrganization ocinst:OceanCare ;
+    geo:lat "40.74944"^^xsd:float ;
+    geo:long "-73.96806"^^xsd:float .
 
-ocinst:UNEPGPML a compass:InternationalForum ;
+ocinst:UNEPGPML
+    a compass:InternationalForum ;
     compass:name "UNEP/GPML"@en ;
     compass:name "UNEP/GPML"@de ;
     rdfs:label "UNEP/GPML"@en ;
     rdfs:label "UNEP/GPML"@de ;
-    compass:location "Nairobi, Kenya"@en ;
+    skos:altLabel "UN Environment Programme’s Global Partnership on Marine Litter"@en ;
+    skos:altLabel "Globale Partnerschaft für Meeresmüll des UN-Umweltprogramms"@de ;
+    compass:location "UNEP Campus, Nairobi, Kenya"@en ;
+    compass:description "OceanCare has been part of the UN Environment Programme’s Global Partnership on Marine Litter (GPML) since 2014. This global network of government bodies, NGOs, scientific experts, representatives of the private sector and civil society develops solutions to reduce marine plastic pollution."@en ;
+    compass:description "OceanCare ist seit 2014 Teil der Global Partnership on Marine Litter (GPML) des UN-Umwelt­programms. Dieses weltweite Netzwerk aus Regierungsstellen, NGOs, wissenschaftlichen Experten, Vertreter­innen der Privatwirtschaft und Repräsentanten der Zivilbevölkerung erarbeitet Lösungen zur Reduktion der Plastikverschmutzung im Meer."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
     compass:pollution compass:PlasticPollution ;
-    geo:lat "-1.2350"^^xsd:float ;
-    geo:long "36.8170"^^xsd:float .
+    geo:lat "-1.23210"^^xsd:float ;
+    geo:long "36.81690"^^xsd:float .
 
-ocinst:UNEPUNEA a compass:InternationalForum ;
+ocinst:UNEPMAP
+    a compass:InternationalForum ;
+    compass:name "UNEP/MAP"@en ;
+    compass:name "UNEP/MAP"@de ;
+    rdfs:label "UNEP/MAP"@en ;
+    rdfs:label "UNEP/MAP"@de ;
+    skos:altLabel "Mediterranean Action Plan/Barcelona Convention"@en ;
+    skos:altLabel "Mittelmeer-Aktionsplan/Barcelona-Konvention"@de ;
+    compass:location "Secretariat in Athens, Greece"@en ;
+    compass:description "In 2019, OceanCare became a partner organisation of the UNEP Mediterranean Action Plan, a framework agreement that addresses marine environmental threats and coordinates the Barcelona Convention as the legal basis for protecting the Mediterranean Sea from pollution."@en ;
+    compass:description "2019 wurde OceanCare Partnerorganisation des UNEP Mediterranean Action Plan, einer Rahmenvereinbarung, die marine Umweltgefahren adressiert und die Barcelona-Konvention als rechtliche Basis für den Schutz des Mittelmeers vor Verschmutzung koordiniert."@de ;
+    compass:managedByOceanCare false ;
+    compass:pollution compass:ChemicalPollution ;
+    geo:lat "37.97241"^^xsd:float ;
+    geo:long "23.74471"^^xsd:float .
+
+ocinst:UNEPUNEA
+    a compass:InternationalForum ;
     compass:name "UNEP/UNEA"@en ;
     compass:name "UNEP/UNEA"@de ;
     rdfs:label "UNEP/UNEA"@en ;
     rdfs:label "UNEP/UNEA"@de ;
-    compass:location "Nairobi, Kenya"@en ;
+    skos:altLabel "United Nations Environment Programme/United Nations Environment Assembly"@en ;
+    skos:altLabel "Verwaltungsgremium des UN-Umweltprogramms"@de ;
+    compass:location "UNEP Campus, Nairobi, Kenya"@en ;
+    compass:description "In 2015, OceanCare was accredited to the United Nations Environment Programme (UNEP) and its governing body, the United Nations Environment Assembly (UNEA). The UN Environment Programme plays a leading role in global environmental protection. It is the only UN body dedicated exclusively to the environment. With its consistently scientific approach, OceanCare is an important voice within the UNEP Scientific and Technological Community Major Group."@en ;
+    compass:description "2015 wurde OceanCare für das UN-Umweltprogramm (United Nations Environment Programme, UNEP) und dessen Verwaltungsgremium (United Nations Environment Assembly, UNEA) akkreditiert. Das UN-Umweltprogramm spielt im globalen Umweltschutz eine führende Rolle. Es ist die einzige Einrichtung der Vereinten Nationen, die sich ausschliesslich mit der Umwelt befasst. Mit ihrem konsequent wissenschaftlichen Ansatz ist OceanCare eine wichtige Stimme innerhalb der UNEP Scientific and Technological Community Major Group."@de ;
+    schema:foundingDate "2015"^^xsd:gYear ;
     compass:managedByOceanCare false ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution, compass:ChemicalPollution ;
-    geo:lat "-1.2340"^^xsd:float ;
-    geo:long "36.8180"^^xsd:float .
+    compass:pollution compass:ChemicalPollution, compass:PlasticPollution ;
+    geo:lat "-1.23210"^^xsd:float ;
+    geo:long "36.81690"^^xsd:float .
 
-ocinst:UNFCCC a compass:InternationalForum ;
+ocinst:UNFCCC
+    a compass:InternationalForum ;
     compass:name "UNFCCC"@en ;
     compass:name "UNFCCC"@de ;
     rdfs:label "UNFCCC"@en ;
     rdfs:label "UNFCCC"@de ;
-    compass:location "Bonn, Germany"@en ;
+    skos:altLabel "UN Framework Convention on Climate Change"@en ;
+    skos:altLabel "Klimarahmenkonvention der Vereinten Nationen"@de ;
+    compass:location "UN Campus, Bonn, Germany"@en ;
+    compass:description "In 2023, OceanCare was accredited by the UN Framework Convention on Climate Change (UNFCCC). The UNFCCC is an international environmental agreement aimed at halting the climate crisis caused by human activities, slowing down global warming and mitigating its consequences."@en ;
+    compass:description "2023 wurde OceanCare bei der Klimarahmenkonvention der Vereinten Nationen akkreditiert. UNFCCC ist ein internationales Umweltabkommen mit dem Ziel, die von Menschen verursachte Klimakrise zu stoppen, die globale Erwärmung zu verlangsamen und deren Folgen zu mildern."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:topic compass:ClimateProtection ;
-    geo:lat "50.7089"^^xsd:float ;
-    geo:long "7.1194"^^xsd:float .
+    geo:lat "50.71938"^^xsd:float ;
+    geo:long "7.12599"^^xsd:float .
 
-# ============================================================
-# Networks (5)
-# ============================================================
-
-ocinst:BFFP a compass:Network ;
-    compass:name "Break Free From Plastic (BFFP)"@en ;
-    compass:location "Quezon City, Philippines"@en ;
-    schema:foundingDate "2016"^^xsd:gYear ;
-    compass:keySentence "Core member of BFFP since 2019."@en ;
+ocinst:UNOC
+    a compass:InternationalForum ;
+    compass:name "UNOC"@en ;
+    compass:name "UNOC"@de ;
+    rdfs:label "UNOC"@en ;
+    rdfs:label "UNOC"@de ;
+    skos:altLabel "UN Ocean Conference"@en ;
+    skos:altLabel "UN-Ozeankonferenz"@de ;
+    compass:location "UN Headquarter, NY"@en ;
+    compass:description "The UN Ocean Conference is a triennial conference held by the United Nations to support the implementation of Sustainable Development Goal 14 \"Life Below Water\" as part of the 2030 Agenda. OceanCare has attended UNOC since 2017."@en ;
+    compass:description "Die UN-Ozeankonferenz (UN Ocean Conference, UNOC) wird von den Vereinten Nationen alle drei Jahre ausgerichtet, um die Umsetzung des Nachhaltigkeitsziels 14 (Sustainable Development Goal 14) \"Leben unter Wasser\" als Teil der Agenda 2030 zu unterstützen. OceanCare nimmt seit 2017 an der UNOC teil."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
-    compass:topic compass:FossilFuels ;
-    compass:pollution compass:PlasticPollution ;
-    geo:lat "14.6393"^^xsd:float ;
-    geo:long "121.0424"^^xsd:float .
+    compass:relatedProject ocinst:BecauseOurPlanetIsBlue ;
+    geo:lat "40.74944"^^xsd:float ;
+    geo:long "-73.96806"^^xsd:float .
 
-ocinst:DSCC a compass:Network ;
-    compass:name "Deep Sea Conservation Coalition (DSCC)"@en ;
-    compass:location "Amsterdam, Netherlands"@en ;
-    schema:foundingDate "2021"^^xsd:gYear ;
-    compass:keySentence "Member of DSCC since 2021"@en ;
+# ============================================================
+# Networks (9)
+# ============================================================
+
+ocinst:BFFP
+    a compass:Network ;
+    compass:name "Break Free From Plastic"@en ;
+    compass:name "Break Free From Plastic"@de ;
+    rdfs:label "Break Free From Plastic"@en ;
+    rdfs:label "Break Free From Plastic"@de ;
+    compass:location "Manila, Philippines"@en ;
+    compass:description "In 2016, OceanCare joined this coalition of international organisations committed to reducing plastic pollution and driving systemic change by tackling plastic pollution across the entire value chain. Since 2019, OceanCare has been a core member of BFFP and contributes to both global efforts and its European policy strategy."@en ;
+    compass:description "2016 wurde OceanCare Teil dieser Koalition aus inter­nationalen Organisationen, die sich für die Reduktion der Plastikverschmutzung und für einen systemischen Wandel einsetzen, indem sie die Plastikverschmutzung über die gesamte Wertschöpfungskette hinweg angehen. Seit 2019 ist OceanCare Kernmitglied von BFFP und arbeitet auf globaler Ebene sowie bei der europäischen Policy-Strategie mit."@de ;
+    schema:foundingDate "2016"^^xsd:gYear ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
+    compass:conservation compass:OceanConservation ;
+    compass:pollution compass:PlasticPollution ;
+    geo:lat "14.64878"^^xsd:float ;
+    geo:long "121.04343"^^xsd:float .
+
+ocinst:DSCC
+    a compass:Network ;
+    compass:name "Deep Sea Conservation Coalition"@en ;
+    compass:name "Deep Sea Conservation Coalition"@de ;
+    rdfs:label "Deep Sea Conservation Coalition"@en ;
+    rdfs:label "Deep Sea Conservation Coalition"@de ;
+    compass:location "Amsterdam, Netherlands"@en ;
+    compass:description "OceanCare joined the coalition in 2021 as part of its programme to prevent deep-sea mining, with a particular focus on underwater noise. DSCC is committed to protecting sensitive deep-sea ecosystems and preserving biodiversity in the high seas. The Coalition and its members campaign for a global moratorium on deep-sea mining to prevent irreversible ocean damage."@en ;
+    compass:description "OceanCare trat der Koalition 2021 im Rahmen ihres Programms zur Verhinderung des Tiefseebergbaus bei, mit inhaltlichem Schwerpunkt auf Unterwasserlärm. DSCC engagiert sich für den Schutz der empfindlichen Tiefsee-Ökosysteme und für den Erhalt der biologischen Vielfalt auf hoher See. Die Koalition und ihre Mitglieder setzen sich für ein weltweites Moratorium für den Tiefseebergbau ein, um irreversible Schäden in den Ozeanen zu verhindern."@de ;
+    schema:foundingDate "2021"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
     compass:conservation compass:OceanConservation ;
     compass:topic compass:DeepSeaMining ;
     compass:pollution compass:OceanNoisePollution ;
     compass:forum ocinst:ISA ;
-    geo:lat "52.3529"^^xsd:float ;
-    geo:long "4.8701"^^xsd:float .
+    geo:lat "52.37309"^^xsd:float ;
+    geo:long "4.89220"^^xsd:float .
 
-ocinst:GGGI a compass:Network ;
-    compass:name "Global Ghost Gear Initiative (GGGI)"@en ;
-    compass:location "Washington D.C., USA"@en ;
-    schema:foundingDate "2019"^^xsd:gYear ;
-    compass:keySentence "Member of GGGI since 2019"@en ;
+ocinst:FossilFreeOceanInitiative
+    a compass:Network ;
+    compass:name "Fossil-Free Ocean Initiative"@en ;
+    compass:name "Fossil-Free Ocean Initiative"@de ;
+    rdfs:label "Fossil-Free Ocean Initiative"@en ;
+    rdfs:label "Fossil-Free Ocean Initiative"@de ;
+    compass:location "Wädenswil, Switzerland"@en ;
+    compass:description "OceanCare has been part of this initiative since 2025, which campaigns to end offshore oil and gas exploration and exploitation."@en ;
+    compass:description "OceanCare ist seit 2025 Teil dieser Initiative, die sich dafür einsetzt, die Suche und Förderung von Öl und Gas im Meer zu beenden."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "47.22900"^^xsd:float ;
+    geo:long "8.67600"^^xsd:float .
+
+ocinst:FossilFuelNonProliferationTreaty
+    a compass:Network ;
+    compass:name "Fossil Fuel Treaty Initiative"@en ;
+    compass:name "Fossil Fuel Treaty Initiative"@de ;
+    rdfs:label "Fossil Fuel Treaty Initiative"@en ;
+    rdfs:label "Fossil Fuel Treaty Initiative"@de ;
+    compass:location "Geneva, Switzerland"@en ;
+    compass:description "OceanCare joined this initiative in 2025, in which more than 4,000 international organisations are calling for a non-proliferation treaty on fossil fuel."@en ;
+    compass:description "OceanCare trat dieser Initiative 2025 bei, in der mehr als 4 000 internationale Organisationen einen Nichtverbreitungsvertrag für fossile Brennstoffe fordern."@de ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:OceanConservation ;
+    compass:topic compass:ClimateProtection, compass:FossilFuels ;
+    compass:pollution compass:OceanNoisePollution ;
+    geo:lat "46.20440"^^xsd:float ;
+    geo:long "6.14320"^^xsd:float .
+
+ocinst:GGGI
+    a compass:Network ;
+    compass:name "Global Ghost Gear Initiative"@en ;
+    compass:name "Global Ghost Gear Initiative"@de ;
+    rdfs:label "Global Ghost Gear Initiative"@en ;
+    rdfs:label "Global Ghost Gear Initiative"@de ;
+    compass:location "Washington DC, USA"@en ;
+    compass:description "In 2019, OceanCare joined the GGGI, which campaigns for lost fishing gear to be recovered and for nets to be marked so that they can be traced back to their owners."@en ;
+    compass:description "2019 wurde OceanCare Mitglied der GGGI, die sich dafür einsetzt, dass verloren gegangenes Fischereigerät geborgen und Netze gekennzeichnet werden, damit diese den Besitzenden zugeordnet werden können."@de ;
+    schema:foundingDate "2019"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:OceanConservation ;
     compass:topic compass:Fisheries ;
     compass:pollution compass:PlasticPollution ;
     compass:species compass:Fish ;
-    geo:lat "38.9029"^^xsd:float ;
-    geo:long "-77.0302"^^xsd:float .
+    geo:lat "38.90683"^^xsd:float ;
+    geo:long "-77.04364"^^xsd:float .
 
-ocinst:HSA a compass:Network ;
-    compass:name "High Seas Alliance (HSA)"@en ;
+ocinst:HSA
+    a compass:Network ;
+    compass:name "High Seas Alliance"@en ;
+    compass:name "High Seas Alliance"@de ;
+    rdfs:label "High Seas Alliance"@en ;
+    rdfs:label "High Seas Alliance"@de ;
     compass:location "Amsterdam, Netherlands"@en ;
+    compass:description "Since 2011, OceanCare has been part of the High Seas Alliance, whose more than 70 members advocate for the ecologically sound conservation and management of marine areas beyond national jurisdiction."@en ;
+    compass:description "Seit 2011 ist OceanCare Teil der Allianz zum Schutz der Hochsee, deren mehr als 70 Mitglieder sich für den Schutz und einen ökologischen Umgang mit Meeresgebieten ausserhalb nationaler Gesetzgebungen einsetzen."@de ;
     schema:foundingDate "2011"^^xsd:gYear ;
-    compass:keySentence "Member of HSA since 2011"@en ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
-    compass:forum ocinst:BBNJ ;
-    geo:lat "52.3702"^^xsd:float ;
-    geo:long "4.8952"^^xsd:float .
+    geo:lat "52.36563"^^xsd:float ;
+    geo:long "4.90791"^^xsd:float .
 
-ocinst:STRA a compass:Network ;
-    compass:name "Sea Turtle Rescue Alliance (STRA)"@en ;
-    compass:location "Bristol, UK"@en ;
+ocinst:STRA
+    a compass:Network ;
+    compass:name "Sea Turtle Rescue Alliance"@en ;
+    compass:name "Sea Turtle Rescue Alliance"@de ;
+    rdfs:label "Sea Turtle Rescue Alliance"@en ;
+    rdfs:label "Sea Turtle Rescue Alliance"@de ;
+    compass:location "Registered in Bristol, UK"@en ;
+    compass:description "In 2021, OceanCare launched the alliance for the rescue and care of injured sea turtles. Led by Dr Claire Petros, the alliance brings together rescue centres from around the world, which share medical expertise and data with one another."@en ;
+    compass:description "OceanCare hat 2021 die Allianz zur Rettung und Pflege von verletzten Meeresschildkröten ins Leben gerufen. Unter der Leitung von Dr. Claire Petros kooperieren darin weltweit Rettungszentren, die untereinander medizinisches Fachwissen und Daten austauschen."@de ;
     schema:foundingDate "2021"^^xsd:gYear ;
-    compass:keySentence "Founding member of STRA"@en ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:SeaTurtles ;
+    geo:lat "51.45328"^^xsd:float ;
+    geo:long "-2.60019"^^xsd:float .
+
+ocinst:SeasAtRisk
+    a compass:Network ;
+    compass:name "Seas at Risk"@en ;
+    compass:name "Seas at Risk"@de ;
+    rdfs:label "Seas at Risk"@en ;
+    rdfs:label "Seas at Risk"@de ;
+    compass:location "Brussels, Belgium"@en ;
+    compass:description "Since 2014, OceanCare has been a member of this alliance of 40 organisations, which advocates effective marine policy in European waters with the aim of improving the protection of marine animals and the living conditions in the oceans."@en ;
+    compass:description "Seit 2014 ist OceanCare Mitglied dieser Allianz aus 40 Organisationen, die sich für eine griffige Meerespolitik in europäischen Gewässern einsetzt, um den Schutz der Meerestiere und die Lebensbedingungen in den Ozeanen zu verbessern."@de ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:OceanConservation ;
+    compass:forum ocinst:BBNJ ;
+    geo:lat "50.85487"^^xsd:float ;
+    geo:long "4.36883"^^xsd:float .
+
+ocinst:SpeciesSurvivalNetwork
+    a compass:Network ;
+    compass:name "Species Survival Network"@en ;
+    compass:name "Species Survival Network"@de ;
+    rdfs:label "Species Survival Network"@en ;
+    rdfs:label "Species Survival Network"@de ;
+    compass:location "Washington DC, USA"@en ;
+    compass:description "OceanCare has been a member of SSN since 1997 and is committed to ensuring that endangered animal and plant species are listed and protected under the CITES Appendices I-III. OceanCare is part of the SSN working groups on the protection of polar bears, whales and dolphins, as well as sharks, rays and other fish species."@en ;
+    compass:description "Seit 1997 ist OceanCare Mitglied von SSN und engagiert sich dafür, dass gefährdete Tier- und Pflanzenarten durch das Artenschutzabkommen CITES geschützt werden. OceanCare ist Teil der SSN-Arbeitsgruppen zum Schutz der Eisbären, der Wale und Delfine sowie der Haie, Rochen und weiterer Fischarten."@de ;
+    compass:managedByOceanCare false ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Fish, compass:Manatees, compass:PolarBears, compass:SeaTurtles, compass:Seals, compass:Sharks, compass:Whales ;
+    geo:lat "38.90536"^^xsd:float ;
+    geo:long "-77.05044"^^xsd:float .
+
+# ============================================================
+# Partner Organizations (17)
+# ============================================================
+
+ocinst:AlnitakResearchInstitute
+    a compass:PartnerOrganization ;
+    compass:name "Alnitak Research Institute"@en ;
+    compass:name "Alnitak Research Institute"@de ;
+    rdfs:label "Alnitak Research Institute"@en ;
+    rdfs:label "Alnitak Research Institute"@de ;
+    compass:location "Sóller, Mallorca, Spain"@en ;
+    compass:description "Alnitak works to tackle the harmful impacts of abandoned, lost and discarded fishing gear in the Mediterranean Sea, with support from OceanCare since 2021. This gear is estimated to account for 46–70% of  marine microplastic litter and can continue trapping and killing marine wildlife long after it has been lost, with sea turtles particularly at risk."@en ;
+    compass:description "Alnitak setzt sich dafür ein, die schädlichen Auswirkungen von aufgegebenen, verlorenen und entsorgten Fanggeräten im Mittelmeer zu reduzieren, und wird dabei seit 2021 von OceanCare unterstützt. Schätzungen zufolge machen solche Fanggeräte 46–70 % des marinen Mikroplastikmülls aus und können noch lange nach ihrem Verlust Meerestiere fangen und töten, wobei insbesondere Meeresschildkröten gefährdet sind."@de ;
+    schema:foundingDate "2015"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:CommunityInvolvement, compass:RescueActivities, compass:ResearchExpeditions, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:pollution compass:PlasticPollution ;
+    compass:species compass:Fish, compass:SeaTurtles ;
+    compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
+    geo:lat "39.76636"^^xsd:float ;
+    geo:long "2.71522"^^xsd:float .
+
+ocinst:BEES
+    a compass:PartnerOrganization ;
+    compass:name "BEES"@en ;
+    compass:name "BEES"@de ;
+    rdfs:label "BEES"@en ;
+    rdfs:label "BEES"@de ;
+    skos:altLabel "Benin Environment and Education Society"@en ;
+    compass:location "Porto Novo, Benin"@en ;
+    compass:description "Declining fish species and harmful fishing practices threaten marine ecosystems and coastal livelihoods, while scarcity is driving the hunting of protected species such as dolphins, manatees, sharks, and rays for aquatic wild meat. OceanCare has been working with Benin Environment and Education Society (BEES) to promote sustainable solutions in the Gulf of Guinea since 2018."@en ;
+    compass:description "Rückläufige Fischbestände und zerstörerische Fischereipraktiken bedrohen Meeresökosysteme und die Lebensgrundlagen der Küstengemeinschaften. Gleichzeitig führt die zunehmende Knappheit dazu, dass geschützte Arten wie Delfine, Seekühe, Haie und Rochen als sogenanntes Aquatic Wild Meat gejagt werden. Gemeinsam mit der Benin Environment and Education Society (BEES) setzt sich OceanCare im Golf von Guinea seit 2018 für nachhaltige Lösungen ein."@de ;
+    schema:foundingDate "2019"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:AquaticWildMeat, compass:Hunting ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Manatees, compass:SeaTurtles, compass:Sharks ;
+    compass:countryArea compass:Benin ;
+    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention ;
+    geo:lat "6.49650"^^xsd:float ;
+    geo:long "2.60360"^^xsd:float .
+
+ocinst:BritishDiversMarineLifeRescue
+    a compass:PartnerOrganization ;
+    compass:name "BDMLR"@en ;
+    compass:name "BDMLR"@de ;
+    rdfs:label "BDMLR"@en ;
+    rdfs:label "BDMLR"@de ;
+    skos:altLabel "British Divers Marine Life Rescue"@en ;
+    compass:location "Cornwall, UK"@en ;
+    compass:description "British Divers Marine Life Rescue (BDMLR) rescues and treats marine animals in distress, including disentangling whales and dolphins, assisting stranded animals, and rehabilitating injured seals. OceanCare has supported the organisation since 2019, including the construction of a seal hospital in Cornwall."@en ;
+    compass:description "British Divers Marine Life Rescue (BDMLR) rettet und versorgt Meerestiere in Not. Dazu gehören die Befreiung von Walen und Delfinen aus Verstrickungen, die Hilfe für gestrandete Meerestiere sowie die Rehabilitation verletzter Robben. OceanCare unterstützt die Arbeit der Organisation seit 2019 und förderte u. a. den Bau einer Robbenklinik in Cornwall."@de ;
+    schema:foundingDate "2012"^^xsd:gYear ;
     compass:managedByOceanCare false ;
     compass:workArea compass:RescueActivities, compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:SeaTurtles ;
-    geo:lat "51.4516"^^xsd:float ;
-    geo:long "-2.5930"^^xsd:float .
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Seals, compass:Whales ;
+    compass:countryArea compass:UnitedKingdom ;
+    geo:lat "50.20263"^^xsd:float ;
+    geo:long "-5.20263"^^xsd:float .
 
-# ============================================================
-# Partner Organisations (7)
-# ============================================================
+ocinst:CBDHabitat
+    a compass:PartnerOrganization ;
+    compass:name "CBD-Hábitat"@en ;
+    compass:name "CBD-Hábitat"@de ;
+    rdfs:label "CBD-Hábitat"@en ;
+    rdfs:label "CBD-Hábitat"@de ;
+    compass:location "Fundación CBD-Habitat – Cabo Blanco Field Station, near Nouadhibou, Mauretania"@en ;
+    compass:description "Since 2005, OceanCare has been supporting the organisation CBD-Hábitat in protecting the last large colony of endangered Mediterranean monk seals at Cabo Blanco in Mauritania, home to around half of the global population. The ‘Costa de las Focas’ Reserve has been monitored year-round and around the clock for 25 years."@en ;
+    compass:description "Seit 2005 unterstützt OceanCare die Organisation CBD-Hábitat beim Schutz der letzten grossen Kolonie der gefährdeten Mittelmeer-Mönchsrobbe am Cabo Blanco in Mauretanien, wo etwa die Hälfte des weltweiten Bestands lebt. Das Schutzgebiet «Costa de las Focas» wird seit 25 Jahren ganzjährig und rund um die Uhr überwacht."@de ;
+    schema:foundingDate "2005"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Seals ;
+    compass:countryArea compass:Mauritania, compass:Spain ;
+    geo:lat "20.83690"^^xsd:float ;
+    geo:long "-17.06360"^^xsd:float .
 
-ocinst:OceanCare a compass:PartnerOrganization ;
+ocinst:CIT
+    a compass:PartnerOrganization ;
+    compass:name "CIT"@en ;
+    compass:name "CIT"@de ;
+    rdfs:label "CIT"@en ;
+    rdfs:label "CIT"@de ;
+    skos:altLabel "Centro para la Investigación de Tiburones"@en ;
+    compass:location "Caracas, Venezuela"@en ;
+    compass:description "CIT has made significant progress in Venezuela since 2017: whale shark fishing has effectively ceased and the trade in shark fins has been significantly reduced. In addition, three areas have been designated as Important Shark and Ray Areas (ISRAs). OceanCare has been collaborating with CIT since 2017."@en ;
+    compass:description "CIT konnte in Venezuela seit 2017 grosse Fortschritte erzielen: Die Walhai-Fischerei ist faktisch zum Erliegen gekommen und der Handel mit Haiflossen wurde stark reduziert. Zudem wurden drei Gebiete als Important Shark and Ray Areas (ISRAs) ausgewiesen. OceanCare unterstützt CIT seit 2017."@de ;
+    schema:foundingDate "2017"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Manatees, compass:Sharks ;
+    compass:countryArea compass:Venezuela ;
+    geo:lat "10.48059"^^xsd:float ;
+    geo:long "-66.90361"^^xsd:float .
+
+ocinst:DolphinBiologyAndConservation
+    a compass:PartnerOrganization ;
+    compass:name "Dolphin Biology and Conservation"@en ;
+    compass:name "Dolphin Biology and Conservation"@de ;
+    rdfs:label "Dolphin Biology and Conservation"@en ;
+    rdfs:label "Dolphin Biology and Conservation"@de ;
+    compass:location "Cordenons, PN, Italy"@en ;
+    compass:description "Dolphin Biology and Conservation, is committed to preserving marine biodiversity and reducing human impacts on cetaceans in various Mediterranean areas. DBC produces  publications and disseminates science-based information with a focus on factors threatening dolphins and marine life. DBC studies and monitors dolphin populations to assess abundance, detect trends and identify important habitat. OceanCare supports and closely collaborates with DBC since 2007."@en ;
+    compass:description "Dolphin Biology and Conservation setzt sich für den Erhalt der marinen Biodiversität und die Verringerung menschlicher Einflüsse auf Wale und Delfine in verschiedenen Gebieten des Mittelmeers ein. DBC erforscht Delfinpopulationen, erstellt wissenschaftliche Publikationen und verbreitet fundierte, wissenschaftsbasierte Informationen mit besonderem Fokus auf die Faktoren, die Delfine und andere Meereslebewesen bedrohen. OceanCare unterstützt DBC seit 2007 und arbeitet eng mit der Organisation zusammen."@de ;
+    schema:foundingDate "2018"^^xsd:gYear ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:Fisheries ;
+    compass:species compass:DolphinsAndSmallCetaceans ;
+    compass:countryArea compass:Italy ;
+    geo:lat "45.98233"^^xsd:float ;
+    geo:long "12.70265"^^xsd:float .
+
+ocinst:FORTH
+    a compass:PartnerOrganization ;
+    compass:name "FORTH"@en ;
+    compass:name "FORTH"@de ;
+    rdfs:label "FORTH"@en ;
+    rdfs:label "FORTH"@de ;
+    skos:altLabel "The Foundation for Research and Technology – Hellas"@en ;
+    compass:location "Heraklion, Crete, Greece"@en ;
+    compass:description "OceanCare plays a pivotal role in the development of SAvE Whales in collaboration with the Pelagos Cetacean Research Institute and the Foundation for Research and Technology - Hellas  (FORTH). SAvE Whales is the world’s first integrated system that can localise sperm whales and inform ship captains of their presence in real time."@en ;
+    compass:description "OceanCare spielt eine Schlüsselrolle bei der Entwicklung von SAvE Whales in Zusammenarbeit mit dem Pelagos Cetacean Research Institute und der Foundation for Research and Technology - Hellas (FORTH). SAvE Whales ist das weltweit erste Warnsystem, das Pottwale lokalisieren und Schiffskapitän:innen in Echtzeit über die Anwesenheit der Tiere informieren kann."@de ;
+    compass:managedByOceanCare false ;
+    compass:topic compass:Shipping ;
+    compass:species compass:Whales ;
+    compass:relatedProject ocinst:SAVEWhales ;
+    geo:lat "35.32500"^^xsd:float ;
+    geo:long "25.13060"^^xsd:float .
+
+ocinst:GreenBalcans
+    a compass:PartnerOrganization ;
+    compass:name "Green Balkans"@en ;
+    compass:name "Green Balkans"@de ;
+    rdfs:label "Green Balkans"@en ;
+    rdfs:label "Green Balkans"@de ;
+    compass:location "Plovdiv, Bulgaria"@en ;
+    compass:description "Since 2018, OceanCare has been supporting the research activities of the organisation Green Balkans into the distribution, population trends and threats facing the protected harbour porpoises, bottlenose dolphins and common dolphins in Bulgarian waters."@en ;
+    compass:description "Seit 2018 unterstützt OceanCare die Forschungstätigkeiten der Organisation Green Balkans zu Verbreitung, Bestandsentwicklung und Bedrohungen der geschützten Schweinswale, Grossen Tümmler und Gewöhnlichen Delfine in bulgarischen Gewässern."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:DolphinsAndSmallCetaceans ;
+    compass:countryArea compass:Bulgaria ;
+    geo:lat "42.13573"^^xsd:float ;
+    geo:long "24.73194"^^xsd:float .
+
+ocinst:IonianDolphinProject
+    a compass:PartnerOrganization ;
+    compass:name "IDP"@en ;
+    compass:name "IDP"@de ;
+    rdfs:label "IDP"@en ;
+    rdfs:label "IDP"@de ;
+    skos:altLabel "Ionian Dolphin Project"@en ;
+    compass:location "Vonitsa, Greece"@en ;
+    compass:description "The Ionian Dolphin Project (IDP) researches and protects dolphins in three Natura 2000 areas: the Central Ionian Sea, the Ambracian Gulf and the waters around Paxos and Antipaxos. OceanCare has been supporting its work since 2004."@en ;
+    compass:description "Das Ionian Dolphin Project (IDP) erforscht und schützt Delfine in drei Natura-2000-Gebieten: dem zentralionischen Meer, dem Ambrakischen Golf und den Gewässern um Paxos und Antipaxos. OceanCare unterstützt diese Arbeit seit 2004."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:CommunityInvolvement, compass:ResearchExpeditions, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Seals ;
+    compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
+    geo:lat "38.91630"^^xsd:float ;
+    geo:long "20.88780"^^xsd:float .
+
+ocinst:LPACalais
+    a compass:PartnerOrganization ;
+    compass:name "LPA Calais"@en ;
+    compass:name "LPA Calais"@de ;
+    rdfs:label "LPA Calais"@en ;
+    rdfs:label "LPA Calais"@de ;
+    skos:altLabel "Ligue de Protection des Animaux du Calaisis"@en ;
+    compass:location "Calais, France"@en ;
+    compass:description "Since 2018, OceanCare has supported the LPA Calais rehabilitation centre in northern France, where weakened and injured seals are rescued, rehabilitated, and released back into the wild."@en ;
+    compass:description "Seit 2018 unterstützt OceanCare das Rehabilitationszentrum von LPA Calais in Nordfrankreich, das geschwächte und verletzte Robben aufnimmt, pflegt und wieder auswildert."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:RescueActivities ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:Seals ;
+    geo:lat "50.96018"^^xsd:float ;
+    geo:long "1.88591"^^xsd:float .
+
+ocinst:Morigenos
+    a compass:PartnerOrganization ;
+    compass:name "Morigenos"@en ;
+    compass:name "Morigenos"@de ;
+    rdfs:label "Morigenos"@en ;
+    rdfs:label "Morigenos"@de ;
+    compass:location "Piran, Slovenia"@en ;
+    compass:description "In Slovenia, OceanCare has supported the Morigenos Dolphin Centre since 2020. It serves as a field station for research projects on the protection of bottlenose dolphins in the Gulf of Trieste, where fishing poses a particular threat."@en ;
+    compass:description "In Slowenien unterstützt OceanCare das Delfinzentrum von Morigenos seit 2020. Es dient als Feldstation für Forschungsprojekte zum Schutz der Grossen Tümmler im Golf von Triest, wo insbesondere die Fischerei eine Bedrohung darstellt."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:species compass:DolphinsAndSmallCetaceans ;
+    compass:countryArea compass:Slovenia ;
+    geo:lat "45.52883"^^xsd:float ;
+    geo:long "13.56811"^^xsd:float .
+
+ocinst:OceanCare
+    a compass:PartnerOrganization ;
     compass:name "OceanCare"@en ;
     compass:name "OceanCare"@de ;
+    rdfs:label "OceanCare"@en ;
+    rdfs:label "OceanCare"@de ;
     compass:location "Wädenswil, Switzerland"@en ;
-    compass:location "Wädenswil, Schweiz"@de ;
+    compass:description "OceanCare is an international marine conservation non-governmental organisation, founded in Switzerland in 1989. The organisation pursues the protection and restoration of the marine environment and marine wildlife with a strong policy focus, combining research, conservation projects and education. OceanCare’s remit includes marine pollution, climate change, marine mammal hunting and the environmental consequences of fisheries. Its work is supported by a team of scientific, legal and policy experts, and involves strategic collaboration with civil society organisations and coalitions around the world. OceanCare is an officially accredited partner and observer to several UN conventions and other international fora."@en ;
+    compass:description "OceanCare ist eine Nichtregierungsorganisation, die sich seit 1989 weltweit für die Wiederherstellung der Meeresumwelt sowie den Schutz der Meerestiere einsetzt. Mit Forschungs- und Schutzprojekten, Umweltbildungskampagnen sowie intensivem Einsatz in internationalen Gremien unternimmt die Organisation konkrete Schritte zur Verbesserung der Lebensbedingungen in den Weltmeeren. OceanCare kümmert sich u. a. um Meeresverschmutzung, Klimawandel, Jagd auf Meeressäuger und Umweltfolgen der Fischerei. Diese Arbeit wird von einem Team mit wissenschaftlicher, juristischer und politischer Expertise unterstützt und umfasst die strategische Zusammenarbeit mit zivilgesellschaftlichen Organisationen und Koalitionen auf der ganzen Welt. OceanCare wurde vom Wirtschafts- und Sozialrat der Vereinten Nationen als Sonderberaterin für den Meeresschutz anerkannt und ist offizielle Partnerorganisation in zahlreichen UN-Abkommen und internationalen Konventionen."@de ;
     schema:foundingDate "1989"^^xsd:gYear ;
     schema:url "https://www.oceancare.org"^^xsd:anyURI ;
     schema:image "https://www.oceancare.org/wp-content/uploads/2022/01/OceanCare_logo.svg"^^xsd:anyURI ;
     compass:managedByOceanCare true ;
-    compass:keySentence "A Swiss marine conservation organization protecting ocean biodiversity through science and advocacy."@en ;
-    compass:keySentence "Eine Schweizer Meeresschutzorganisation, die durch Wissenschaft und Lobbyarbeit die Meeresbiodiversität schützt."@de ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch, compass:RescueActivities, compass:CommunityInvolvement ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:countryArea compass:Switzerland ;
-    geo:lat "47.2290"^^xsd:float ;
-    geo:long "8.6760"^^xsd:float .
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
+    compass:relatedProject ocinst:BecauseOurPlanetIsBlue ;
+    geo:lat "47.22953"^^xsd:float ;
+    geo:long "8.67306"^^xsd:float .
 
-ocinst:DolphinBiologyAndConservation a compass:PartnerOrganization ;
-    compass:name "Dolphin Biology and Conservation"@en ;
-    compass:location "Cordenons (PN), Italy"@en ;
-    schema:foundingDate "2018"^^xsd:gYear ;
-    compass:keySentence "Adriatic Dolphins"@en ;
+ocinst:OliveRidleyProject
+    a compass:PartnerOrganization ;
+    compass:name "ORP"@en ;
+    compass:name "ORP"@de ;
+    rdfs:label "ORP"@en ;
+    rdfs:label "ORP"@de ;
+    skos:altLabel "Olive Ridley Project"@en ;
+    compass:location "Baa Atoll, Maldives"@en ;
+    compass:description "OceanCare has supported the Olive Ridley Project (ORP) in the rescue and treatment of, and research into injured sea turtles since 2017. With the establishment of the new Sea Turtle Health Institute, new standards for sea turtle medicine in the Indian Ocean are being set."@en ;
+    compass:description "OceanCare unterstützt das Olive Ridley Project bei der Rettung, Behandlung und Erforschung verletzter Meeresschildkröten seit 2017. Mit dem neuen Sea Turtle Health Institute werden neue Standards für die Meeresschildkrötenmedizin im Indischen Ozean gesetzt."@de ;
+    compass:managedByOceanCare false ;
+    compass:workArea compass:CommunityInvolvement, compass:RescueActivities, compass:ResearchExpeditions, compass:ScientificResearch ;
+    compass:conservation compass:AnimalAndSpeciesConservation ;
+    compass:topic compass:AquaticWildMeat, compass:Hunting ;
+    compass:species compass:SeaTurtles ;
+    compass:countryArea compass:Maldives ;
+    geo:lat "5.01690"^^xsd:float ;
+    geo:long "73.06170"^^xsd:float .
+
+ocinst:PelagosCetaceanResearchInstitute
+    a compass:PartnerOrganization ;
+    compass:name "Pelagos Cetacean Research Institute"@en ;
+    compass:name "Pelagos Cetacean Research Institute"@de ;
+    rdfs:label "Pelagos Cetacean Research Institute"@en ;
+    rdfs:label "Pelagos Cetacean Research Institute"@de ;
+    compass:location "Heraklion, Crete, Greece"@en ;
+    compass:description "OceanCare has supported the Pelagos Cetacean Research Institute since 2007 and plays a pivotal role in the development of SAvE Whales in collaboration with the Pelagos Cetacean Research Institute and the Foundation for Research and Technology - Hellas  (FORTH). SAvE Whales is the world’s first integrated system that can localise sperm whales and inform ship captains of their presence in real time."@en ;
+    compass:description "OceanCare unterstützt das Pelagos Cetacean Research Institute seit 2007 und spielt gemeinsam mit diesem Forschungsinstitut und der Foundation for Research and Technology - Hellas (FORTH) eine Schlüsselrolle bei der Entwicklung von SAvE Whales, dem weltweit ersten Warnsystem, das Pottwale lokalisieren und Schiffskapitän:innen in Echtzeit über die Anwesenheit der Tiere informieren kann."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Fisheries ;
-    compass:species compass:Dolphins ;
-    compass:countryArea compass:Italy, compass:EasternMediterraneanSea ;
-    compass:forum ocinst:ACCOBAMS ;
-    geo:lat "43.18"^^xsd:float ;
-    geo:long "13.80"^^xsd:float .
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Whales ;
+    geo:lat "35.32500"^^xsd:float ;
+    geo:long "25.13060"^^xsd:float .
 
-ocinst:AlnitakResearchInstitute a compass:PartnerOrganization ;
-    compass:name "Alnitak Research Institute"@en ;
-    compass:location "Madrid, Spain"@en ;
-    schema:foundingDate "2015"^^xsd:gYear ;
-    compass:keySentence "MEDTOP / LIFE OASIS"@en ;
+ocinst:SaveTheMed
+    a compass:PartnerOrganization ;
+    compass:name "Save The Med"@en ;
+    compass:name "Save The Med"@de ;
+    rdfs:label "Save The Med"@en ;
+    rdfs:label "Save The Med"@de ;
+    compass:location "Mallorca, Spain"@en ;
+    compass:description "Marine conservation NGO protecting the Mediterranean ecosystem."@en ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:AdvocacyWork, compass:RescueActivities, compass:CommunityInvolvement ;
-    compass:conservation compass:OceanConservation, compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Shipping, compass:Fisheries ;
+    compass:workArea compass:ScientificResearch ;
     compass:pollution compass:PlasticPollution ;
-    compass:species compass:Whales, compass:Dolphins, compass:SeaTurtles, compass:Fish ;
-    compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
-    compass:forum ocinst:ACCOBAMS, ocinst:IMO, ocinst:UNEPMAP ;
-    compass:relatedProject ocinst:SAVEWhales ;
-    geo:lat "39.75"^^xsd:float ;
-    geo:long "2.9"^^xsd:float .
+    compass:countryArea compass:Spain ;
+    geo:lat "39.57000"^^xsd:float ;
+    geo:long "2.65000"^^xsd:float .
 
-ocinst:BEES a compass:PartnerOrganization ;
-    compass:name "BEES"@en ;
-    compass:location "Porto Novo, Benin"@en ;
-    schema:foundingDate "2019"^^xsd:gYear ;
-    compass:keySentence "Aquatic Wild Meat"@en ;
+ocinst:TethysResearchInstitute
+    a compass:PartnerOrganization ;
+    compass:name "Tethys Research Institute"@en ;
+    compass:name "Tethys Research Institute"@de ;
+    rdfs:label "Tethys Research Institute"@en ;
+    rdfs:label "Tethys Research Institute"@de ;
+    compass:location "Milan, Italy"@en ;
+    compass:description "Tethys Research Institute is a non-profit research organisation supporting marine conservation through science and public awareness with a focus on large marine vertebrates. OceanCare has cooperated with Tethys since 2004 in various areas – most recently as part of the Pelagos Consortium in the north-western Mediterranean Sea, where a PSSA (Particularly Sensitive Sea Area) was adopted by the International Maritime Organization (IMO) in July 2023 and came into force in January 2024. It is the first PSSA to be designated by the IMO explicitly to protect whales from the impact of maritime traffic."@en ;
+    compass:description "Das Tethys Research Institute ist ein gemeinnütziges Forschungsinstitut mit Fokus auf den Schutz von Waltieren und ihrer Lebensräume. OceanCare arbeitet seit 2004 in verschiedenen Bereichen mit Tethys zusammen – unter anderem im nordwestlichen Mittelmeer, wo die Internationale Seeschifffahrts-Organisation (IMO) im Juli 2023 eine Particularly Sensitive Sea Area (PSSA, «Besonders empfindliches Meeresgebiet») auswies, die im Januar 2024 in Kraft trat. Es ist die erste PSSA der IMO, die ausdrücklich dem Schutz von Walen vor den Auswirkungen des Schiffsverkehrs dient."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:AdvocacyWork ;
+    compass:workArea compass:CommunityInvolvement, compass:ResearchExpeditions, compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting, compass:Fisheries ;
-    compass:species compass:Dolphins, compass:SeaTurtles, compass:Manatees, compass:Sharks ;
-    compass:countryArea compass:Benin ;
-    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention, ocinst:CBD ;
-    compass:relatedProject ocinst:AquaticWildMeat ;
-    geo:lat "6.4965"^^xsd:float ;
-    geo:long "2.6036"^^xsd:float .
+    compass:species compass:DolphinsAndSmallCetaceans, compass:Whales ;
+    geo:lat "45.47230"^^xsd:float ;
+    geo:long "9.17900"^^xsd:float .
 
-ocinst:BritishDiversMarineLifeRescue a compass:PartnerOrganization ;
-    compass:name "British Divers Marine Life Rescue"@en ;
-    compass:location "Cornwall, UK"@en ;
-    schema:foundingDate "2012"^^xsd:gYear ;
-    compass:keySentence "Marine Life Rescue"@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins, compass:Whales, compass:Seals ;
-    compass:countryArea compass:England ;
-    geo:lat "50.20263"^^xsd:float ;
-    geo:long "-5.20263"^^xsd:float .
-
-ocinst:CIT a compass:PartnerOrganization ;
-    compass:name "CIT"@en ;
-    compass:location "Caracas, Venezuela"@en ;
-    schema:foundingDate "2017"^^xsd:gYear ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:RescueActivities ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting, compass:Fisheries ;
-    compass:species compass:Dolphins, compass:Manatees, compass:Sharks ;
-    compass:countryArea compass:Venezuela ;
-    geo:lat "10.488"^^xsd:float ;
-    geo:long "-66.879"^^xsd:float .
-
-ocinst:CBDHabitat a compass:PartnerOrganization ;
-    compass:name "CBD-Hábitat"@en ;
-    compass:location "Cap Blanc, Mauritania"@en ;
-    schema:foundingDate "2005"^^xsd:gYear ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:RescueActivities ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Seals ;
-    compass:countryArea compass:Mauritania, compass:Spain ;
-    geo:lat "20.7701"^^xsd:float ;
-    geo:long "-17.0488"^^xsd:float .
-
-# ============================================================
-# Partner Organisations (continued)
-# ============================================================
-
-ocinst:GreenBalcans a compass:PartnerOrganization ;
-    compass:name "Green Balkans"@en ;
-    compass:name "Green Balkans"@de ;
-    compass:location "Plovdiv, Bulgaria"@en ;
-    compass:keySentence "Wildlife conservation NGO protecting nature and marine biodiversity in Bulgaria."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins ;
-    compass:countryArea compass:Bulgaria ;
-    geo:lat "42.1500"^^xsd:float ;
-    geo:long "24.7500"^^xsd:float .
-
-ocinst:IonianDolphinProject a compass:PartnerOrganization ;
-    compass:name "Ionian Dolphin Project"@en ;
-    compass:name "Ionian Dolphin Project"@de ;
-    compass:location "Lefkada, Greece"@en ;
-    compass:keySentence "Long-term research programme monitoring cetaceans in the Ionian Sea."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins, compass:Seals ;
-    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
-    geo:lat "38.7000"^^xsd:float ;
-    geo:long "20.7000"^^xsd:float .
-
-ocinst:iSeas a compass:PartnerOrganization ;
-    compass:name "iSeas"@en ;
-    compass:name "iSeas"@de ;
-    compass:location "Athens, Greece"@en ;
-    compass:keySentence "Marine NGO working on ocean conservation and plastic pollution reduction in Greece."@en ;
+ocinst:iSeas
+    a compass:PartnerOrganization ;
+    compass:name "iSea"@en ;
+    compass:name "iSea"@de ;
+    rdfs:label "iSea"@en ;
+    rdfs:label "iSea"@de ;
+    compass:location "Thessaloniki, Greece"@en ;
+    compass:description "iSea works to protect endangered sharks and rays in the Ambracian Gulf in western Greece, an Important Shark and Ray Area and key breeding and nursery ground for several species. Its #zeroplastic campaign also tackles plastic pollution through education and efforts to reduce single-use plastic. OceanCare has supported iSea and both areas of its work since 2019."@en ;
+    compass:description "iSea setzt sich für den Schutz gefährdeter Haie und Rochen im Ambrakischen Golf im Westen Griechenlands ein, einem als «Important Shark and Ray Area» ausgewiesenen Gebiet, das ein wichtiges Fortpflanzungs- und Aufwuchsgebiet für mehrere Arten ist. Mit der Kampagne #zeroplastic engagiert sich iSea zudem durch Bildungsarbeit und Massnahmen zur Reduktion von Einwegplastik gegen die Plastikverschmutzung. OceanCare unterstützt iSea in beiden Arbeitsbereichen seit 2019."@de ;
     compass:managedByOceanCare false ;
     compass:workArea compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:pollution compass:PlasticPollution ;
     compass:species compass:Sharks ;
-    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
-    geo:lat "37.9700"^^xsd:float ;
-    geo:long "23.7300"^^xsd:float .
-
-ocinst:LPACalais a compass:PartnerOrganization ;
-    compass:name "LPA Calais"@en ;
-    compass:name "LPA Calais"@de ;
-    compass:location "Calais, France"@en ;
-    compass:keySentence "Marine mammal rescue and rehabilitation on the northern French coast."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:RescueActivities ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Seals ;
-    compass:countryArea compass:France ;
-    geo:lat "50.9500"^^xsd:float ;
-    geo:long "1.8500"^^xsd:float .
-
-ocinst:Morigenos a compass:PartnerOrganization ;
-    compass:name "Morigenos"@en ;
-    compass:name "Morigenos"@de ;
-    compass:location "Piran, Slovenia"@en ;
-    compass:keySentence "Slovenian Marine Mammal Society — research and conservation of Mediterranean dolphins."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins ;
-    compass:countryArea compass:Slovenia ;
-    compass:forum ocinst:ACCOBAMS ;
-    geo:lat "45.5300"^^xsd:float ;
-    geo:long "13.5700"^^xsd:float .
-
-ocinst:OliveRidleyProject a compass:PartnerOrganization ;
-    compass:name "Olive Ridley Project"@en ;
-    compass:name "Olive Ridley Project"@de ;
-    compass:location "Maldives"@en ;
-    compass:keySentence "Sea turtle conservation in the Indian Ocean, focusing on ghost gear entanglement."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:RescueActivities, compass:CommunityInvolvement ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:species compass:SeaTurtles ;
-    compass:countryArea compass:Maldives ;
-    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention ;
-    compass:relatedProject ocinst:AquaticWildMeat ;
-    geo:lat "3.2000"^^xsd:float ;
-    geo:long "73.2200"^^xsd:float .
-
-ocinst:PelagosCetaceanResearchInstitute a compass:PartnerOrganization ;
-    compass:name "Pelagos Cetacean Research Institute"@en ;
-    compass:name "Pelagos Cetacean Research Institute"@de ;
-    compass:location "Athens, Greece"@en ;
-    compass:keySentence "Cetacean research and conservation in the Mediterranean Sea."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins, compass:Whales ;
-    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
-    compass:forum ocinst:ACCOBAMS ;
-    geo:lat "37.9800"^^xsd:float ;
-    geo:long "23.7300"^^xsd:float .
-
-ocinst:SaveTheMed a compass:PartnerOrganization ;
-    compass:name "Save The Med"@en ;
-    compass:name "Save The Med"@de ;
-    compass:location "Palma de Mallorca, Spain"@en ;
-    compass:keySentence "Marine conservation NGO protecting the Mediterranean ecosystem."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation ;
-    compass:pollution compass:PlasticPollution ;
-    compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
-    geo:lat "39.5700"^^xsd:float ;
-    geo:long "2.6500"^^xsd:float .
-
-ocinst:TethysResearchInstitute a compass:PartnerOrganization ;
-    compass:name "Tethys Research Institute"@en ;
-    compass:name "Tethys Research Institute"@de ;
-    compass:location "Milan, Italy"@en ;
-    compass:keySentence "Cetacean research in the Mediterranean Sea since 1986."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:ScientificResearch, compass:CommunityInvolvement ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins, compass:Whales ;
-    compass:countryArea compass:Italy, compass:WesternMediterraneanSea ;
-    compass:forum ocinst:ACCOBAMS ;
-    geo:lat "45.4700"^^xsd:float ;
-    geo:long "9.1900"^^xsd:float .
+    compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
+    geo:lat "40.60192"^^xsd:float ;
+    geo:long "22.95759"^^xsd:float .
 
 # ============================================================
-# Networks (continued)
+# Projects and Programmes (2)
 # ============================================================
 
-ocinst:FossilFreeOceanInitiative a compass:Network ;
-    compass:name "Fossil-Free Ocean Initiative"@en ;
-    compass:name "Fossil-Free Ocean Initiative"@de ;
+ocinst:BecauseOurPlanetIsBlue
+    a compass:Project ;
+    compass:name "Because Our Planet Is Blue"@en ;
+    compass:name "Because Our Planet Is Blue"@de ;
+    rdfs:label "Because Our Planet Is Blue"@en ;
+    rdfs:label "Because Our Planet Is Blue"@de ;
     compass:location "Wädenswil, Switzerland"@en ;
-    compass:keySentence "Initiative advocating to keep fossil fuels out of our oceans."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:ClimateProtection, compass:FossilFuels ;
-    compass:pollution compass:OceanNoisePollution ;
-    geo:lat "47.2290"^^xsd:float ;
-    geo:long "8.6760"^^xsd:float .
+    compass:managedByOceanCare true ;
+    compass:topic compass:DeepSeaMining, compass:Fisheries, compass:FossilFuels, compass:Shipping ;
+    compass:pollution compass:PlasticPollution ;
+    compass:forum ocinst:BBNJ, ocinst:UNOC ;
+    compass:relatedOrganization ocinst:OceanCare ;
+    geo:lat "47.22953"^^xsd:float ;
+    geo:long "8.67306"^^xsd:float .
 
-ocinst:FossilFuelNonProliferationTreaty a compass:Network ;
-    compass:name "Fossil Fuel Non-Proliferation Treaty Initiative"@en ;
-    compass:name "Fossil Fuel Non-Proliferation Treaty Initiative"@de ;
-    compass:location "Geneva, Switzerland"@en ;
-    compass:keySentence "Global initiative for an international treaty to phase out fossil fuels."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:ClimateProtection, compass:FossilFuels ;
-    compass:pollution compass:OceanNoisePollution ;
-    geo:lat "46.2044"^^xsd:float ;
-    geo:long "6.1432"^^xsd:float .
-
-ocinst:SeasAtRisk a compass:Network ;
-    compass:name "Seas at Risk"@en ;
-    compass:name "Seas at Risk"@de ;
-    compass:location "Brussels, Belgium"@en ;
-    compass:keySentence "European network advocating for healthy marine ecosystems."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:OceanConservation ;
-    compass:forum ocinst:BBNJ ;
-    geo:lat "50.8503"^^xsd:float ;
-    geo:long "4.3517"^^xsd:float .
-
-ocinst:SpeciesSurvivalNetwork a compass:Network ;
-    compass:name "Species Survival Network (SSN)"@en ;
-    compass:name "Species Survival Network (SSN)"@de ;
-    compass:location "Washington D.C., USA"@en ;
-    compass:keySentence "Coalition of NGOs promoting conservation of wild species through policy advocacy."@en ;
-    compass:managedByOceanCare false ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Dolphins, compass:Whales, compass:Seals, compass:Manatees, compass:Sharks, compass:SeaTurtles, compass:PolarBears, compass:Fish ;
-    geo:lat "38.9029"^^xsd:float ;
-    geo:long "-77.0302"^^xsd:float .
-
-# ============================================================
-# Projects (4)
-# ============================================================
-
-ocinst:SAVEWhales a compass:Project ;
+ocinst:SAVEWhales
+    a compass:Project ;
     compass:name "SAvE Whales"@en ;
     compass:name "SAvE Whales"@de ;
     rdfs:label "SAvE Whales"@en ;
     rdfs:label "SAvE Whales"@de ;
     compass:location "Kythira Strait, Greece"@en ;
-    compass:keySentence "OceanCare enables the development of the SAvE Whales warning system"@en ;
+    compass:description "OceanCare enables the development of the SAvE Whales warning system"@en ;
     compass:managedByOceanCare true ;
     compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
     compass:conservation compass:AnimalAndSpeciesConservation ;
     compass:topic compass:Shipping ;
-    compass:species compass:Whales ;
-    compass:countryArea compass:Greece, compass:EasternMediterraneanSea ;
+    compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
     compass:forum ocinst:ACCOBAMS ;
+    compass:relatedOrganization ocinst:FORTH, ocinst:PelagosCetaceanResearchInstitute ;
     compass:wpEntityTagIdEn "921"^^xsd:integer ;
-    geo:lat "35.8428"^^xsd:float ;
-    geo:long "23.2325"^^xsd:float .
-
-ocinst:WhaleDolphinHuntFaroeIslands a compass:Project ;
-    compass:name "Whale & Dolphin Hunt Faroe Islands"@en ;
-    compass:name "Wal- und Delfinjagd Färöer-Inseln"@de ;
-    rdfs:label "Whale & Dolphin Hunt Faroe Islands"@en ;
-    rdfs:label "Wal- und Delfinjagd Färöer-Inseln"@de ;
-    compass:location "Faroe Islands"@en ;
-    compass:startDate "1992-01-01"^^xsd:date ;
-    compass:keySentence "Campaign against Faroese whale and dolphin hunts"@en ;
-    compass:managedByOceanCare true ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:pollution compass:ChemicalPollution ;
-    compass:species compass:Whales, compass:Dolphins ;
-    compass:countryArea compass:FaroeIslands ;
-    compass:forum ocinst:IWC ;
-    compass:wpEntityTagIdEn "90002"^^xsd:integer ;
-    geo:lat "62.0000"^^xsd:float ;
-    geo:long "-6.7830"^^xsd:float .
-
-ocinst:OutOfHabitat a compass:Project ;
-    compass:name "Out of Habitat"@en ;
-    compass:name "Ausserhalb des Lebensraums"@de ;
-    rdfs:label "Out of Habitat"@en ;
-    rdfs:label "Ausserhalb des Lebensraums"@de ;
-    compass:location "Wädenswil, Switzerland"@en ;
-    compass:keySentence "Tracking marine species found outside their natural habitats due to climate change"@en ;
-    compass:managedByOceanCare true ;
-    compass:workArea compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection ;
-    compass:species compass:Dolphins, compass:Whales, compass:PolarBears, compass:Seals ;
-    geo:lat "47.2295"^^xsd:float ;
-    geo:long "8.6755"^^xsd:float .
-
-ocinst:AquaticWildMeat a compass:Project ;
-    compass:name "Aquatic Wild Meat"@en ;
-    compass:name "Aquatic Wild Meat"@de ;
-    rdfs:label "Aquatic Wild Meat"@en ;
-    rdfs:label "Aquatic Wild Meat"@de ;
-    compass:location "West Africa"@en ;
-    compass:keySentence "Addressing unsustainable hunting and trade of aquatic wildlife for food"@en ;
-    compass:managedByOceanCare true ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting, compass:Fisheries ;
-    compass:species compass:Dolphins, compass:SeaTurtles, compass:Manatees, compass:Sharks ;
-    compass:countryArea compass:Benin, compass:Maldives ;
-    compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention, ocinst:CBD ;
-    geo:lat "6.5000"^^xsd:float ;
-    geo:long "2.6000"^^xsd:float .
+    geo:lat "35.84280"^^xsd:float ;
+    geo:long "23.23250"^^xsd:float .

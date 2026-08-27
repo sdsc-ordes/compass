@@ -92,20 +92,15 @@ compass:location a rdf:Property ;
     rdfs:label "Ort"@de ;
     rdfs:comment "Human-readable location description (city, country)."@en .
 
-compass:keySentence a rdf:Property ;
-    rdfs:label "key sentence"@en ;
-    rdfs:label "Kernsatz"@de ;
-    rdfs:comment "A single sentence summarizing the entity."@en .
+compass:description a rdf:Property ;
+    rdfs:label "description"@en ;
+    rdfs:label "Beschreibung"@de ;
+    rdfs:comment "A paragraph describing the entity and OceanCare's involvement with it."@en .
 
 compass:managedByOceanCare a rdf:Property ;
     rdfs:label "managed by OceanCare"@en ;
     rdfs:label "verwaltet von OceanCare"@de ;
     rdfs:comment "Whether this entity is directly managed by OceanCare."@en .
-
-compass:startDate a rdf:Property ;
-    rdfs:label "start date"@en ;
-    rdfs:label "Startdatum"@de ;
-    rdfs:comment "The start date of the project."@en .
 
 # -- Tag dimension properties --
 
@@ -144,10 +139,37 @@ compass:forum a rdf:Property ;
     rdfs:label "Forum"@de ;
     rdfs:comment "An international forum associated with this entity."@en .
 
+compass:relatedOrganization a rdf:Property ;
+    rdfs:label "related organization"@en ;
+    rdfs:label "Verwandte Organisation"@de ;
+    rdfs:comment "A partner organization or network associated with this entity."@en .
+
 compass:relatedProject a rdf:Property ;
     rdfs:label "related project"@en ;
     rdfs:label "Verwandtes Projekt"@de ;
     rdfs:comment "A project associated with this entity."@en .
+
+# -- Bookkeeping properties (not filter dimensions) --
+
+compass:wpTagId a rdf:Property ;
+    rdfs:label "WordPress Tag ID"@en ;
+    rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the OceanCare website."@en ;
+    rdfs:range xsd:integer .
+
+compass:wpEntityTagIdEn a rdf:Property ;
+    rdfs:label "WordPress Entity Tag ID (English)"@en ;
+    rdfs:comment "Numeric WP term ID of the English per-entity tag on OceanCare (used to link to English stories about this entity)."@en ;
+    rdfs:range xsd:integer .
+
+compass:wpEntityTagIdDe a rdf:Property ;
+    rdfs:label "WordPress Entity Tag ID (German)"@en ;
+    rdfs:comment "Numeric WP term ID of the German per-entity tag on OceanCare (used to link to German stories about this entity)."@en ;
+    rdfs:range xsd:integer .
+
+compass:isoCode a rdf:Property ;
+    rdfs:label "ISO / boundary code"@en ;
+    rdfs:comment "Boundary lookup key for a Country/Area concept (ISO 3166-1 alpha-3, or a custom code for sub-national/marine areas). Mirrored by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
+    rdfs:range xsd:string .
 
 # -- External properties (stub declarations) --
 
@@ -174,6 +196,10 @@ schema:image a rdf:Property ;
 skos:prefLabel a rdf:Property ;
     rdfs:label "preferred label"@en ;
     rdfs:comment "The preferred lexical label for a resource, in a given language."@en .
+
+skos:altLabel a rdf:Property ;
+    rdfs:label "alternative label"@en ;
+    rdfs:comment "An alternative lexical label — for an entity, the long form of an abbreviated name."@en .
 
 # ============================================================
 # Named Property Shapes (shared across entity NodeShapes)
@@ -241,11 +267,20 @@ compass:ImageShape a sh:Shape ;
     sh:datatype xsd:anyURI ;
     sh:maxCount 1 .
 
-compass:KeySentenceShape a sh:Shape ;
-    sh:path compass:keySentence ;
-    sh:name "key sentence"@en ;
-    sh:name "Kernsatz"@de ;
-    sh:description "A single sentence summarizing the entity."@en ;
+compass:AltLabelShape a sh:Shape ;
+    sh:path skos:altLabel ;
+    sh:name "long name"@en ;
+    sh:name "Langform"@de ;
+    sh:description "The unabbreviated name, shown on hover where the display name is an acronym."@en ;
+    sh:datatype rdf:langString ;
+    sh:uniqueLang true .
+
+compass:DescriptionShape a sh:Shape ;
+    sh:path compass:description ;
+    sh:name "description"@en ;
+    sh:name "Beschreibung"@de ;
+    sh:description "A paragraph describing the entity and OceanCare's involvement with it."@en ;
+    sh:description "Ein Absatz, der die Entität und das Engagement von OceanCare beschreibt."@de ;
     sh:datatype rdf:langString ;
     sh:uniqueLang true .
 
@@ -263,14 +298,6 @@ compass:FoundingDateShape a sh:Shape ;
     sh:name "Gründungsjahr"@de ;
     sh:description "The year the entity was established."@en ;
     sh:datatype xsd:gYear ;
-    sh:maxCount 1 .
-
-compass:StartDateShape a sh:Shape ;
-    sh:path compass:startDate ;
-    sh:name "Start Date"@en ;
-    sh:name "Startdatum"@de ;
-    sh:description "The start date of the project."@en ;
-    sh:datatype xsd:date ;
     sh:maxCount 1 .
 
 # -- Tag dimension property shapes --
@@ -331,6 +358,15 @@ compass:RelatedProjectPropertyShape a sh:Shape ;
     sh:description "A related project."@en ;
     sh:class compass:Project .
 
+# No sh:class: the sheet links entities to both partner organizations and
+# networks, which are separate classes.
+compass:RelatedOrganizationPropertyShape a sh:Shape ;
+    sh:path compass:relatedOrganization ;
+    sh:name "Related Organization"@en ;
+    sh:name "Verwandte Organisation"@de ;
+    sh:description "A related partner organization or network."@en ;
+    sh:nodeKind sh:IRI .
+
 # ============================================================
 # SHACL Node Shapes: 4 entity types
 # Each references the shared named property shapes above.
@@ -347,7 +383,8 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:LocationShape ;
     sh:property compass:WebsiteUrlShape ;
     sh:property compass:ImageShape ;
-    sh:property compass:KeySentenceShape ;
+    sh:property compass:DescriptionShape ;
+    sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
@@ -356,6 +393,7 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:PollutionPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
+    sh:property compass:RelatedOrganizationPropertyShape ;
     sh:property compass:RelatedProjectPropertyShape .
 
 compass:NetworkShape a sh:NodeShape ;
@@ -369,7 +407,8 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:LocationShape ;
     sh:property compass:WebsiteUrlShape ;
     sh:property compass:ImageShape ;
-    sh:property compass:KeySentenceShape ;
+    sh:property compass:DescriptionShape ;
+    sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
@@ -379,6 +418,7 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
+    sh:property compass:RelatedOrganizationPropertyShape ;
     sh:property compass:RelatedProjectPropertyShape .
 
 compass:PartnerOrganizationShape a sh:NodeShape ;
@@ -392,7 +432,8 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:LocationShape ;
     sh:property compass:WebsiteUrlShape ;
     sh:property compass:ImageShape ;
-    sh:property compass:KeySentenceShape ;
+    sh:property compass:DescriptionShape ;
+    sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
@@ -402,6 +443,7 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
+    sh:property compass:RelatedOrganizationPropertyShape ;
     sh:property compass:RelatedProjectPropertyShape .
 
 compass:ProjectShape a sh:NodeShape ;
@@ -415,14 +457,15 @@ compass:ProjectShape a sh:NodeShape ;
     sh:property compass:LocationShape ;
     sh:property compass:WebsiteUrlShape ;
     sh:property compass:ImageShape ;
-    sh:property compass:KeySentenceShape ;
+    sh:property compass:DescriptionShape ;
+    sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:FoundingDateShape ;
-    sh:property compass:StartDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
     sh:property compass:PollutionPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
-    sh:property compass:ForumPropertyShape .
+    sh:property compass:ForumPropertyShape ;
+    sh:property compass:RelatedOrganizationPropertyShape .

@@ -1,0 +1,55 @@
+id	dimension	name_en	name_de	wp_tag_id	iso_codes	links	notes
+AdvocacyWork	WorkArea	Advocacy Work	Advocacy Arbeit				
+CommunityInvolvement	WorkArea	Community Involvement	Aktiv werden				
+Events	WorkArea	Events	Veranstaltungen				New. No pin carries this tag yet, so its filter chip shows zero.
+Petitions	WorkArea	Petitions	Petitionen				New. No pin carries this tag yet, so its filter chip shows zero.
+RescueActivities	WorkArea	Rescue Activities	Tierrettung				
+ResearchExpeditions	WorkArea	Research Expeditions	Mitforschen				New. Assigned to the Work Area dimension.
+ScientificResearch	WorkArea	Scientific Research	Wissenschaftliche Forschung				
+AnimalAndSpeciesConservation	Conservation	Animal and Species Conservation	Tier- und Artenschutz	455			One concept, not two. The taxonomy sheet lists Tierschutz and Artenschutz separately, but every pin tags them together and no row has ever used one without the other.
+OceanConservation	Conservation	Ocean Conservation	Meeresschutz				
+AquaticWildMeat	Topic	Aquatic Wild Meat	Aquatic Wild Meat				Was a map pin; the sheet lists it as a topic, so it is now a tag.
+ClimateProtection	Topic	Climate Protection	Klimaschutz				
+DeepSeaMining	Topic	Deep-Sea Mining	Tiefseebergbau				
+Fisheries	Topic	Fisheries	Fischerei				
+FossilFuels	Topic	Fossil Fuels	Fossile Brennstoffe				
+Geoengineering	Topic	Geoengineering	Geoengineering				
+Hunting	Topic	Hunting	Bejagung				
+OutOfHabitat	Topic	Out of Habitat	Out of Habitat				Was a map pin; the sheet lists it as a topic, so it is now a tag.
+Shipping	Topic	Shipping	Schifffahrt				
+ChemicalPollution	Pollution	Chemical Pollution	Chemische Verschmutzung				
+OceanNoisePollution	Pollution	Ocean Noise Pollution	Unterwasserlärmverschmutzung				
+PlasticPollution	Pollution	Plastic Pollution	Plastikverschmutzung				
+Corals	Species	Corals	Korallen				
+DolphinsAndSmallCetaceans	Species	Dolphins and Small Cetaceans	Delfine und Kleinwale	148			One concept, not two. Pin rows write it as a single tag ('Dolphins & Small Cetaceans'), and every row using Small Cetaceans also used Dolphins.
+Fish	Species	Fish	Fische				
+Manatees	Species	Manatee	Manatis				
+Orcas	Species	Orcas	Orcas				
+PolarBears	Species	Polar Bears	Eisbären				
+SeaTurtles	Species	Sea Turtles	Meeresschildkröten				
+Seals	Species	Seals	Robben				
+Sharks	Species	Sharks	Haie				
+Whales	Species	Whales	Wale	147			
+Arctic	CountryArea	Arctic	Arktis			AdvocacyWork, AnimalAndSpeciesConservation, ClimateProtection, FossilFuels, Hunting, OceanConservation, PolarBears, Shipping	
+Australia	CountryArea	Australia	Australien		AUS	AnimalAndSpeciesConservation, ClimateProtection	
+BalticSea	CountryArea	Baltic Sea	Ostsee			AdvocacyWork, AnimalAndSpeciesConservation, DolphinsAndSmallCetaceans, ScientificResearch, Whales	Renamed from NorthSeaBalticSea. ASCOBANS was tagged 'North Sea and Baltic Sea'; the North Sea half of its remit was dropped. Confirm.
+Benin	CountryArea	Benin	Benin		BEN	AbidjanConvention, AdvocacyWork, AnimalAndSpeciesConservation, AquaticWildMeat, Fish, Fisheries, Hunting, Manatees, ScientificResearch, SeaTurtles, Sharks	
+Bulgaria	CountryArea	Bulgaria	Bulgarien		BGR	AdvocacyWork, AnimalAndSpeciesConservation, DolphinsAndSmallCetaceans, ScientificResearch	
+EasternMediterraneanSea	CountryArea	Eastern Mediterranean Sea	Östliches Mittelmeer			ACCOBAMS, AdvocacyWork, AnimalAndSpeciesConservation, CommunityInvolvement, DolphinsAndSmallCetaceans, FAOGFCM, SAVEWhales, ScientificResearch, Seals, Shipping, Whales	
+EuropeanUnion	CountryArea	European Union	Europäische Union		AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX MLT NLD POL PRT ROU SVK SVN ESP SWE		New. Polygon dissolved from the 27 member states in iso_codes.
+FaroeIslands	CountryArea	Faroe Islands	Färöer-Inseln		FRO	AdvocacyWork, AnimalAndSpeciesConservation, ChemicalPollution, CommunityInvolvement, DolphinsAndSmallCetaceans, Hunting, IWC	
+France	CountryArea	France	Frankreich		FRA	AnimalAndSpeciesConservation, RescueActivities, ScientificResearch, Seals	
+Greece	CountryArea	Greece	Griechenland		GRC	ACCOBAMS, AdvocacyWork, AnimalAndSpeciesConservation, CommunityInvolvement, DolphinsAndSmallCetaceans, SAVEWhales, ScientificResearch, Seals, Shipping, Whales	
+Iceland	CountryArea	Iceland	Island		ISL	AdvocacyWork, AnimalAndSpeciesConservation, Hunting, IWC, Whales	
+Italy	CountryArea	Italy	Italien		ITA	ACCOBAMS, AnimalAndSpeciesConservation, CommunityInvolvement, DolphinsAndSmallCetaceans, Fisheries, ResearchExpeditions, ScientificResearch, Shipping	
+Japan	CountryArea	Japan	Japan		JPN	AdvocacyWork, AnimalAndSpeciesConservation, ChemicalPollution, DolphinsAndSmallCetaceans, Hunting, IWC, Whales	
+Maldives	CountryArea	Maldives	Malediven		MDV	AdvocacyWork, AnimalAndSpeciesConservation, AquaticWildMeat, Hunting, PlasticPollution, RescueActivities, ScientificResearch, SeaTurtles	
+Mauritania	CountryArea	Mauritania	Mauretanien		MRT	AdvocacyWork, AnimalAndSpeciesConservation, Fisheries, RescueActivities, ScientificResearch, Seals	
+Norway	CountryArea	Norway	Norwegen		NOR	AdvocacyWork, AnimalAndSpeciesConservation, Hunting, IWC, Whales	
+Slovenia	CountryArea	Slovenia	Slowenien		SVN	ACCOBAMS, AnimalAndSpeciesConservation, DolphinsAndSmallCetaceans, ScientificResearch	
+Spain	CountryArea	Spain	Spanien		ESP	ACCOBAMS, AdvocacyWork, AnimalAndSpeciesConservation, CommunityInvolvement, EUCommission, FossilFuels, IMO, OceanNoisePollution, Orcas, PlasticPollution, RescueActivities, ScientificResearch, SeaTurtles, Shipping, UNEPMAP, Whales	
+Switzerland	CountryArea	Switzerland	Schweiz		CHE	AdvocacyWork, BBNJ, CommunityInvolvement, DeepSeaMining, FossilFuels, ISA, OceanConservation, PlasticPollution, ScientificResearch, UNEPUNEA	
+UnitedKingdom	CountryArea	United Kingdom	Grossbritannien		GBR	AnimalAndSpeciesConservation, DolphinsAndSmallCetaceans, OutOfHabitat, PlasticPollution, RescueActivities, ScientificResearch, Seals, Whales	Covers England too: the two had identical links, only BDMLR tagged either, and Natural Earth has no separate England boundary so both drew the same polygon.
+Venezuela	CountryArea	Venezuela	Venezuela		VEN	AnimalAndSpeciesConservation, Fisheries, Hunting, RescueActivities, ScientificResearch, Sharks	
+WestAfrica	CountryArea	West Africa	Westafrika		BEN BFA CPV CIV GMB GHA GIN GNB LBR MLI MRT NER NGA SEN SLE TGO		New. Polygon dissolved from ECOWAS plus Mauritania.
+WesternMediterraneanSea	CountryArea	Western Mediterranean Sea	Westliches Mittelmeer			ACCOBAMS, AdvocacyWork, AnimalAndSpeciesConservation, CommunityInvolvement, Fisheries, FossilFuels, IMO, OceanConservation, OceanNoisePollution, Orcas, PlasticPollution, RescueActivities, ScientificResearch, SeaTurtles, Shipping, Whales	

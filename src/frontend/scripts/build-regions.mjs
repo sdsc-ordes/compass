@@ -4,11 +4,16 @@
 //
 //   node scripts/build-regions.mjs   (needs network)
 //
-// Countries come from Natural Earth Admin-0 (England approximated as GBR).
-// Marine areas are composed from Natural Earth's named sea polygons, so they
-// follow coastlines. COUNTRY/MARINE here mirror ontology/vocab.ttl — keep synced.
+// Countries come from Natural Earth Admin-0. Supranational and continental
+// regions are dissolved from their member states. Marine areas are composed from
+// Natural Earth's named sea polygons, so they follow coastlines.
+//
+// Country regions are read straight from the taxonomy sheet's iso_codes column,
+// so there is one list to maintain. A cell holding several codes is a region
+// dissolved from its member states (European Union, West Africa). MARINE below
+// is composed from named sea polygons instead, so it stays here.
 
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import polygonClipping from 'polygon-clipping';
@@ -21,13 +26,24 @@ const COUNTRY_TIERS = [
 ];
 const MARINE_URL = `${NE}/ne_10m_geography_marine_polys.geojson`;
 
-const COUNTRY = {
-  Australia: 'AUS',
-  Benin: 'BEN', Bulgaria: 'BGR', England: 'GBR', FaroeIslands: 'FRO',
-  France: 'FRA', Greece: 'GRC', Iceland: 'ISL', Italy: 'ITA', Japan: 'JPN',
-  Maldives: 'MDV', Mauritania: 'MRT', Norway: 'NOR', Slovenia: 'SVN',
-  Spain: 'ESP', Switzerland: 'CHE', Venezuela: 'VEN',
-};
+const CONCEPTS = join(
+  dirname(fileURLToPath(import.meta.url)), '..', '..', 'ontology', 'taxonomy', 'concepts.tsv',
+);
+
+// regionKey -> ISO3 codes, one entry per Country/Area concept that has any.
+// Concepts with no code (Arctic, the seas) are covered by MARINE instead.
+function countryRegions() {
+  const [header, ...lines] = readFileSync(CONCEPTS, 'utf8').trim().split('\n');
+  const column = Object.fromEntries(header.split('\t').map((name, i) => [name, i]));
+  const regions = [];
+  for (const line of lines) {
+    const cells = line.split('\t');
+    if (cells[column.dimension] !== 'CountryArea') continue;
+    const codes = (cells[column.iso_codes] || '').trim().split(/\s+/).filter(Boolean);
+    if (codes.length) regions.push([cells[column.id], codes]);
+  }
+  return regions;
+}
 
 const MED_SEAS = ['Mediterranean Sea', 'Alboran Sea', 'Balearic Sea', 'Golfe du Lion',
   'Ligurian Sea', 'Tyrrhenian Sea', 'Adriatic Sea', 'Ionian Sea', 'Aegean Sea', 'Sea of Crete'];
@@ -37,7 +53,7 @@ const MED_CUT = 12.5; // Strait of Sicily — divides western and eastern basins
 // clip trims to the relevant basin/sector.
 const MARINE = {
   Arctic: { seas: ['Arctic Ocean', 'Greenland Sea', 'Barents Sea', 'Norwegian Sea'], clip: [-75, 58, 75, 90] },
-  NorthSeaBalticSea: { seas: ['North Sea', 'Baltic Sea', 'Skagerrak', 'Kattegat', 'Gulf of Finland', 'Gulf of Riga'] },
+  BalticSea: { seas: ['Baltic Sea', 'Gulf of Bothnia', 'Gulf of Finland', 'Gulf of Riga'] },
   WesternMediterraneanSea: { seas: MED_SEAS, clip: [-10, 30, MED_CUT, 47] },
   EasternMediterraneanSea: { seas: MED_SEAS, clip: [MED_CUT, 30, 40, 47] },
 };
@@ -67,19 +83,28 @@ async function load(url, key) {
 async function main() {
   const features = [];
 
-  let needed = Object.entries(COUNTRY);
+  // Single-country regions and dissolved groups resolve the same way: a region is
+  // done once every one of its codes is found, and drops to a finer tier if any
+  // is missing (small states are absent from the coarser files).
+  let needed = countryRegions();
   for (const url of COUNTRY_TIERS) {
     if (!needed.length) break;
     const byCode = await load(url, alpha3);
     const missing = [];
-    for (const [regionKey, code] of needed) {
-      const geometry = byCode.get(code);
-      if (geometry) features.push({ type: 'Feature', properties: { regionKey }, geometry });
-      else missing.push([regionKey, code]);
+    for (const [regionKey, codes] of needed) {
+      const geometries = codes.map((code) => byCode.get(code));
+      if (geometries.some((g) => !g)) {
+        missing.push([regionKey, codes]);
+        continue;
+      }
+      const geometry = geometries.length === 1 ? geometries[0] : dissolve(geometries);
+      features.push({ type: 'Feature', properties: { regionKey }, geometry });
     }
     needed = missing;
   }
-  for (const [regionKey, code] of needed) console.warn(`no polygon for ${regionKey} (${code})`);
+  for (const [regionKey, codes] of needed) {
+    console.warn(`no polygon for ${regionKey} (${codes.join(', ')})`);
+  }
 
   const byName = await load(MARINE_URL, (p) => p.name);
   for (const [regionKey, { seas, clip }] of Object.entries(MARINE)) {
