@@ -8,7 +8,7 @@ root_dir := `git rev-parse --show-toplevel`
 default:
     just --list
 
-# Regenerate compass.ttl and vocab.ttl from the source-data workbook.
+# Regenerate ocean-care.ttl and vocab.ttl from the source-data workbook.
 data:
     cd "{{root_dir}}/tools/scripts" && uv run tsv_to_rdf.py
 

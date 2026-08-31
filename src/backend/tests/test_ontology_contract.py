@@ -33,11 +33,11 @@ class TestTopLevelEntityClasses:
     ]
 
     def test_classes_have_instances(self, rdflib_graph):
-        """Each of the 4 entity types must have at least one instance in compass.ttl."""
+        """Each of the 4 entity types must have at least one instance in ocean-care.ttl."""
         for cls in self.REQUIRED_CLASSES:
             subjects = list(rdflib_graph.subjects(RDF.type, cls))
             assert subjects, (
-                f"{cls} has no instances in compass.ttl. "
+                f"{cls} has no instances in ocean-care.ttl. "
                 f"Add at least one instance or remove from _sparql_preamble()."
             )
 
@@ -207,7 +207,7 @@ class TestAllGeoEntitiesHaveLabels:
 # -- SHACL validation of instance data --
 
 class TestShaclValidation:
-    """Instance data in compass.ttl must conform to shapes.ttl.
+    """Instance data in ocean-care.ttl must conform to shapes.ttl.
 
     Add a new entity? If it violates a SHACL constraint (missing required
     property, wrong datatype, etc.) this test will fail and tell you exactly
@@ -219,7 +219,7 @@ class TestShaclValidation:
         shapes_graph.parse(os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle")
 
         data_graph = Graph()
-        data_graph.parse(os.path.join(_ONTOLOGY_DIR, "compass.ttl"), format="turtle")
+        data_graph.parse(os.path.join(_ONTOLOGY_DIR, "ocean-care.ttl"), format="turtle")
         data_graph.parse(os.path.join(_ONTOLOGY_DIR, "vocab.ttl"), format="turtle")
         data_graph.parse(os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle")
 

@@ -265,7 +265,7 @@ def test_predicates_emit_in_a_fixed_order():
 
 def test_output_matches_the_committed_files():
     data, vocab = gen.generate()
-    assert gen.OUT_DATA.read_text(encoding="utf-8") == data, "compass.ttl is stale; run `just data`"
+    assert gen.OUT_DATA.read_text(encoding="utf-8") == data, "ocean-care.ttl is stale; run `just data`"
     assert gen.OUT_VOCAB.read_text(encoding="utf-8") == vocab, "vocab.ttl is stale; run `just data`"
 
 

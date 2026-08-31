@@ -25,7 +25,7 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     store = RDFStore(
-        data_path=str(ONTOLOGY / "compass.ttl"),
+        data_path=str(ONTOLOGY / "ocean-care.ttl"),
         shapes_path=str(ONTOLOGY / "shapes.ttl"),
         vocab_path=str(ONTOLOGY / "vocab.ttl"),
     )

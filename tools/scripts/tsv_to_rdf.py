@@ -3,7 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = ["rdflib>=7.0,<8", "pyshacl>=0.30,<0.32", "odfpy>=1.4"]
 # ///
-"""Generate compass.ttl and vocab.ttl from src/ontology/source-data.ods.
+"""Generate ocean-care.ttl and vocab.ttl from src/ontology/source-data.ods.
 
 Rows carry their own `id` and link by id in a `links` column; a link's predicate
 follows what it points at, so there is no mapping to configure.
@@ -30,7 +30,7 @@ SCHEMES = "schemes"
 CONCEPTS = "concepts"
 PINS = "pins"
 SHAPES = ONTOLOGY_DIR / "shapes.ttl"
-OUT_DATA = ONTOLOGY_DIR / "compass.ttl"
+OUT_DATA = ONTOLOGY_DIR / "ocean-care.ttl"
 OUT_VOCAB = ONTOLOGY_DIR / "vocab.ttl"
 
 ONTOLOGY_NS = "http://example.org/ocean-org/ontology#"
@@ -39,7 +39,7 @@ DATA_NS = "http://example.org/ocean-org/data#"
 # The six tag dimensions, in the order their sections appear in vocab.ttl.
 DIMENSIONS = ["WorkArea", "Conservation", "Topic", "Pollution", "Species", "CountryArea"]
 
-# The four entity classes, in the order their sections appear in compass.ttl.
+# The four entity classes, in the order their sections appear in ocean-care.ttl.
 CLASSES = {
     "InternationalForum": "International Forums",
     "Network": "Networks",
