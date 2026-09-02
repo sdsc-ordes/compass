@@ -27,8 +27,8 @@ from typing import List
 import httpx
 from fastapi import APIRouter, Depends, Query
 
-from ..config import stories_base_url
-from ..rdf import RDFStore, get_store
+from app.config import stories_base_url
+from app.rdf import RDFStore, get_store
 
 logger = logging.getLogger(__name__)
 

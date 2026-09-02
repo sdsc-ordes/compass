@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from ..rdf import get_store, RDFStore
+from app.rdf import get_store, RDFStore
 
 router = APIRouter()
 

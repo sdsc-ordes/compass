@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, Query, Request
 
-from ..rdf import get_store, RDFStore
-from ..sparql_builder import build_entities_query, build_facet_query
-from ..result_parser import results_to_geojson
+from app.rdf import get_store, RDFStore
+from app.sparql_builder import build_entities_query, build_facet_query
+from app.result_parser import results_to_geojson
 
 router = APIRouter()
 
