@@ -1,12 +1,18 @@
 """
 Stories proxy router.
 
-GET /api/stories/count?tag=<iri>&tag=<iri>&lang=de
+GET /api/stories/count?tags=<iri>&tags=<iri>&lang=de
 
 1. Maps each IRI to a WordPress term ID via compass:wpTagId in the RDF graph.
-2. Constructs a filtered stories URL: ?tag=id1,id2,id3
+2. Builds a frontend stories URL for user navigation (?tag=id1,id2,id3).
 3. Queries the WordPress REST API for the story count via the X-WP-Total header.
-4. Returns {"count": N, "url": "<filtered stories URL>"}.
+4. Returns {"count": N, "url": "...", "status": "...", "message": "..."}.
+
+Response status values:
+- "ok":              Count retrieved successfully.
+- "no_tags":         No tag IRIs were provided in the request.
+- "no_ID_mapping":   None of the provided IRIs have a compass:wpTagId mapping.
+- "upstream_error":  The OceanCare WordPress API returned an error or was unreachable.
 
 DISCLAIMER: The WordPress REST API uses OR logic for comma-separated tags.
             Stories tagged with ANY of the provided tags are counted.
@@ -71,11 +77,23 @@ async def get_stories_count(
 ):
     """Return the number of OceanCare stories matching the given tag IRIs."""
     if not tags:
-        return {"count": 0, "url": stories_base_url(lang)}
+        logger.info("Stories count requested with no tags")
+        return {
+            "count": 0,
+            "url": stories_base_url(lang),
+            "status": "no_tags",
+            "message": None,
+        }
 
     wp_ids = _resolve_tags_ids(tags, store)
     if not wp_ids:
-        return {"count": 0, "url": stories_base_url(lang)}
+        logger.warning("No ID (wpTagId) mapping for IRIs: %s", tags)
+        return {
+            "count": 0,
+            "url": stories_base_url(lang),
+            "status": "no_ID_mapping",
+            "message": None,
+        }
 
     frontend_url = _build_frontend_url(wp_ids, lang)
     api_url = _build_api_url(wp_ids)
@@ -83,9 +101,28 @@ async def get_stories_count(
     try:
         async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
             resp = await client.get(api_url)
+            resp.raise_for_status() 
         count = int(resp.headers.get("x-wp-total", 0))
+    except httpx.HTTPStatusError as exc:
+        logger.error("OceanCare API returned %s for %s", exc.response.status_code, api_url)
+        return {
+            "count": 0,
+            "url": frontend_url,
+            "status": "upstream_error",
+            "message": "Unable to load story count. Please try again or contact OceanCare.",
+        }
     except Exception as exc:
-        logger.error("Failed to fetch story count from %s: %s", api_url, exc)
-        return {"count": 0, "url": frontend_url}
+        logger.error("OceanCare API unreachable: %s", exc, exc_info=True)
+        return {
+            "count": 0,
+            "url": frontend_url,
+            "status": "upstream_error",
+            "message": "Unable to load story count. Please try again or contact OceanCare.",
+        }
 
-    return {"count": count, "url": frontend_url}
+    return {
+        "count": count,
+        "url": frontend_url,
+        "status": "ok",
+        "message": None,
+    }

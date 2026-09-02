@@ -93,6 +93,8 @@ def test_stories_count_no_tags():
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
+    assert data["status"] == "no_tags"
+    assert data["message"] is None
     assert "oceancare.org" in data["url"]
 
 
@@ -100,10 +102,13 @@ def test_stories_count_unmapped_tag():
     """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
     resp = client.get(
         "/api/stories/count",
-        params={"tag": "http://example.org/ocean-org/ontology#Geoengineering"},
+        params={"tags": "http://example.org/ocean-org/ontology#Geoengineering"},
     )
     assert resp.status_code == 200
-    assert resp.json()["count"] == 0
+    data = resp.json()
+    assert data["count"] == 0
+    assert data["status"] == "no_ID_mapping"
+    assert data["message"] is None
 
 
 def test_stories_count_mapped_tag(monkeypatch):
@@ -119,12 +124,14 @@ def test_stories_count_mapped_tag(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tags": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
         )
 
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 42
+    assert data["status"] == "ok"
+    assert data["message"] is None
     assert "?tag=148" in data["url"]
 
 
@@ -141,11 +148,13 @@ def test_stories_count_url_contains_tag_ids(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tags": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
         )
 
     assert resp.status_code == 200
-    assert "?tag=" in resp.json()["url"]
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert "?tag=" in data["url"]
 
 
 def test_stories_count_proxy_error(monkeypatch):
@@ -159,10 +168,12 @@ def test_stories_count_proxy_error(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tags": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
         )
 
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
+    assert data["status"] == "upstream_error"
+    assert "contact OceanCare" in data["message"]
     assert "?tag=148" in data["url"]
