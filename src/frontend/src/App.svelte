@@ -8,22 +8,39 @@
   import EntitySidebar from './shared/EntitySidebar.svelte';
   import ShareModal from './shared/ShareModal.svelte';
   import { i18n, type Lang } from './shared/i18n';
-  import { getEntities, getFacets, init as initEngine } from './engine';
-  import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft, Share2 } from 'lucide-svelte';
+  import { ownedUrlParams } from './shared/dimensions';
+  import {
+    getEntities,
+    getFacets,
+    init as initEngine,
+    type EntityProperties,
+    type FacetCounts,
+    type Feature,
+  } from './engine';
+  import type { Filters } from './engine/namespaces';
+  import {
+    Map as MapIcon,
+    List,
+    Globe,
+    Languages,
+    ChevronRight,
+    ChevronLeft,
+    Share2,
+  } from 'lucide-svelte';
 
-  /** The API the widget reads its data from, and posts share links to. */
+  /** The API the widget reads its data from. */
   export let apiurl = '';
   export let lang: Lang = 'en';
 
-  let entities: any[] = [];
-  let activeFilters: any = {};
+  let entities: Feature[] = [];
+  let activeFilters: Filters = {};
   let legendTypeFilters: string[] = [];
   let viewMode: 'map' | 'list' = 'map';
   let isLoading = true;
   let error: string | null = null;
-  let selectedEntity: any = null;
+  let selectedEntity: EntityProperties | null = null;
   let selectedEntityId: string | null = null;
-  let facetCounts: Record<string, Record<string, number>> = {};
+  let facetCounts: FacetCounts = {};
   let filterOpen = true;
   let sidebarVisible = false;
   let mounted = false;
@@ -33,61 +50,40 @@
 
   $: t = i18n[lang] || i18n.en;
 
+  const reason = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
   // Real results = point features; Country/Area regions are always-on background
   // context (see ontology/DECISIONS.md), so they don't count toward the total.
-  $: resultCount = entities.filter((e: any) => !e?.properties?.is_region).length;
+  $: resultCount = entities.filter((e) => !e?.properties?.is_region).length;
 
   // A thematic (non-legend) filter is active — used to frame matched regions.
   $: thematicFilterActive = Object.entries(activeFilters).some(
-    ([k, v]) => k !== 'entityType' && Array.isArray(v) && v.length > 0
+    ([k, v]) => k !== 'entityType' && Array.isArray(v) && v.length > 0,
   );
 
-  // Sync with URL on mount
   onMount(async () => {
     // Start with filters collapsed on small screens so the map is visible first.
     if (typeof window !== 'undefined' && window.innerWidth < 900) filterOpen = false;
 
-    // The filter panel and the tag chips read the schema synchronously, so it
-    // has to be in hand before anything renders against it.
     try {
       await initEngine(apiurl);
       engineReady = true;
-    } catch (e: any) {
-      error = `Cannot reach the API at ${apiurl || '(no apiurl set)'}: ${e?.message ?? e}`;
+    } catch (e) {
+      error = `Cannot reach the API at ${apiurl || '(no apiurl set)'}: ${reason(e)}`;
       return;
     }
 
     const params = new URLSearchParams(window.location.search);
     if (params.has('lang')) lang = params.get('lang') as Lang;
-    
-    // Restore saved state if 'state' param exists
-    if (params.has('state')) {
-      const stateId = params.get('state');
-      console.log("[Compass] Restoring state:", stateId);
-      if (apiurl && stateId) {
-        try {
-          const resp = await fetch(`${apiurl}/api/states/${stateId}`);
-          const data = await resp.json();
-          activeFilters = data.filters || {};
-          legendTypeFilters = Array.isArray(activeFilters.entityType) ? activeFilters.entityType : [];
-          viewMode = data.view || 'map';
-          if (data.lang) lang = data.lang;
-        } catch (e) {
-          console.error('[Compass] Failed to restore state:', e);
-        }
-      }
-    } else {
-       // Restore filter params from URL (all params except lang)
-       const restoredFilters: Record<string, string[]> = {};
-       for (const [key, val] of params.entries()) {
-         if (key === 'lang') continue;
-         if (!restoredFilters[key]) restoredFilters[key] = [];
-         restoredFilters[key].push(val);
-       }
-       if (Object.keys(restoredFilters).length > 0) {
-         activeFilters = restoredFilters;
-         legendTypeFilters = Array.isArray(activeFilters.entityType) ? activeFilters.entityType : [];
-       }
+
+    const restored: Record<string, string[]> = {};
+    for (const [key, val] of params.entries()) {
+      if (key === 'lang') continue;
+      (restored[key] ??= []).push(val);
+    }
+    if (Object.keys(restored).length > 0) {
+      activeFilters = restored;
+      legendTypeFilters = Array.isArray(restored.entityType) ? restored.entityType : [];
     }
     mounted = true; // triggers the reactive block below, which runs the first query
   });
@@ -100,7 +96,7 @@
   // Facets are a second request; yielding lets the map paint before it runs.
   const nextTick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-  async function loadData(l: Lang, f: any) {
+  async function loadData(l: Lang, f: Filters) {
     const seq = ++loadSeq;
     isLoading = true;
     error = null;
@@ -118,19 +114,26 @@
       const counts = await getFacets(l, f);
       if (seq !== loadSeq) return;
       facetCounts = counts;
-    } catch (e: any) {
+    } catch (e) {
       if (seq !== loadSeq) return;
       console.error('[Compass] Query failed:', e);
-      error = 'Failed to load map data: ' + (e?.message ?? e);
+      error = `Failed to load map data: ${reason(e)}`;
     } finally {
       if (seq === loadSeq) isLoading = false;
     }
   }
 
-  // Mirrors the active filters into the address bar; the share button hands out
-  // whatever this produces.
-  function syncUrl(f: any, l: string) {
-    const urlObj = new URL(window.location.origin + window.location.pathname);
+  /**
+   * Mirror the active filters into the address bar; the share button hands out
+   * whatever this produces.
+   *
+   * The widget is embedded in someone else's page, so it rewrites only the
+   * parameters it owns -- the filter dimensions and `lang` -- and leaves the
+   * host page's own query string intact.
+   */
+  function syncUrl(f: Filters, l: string) {
+    const urlObj = new URL(window.location.href);
+    for (const key of ownedUrlParams(l)) urlObj.searchParams.delete(key);
     for (const [key, val] of Object.entries(f)) {
       if (Array.isArray(val)) {
         val.forEach((v) => urlObj.searchParams.append(key, String(v)));
@@ -187,8 +190,8 @@
     showShareModal = true;
   }
 
-  function handleFilterChange(filters: any) {
-    // Preserve entityType managed by the map legend (not by FilterPanel)
+  function handleFilterChange(filters: Record<string, string[]>) {
+    // Preserve entityType managed by the map legend (not by TagPanel)
     activeFilters = {
       ...filters,
       ...(legendTypeFilters.length ? { entityType: legendTypeFilters } : {}),
@@ -206,39 +209,20 @@
 
   function handleTypeFilterChange(iris: string[]) {
     legendTypeFilters = iris;
-    activeFilters = {
-      ...activeFilters,
-      ...(iris.length ? { entityType: iris } : {}),
-    };
-    if (!iris.length) {
-      const { entityType: _, ...rest } = activeFilters;
-      activeFilters = rest;
-    }
+    const { entityType: _dropped, ...rest } = activeFilters;
+    activeFilters = iris.length ? { ...rest, entityType: iris } : rest;
   }
 
-  // When entities are re-fetched (e.g. language change), refresh the open sidebar.
-  // Depends only on `entities` and `selectedEntityId` — NOT on `selectedEntity` — to avoid infinite loops.
-  // Nested objects are re-serialized to JSON strings so EntitySidebar's JSON.parse calls work correctly.
+  // Keep the open sidebar in step with a re-fetch (a language change, say).
+  // Depends on `entities` and `selectedEntityId` but NOT on `selectedEntity`,
+  // which it assigns — that would loop.
   $: if (selectedEntityId && entities.length > 0) {
-    const match = entities.find((e: any) => e.properties?.id === selectedEntityId);
-    if (match) {
-      const p = match.properties;
-      // MapLibre flattens GeoJSON feature properties to strings when rendering,
-      // so nested objects (arrays, objects) must be re-serialised here and
-      // parsed back in EntitySidebar via safeParseJson.
-      const serialized: Record<string, any> = {};
-      for (const [key, val] of Object.entries(p)) {
-        // Only stringify arrays of objects (tag dimensions like {iri, label}).
-        // Leave scalar values and simple strings untouched.
-        const isTagArray = Array.isArray(val) && val.length > 0 && typeof val[0] === 'object';
-        serialized[key] = isTagArray ? JSON.stringify(val) : val;
-      }
-      selectedEntity = serialized;
-    }
+    const match = entities.find((e) => e.properties?.id === selectedEntityId);
+    if (match) selectedEntity = match.properties;
   }
 
-  function handleEntitySelect(props: any) {
-    const id = props?.id ?? null;
+  function handleEntitySelect(props: Record<string, unknown>) {
+    const id = typeof props?.id === 'string' ? props.id : null;
     if (!id) return;
     if (selectedEntityId === id && sidebarVisible) {
       // Clicking the already-open entity toggles it closed.
@@ -247,6 +231,7 @@
       sidebarVisible = false;
     } else {
       selectedEntityId = id;
+      selectedEntity = props as EntityProperties;
       sidebarVisible = true;
     }
   }
@@ -256,28 +241,41 @@
   }
 </script>
 
-<main class="compass-app" lang={lang}>
+<main class="compass-app" {lang}>
   <header class="app-header">
     <div class="brand">
       <div class="logo">
-         <Globe size={24} color="#0284c7" />
+        <Globe size={24} color="#0284c7" />
       </div>
       <h2>OceanCare Compass</h2>
     </div>
-    
+
     <div class="controls">
       <div class="view-toggle" role="group" aria-label={t.viewSwitcher}>
-        <button class:active={viewMode === 'map'} aria-pressed={viewMode === 'map'} on:click={() => viewMode = 'map'}>
+        <button
+          class:active={viewMode === 'map'}
+          aria-pressed={viewMode === 'map'}
+          on:click={() => (viewMode = 'map')}
+        >
           <MapIcon size={16} />
           <span>{t.mapView}</span>
         </button>
-        <button class:active={viewMode === 'list'} aria-pressed={viewMode === 'list'} on:click={() => viewMode = 'list'}>
+        <button
+          class:active={viewMode === 'list'}
+          aria-pressed={viewMode === 'list'}
+          on:click={() => (viewMode = 'list')}
+        >
           <List size={16} />
           <span>{t.listView}</span>
         </button>
       </div>
 
-      <button type="button" class="lang-toggle" on:click|preventDefault|stopPropagation={saveMapState} title={t.shareTitle}>
+      <button
+        type="button"
+        class="lang-toggle"
+        on:click|preventDefault|stopPropagation={saveMapState}
+        title={t.shareTitle}
+      >
         <Share2 size={16} />
         <span>{t.share}</span>
       </button>
@@ -290,7 +288,6 @@
         <Languages size={18} />
         <span>{lang.toUpperCase()}</span>
       </button>
-
     </div>
   </header>
 
@@ -306,72 +303,97 @@
         <p>{t.loading}</p>
       </div>
     {:else}
-    {#if !filterOpen}
-      <button class="filter-reopen-tab" on:click={() => (filterOpen = true)} aria-label={t.openFilters}>
-        <ChevronRight size={16} />
-      </button>
-    {/if}
-    <div class="sidebar" class:closed={!filterOpen} role="region" aria-label={t.filterRegion}>
-      <TagPanel
-        {lang}
-        initialFilters={activeFilters}
-        onTagChange={handleFilterChange}
-        onToggle={() => (filterOpen = false)}
-        {facetCounts}
-        {resultCount}
-      />
-    </div>
-    <div class="main-area" aria-busy={isLoading}>
-      <!-- Filtering happens without a page change, so the new result count is
-           announced; without this a screen reader user gets silence. -->
-      <p class="visually-hidden" role="status" aria-live="polite">
-        {isLoading ? t.loading : `${resultCount} ${t.resultsAnnouncement}`}
-      </p>
-      {#if error}
-        <div class="status-overlay error">
-          <p>{error}</p>
-          <button on:click={() => loadData(lang, activeFilters)}>Retry</button>
-        </div>
-      {:else if isLoading && entities.length === 0}
-        <!-- First load only: nothing on screen yet, so show the full overlay. -->
-        <div class="status-overlay loading">
-           <div class="spinner"></div>
-           <p>{t.loading}</p>
-        </div>
-      {:else if isLoading}
-        <!-- Subsequent filter changes: keep the map visible, show a thin bar. -->
-        <div class="loading-bar" aria-label={t.loading}></div>
-      {/if}
-
-      {#if selectedEntity && !sidebarVisible}
-        <button class="sidebar-reopen-tab" on:click={() => (sidebarVisible = true)} aria-label={t.openDetails}>
-          <ChevronLeft size={16} />
+      {#if !filterOpen}
+        <button
+          class="filter-reopen-tab"
+          on:click={() => (filterOpen = true)}
+          aria-label={t.openFilters}
+        >
+          <ChevronRight size={16} />
         </button>
       {/if}
+      <div class="sidebar" class:closed={!filterOpen} role="region" aria-label={t.filterRegion}>
+        <TagPanel
+          {lang}
+          initialFilters={activeFilters}
+          onTagChange={handleFilterChange}
+          onToggle={() => (filterOpen = false)}
+          {facetCounts}
+          {resultCount}
+        />
+      </div>
+      <div class="main-area" aria-busy={isLoading}>
+        <!-- Filtering happens without a page change, so the new result count is
+           announced; without this a screen reader user gets silence. -->
+        <p class="visually-hidden" role="status" aria-live="polite">
+          {isLoading ? t.loading : `${resultCount} ${t.resultsAnnouncement}`}
+        </p>
+        {#if error}
+          <div class="status-overlay error">
+            <p>{error}</p>
+            <button on:click={() => loadData(lang, activeFilters)}>Retry</button>
+          </div>
+        {:else if isLoading && entities.length === 0}
+          <!-- First load only: nothing on screen yet, so show the full overlay. -->
+          <div class="status-overlay loading">
+            <div class="spinner"></div>
+            <p>{t.loading}</p>
+          </div>
+        {:else if isLoading}
+          <!-- Subsequent filter changes: keep the map visible, show a thin bar. -->
+          <div class="loading-bar" aria-label={t.loading}></div>
+        {/if}
 
-      {#if viewMode === 'map'}
-        <Map {lang} {entities} {resultCount} tileurl={apiurl} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
-        <!-- A canvas map carries nothing for a screen reader, so the same
+        {#if selectedEntity && !sidebarVisible}
+          <button
+            class="sidebar-reopen-tab"
+            on:click={() => (sidebarVisible = true)}
+            aria-label={t.openDetails}
+          >
+            <ChevronLeft size={16} />
+          </button>
+        {/if}
+
+        {#if viewMode === 'map'}
+          <Map
+            {lang}
+            {entities}
+            {resultCount}
+            tileurl={apiurl}
+            frameRegions={thematicFilterActive}
+            detailOpen={!!(selectedEntity && sidebarVisible)}
+            onEntitySelect={handleEntitySelect}
+            activeTypeFilters={legendTypeFilters}
+            onTypeFilterChange={handleTypeFilterChange}
+            {storyCount}
+            {storyCountLoading}
+            storyActive={storyTagIris.length > 0}
+          />
+          <!-- A canvas map carries nothing for a screen reader, so the same
              results are rendered as a table off-screen. Reusing ListView keeps
              the alternative complete by construction. -->
-        <div class="visually-hidden">
-          <h3>{t.textAlternative}</h3>
+          <div class="visually-hidden">
+            <h3>{t.textAlternative}</h3>
+            <ListView {entities} {lang} />
+          </div>
+        {:else}
           <ListView {entities} {lang} />
-        </div>
-      {:else}
-        <ListView {entities} {lang} />
-      {/if}
+        {/if}
 
-      {#if selectedEntity && sidebarVisible}
-        <EntitySidebar
-          entity={selectedEntity}
-          {lang}
-          regionCount={selectedEntity?.id ? facetCounts.countryArea?.[selectedEntity.id] : undefined}
-          onFilterByRegion={handleFilterByRegion}
-          onClose={() => { sidebarVisible = false; }}
-        />
-      {/if}
-    </div>
+        {#if selectedEntity && sidebarVisible}
+          <EntitySidebar
+            entity={selectedEntity}
+            {lang}
+            regionCount={selectedEntity?.id
+              ? facetCounts.countryArea?.[selectedEntity.id]
+              : undefined}
+            onFilterByRegion={handleFilterByRegion}
+            onClose={() => {
+              sidebarVisible = false;
+            }}
+          />
+        {/if}
+      </div>
     {/if}
   </div>
 
@@ -408,7 +430,13 @@
     display: block;
     width: 100%;
     min-height: 700px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
     --primary: #0284c7;
     --primary-hover: #0369a1;
   }
@@ -478,7 +506,7 @@
   .view-toggle button.active {
     background: white;
     color: var(--primary);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .lang-toggle {
@@ -514,7 +542,9 @@
     background: #f8fafc;
     color: #64748b;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
     padding: 0;
   }
   .filter-reopen-tab:hover {
@@ -539,8 +569,10 @@
     background: white;
     color: #64748b;
     cursor: pointer;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.08);
-    transition: background 0.15s, color 0.15s;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+    transition:
+      background 0.15s,
+      color 0.15s;
     padding: 0;
   }
   .sidebar-reopen-tab:hover {
@@ -561,7 +593,11 @@
     border-right: 1px solid #e2e8f0;
     background: #f8fafc;
     overflow: hidden;
-    transition: min-width 0.25s ease, width 0.25s ease, opacity 0.2s ease, border 0.25s ease;
+    transition:
+      min-width 0.25s ease,
+      width 0.25s ease,
+      opacity 0.2s ease,
+      border 0.25s ease;
   }
   .sidebar.closed {
     width: 0;
@@ -625,7 +661,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .loading-bar {
@@ -647,8 +685,12 @@
     animation: indeterminate 1.1s ease-in-out infinite;
   }
   @keyframes indeterminate {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(350%); }
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(350%);
+    }
   }
 
   /* On small screens the filter panel becomes an overlay drawer (collapsed by
