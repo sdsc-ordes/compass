@@ -42,6 +42,7 @@ compass:CommunityInvolvement
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Community Involvement"@en ;
     skos:prefLabel "Aktiv werden"@de ;
+    compass:wpTagId "451"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -49,6 +50,7 @@ compass:Events
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Events"@en ;
     skos:prefLabel "Veranstaltungen"@de ;
+    compass:wpTagId "425"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -56,6 +58,7 @@ compass:Petitions
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Petitions"@en ;
     skos:prefLabel "Petitionen"@de ;
+    compass:wpTagId "443"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -63,6 +66,7 @@ compass:RescueActivities
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Rescue Activities"@en ;
     skos:prefLabel "Tierrettung"@de ;
+    compass:wpTagId "440"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -70,6 +74,7 @@ compass:ResearchExpeditions
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Research Expeditions"@en ;
     skos:prefLabel "Mitforschen"@de ;
+    compass:wpTagId "158"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -81,7 +86,7 @@ compass:ScientificResearch
     skos:topConceptOf compass:WorkAreaScheme .
 
 # ============================================================
-# Conservation (2 concepts)
+# Conservation (3 concepts)
 # ============================================================
 
 compass:ConservationScheme
@@ -89,15 +94,15 @@ compass:ConservationScheme
     skos:prefLabel "Conservation"@en ;
     skos:prefLabel "Schutz"@de ;
     skos:definition "Conservation focus areas."@en ;
-    skos:hasTopConcept compass:AnimalAndSpeciesConservation ;
+    skos:hasTopConcept compass:AnimalConservation ;
     skos:hasTopConcept compass:OceanConservation ;
+    skos:hasTopConcept compass:SpeciesConservation ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
-compass:AnimalAndSpeciesConservation
+compass:AnimalConservation
     a skos:Concept, compass:Conservation ;
-    skos:prefLabel "Animal and Species Conservation"@en ;
-    skos:prefLabel "Tier- und Artenschutz"@de ;
-    compass:wpTagId "455"^^xsd:integer ;
+    skos:prefLabel "Animal Conservation"@en ;
+    skos:prefLabel "Tierschutz"@de ;
     skos:inScheme compass:ConservationScheme ;
     skos:topConceptOf compass:ConservationScheme .
 
@@ -108,8 +113,16 @@ compass:OceanConservation
     skos:inScheme compass:ConservationScheme ;
     skos:topConceptOf compass:ConservationScheme .
 
+compass:SpeciesConservation
+    a skos:Concept, compass:Conservation ;
+    skos:prefLabel "Species Conservation"@en ;
+    skos:prefLabel "Artenschutz"@de ;
+    compass:wpTagId "455"^^xsd:integer ;
+    skos:inScheme compass:ConservationScheme ;
+    skos:topConceptOf compass:ConservationScheme .
+
 # ============================================================
-# Topic (9 concepts)
+# Topic (10 concepts)
 # ============================================================
 
 compass:TopicScheme
@@ -119,6 +132,7 @@ compass:TopicScheme
     skos:definition "Thematic topics addressed by OceanCare."@en ;
     skos:hasTopConcept compass:AquaticWildMeat ;
     skos:hasTopConcept compass:ClimateProtection ;
+    skos:hasTopConcept compass:Collisions ;
     skos:hasTopConcept compass:DeepSeaMining ;
     skos:hasTopConcept compass:Fisheries ;
     skos:hasTopConcept compass:FossilFuels ;
@@ -132,6 +146,7 @@ compass:AquaticWildMeat
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Aquatic Wild Meat"@en ;
     skos:prefLabel "Aquatic Wild Meat"@de ;
+    compass:wpTagId "445"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -139,6 +154,15 @@ compass:ClimateProtection
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Climate Protection"@en ;
     skos:prefLabel "Klimaschutz"@de ;
+    compass:wpTagId "447"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:Collisions
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Collisions"@en ;
+    skos:prefLabel "Kollisionen"@de ;
+    compass:wpTagId "492"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -146,6 +170,7 @@ compass:DeepSeaMining
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Deep-Sea Mining"@en ;
     skos:prefLabel "Tiefseebergbau"@de ;
+    compass:wpTagId "145"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -153,6 +178,7 @@ compass:Fisheries
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Fisheries"@en ;
     skos:prefLabel "Fischerei"@de ;
+    compass:wpTagId "892"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -160,6 +186,7 @@ compass:FossilFuels
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Fossil Fuels"@en ;
     skos:prefLabel "Fossile Brennstoffe"@de ;
+    compass:wpTagId "906"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -167,6 +194,7 @@ compass:Geoengineering
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Geoengineering"@en ;
     skos:prefLabel "Geoengineering"@de ;
+    compass:wpTagId "889"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -181,6 +209,7 @@ compass:OutOfHabitat
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Out of Habitat"@en ;
     skos:prefLabel "Out of Habitat"@de ;
+    compass:wpTagId "907"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -188,6 +217,7 @@ compass:Shipping
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Shipping"@en ;
     skos:prefLabel "Schifffahrt"@de ;
+    compass:wpTagId "870"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -209,6 +239,7 @@ compass:ChemicalPollution
     a skos:Concept, compass:Pollution ;
     skos:prefLabel "Chemical Pollution"@en ;
     skos:prefLabel "Chemische Verschmutzung"@de ;
+    compass:wpTagId "845"^^xsd:integer ;
     skos:inScheme compass:PollutionScheme ;
     skos:topConceptOf compass:PollutionScheme .
 
@@ -216,6 +247,7 @@ compass:OceanNoisePollution
     a skos:Concept, compass:Pollution ;
     skos:prefLabel "Ocean Noise Pollution"@en ;
     skos:prefLabel "Unterwasserlärmverschmutzung"@de ;
+    compass:wpTagId "142"^^xsd:integer ;
     skos:inScheme compass:PollutionScheme ;
     skos:topConceptOf compass:PollutionScheme .
 
@@ -223,11 +255,12 @@ compass:PlasticPollution
     a skos:Concept, compass:Pollution ;
     skos:prefLabel "Plastic Pollution"@en ;
     skos:prefLabel "Plastikverschmutzung"@de ;
+    compass:wpTagId "143"^^xsd:integer ;
     skos:inScheme compass:PollutionScheme ;
     skos:topConceptOf compass:PollutionScheme .
 
 # ============================================================
-# Species (10 concepts)
+# Species (11 concepts)
 # ============================================================
 
 compass:SpeciesScheme
@@ -236,7 +269,7 @@ compass:SpeciesScheme
     skos:prefLabel "Arten"@de ;
     skos:definition "Marine and aquatic species relevant to OceanCare's work."@en ;
     skos:hasTopConcept compass:Corals ;
-    skos:hasTopConcept compass:DolphinsAndSmallCetaceans ;
+    skos:hasTopConcept compass:Dolphins ;
     skos:hasTopConcept compass:Fish ;
     skos:hasTopConcept compass:Manatees ;
     skos:hasTopConcept compass:Orcas ;
@@ -244,6 +277,7 @@ compass:SpeciesScheme
     skos:hasTopConcept compass:SeaTurtles ;
     skos:hasTopConcept compass:Seals ;
     skos:hasTopConcept compass:Sharks ;
+    skos:hasTopConcept compass:SmallCetaceans ;
     skos:hasTopConcept compass:Whales ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
@@ -254,10 +288,10 @@ compass:Corals
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
-compass:DolphinsAndSmallCetaceans
+compass:Dolphins
     a skos:Concept, compass:Species ;
-    skos:prefLabel "Dolphins and Small Cetaceans"@en ;
-    skos:prefLabel "Delfine und Kleinwale"@de ;
+    skos:prefLabel "Dolphins"@en ;
+    skos:prefLabel "Delfine"@de ;
     compass:wpTagId "148"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -266,6 +300,7 @@ compass:Fish
     a skos:Concept, compass:Species ;
     skos:prefLabel "Fish"@en ;
     skos:prefLabel "Fische"@de ;
+    compass:wpTagId "918"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -273,6 +308,7 @@ compass:Manatees
     a skos:Concept, compass:Species ;
     skos:prefLabel "Manatee"@en ;
     skos:prefLabel "Manatis"@de ;
+    compass:wpTagId "436"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -280,6 +316,7 @@ compass:Orcas
     a skos:Concept, compass:Species ;
     skos:prefLabel "Orcas"@en ;
     skos:prefLabel "Orcas"@de ;
+    compass:wpTagId "897"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -287,6 +324,7 @@ compass:PolarBears
     a skos:Concept, compass:Species ;
     skos:prefLabel "Polar Bears"@en ;
     skos:prefLabel "Eisbären"@de ;
+    compass:wpTagId "429"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -294,6 +332,7 @@ compass:SeaTurtles
     a skos:Concept, compass:Species ;
     skos:prefLabel "Sea Turtles"@en ;
     skos:prefLabel "Meeresschildkröten"@de ;
+    compass:wpTagId "437"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -301,6 +340,7 @@ compass:Seals
     a skos:Concept, compass:Species ;
     skos:prefLabel "Seals"@en ;
     skos:prefLabel "Robben"@de ;
+    compass:wpTagId "149"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -308,6 +348,14 @@ compass:Sharks
     a skos:Concept, compass:Species ;
     skos:prefLabel "Sharks"@en ;
     skos:prefLabel "Haie"@de ;
+    compass:wpTagId "433"^^xsd:integer ;
+    skos:inScheme compass:SpeciesScheme ;
+    skos:topConceptOf compass:SpeciesScheme .
+
+compass:SmallCetaceans
+    a skos:Concept, compass:Species ;
+    skos:prefLabel "Small Cetaceans"@en ;
+    skos:prefLabel "Kleinwale"@de ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -320,7 +368,7 @@ compass:Whales
     skos:topConceptOf compass:SpeciesScheme .
 
 # ============================================================
-# Country / Area (23 concepts)
+# Country / Area (25 concepts)
 # ============================================================
 
 compass:CountryAreaScheme
@@ -330,6 +378,7 @@ compass:CountryAreaScheme
     skos:definition "Countries and geographic areas relevant to OceanCare's work."@en ;
     skos:hasTopConcept compass:Arctic ;
     skos:hasTopConcept compass:Australia ;
+    skos:hasTopConcept compass:Austria ;
     skos:hasTopConcept compass:BalticSea ;
     skos:hasTopConcept compass:Benin ;
     skos:hasTopConcept compass:Bulgaria ;
@@ -337,6 +386,7 @@ compass:CountryAreaScheme
     skos:hasTopConcept compass:EuropeanUnion ;
     skos:hasTopConcept compass:FaroeIslands ;
     skos:hasTopConcept compass:France ;
+    skos:hasTopConcept compass:Germany ;
     skos:hasTopConcept compass:Greece ;
     skos:hasTopConcept compass:Iceland ;
     skos:hasTopConcept compass:Italy ;
@@ -357,10 +407,6 @@ compass:Arctic
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Arctic"@en ;
     skos:prefLabel "Arktis"@de ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
-    compass:topic compass:ClimateProtection, compass:FossilFuels, compass:Hunting, compass:Shipping ;
-    compass:species compass:PolarBears ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -369,8 +415,14 @@ compass:Australia
     skos:prefLabel "Australia"@en ;
     skos:prefLabel "Australien"@de ;
     compass:isoCode "AUS" ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:ClimateProtection ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Austria
+    a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Austria"@en ;
+    skos:prefLabel "Österreich"@de ;
+    compass:isoCode "AUT" ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -378,9 +430,6 @@ compass:BalticSea
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Baltic Sea"@en ;
     skos:prefLabel "Ostsee"@de ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:DolphinsAndSmallCetaceans, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -389,11 +438,6 @@ compass:Benin
     skos:prefLabel "Benin"@en ;
     skos:prefLabel "Benin"@de ;
     compass:isoCode "BEN" ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:AquaticWildMeat, compass:Fisheries, compass:Hunting ;
-    compass:species compass:Fish, compass:Manatees, compass:SeaTurtles, compass:Sharks ;
-    compass:forum ocinst:AbidjanConvention ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -402,9 +446,6 @@ compass:Bulgaria
     skos:prefLabel "Bulgaria"@en ;
     skos:prefLabel "Bulgarien"@de ;
     compass:isoCode "BGR" ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:DolphinsAndSmallCetaceans ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -412,12 +453,6 @@ compass:EasternMediterraneanSea
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Eastern Mediterranean Sea"@en ;
     skos:prefLabel "Östliches Mittelmeer"@de ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Shipping ;
-    compass:species compass:DolphinsAndSmallCetaceans, compass:Seals, compass:Whales ;
-    compass:forum ocinst:ACCOBAMS, ocinst:FAOGFCM ;
-    compass:relatedProject ocinst:SAVEWhales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -426,6 +461,7 @@ compass:EuropeanUnion
     skos:prefLabel "European Union"@en ;
     skos:prefLabel "Europäische Union"@de ;
     compass:isoCode "AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX MLT NLD POL PRT ROU SVK SVN ESP SWE" ;
+    compass:wpTagId "905"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -434,12 +470,7 @@ compass:FaroeIslands
     skos:prefLabel "Faroe Islands"@en ;
     skos:prefLabel "Färöer-Inseln"@de ;
     compass:isoCode "FRO" ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:pollution compass:ChemicalPollution ;
-    compass:species compass:DolphinsAndSmallCetaceans ;
-    compass:forum ocinst:IWC ;
+    compass:wpTagId "843"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -448,9 +479,14 @@ compass:France
     skos:prefLabel "France"@en ;
     skos:prefLabel "Frankreich"@de ;
     compass:isoCode "FRA" ;
-    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:Seals ;
+    skos:inScheme compass:CountryAreaScheme ;
+    skos:topConceptOf compass:CountryAreaScheme .
+
+compass:Germany
+    a skos:Concept, compass:CountryArea ;
+    skos:prefLabel "Germany"@en ;
+    skos:prefLabel "Deutschland"@de ;
+    compass:isoCode "DEU" ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -459,12 +495,6 @@ compass:Greece
     skos:prefLabel "Greece"@en ;
     skos:prefLabel "Griechenland"@de ;
     compass:isoCode "GRC" ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Shipping ;
-    compass:species compass:DolphinsAndSmallCetaceans, compass:Seals, compass:Whales ;
-    compass:forum ocinst:ACCOBAMS ;
-    compass:relatedProject ocinst:SAVEWhales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -473,11 +503,6 @@ compass:Iceland
     skos:prefLabel "Iceland"@en ;
     skos:prefLabel "Island"@de ;
     compass:isoCode "ISL" ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:species compass:Whales ;
-    compass:forum ocinst:IWC ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -486,11 +511,6 @@ compass:Italy
     skos:prefLabel "Italy"@en ;
     skos:prefLabel "Italien"@de ;
     compass:isoCode "ITA" ;
-    compass:workArea compass:CommunityInvolvement, compass:ResearchExpeditions, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Fisheries, compass:Shipping ;
-    compass:species compass:DolphinsAndSmallCetaceans ;
-    compass:forum ocinst:ACCOBAMS ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -499,12 +519,6 @@ compass:Japan
     skos:prefLabel "Japan"@en ;
     skos:prefLabel "Japan"@de ;
     compass:isoCode "JPN" ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:pollution compass:ChemicalPollution ;
-    compass:species compass:DolphinsAndSmallCetaceans, compass:Whales ;
-    compass:forum ocinst:IWC ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -513,11 +527,6 @@ compass:Maldives
     skos:prefLabel "Maldives"@en ;
     skos:prefLabel "Malediven"@de ;
     compass:isoCode "MDV" ;
-    compass:workArea compass:AdvocacyWork, compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:AquaticWildMeat, compass:Hunting ;
-    compass:pollution compass:PlasticPollution ;
-    compass:species compass:SeaTurtles ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -526,10 +535,6 @@ compass:Mauritania
     skos:prefLabel "Mauritania"@en ;
     skos:prefLabel "Mauretanien"@de ;
     compass:isoCode "MRT" ;
-    compass:workArea compass:AdvocacyWork, compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Fisheries ;
-    compass:species compass:Seals ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -538,11 +543,6 @@ compass:Norway
     skos:prefLabel "Norway"@en ;
     skos:prefLabel "Norwegen"@de ;
     compass:isoCode "NOR" ;
-    compass:workArea compass:AdvocacyWork ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Hunting ;
-    compass:species compass:Whales ;
-    compass:forum ocinst:IWC ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -551,10 +551,6 @@ compass:Slovenia
     skos:prefLabel "Slovenia"@en ;
     skos:prefLabel "Slowenien"@de ;
     compass:isoCode "SVN" ;
-    compass:workArea compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:species compass:DolphinsAndSmallCetaceans ;
-    compass:forum ocinst:ACCOBAMS ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -563,12 +559,6 @@ compass:Spain
     skos:prefLabel "Spain"@en ;
     skos:prefLabel "Spanien"@de ;
     compass:isoCode "ESP" ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:FossilFuels, compass:Shipping ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
-    compass:species compass:Orcas, compass:SeaTurtles, compass:Whales ;
-    compass:forum ocinst:ACCOBAMS, ocinst:EUCommission, ocinst:UNEPMAP ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -577,11 +567,7 @@ compass:Switzerland
     skos:prefLabel "Switzerland"@en ;
     skos:prefLabel "Schweiz"@de ;
     compass:isoCode "CHE" ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
-    compass:conservation compass:OceanConservation ;
-    compass:topic compass:DeepSeaMining, compass:FossilFuels ;
-    compass:pollution compass:PlasticPollution ;
-    compass:forum ocinst:BBNJ, ocinst:ISA, ocinst:UNEPUNEA ;
+    compass:wpTagId "913"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -590,11 +576,6 @@ compass:UnitedKingdom
     skos:prefLabel "United Kingdom"@en ;
     skos:prefLabel "Grossbritannien"@de ;
     compass:isoCode "GBR" ;
-    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:OutOfHabitat ;
-    compass:pollution compass:PlasticPollution ;
-    compass:species compass:DolphinsAndSmallCetaceans, compass:Seals, compass:Whales ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -603,10 +584,6 @@ compass:Venezuela
     skos:prefLabel "Venezuela"@en ;
     skos:prefLabel "Venezuela"@de ;
     compass:isoCode "VEN" ;
-    compass:workArea compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation ;
-    compass:topic compass:Fisheries, compass:Hunting ;
-    compass:species compass:Sharks ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
 
@@ -622,11 +599,5 @@ compass:WesternMediterraneanSea
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Western Mediterranean Sea"@en ;
     skos:prefLabel "Westliches Mittelmeer"@de ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
-    compass:conservation compass:AnimalAndSpeciesConservation, compass:OceanConservation ;
-    compass:topic compass:Fisheries, compass:FossilFuels, compass:Shipping ;
-    compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
-    compass:species compass:Orcas, compass:SeaTurtles, compass:Whales ;
-    compass:forum ocinst:ACCOBAMS ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .

@@ -5,8 +5,10 @@
 # ///
 """Generate compass.ttl and vocab.ttl from src/ontology/source-data.ods.
 
-Rows carry their own `id` and link by id in a `links` column; a link's predicate
-follows what it points at, so there is no mapping to configure.
+Pin rows carry their own `id` and link by id in a `links` column; a link's
+predicate follows what it points at, so there is no mapping to configure.
+Concepts never link out: a tag is recorded on the pin that carries it, so a
+region is on the map only because some pin points at it.
 
     tsv_to_rdf.py            regenerate
     tsv_to_rdf.py --check    exit 1 if the committed files are stale
@@ -66,13 +68,13 @@ MANAGED_BY_OCEANCARE = {"OceanCare"}
 
 SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition"]
 CONCEPT_COLUMNS = [
-    "id", "dimension", "name_en", "name_de", "wp_tag_id", "iso_codes", "links", "notes",
+    "id", "dimension", "name_en", "name_de", "wp_tag_id", "iso_codes", "notes",
 ]
 PIN_COLUMNS = [
     "id", "class", "name_en", "name_de", "long_name_en", "long_name_de",
     "lat", "lon", "location",
-    "description_en", "description_de", "founded", "url", "logo",
-    "wp_entity_tag_id_en", "wp_entity_tag_id_de", "links", "notes",
+    "description_en", "description_de", "url", "logo",
+    "wp_entity_tag_id", "links", "notes",
 ]
 
 # Emission order within a subject block. Anything unlisted sorts last, by name.
@@ -84,7 +86,6 @@ PREDICATE_ORDER = [
     "skos:definition",
     "compass:location",
     "compass:description",
-    "schema:foundingDate",
     "schema:url",
     "schema:image",
     "compass:isoCode",
@@ -99,8 +100,7 @@ PREDICATE_ORDER = [
     "compass:relatedOrganization",
     "compass:relatedProject",
     "compass:wpTagId",
-    "compass:wpEntityTagIdEn",
-    "compass:wpEntityTagIdDe",
+    "compass:wpEntityTagId",
     "skos:hasTopConcept",
     "skos:inScheme",
     "skos:topConceptOf",
@@ -340,7 +340,7 @@ def link_triples(grouped: dict[str, set[str]]) -> Triples:
     ]
 
 
-def concept_triples(row: Row, kinds: dict[str, str], problems: Problems) -> Triples:
+def concept_triples(row: Row, problems: Problems) -> Triples:
     dimension = row["dimension"]
     scheme = f"compass:{dimension}Scheme"
     triples: Triples = [
@@ -353,7 +353,6 @@ def concept_triples(row: Row, kinds: dict[str, str], problems: Problems) -> Trip
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
     if row["iso_codes"]:
         triples.append(("compass:isoCode", f'"{row["iso_codes"]}"'))
-    triples += link_triples(parse_links(row, kinds, problems))
     triples += [("skos:inScheme", scheme), ("skos:topConceptOf", scheme)]
     return triples
 
@@ -378,20 +377,13 @@ def pin_triples(row: Row, kinds: dict[str, str], problems: Problems) -> Triples:
     if row["location"]:
         triples.append(("compass:location", literal(row["location"], "en")))
 
-    founded = number(row, "founded", problems, int)
-    if founded:
-        triples.append(("schema:foundingDate", typed(founded, "xsd:gYear")))
     if row["url"]:
         triples.append(("schema:url", typed(row["url"], "xsd:anyURI")))
     if row["logo"]:
         triples.append(("schema:image", typed(row["logo"], "xsd:anyURI")))
-    for column, predicate in (
-        ("wp_entity_tag_id_en", "compass:wpEntityTagIdEn"),
-        ("wp_entity_tag_id_de", "compass:wpEntityTagIdDe"),
-    ):
-        value = number(row, column, problems, int)
-        if value:
-            triples.append((predicate, typed(value, "xsd:integer")))
+    wp_entity_tag_id = number(row, "wp_entity_tag_id", problems, int)
+    if wp_entity_tag_id:
+        triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
     managed = row["class"] == "Project" or row["id"] in MANAGED_BY_OCEANCARE
     triples.append(("compass:managedByOceanCare", "true" if managed else "false"))
@@ -452,7 +444,7 @@ def render_file(sections: list[tuple[str, list[str]]]) -> str:
     return "\n".join(parts).rstrip("\n") + "\n"
 
 
-def build_vocab(schemes: list[Row], concepts: list[Row], kinds, problems) -> str:
+def build_vocab(schemes: list[Row], concepts: list[Row], problems) -> str:
     by_id = {row["id"]: row for row in schemes}
     missing = [d for d in DIMENSIONS if d not in by_id]
     if missing:
@@ -480,7 +472,7 @@ def build_vocab(schemes: list[Row], concepts: list[Row], kinds, problems) -> str
 
         blocks = [render_subject(f"compass:{dimension}Scheme", scheme_triples)]
         blocks += [
-            render_subject(f"compass:{m['id']}", concept_triples(m, kinds, problems))
+            render_subject(f"compass:{m['id']}", concept_triples(m, problems))
             for m in members
         ]
         sections.append((f"{scheme['name_en']} ({len(members)} concepts)", blocks))
@@ -530,7 +522,7 @@ def generate() -> tuple[str, str]:
     kinds = index_terms(concepts, pins, problems)
     problems.raise_if_any()  # ids must be sound before links can be checked
 
-    vocab = build_vocab(schemes, concepts, kinds, problems)
+    vocab = build_vocab(schemes, concepts, problems)
     data = build_data(pins, kinds, problems)
     problems.raise_if_any()
     return data, vocab

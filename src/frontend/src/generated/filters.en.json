@@ -7,12 +7,16 @@
     "order": 0,
     "options": [
       {
-        "value": "http://example.org/ocean-org/ontology#AnimalAndSpeciesConservation",
-        "label": "Animal and Species Conservation"
+        "value": "http://example.org/ocean-org/ontology#AnimalConservation",
+        "label": "Animal Conservation"
       },
       {
         "value": "http://example.org/ocean-org/ontology#OceanConservation",
         "label": "Ocean Conservation"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#SpeciesConservation",
+        "label": "Species Conservation"
       }
     ]
   },
@@ -30,6 +34,10 @@
       {
         "value": "http://example.org/ocean-org/ontology#Australia",
         "label": "Australia"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Austria",
+        "label": "Austria"
       },
       {
         "value": "http://example.org/ocean-org/ontology#BalticSea",
@@ -58,6 +66,10 @@
       {
         "value": "http://example.org/ocean-org/ontology#France",
         "label": "France"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Germany",
+        "label": "Germany"
       },
       {
         "value": "http://example.org/ocean-org/ontology#Greece",
@@ -186,6 +198,10 @@
         "label": "FAO/GFCM"
       },
       {
+        "value": "http://example.org/ocean-org/data#IMO",
+        "label": "IMO"
+      },
+      {
         "value": "http://example.org/ocean-org/data#ISA",
         "label": "ISA"
       },
@@ -226,15 +242,6 @@
         "label": "UNOC"
       }
     ]
-  },
-  {
-    "id": "foundingDate",
-    "path": "https://schema.org/foundingDate",
-    "label": "Founded Year",
-    "type": "slider",
-    "order": 0,
-    "min": 1989.0,
-    "max": 2021.0
   },
   {
     "id": "managedByOceanCare",
@@ -293,8 +300,8 @@
         "label": "Corals"
       },
       {
-        "value": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans",
-        "label": "Dolphins and Small Cetaceans"
+        "value": "http://example.org/ocean-org/ontology#Dolphins",
+        "label": "Dolphins"
       },
       {
         "value": "http://example.org/ocean-org/ontology#Fish",
@@ -325,6 +332,10 @@
         "label": "Sharks"
       },
       {
+        "value": "http://example.org/ocean-org/ontology#SmallCetaceans",
+        "label": "Small Cetaceans"
+      },
+      {
         "value": "http://example.org/ocean-org/ontology#Whales",
         "label": "Whales"
       }
@@ -344,6 +355,10 @@
       {
         "value": "http://example.org/ocean-org/ontology#ClimateProtection",
         "label": "Climate Protection"
+      },
+      {
+        "value": "http://example.org/ocean-org/ontology#Collisions",
+        "label": "Collisions"
       },
       {
         "value": "http://example.org/ocean-org/ontology#DeepSeaMining",

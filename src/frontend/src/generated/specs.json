@@ -48,14 +48,6 @@
     "datatype": "http://www.w3.org/2001/XMLSchema#boolean"
   },
   {
-    "id": "foundingDate",
-    "path_iri": "https://schema.org/foundingDate",
-    "category": "simple_literal",
-    "is_multi": false,
-    "filter_type": "slider",
-    "datatype": "http://www.w3.org/2001/XMLSchema#gYear"
-  },
-  {
     "id": "workArea",
     "path_iri": "http://example.org/ocean-org/ontology#workArea",
     "category": "iri_with_label",
