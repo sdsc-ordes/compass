@@ -67,25 +67,65 @@ export function buildSelectExpr(spec: Spec): string {
   return `(SAMPLE(?${sid}) AS ?${sid}Result)`;
 }
 
-function sparqlPreamble(lang: string): string {
-  return `
-        {
-            ?s a compass:InternationalForum .
-            BIND(compass:InternationalForum AS ?type)
-        } UNION {
-            ?s a compass:Network .
-            BIND(compass:Network AS ?type)
-        } UNION {
-            ?s a compass:Project .
-            BIND(compass:Project AS ?type)
-        } UNION {
-            ?s a compass:PartnerOrganization .
-            BIND(compass:PartnerOrganization AS ?type)
-        } UNION {
-            ?s a compass:CountryArea .
-            BIND(compass:CountryArea AS ?type)
-        }
-        OPTIONAL { ?s geo:lat ?lat . }
+const PIN_CLASSES = ['InternationalForum', 'Network', 'Project', 'PartnerOrganization'] as const;
+
+/**
+ * Which variable a set of filter clauses constrains.
+ *
+ * Filters read the same for a pin the map draws and for the pin that puts a
+ * region on the map, but they cannot share variable names: the region branch
+ * nests its copy inside FILTER EXISTS, where the outer ?type is already bound
+ * to compass:CountryArea.
+ */
+type Subject = {
+  var: string;
+  typeVar: string;
+  /** Keeps helper variables distinct across the two copies. */
+  suffix: string;
+  /** Bind typeVar here, rather than relying on an outer BIND. */
+  declareType: boolean;
+};
+
+const PIN: Subject = { var: '?s', typeVar: '?type', suffix: '', declareType: false };
+const REGION_PIN: Subject = { var: '?pin', typeVar: '?pinType', suffix: 'Pin', declareType: true };
+
+/** The four entity classes that carry coordinates -- the pins on the map. */
+function pinBranch(whereClauses: string[], indent = '        '): string {
+  const branches = PIN_CLASSES.map(
+    (name) => `{ ?s a compass:${name} . BIND(compass:${name} AS ?type) }`,
+  ).join(`\n${indent}UNION `);
+  let body = `${indent}${branches}\n`;
+  if (whereClauses.length) body += indent + whereClauses.join(`\n${indent}`) + '\n';
+  return body;
+}
+
+/**
+ * Country/Area concepts, reachable only through a pin that points at one.
+ *
+ * A region is a shaded polygon rather than a result, and it carries no tags of
+ * its own: it reaches the map because some pin passing the same filters records
+ * it, so shading always means "matching pins are in here".
+ */
+function regionBranch(whereClauses: string[], indent = '        '): string {
+  let inner = `${indent}    ?pin compass:countryArea ?s .\n`;
+  if (whereClauses.length) {
+    inner += `${indent}    ` + whereClauses.join(`\n${indent}    `) + '\n';
+  }
+  return (
+    `${indent}?s a compass:CountryArea .\n` +
+    `${indent}BIND(compass:CountryArea AS ?type)\n` +
+    `${indent}FILTER EXISTS {\n${inner}${indent}}\n`
+  );
+}
+
+/**
+ * Geometry and label binding, applied to pins and regions alike.
+ *
+ * Regions have no coordinates and label themselves with skos:prefLabel, so
+ * geometry is OPTIONAL and the label is COALESCEd across both properties.
+ */
+function sharedOptionals(lang: string): string {
+  return `        OPTIONAL { ?s geo:lat ?lat . }
         OPTIONAL { ?s geo:long ?long . }
         OPTIONAL { ?s compass:name ?nameLabel . FILTER(lang(?nameLabel) = "${lang}") }
         OPTIONAL { ?s skos:prefLabel ?prefLabel . FILTER(lang(?prefLabel) = "${lang}") }
@@ -99,8 +139,7 @@ function specialOptionals(): string {
   return `
         OPTIONAL { ?s compass:startDate ?selfStart . }
         OPTIONAL { ?s compass:endDate ?selfEnd . }
-        OPTIONAL { ?s compass:wpEntityTagIdEn ?wpEntityTagIdEn . }
-        OPTIONAL { ?s compass:wpEntityTagIdDe ?wpEntityTagIdDe . }
+        OPTIONAL { ?s compass:wpEntityTagId ?wpEntityTagId . }
 `;
 }
 
@@ -108,8 +147,7 @@ function specialSelects(): string {
   return (
     '           (SAMPLE(?selfStart) AS ?selfStart)\n' +
     '           (SAMPLE(?selfEnd) AS ?selfEnd)\n' +
-    '           (SAMPLE(?wpEntityTagIdEn) AS ?wpEntityTagIdEn)\n' +
-    '           (SAMPLE(?wpEntityTagIdDe) AS ?wpEntityTagIdDe)\n'
+    '           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n'
   );
 }
 
@@ -127,21 +165,24 @@ function buildWhereClauses(
   filterMap: Map<string, string>,
   rangeFilters: Map<string, [string, string | null]>,
   dateFilters: Map<string, string>,
+  subject: Subject = PIN,
   excludeKey: string | null = null,
 ): string[] {
   const whereClauses: string[] = [];
+  const subj = subject.var;
 
   for (const [key, values] of params) {
     if (key === 'lang' || key === excludeKey || values.length === 0) continue;
+    const v0 = `?${key}${subject.suffix}Val`;
 
     if (filterMap.has(key)) {
       const prop = filterMap.get(key)!;
       const parts: string[] = [];
       for (const v of values) {
         if (v.startsWith('http') && !v.includes('>')) {
-          parts.push(`?s ${prop} <${v}> .`);
+          parts.push(`${subj} ${prop} <${v}> .`);
         } else {
-          parts.push(`?s ${prop} ?${key}Val . FILTER(str(?${key}Val) = "${escapeLiteral(v)}")`);
+          parts.push(`${subj} ${prop} ${v0} . FILTER(str(${v0}) = "${escapeLiteral(v)}")`);
         }
       }
       if (parts.length) whereClauses.push(unionOrSingle(parts));
@@ -149,8 +190,8 @@ function buildWhereClauses(
       const prop = dateFilters.get(key)!;
       const safeV = escapeLiteral(values[0]);
       whereClauses.push(
-        `OPTIONAL { ?s ${prop} ?${key}Val . } ` +
-          `FILTER(!BOUND(?${key}Val) || ?${key}Val >= "${safeV}"^^xsd:date)`,
+        `OPTIONAL { ${subj} ${prop} ${v0} . } ` +
+          `FILTER(!BOUND(${v0}) || ${v0} >= "${safeV}"^^xsd:date)`,
       );
     } else if (key === 'entityType') {
       const iriList = values
@@ -158,7 +199,13 @@ function buildWhereClauses(
         .map((v) => `<${v}>`)
         .join(', ');
       if (iriList) {
-        whereClauses.push(`FILTER(?type IN (${iriList}) || ?type = compass:CountryArea)`);
+        // A region has no type of its own to filter, so the legend reaches it
+        // through the pins: hide every Project and a region holding only
+        // projects stops being shaded.
+        const filter = `FILTER(${subject.typeVar} IN (${iriList}))`;
+        whereClauses.push(
+          subject.declareType ? `${subj} a ${subject.typeVar} . ${filter}` : filter,
+        );
       }
     } else if (rangeFilters.has(key)) {
       const [prop, datatype] = rangeFilters.get(key)!;
@@ -167,13 +214,13 @@ function buildWhereClauses(
       if (datatype && datatype.includes('gYear')) {
         const yearInt = Math.trunc(numericVal);
         whereClauses.push(
-          `OPTIONAL { ?s ${prop} ?${key}Val . } ` +
-            `FILTER(!BOUND(?${key}Val) || ?${key}Val >= "${yearInt}"^^xsd:gYear)`,
+          `OPTIONAL { ${subj} ${prop} ${v0} . } ` +
+            `FILTER(!BOUND(${v0}) || ${v0} >= "${yearInt}"^^xsd:gYear)`,
         );
       } else {
         whereClauses.push(
-          `OPTIONAL { ?s ${prop} ?${key}Val . } ` +
-            `FILTER(!BOUND(?${key}Val) || ?${key}Val >= ${numericVal})`,
+          `OPTIONAL { ${subj} ${prop} ${v0} . } ` +
+            `FILTER(!BOUND(${v0}) || ${v0} >= ${numericVal})`,
         );
       }
     }
@@ -199,19 +246,21 @@ function categorizeSpecs(specs: Spec[]) {
   return { filterMap, rangeFilters, dateFilters };
 }
 
-/** Count-per-value query for one tag dimension (drill-down faceting). */
+/**
+ * Count-per-value query for one tag dimension (drill-down faceting).
+ *
+ * Regions are background context rather than results (see the map's result
+ * badge, which counts point features only), so only the pin branch is counted.
+ */
 export function buildFacetQuery(specs: Spec[], lang: string, params: ParamMap, targetId: string): string {
   const { filterMap, rangeFilters, dateFilters } = categorizeSpecs(specs);
   const targetPath = filterMap.get(targetId)!;
 
-  const preamble = sparqlPreamble(lang);
-  const whereClauses = buildWhereClauses(params, filterMap, rangeFilters, dateFilters, targetId);
+  const whereClauses = buildWhereClauses(params, filterMap, rangeFilters, dateFilters, PIN, targetId);
 
-  let sparqlWhere = preamble + `        ?s ${targetPath} ?val .\n`;
-  sparqlWhere += '        FILTER(?type != compass:CountryArea)\n';
-  if (whereClauses.length) {
-    sparqlWhere += '        ' + whereClauses.join('\n        ') + '\n';
-  }
+  let sparqlWhere = pinBranch(whereClauses);
+  sparqlWhere += `        ?s ${targetPath} ?val .\n`;
+  sparqlWhere += sharedOptionals(lang);
 
   return (
     SPARQL_PREFIXES +
@@ -227,15 +276,19 @@ export function buildFacetQuery(specs: Spec[], lang: string, params: ParamMap, t
 export function buildEntitiesQuery(specs: Spec[], lang: string, params: ParamMap): string {
   const { filterMap, rangeFilters, dateFilters } = categorizeSpecs(specs);
 
-  const preamble = sparqlPreamble(lang);
   const autoOptionals = specs.map((spec) => buildOptional(spec, lang)).join('\n        ');
   const autoSelects = specs.map((spec) => buildSelectExpr(spec)).join('\n           ');
-  const whereClauses = buildWhereClauses(params, filterMap, rangeFilters, dateFilters);
+  const pinClauses = buildWhereClauses(params, filterMap, rangeFilters, dateFilters, PIN);
+  const regionClauses = buildWhereClauses(params, filterMap, rangeFilters, dateFilters, REGION_PIN);
 
-  let sparqlWhere = preamble + '        ' + autoOptionals + '\n' + specialOptionals();
-  if (whereClauses.length) {
-    sparqlWhere += '        ' + whereClauses.join('\n        ') + '\n';
-  }
+  let sparqlWhere =
+    '        {\n' +
+    pinBranch(pinClauses, '            ') +
+    '        } UNION {\n' +
+    regionBranch(regionClauses, '            ') +
+    '        }\n';
+  sparqlWhere += sharedOptionals(lang);
+  sparqlWhere += '        ' + autoOptionals + '\n' + specialOptionals();
 
   return (
     SPARQL_PREFIXES +

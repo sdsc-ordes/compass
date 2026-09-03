@@ -38,9 +38,6 @@
                   {/if}
                 {/each}
               </div>
-              {#if entity.properties.foundingDate}
-                <span class="founded-year">{t.established} {entity.properties.foundingDate}</span>
-              {/if}
             </div>
           </td>
           <td>
@@ -152,12 +149,6 @@
   .chip-region  { background: #ccfbf1; color: #0f766e; }
   .chip-tag     { background: #f1f5f9; color: #475569; }
   .chip-species { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-
-  .founded-year {
-    font-size: 0.72rem;
-    color: #94a3b8;
-    margin-top: 2px;
-  }
 
   .type-badge {
     display: inline-block;

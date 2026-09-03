@@ -54,10 +54,6 @@
       <p class="description">{entity.description}</p>
     {/if}
 
-    {#if entity?.foundingDate}
-      <p class="founded">{t.established} {entity.foundingDate}</p>
-    {/if}
-
     {#if parsedTags.length > 0}
       <div class="props-section">
         {#each parsedTags as dim}
@@ -96,12 +92,12 @@
           {t.details}
         </a>
       {/if}
-      {#if entity?.wpEntityTagIdEn || entity?.wpEntityTagIdDe}
-        {@const tagId = lang === 'de' ? (entity.wpEntityTagIdDe || entity.wpEntityTagIdEn) : (entity.wpEntityTagIdEn || entity.wpEntityTagIdDe)}
+      {#if entity?.wpEntityTagId}
+        <!-- One term id serves both language sites; only the base URL differs. -->
         {@const baseUrl = lang === 'de' ? 'https://www.oceancare.org/de/storys-and-news/' : 'https://www.oceancare.org/en/stories-and-news/'}
         <a
           class="visit-btn stories"
-          href="{baseUrl}?tag={tagId}"
+          href="{baseUrl}?tag={entity.wpEntityTagId}"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -184,12 +180,6 @@
     font-weight: 700;
     color: #0f172a;
     line-height: 1.35;
-  }
-
-  .founded {
-    margin: 0 0 0.25rem;
-    font-size: 0.8125rem;
-    color: #94a3b8;
   }
 
   /* ── Property rows ── */

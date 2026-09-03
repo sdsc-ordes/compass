@@ -60,8 +60,7 @@ function parseSpecialProperties(res: Row): Record<string, string> {
   return {
     startDate: res['selfStart'] ?? '',
     endDate: res['selfEnd'] ?? '',
-    wpEntityTagIdEn: res['wpEntityTagIdEn'] ?? '',
-    wpEntityTagIdDe: res['wpEntityTagIdDe'] ?? '',
+    wpEntityTagId: res['wpEntityTagId'] ?? '',
   };
 }
 
