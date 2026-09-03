@@ -1,16 +1,17 @@
 """Tests for the stories count proxy endpoint."""
-import pytest
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
-from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.routers.stories import _count_story_cards, _resolve_wp_tag_ids, _build_stories_url
-
+from app.routers.stories import _build_stories_url, _count_story_cards, _resolve_wp_tag_ids
 
 # ---------------------------------------------------------------------------
 # Unit tests for helpers
 # ---------------------------------------------------------------------------
+
 
 def test_count_story_cards_empty():
     assert _count_story_cards("") == 0
@@ -73,16 +74,16 @@ def test_resolve_wp_tag_ids_no_iris():
 def test_resolve_wp_tag_ids_unmapped():
     store = MagicMock()
     store.query.return_value = []
-    result = _resolve_wp_tag_ids(["http://example.org/ocean-org/ontology#UnknownConcept"], store)
+    result = _resolve_wp_tag_ids(
+        ["http://example.org/ocean-org/ontology#UnknownConcept"], store
+    )
     assert result == []
 
 
 def test_resolve_wp_tag_ids_known():
     store = MagicMock()
     store.query.return_value = [{"wpTagId": "147"}]
-    result = _resolve_wp_tag_ids(
-        ["http://example.org/ocean-org/ontology#Whales"], store
-    )
+    result = _resolve_wp_tag_ids(["http://example.org/ocean-org/ontology#Whales"], store)
     assert result == [147]
 
 

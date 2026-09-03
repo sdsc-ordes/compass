@@ -3,11 +3,12 @@
 Provides a real RDFStore loaded from the ontology files so tests validate
 against the actual data/shapes/vocab rather than synthetic mocks.
 """
+
 import os
+
 import pytest
 
 from app.rdf import RDFStore
-
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _ONTOLOGY_DIR = os.path.join(_BASE_DIR, "ontology")

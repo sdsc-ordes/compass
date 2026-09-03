@@ -6,7 +6,7 @@
 //
 // GEBCO's grid is free for commercial use with attribution, which the map
 // carries. Output goes to tools/tiles/{z}/{x}/{y}.jpg and is gitignored: it is
-// ~85 MB, regenerable, and belongs on the server rather than in history.
+// ~53 MB, regenerable, and belongs on the server rather than in history.
 //
 // Already-written tiles are skipped, so an interrupted run resumes.
 

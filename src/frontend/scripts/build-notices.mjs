@@ -13,7 +13,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const LICENCE_FILES = ['LICENSE', 'LICENSE.md', 'LICENSE.txt', 'LICENCE', 'license', 'LICENSE-MIT'];
+const LICENCE_FILES = [
+  'LICENSE',
+  'LICENSE.md',
+  'LICENSE.txt',
+  'LICENCE',
+  'license',
+  'LICENSE-MIT',
+];
 
 // Compilers whose *runtime* is emitted into the bundle even though the package
 // itself is a devDependency. Svelte is the case that matters: components
@@ -40,13 +47,17 @@ function licenceText(name) {
 const sections = [];
 const missing = [];
 for (const name of shipped) {
-  const meta = JSON.parse(readFileSync(join(ROOT, 'node_modules', name, 'package.json'), 'utf8'));
+  const meta = JSON.parse(
+    readFileSync(join(ROOT, 'node_modules', name, 'package.json'), 'utf8'),
+  );
   const text = licenceText(name);
   if (!text) missing.push(name);
   sections.push(
     `## ${name} ${meta.version}\n\n` +
-    `SPDX: ${meta.license ?? 'unknown'}${meta.homepage ? `  \nHome: ${meta.homepage}` : ''}\n\n` +
-    (text ? `\`\`\`\n${text}\n\`\`\`` : '_No licence file shipped in the package; see the SPDX identifier above._'),
+      `SPDX: ${meta.license ?? 'unknown'}${meta.homepage ? `  \nHome: ${meta.homepage}` : ''}\n\n` +
+      (text
+        ? `\`\`\`\n${text}\n\`\`\``
+        : '_No licence file shipped in the package; see the SPDX identifier above._'),
   );
 }
 
@@ -61,9 +72,10 @@ const out =
   '- Bathymetry imagery: reproduced from the **GEBCO_2026 Grid**, GEBCO\n' +
   '  Compilation Group (<https://www.gebco.net>). Free to use with attribution.\n' +
   '  GEBCO state the imagery is not to be used for navigation or any purpose\n' +
-  '  relating to safety at sea. Both notices appear in the map\'s attribution\n' +
+  "  relating to safety at sea. Both notices appear in the map's attribution\n" +
   '  control at runtime.\n\n' +
-  sections.join('\n\n') + '\n';
+  sections.join('\n\n') +
+  '\n';
 
 writeFileSync(join(ROOT, 'THIRD-PARTY-NOTICES.md'), out);
 console.log(`wrote THIRD-PARTY-NOTICES.md for ${shipped.length} bundled package(s)`);

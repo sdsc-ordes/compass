@@ -4,6 +4,7 @@ Shared RDF namespace definitions and SPARQL prefix declarations.
 Single source of truth for all namespace URIs and prefix shorthands used
 across rdf.py, schema.py, sparql_builder.py, and result_parser.py.
 """
+
 from rdflib import Namespace
 
 COMPASS = Namespace("http://example.org/ocean-org/ontology#")

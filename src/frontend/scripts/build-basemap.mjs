@@ -15,9 +15,9 @@ const SOURCES = {
   land: `${NE}/ne_110m_land.geojson`,
   borders: `${NE}/ne_110m_admin_0_boundary_lines_land.geojson`,
   // Lakes and rivers cost ~25 KB together and are what stop the land reading
-  // as a blank shape. Real bathymetry would be the equivalent for the ocean,
-  // but the coarsest Natural Earth band is 600 KB even simplified, so the sea
-  // gets depth from styling instead.
+  // as a blank shape. Depth comes from the GEBCO tiles `just tiles` renders,
+  // not from here: Natural Earth's coarsest band is 600 KB even simplified,
+  // far too much to ship inside the widget bundle.
   lakes: `${NE}/ne_110m_lakes.geojson`,
   rivers: `${NE}/ne_110m_rivers_lake_centerlines.geojson`,
 };
@@ -55,9 +55,18 @@ async function main() {
     console.log(`${name}: ${out[name].features.length} features`);
   }
 
-  const path = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'map', 'basemap.json');
+  const path = join(
+    dirname(fileURLToPath(import.meta.url)),
+    '..',
+    'src',
+    'map',
+    'basemap.json',
+  );
   writeFileSync(path, JSON.stringify(out));
   console.log(`wrote ${path}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

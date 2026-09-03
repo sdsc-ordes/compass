@@ -22,7 +22,11 @@ const COUNTRY_TIERS = [
 const MARINE_URL = `${NE}/ne_10m_geography_marine_polys.geojson`;
 
 const VOCAB = join(
-  dirname(fileURLToPath(import.meta.url)), '..', '..', 'ontology', 'vocab.ttl',
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  'ontology',
+  'vocab.ttl',
 );
 
 // regionKey -> ISO3 codes, one entry per Country/Area concept that has any.
@@ -38,20 +42,41 @@ function countryRegions() {
   return regions;
 }
 
-const MED_SEAS = ['Mediterranean Sea', 'Alboran Sea', 'Balearic Sea', 'Golfe du Lion',
-  'Ligurian Sea', 'Tyrrhenian Sea', 'Adriatic Sea', 'Ionian Sea', 'Aegean Sea', 'Sea of Crete'];
+const MED_SEAS = [
+  'Mediterranean Sea',
+  'Alboran Sea',
+  'Balearic Sea',
+  'Golfe du Lion',
+  'Ligurian Sea',
+  'Tyrrhenian Sea',
+  'Adriatic Sea',
+  'Ionian Sea',
+  'Aegean Sea',
+  'Sea of Crete',
+];
 const MED_CUT = 12.5; // Strait of Sicily — divides western and eastern basins
 
 // regionKey -> { seas, clip:[W,S,E,N] }. Sub-seas are dissolved into one shape;
 // clip trims to the relevant basin/sector.
 const MARINE = {
-  Arctic: { seas: ['Arctic Ocean', 'Greenland Sea', 'Barents Sea', 'Norwegian Sea'], clip: [-75, 58, 75, 90] },
+  Arctic: {
+    seas: ['Arctic Ocean', 'Greenland Sea', 'Barents Sea', 'Norwegian Sea'],
+    clip: [-75, 58, 75, 90],
+  },
   BalticSea: { seas: ['Baltic Sea', 'Gulf of Bothnia', 'Gulf of Finland', 'Gulf of Riga'] },
   WesternMediterraneanSea: { seas: MED_SEAS, clip: [-10, 30, MED_CUT, 47] },
   EasternMediterraneanSea: { seas: MED_SEAS, clip: [MED_CUT, 30, 40, 47] },
 };
 
-const rect = ([w, s, e, n]) => [[[w, s], [e, s], [e, n], [w, n], [w, s]]];
+const rect = ([w, s, e, n]) => [
+  [
+    [w, s],
+    [e, s],
+    [e, n],
+    [w, n],
+    [w, s],
+  ],
+];
 
 const toPolys = (g) => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates);
 
@@ -103,7 +128,10 @@ async function main() {
   for (const [regionKey, { seas, clip }] of Object.entries(MARINE)) {
     const missing = seas.filter((n) => !byName.get(n));
     if (missing.length) console.warn(`${regionKey}: missing seas ${missing.join(', ')}`);
-    const geometry = dissolve(seas.map((n) => byName.get(n)), clip);
+    const geometry = dissolve(
+      seas.map((n) => byName.get(n)),
+      clip,
+    );
     features.push({ type: 'Feature', properties: { regionKey }, geometry });
   }
 
@@ -112,4 +140,7 @@ async function main() {
   console.log(`wrote ${features.length} regions to ${out}`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

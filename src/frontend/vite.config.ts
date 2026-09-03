@@ -1,9 +1,8 @@
-import { defineConfig } from 'vite'
-import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte'
+import { defineConfig } from 'vite';
+import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 export default defineConfig({
   plugins: [
-
     svelte({
       preprocess: [vitePreprocess()],
       compilerOptions: {
@@ -11,10 +10,10 @@ export default defineConfig({
       },
     }),
   ],
-  // maplibre-gl is BSD-3-Clause and svelte, qrcode, geojson and
-  // polygon-clipping are MIT/ISC: all require their notice to travel with the
-  // distribution. The widget ships as one minified file with nothing beside
-  // it, so the banners are appended to it rather than stripped.
+  // maplibre-gl is BSD-3-Clause and svelte, lucide-svelte, qrcode and geojson
+  // are MIT/ISC: all require their notice to travel with the distribution. The
+  // widget ships as one minified file with nothing beside it, so the banners
+  // are appended to it rather than stripped.
   esbuild: { legalComments: 'eof' },
   build: {
     lib: {
@@ -29,4 +28,4 @@ export default defineConfig({
       },
     },
   },
-})
+});

@@ -3,21 +3,22 @@
 Tests that the generated SPARQL is structurally valid and that the base query
 actually returns all expected entities from the real ontology.
 """
-from starlette.datastructures import QueryParams
 
 import pytest
+from starlette.datastructures import QueryParams
+
+from app.namespaces import COMPASS
 from app.sparql_builder import (
     PIN_CLASSES,
+    _pin_branch,
+    _region_branch,
+    _shared_optionals,
     build_entities_query,
     build_facet_query,
     build_optional,
     build_select_expr,
     to_prefixed,
-    _pin_branch,
-    _region_branch,
-    _shared_optionals,
 )
-from app.namespaces import COMPASS
 
 
 class TestToPrefixed:
@@ -30,19 +31,31 @@ class TestToPrefixed:
 
 class TestBuildOptional:
     def test_lang_literal(self):
-        spec = {"id": "location", "path_iri": str(COMPASS.location), "category": "lang_literal"}
+        spec = {
+            "id": "location",
+            "path_iri": str(COMPASS.location),
+            "category": "lang_literal",
+        }
         result = build_optional(spec, "en")
         assert 'FILTER(lang(?location) = "en")' in result
         assert "OPTIONAL" in result
 
     def test_iri_with_label(self):
-        spec = {"id": "workArea", "path_iri": str(COMPASS.workArea), "category": "iri_with_label"}
+        spec = {
+            "id": "workArea",
+            "path_iri": str(COMPASS.workArea),
+            "category": "iri_with_label",
+        }
         result = build_optional(spec, "en")
         assert "skos:prefLabel" in result
         assert "rdfs:label" in result
 
     def test_boolean(self):
-        spec = {"id": "managedByOceanCare", "path_iri": str(COMPASS.managedByOceanCare), "category": "boolean"}
+        spec = {
+            "id": "managedByOceanCare",
+            "path_iri": str(COMPASS.managedByOceanCare),
+            "category": "boolean",
+        }
         result = build_optional(spec, "en")
         assert "OPTIONAL" in result
         assert "FILTER" not in result
@@ -162,8 +175,9 @@ class TestBuildEntitiesQueryExecutes:
         )
         filtered = store.query(
             build_entities_query(
-                property_specs, "en",
-                QueryParams(f"entityType={COMPASS.InternationalForum}")
+                property_specs,
+                "en",
+                QueryParams(f"entityType={COMPASS.InternationalForum}"),
             )
         )
         assert len(filtered) > 0, "entityType filter returned no results"
