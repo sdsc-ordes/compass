@@ -9,6 +9,7 @@
   import { i18n, type Lang } from '../shared/i18n';
   import { Globe as GlobeIcon, Map as MapIcon, BookOpen } from 'lucide-svelte';
   import regionsData from './regions.json';
+  import basemapData from './basemap.json';
 
   // Region boundary polygons keyed by regionKey, built by
   // scripts/build-regions.mjs. Country/Area entities arrive without geometry;
@@ -41,31 +42,168 @@
     return l === 'de' ? found.de : found.en;
   }
 
-  function containsNameField(expr: any): boolean {
-    if (!expr) return false;
-    if (typeof expr === 'string') return expr.includes('name');
-    if (Array.isArray(expr)) return expr.some(containsNameField);
-    if (typeof expr === 'object') return Object.values(expr).some(containsNameField);
-    return false;
+  // The map draws its own background from bundled Natural Earth geometry, so
+  // no tile, glyph or sprite service is contacted at runtime. Keeping the
+  // basemap unlabelled is what makes that possible -- labels would need glyph
+  // PBFs from a font server -- and it costs nothing here: every label on the
+  // map comes from the ontology, already in both languages.
+  // Pre-rendered GEBCO bathymetry, served from our own origin by `just tiles`.
+  // 512px JPEG to z5; MapLibre overzooms past that, which a smooth gradient
+  // tolerates well.
+  const TILE_MAX_ZOOM = 5;
+  const tilePath = () => `${(tileurl ?? '').replace(/\/$/, '')}/tiles/{z}/{x}/{y}.jpg`;
+
+  /** True when tiles are actually being served, so a deployment without them
+      falls back to the vector basemap instead of logging a 404 per tile. */
+  async function tilesAvailable(): Promise<boolean> {
+    try {
+      const probe = tilePath().replace('{z}/{x}/{y}', '0/0/0');
+      const response = await fetch(probe, { method: 'GET' });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 
-  function applyBasemapLanguage(l: Lang) {
-    if (!map?.isStyleLoaded()) return;
-    const layers = map.getStyle().layers || [];
-    const field = l === 'de'
-      ? ['coalesce', ['get', 'name:de'], ['get', 'name'], ['get', 'name:en']]
-      : ['coalesce', ['get', 'name:en'], ['get', 'name'], ['get', 'name:de']];
+  const OCEAN = '#cfe3f7';
+  const OCEAN_DEEP = '#b9d6f2';
+  const LAND = '#f6f7f4';
+  const LAND_EDGE = '#e8eae4';
+  const COASTLINE = '#8fa6bd';
+  const BORDER = '#cbd5e1';
+  const WATER = '#bcd9f2';
+  const GRATICULE = '#a9c6e3';
 
-    for (const layer of layers) {
-      if (layer.type !== 'symbol') continue;
-      const current = map.getLayoutProperty(layer.id, 'text-field');
-      if (!containsNameField(current)) continue;
-      try {
-        map.setLayoutProperty(layer.id, 'text-field', field as any);
-      } catch {
-        // Some symbol layers may not accept dynamic text-field overrides.
-      }
+  /** Meridians and parallels every 20 degrees, so open ocean is not featureless. */
+  function graticule(step = 20): any {
+    const lines: any[] = [];
+    for (let lon = -180; lon <= 180; lon += step) {
+      const points = [];
+      for (let lat = -80; lat <= 80; lat += 5) points.push([lon, lat]);
+      lines.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: points } });
     }
+    for (let lat = -80; lat <= 80; lat += step) {
+      const points = [];
+      for (let lon = -180; lon <= 180; lon += 5) points.push([lon, lat]);
+      lines.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: points } });
+    }
+    return { type: 'FeatureCollection', features: lines };
+  }
+
+  function basemapStyle(): maplibregl.StyleSpecification {
+    return {
+      version: 8,
+      sources: {
+        land: {
+          type: 'geojson',
+          data: (basemapData as any).land,
+          // Natural Earth is public domain and asks only for credit; it is the
+          // basemap whenever the bathymetry tiles are not served.
+          attribution:
+            'Basemap: <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a>',
+        },
+        borders: { type: 'geojson', data: (basemapData as any).borders },
+        lakes: { type: 'geojson', data: (basemapData as any).lakes },
+        rivers: { type: 'geojson', data: (basemapData as any).rivers },
+        graticule: { type: 'geojson', data: graticule() },
+      },
+      layers: [
+        { id: 'ocean', type: 'background', paint: { 'background-color': OCEAN_DEEP } },
+        {
+          id: 'graticule',
+          type: 'line',
+          source: 'graticule',
+          paint: { 'line-color': GRATICULE, 'line-width': 0.5, 'line-opacity': 0.5 },
+        },
+        // A wide, soft stroke on the coast reads as shallow water against the
+        // deeper background, which is the job real bathymetry would do.
+        {
+          id: 'shelf',
+          type: 'line',
+          source: 'land',
+          paint: { 'line-color': OCEAN, 'line-width': 14, 'line-blur': 12, 'line-opacity': 0.9 },
+        },
+        { id: 'land', type: 'fill', source: 'land', paint: { 'fill-color': LAND } },
+        {
+          id: 'land-inner-edge',
+          type: 'line',
+          source: 'land',
+          paint: { 'line-color': LAND_EDGE, 'line-width': 5, 'line-offset': 3, 'line-blur': 3 },
+        },
+        {
+          id: 'borders',
+          type: 'line',
+          source: 'borders',
+          paint: { 'line-color': BORDER, 'line-width': 0.6, 'line-dasharray': [3, 2] },
+        },
+        {
+          id: 'rivers',
+          type: 'line',
+          source: 'rivers',
+          paint: { 'line-color': WATER, 'line-width': ['interpolate', ['linear'], ['zoom'], 2, 0.5, 6, 1.4] },
+        },
+        { id: 'lakes', type: 'fill', source: 'lakes', paint: { 'fill-color': WATER } },
+        {
+          id: 'coastline',
+          type: 'line',
+          source: 'land',
+          paint: { 'line-color': COASTLINE, 'line-width': 0.8 },
+        },
+      ],
+    } as maplibregl.StyleSpecification;
+  }
+
+  /** An RGBA bitmap MapLibre can use as a symbol icon, drawn on a canvas. */
+  function iconCanvas(size: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; scale: number } {
+    const scale = 2; // registered with pixelRatio 2, so it stays crisp
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size * scale;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('2D canvas context unavailable');
+    ctx.scale(scale, scale);
+    return { canvas, ctx, scale };
+  }
+
+  function toImage(canvas: HTMLCanvasElement): ImageData {
+    const ctx = canvas.getContext('2d')!;
+    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+  }
+
+  /** The cluster tally, as an icon: a number needs no glyph server this way. */
+  function countIcon(count: string): ImageData {
+    const size = 32;
+    const { canvas, ctx } = iconCanvas(size);
+    ctx.font = '600 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(count, size / 2, size / 2);
+    return toImage(canvas);
+  }
+
+  /** OceanCare's marker. Drawn as a path, so it needs no font that has U+2605. */
+  function starIcon(): ImageData {
+    const size = 34;
+    const { canvas, ctx } = iconCanvas(size);
+    const cx = size / 2;
+    const cy = size / 2;
+    const outer = 13;
+    const inner = outer * 0.42;
+    ctx.beginPath();
+    for (let point = 0; point < 10; point++) {
+      const radius = point % 2 === 0 ? outer : inner;
+      const angle = (Math.PI / 5) * point - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+      point === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#f59e0b';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fill();
+    return toImage(canvas);
   }
 
   function typeColorExpression(): maplibregl.ExpressionSpecification {
@@ -78,6 +216,8 @@
   }
 
   export let lang: Lang = 'en';
+  /** Origin serving /tiles/; empty means this page's own origin. */
+  export let tileurl = '';
   export let entities: any[] = [];
   export let onEntitySelect: (props: any) => void = () => {};
   export let activeTypeFilters: string[] = [];
@@ -121,9 +261,6 @@
   let mapLoaded = false;
 
   $: t = i18n[lang] || i18n.en;
-  $: if (mapLoaded) {
-    applyBasemapLanguage(lang);
-  }
   $: if (mapLoaded && entities) {
     updateMarkers();
   }
@@ -135,19 +272,46 @@
 
     map = new maplibregl.Map({
       container: mapContainer,
-      style: 'https://tiles.openfreemap.org/styles/liberty',
+      style: basemapStyle(),
       center: [0, 20],
       zoom: 2,
+      // Explicit: the data licences require this control, so it must not
+      // depend on a MapLibre default. Compact keeps it to an (i) toggle.
+      attributionControl: { compact: true },
     });
 
-    map.on('load', () => {
-      try {
-        addOceanLayers();
-      } catch (e) {
-        console.warn('[Compass] Ocean layers failed to initialize:', e);
+    // Cluster tallies vary with zoom, so each number's icon is drawn the first
+    // time a layer asks for one rather than guessed at up front.
+    map.on('styleimagemissing', (e: any) => {
+      const count = /^cluster-count-(\d+)$/.exec(e.id)?.[1];
+      if (count && !map.hasImage(e.id)) {
+        map.addImage(e.id, countIcon(count), { pixelRatio: 2 });
+      }
+    });
+
+    map.on('load', async () => {
+      map.addImage('featured-star', starIcon(), { pixelRatio: 2 });
+
+      if (await tilesAvailable()) {
+        map.addSource('bathymetry', {
+          type: 'raster',
+          tiles: [tilePath()],
+          tileSize: 512,
+          maxzoom: TILE_MAX_ZOOM,
+          attribution:
+            'Imagery reproduced from the GEBCO_2026 Grid, ' +
+            '<a href="https://www.gebco.net" target="_blank" rel="noopener">GEBCO</a> ' +
+            'Compilation Group. Not to be used for navigation.',
+        });
+        // Under the land fill and the shelf halo: the real depth data replaces
+        // what those approximate, but land stays flat for pin legibility.
+        map.addLayer(
+          { id: 'bathymetry', type: 'raster', source: 'bathymetry' },
+          'graticule',
+        );
+        map.setPaintProperty('shelf', 'line-opacity', 0);
       }
       mapLoaded = true;
-      applyBasemapLanguage(lang);
       updateMarkers();
       setupEventHandlers();
     });
@@ -156,60 +320,6 @@
   onDestroy(() => {
     if (map) map.remove();
   });
-
-  function addOceanLayers() {
-    // Find the first layer above 'water' so we can insert ocean overlays
-    // between the basemap water fill (blue) and land/label layers.
-    const styleLayers = map.getStyle().layers;
-    const waterIdx = styleLayers.findIndex(l => l.id === 'water');
-    const aboveWater = waterIdx >= 0 && waterIdx + 1 < styleLayers.length
-      ? styleLayers[waterIdx + 1].id
-      : undefined;
-
-    // --- GEBCO Bathymetry ---
-    // Free for commercial use with attribution: https://www.gebco.net/data_and_products/gridded_bathymetry_data/
-    map.addSource('gebco-bathymetry', {
-      type: 'raster',
-      tiles: [
-        'https://wms.gebco.net/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
-        '&LAYERS=GEBCO_LATEST&WIDTH=256&HEIGHT=256&CRS=EPSG:3857' +
-        '&BBOX={bbox-epsg-3857}&FORMAT=image/png'
-      ],
-      tileSize: 256,
-      attribution: '© <a href="https://www.gebco.net" target="_blank" rel="noopener">GEBCO</a> Compilation Group'
-    });
-
-    // GEBCO sits ABOVE the basemap water fill at partial opacity.
-    // The basemap keeps its natural blue ocean color; GEBCO adds depth texture on top.
-    // Land/label layers above mask GEBCO on land automatically.
-    map.addLayer(
-      { id: 'gebco-layer', type: 'raster', source: 'gebco-bathymetry',
-        paint: {
-          'raster-opacity': 0.35,
-          'raster-contrast': 0.15,
-          'raster-saturation': -0.3,
-        }
-      },
-      aboveWater
-    );
-
-    // --- OpenSeaMap nautical overlay ---
-    // Free for commercial use (CC BY-SA 2.0): https://www.openseamap.org
-    map.addSource('openseamap', {
-      type: 'raster',
-      tiles: ['https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '© <a href="https://www.openseamap.org" target="_blank" rel="noopener">OpenSeaMap</a> contributors'
-    });
-
-    // Subtle nautical marks above bathymetry, below entity pins
-    map.addLayer({
-      id: 'openseamap-layer',
-      type: 'raster',
-      source: 'openseamap',
-      paint: { 'raster-opacity': 0.45 }
-    });
-  }
 
   // Extend a bounds object by every coordinate in a GeoJSON geometry
   // (handles Polygon / MultiPolygon nesting via recursion).
@@ -287,7 +397,14 @@
     if (!bounds.isEmpty()) {
       // maxZoom keeps a lone pin, which has zero extent, from snapping to
       // street level while a matched region frames at ~z6-8.
-      map.fitBounds(bounds, { padding: 40, maxZoom: 6, duration: 1000 });
+      // Filtering re-frames the map on its own; an animation the user did not
+      // ask for is what prefers-reduced-motion is there to suppress.
+      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      map.fitBounds(bounds, {
+        padding: 40,
+        maxZoom: 6,
+        duration: reduceMotion ? 0 : 1000,
+      });
     }
 
     // Color-coded clusters
@@ -297,14 +414,15 @@
       source: 'entities',
       filter: ['has', 'point_count'],
       paint: {
+        // Dark enough that the white tally drawn over them clears 4.5:1.
         'circle-color': [
           'step',
           ['get', 'point_count'],
-          '#60a5fa',
+          '#2563eb',
           10,
-          '#3b82f6',
+          '#1d4ed8',
           50,
-          '#2563eb'
+          '#1e40af'
         ],
         'circle-radius': [
           'step',
@@ -326,12 +444,9 @@
       source: 'entities',
       filter: ['has', 'point_count'],
       layout: {
-        'text-field': '{point_count}',
-        'text-font': ['Noto Sans Regular'],
-        'text-size': 12
-      },
-      paint: {
-        'text-color': '#fff'
+        'icon-image': ['concat', 'cluster-count-', ['to-string', ['get', 'point_count']]],
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
       }
     });
 
@@ -386,22 +501,16 @@
       }
     });
 
-    // OceanCare — gold star symbol
+    // OceanCare — gold star
     map.addLayer({
       id: 'featured-star',
       type: 'symbol',
       source: 'entities',
       filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'id'], FEATURED_IRI]],
       layout: {
-        'text-field': '★',
-        'text-size': 28,
-        'text-allow-overlap': true,
-        'text-ignore-placement': true,
-      },
-      paint: {
-        'text-color': '#f59e0b',
-        'text-halo-color': '#fff',
-        'text-halo-width': 1.5,
+        'icon-image': 'featured-star',
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
       }
     });
 
@@ -606,13 +715,23 @@
 <div class="map-wrapper">
   {@html `<style>${maplibreCss}</style>`}
 
-  <div bind:this={mapContainer} class="map-container"></div>
+  <!-- role="application" keeps MapLibre's own panning and zooming keys working
+       instead of the screen reader intercepting them; the description points at
+       the text equivalent App.svelte renders alongside. -->
+  <div
+    bind:this={mapContainer}
+    class="map-container"
+    role="application"
+    aria-label={t.mapLabel}
+    aria-describedby="map-alternative-note"
+  ></div>
+  <p id="map-alternative-note" class="visually-hidden">{t.mapAlternative}</p>
 
   <div class="map-badge">
     {resultCount ?? entities.length} {t.results}
   </div>
 
-  <div class="map-legend" class:shifted={detailOpen}>
+  <div class="map-legend" class:shifted={detailOpen} role="group" aria-label={t.type}>
     {#each Object.entries(TYPE_COLORS) as [iri, color]}
       <button
         class="legend-item legend-type-btn"
@@ -670,6 +789,19 @@
 </div>
 
 <style>
+  /* Announced but not shown: the map's description for screen-reader users. */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
   .map-wrapper {
     position: relative;
     width: 100%;
