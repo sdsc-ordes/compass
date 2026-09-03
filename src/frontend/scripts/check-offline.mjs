@@ -22,9 +22,11 @@ const ALLOWED = new Map([
   ['purl.org', 'Dublin Core namespace'],
   // Links the visitor chooses to follow, plus the configurable API origin.
   ['www.oceancare.org', 'story links and the story-count API'],
-  // Attribution the GEBCO licence requires. A link in the map's attribution
-  // control; the imagery itself is pre-rendered and served from our origin.
+  // Attribution the data licences ask for. Both are links in the map's
+  // attribution control, followed only if the visitor clicks: the imagery is
+  // pre-rendered onto our own origin and the vector basemap is bundled.
   ['www.gebco.net', 'attribution link for the bathymetry we host ourselves'],
+  ['www.naturalearthdata.com', 'attribution link for the bundled basemap geometry'],
 ]);
 
 function walk(dir) {
@@ -51,9 +53,9 @@ for (const path of walk(ROOT)) {
 if (offenders.length) {
   console.error(
     'error: the widget must make no third-party requests at runtime, but ' +
-    `these hosts appear in its source:\n  ${offenders.join('\n  ')}\n\n` +
-    'Bundle the asset instead, or add the host to ALLOWED in ' +
-    'scripts/check-offline.mjs with the reason it is safe.',
+      `these hosts appear in its source:\n  ${offenders.join('\n  ')}\n\n` +
+      'Bundle the asset instead, or add the host to ALLOWED in ' +
+      'scripts/check-offline.mjs with the reason it is safe.',
   );
   process.exit(1);
 }
