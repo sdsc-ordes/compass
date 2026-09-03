@@ -45,7 +45,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>{t.shareTitle}</h3>
-      <button class="close-btn" on:click={onClose} aria-label="Close">
+      <button class="close-btn" on:click={onClose} aria-label={t.close}>
         <X size={18} />
       </button>
     </div>
@@ -60,7 +60,7 @@
       </div>
       <div class="link-row">
         <input type="text" readonly value={url} class="link-input" />
-        <button class="copy-btn" on:click={copyLink} title={t.copyLink}>
+        <button class="copy-btn" on:click={copyLink} aria-label={t.copyLink}>
           {#if copied}
             <Check size={16} />
           {:else}

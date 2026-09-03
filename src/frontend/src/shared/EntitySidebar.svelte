@@ -42,7 +42,7 @@
         <span class="type-badge">{entity?.type}</span>
       {/if}
     </div>
-    <button class="close-btn" on:click={onClose} aria-label="Close panel">
+    <button class="close-btn" on:click={onClose} aria-label={t.closeDetails}>
       <X size={18} />
     </button>
   </div>
@@ -201,7 +201,7 @@
   .prop-label {
     font-size: 10px;
     font-weight: 700;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }

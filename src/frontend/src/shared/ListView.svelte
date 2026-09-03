@@ -14,10 +14,11 @@
 
 <div class="list-container">
   <table class="entity-table">
+    <caption class="table-caption">{t.resultsTable}</caption>
     <thead>
       <tr>
-        <th>{t.results} ({entities.length})</th>
-        <th>{t.type}</th>
+        <th scope="col">{t.results} ({entities.length})</th>
+        <th scope="col">{t.type}</th>
       </tr>
     </thead>
     <tbody>
@@ -57,6 +58,17 @@
 </div>
 
 <style>
+  /* The caption names the table for a screen reader; the visible header row
+     already carries the same information sighted users need. */
+  .table-caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   .list-container {
     width: 100%;
     height: 100%;
@@ -125,7 +137,7 @@
   .prop-label {
     font-size: 0.68rem;
     font-weight: 700;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
@@ -171,7 +183,7 @@
   .empty-state {
     text-align: center;
     padding: 4rem 1rem;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.875rem;
   }
 </style>

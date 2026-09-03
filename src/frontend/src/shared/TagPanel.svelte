@@ -108,7 +108,7 @@
       <button class="reset-btn" on:click={clearAll}>{t.resetFilters}</button>
     {/if}
     {#if onToggle}
-      <button class="collapse-btn" on:click={onToggle} title="Hide panel" aria-label="Collapse tag panel">
+      <button class="collapse-btn" on:click={onToggle} aria-label={t.collapseFilters}>
         <ChevronLeft size={16} />
       </button>
     {/if}
@@ -238,7 +238,7 @@
   }
   .reset-btn:hover {
     background: #f1f5f9;
-    border-color: #94a3b8;
+    border-color: #64748b;
     color: #0f172a;
   }
   .collapse-btn {
@@ -250,7 +250,7 @@
     background: none;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #94a3b8;
+    color: #64748b;
     cursor: pointer;
     flex-shrink: 0;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -394,7 +394,7 @@
   }
   .chip:hover {
     background: #f1f5f9;
-    border-color: #94a3b8;
+    border-color: #64748b;
     color: #0f172a;
   }
   .chip:focus-visible,
@@ -416,7 +416,7 @@
   .chip-count {
     font-size: 0.6875rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: #64748b;
     background: #f1f5f9;
     border-radius: 8px;
     padding: 0 5px;

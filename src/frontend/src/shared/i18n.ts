@@ -24,6 +24,24 @@ export const i18n = {
     noResults: "No results match your filters",
     clearToSeeAll: "Clear filters to see all",
     share: "Share",
+    // Accessibility strings: labels for landmarks and controls that would
+    // otherwise be announced as an unnamed region or an icon-only button.
+    mapLabel: "Map of OceanCare's partners, forums, networks and projects",
+    mapAlternative:
+      "This map is a visual summary. The same results are available as a table below, " +
+      "and the List View button presents them on their own.",
+    resultsTable: "Results, with the themes and regions each entry is tagged with",
+    textAlternative: "Results as text",
+    filterRegion: "Filter results",
+    viewSwitcher: "Choose how results are presented",
+    switchToGerman: "Switch to German",
+    switchToEnglish: "Switch to English",
+    resultsAnnouncement: "results match your filters",
+    closeDetails: "Close detail panel",
+    openDetails: "Open detail panel",
+    collapseFilters: "Collapse filter panel",
+    openFilters: "Open filter panel",
+    close: "Close",
   },
   de: {
     resetFilters: "Zurücksetzen",
@@ -50,6 +68,22 @@ export const i18n = {
     noResults: "Keine Ergebnisse für deine Filter",
     clearToSeeAll: "Filter zurücksetzen, um alle zu sehen",
     share: "Teilen",
+    mapLabel: "Karte der Partner, Foren, Netzwerke und Projekte von OceanCare",
+    mapAlternative:
+      "Diese Karte ist eine visuelle Zusammenfassung. Die gleichen Ergebnisse stehen " +
+      "unten als Tabelle bereit, und die Listenansicht zeigt sie für sich allein.",
+    resultsTable: "Ergebnisse mit den Themen und Gebieten, die jedem Eintrag zugeordnet sind",
+    textAlternative: "Ergebnisse als Text",
+    filterRegion: "Ergebnisse filtern",
+    viewSwitcher: "Darstellung der Ergebnisse wählen",
+    switchToGerman: "Auf Deutsch umschalten",
+    switchToEnglish: "Auf Englisch umschalten",
+    resultsAnnouncement: "Ergebnisse entsprechen deinen Filtern",
+    closeDetails: "Detailpanel schliessen",
+    openDetails: "Detailpanel öffnen",
+    collapseFilters: "Filterpanel einklappen",
+    openFilters: "Filterpanel öffnen",
+    close: "Schliessen",
   }
 };
 
