@@ -101,12 +101,19 @@ the widget ships a stale filter panel.
 | `src/ontology/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
 | `src/frontend/src/generated/` | *Generated* — filter schema and property specs for the browser engine |
 
-Every row carries its own `id`, and rows link to each other by id in a `links`
-column. **The predicate a link becomes is decided by what it points at**: a link
-to a Species concept becomes `compass:species`, one to an InternationalForum
-becomes `compass:forum`. So adding a tag to a pin means adding an id to its
-`links` cell — nothing else. There is no configuration file and no mapping to
-keep in step.
+Every row carries its own `id`, and **pins** link to other rows by id in a
+`links` column. **The predicate a link becomes is decided by what it points
+at**: a link to a Species concept becomes `compass:species`, one to an
+InternationalForum becomes `compass:forum`. So adding a tag to a pin means
+adding an id to its `links` cell — nothing else. There is no configuration file
+and no mapping to keep in step.
+
+Concepts never link out: the `concepts` sheet has no `links` column, so a tag is
+recorded once, on the pin that carries it. Country/Area concepts are the visible
+consequence — a region is shaded on the map only because some pin passing the
+active filters points at it, which is also why shading means "matching pins are
+in here" rather than something maintained by hand. A region no pin refers to
+stays a filter value that matches nothing.
 
 Adding a filter dimension means adding a property shape to `shapes.ttl` — the
 filter panel and the query follow automatically.
@@ -129,7 +136,8 @@ and never reaches the RDF.
 Country and marine boundary polygons are built separately by `just regions`
 (needs network). It reads `compass:isoCode` out of `vocab.ttl`, so adding a
 region with a code needs no change there; the `MARINE` table for seas is still
-maintained by hand in `src/frontend/scripts/build-regions.mjs`.
+maintained by hand in `src/frontend/scripts/build-regions.mjs`. A new region also
+needs a pin pointing at it before anything shades.
 
 ## Optional backend
 
