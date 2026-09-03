@@ -42,7 +42,8 @@ def test_build_api_url_single():
 
 def test_build_api_url_multiple():
     url = _build_api_url([147, 148])
-    assert "tags=147,148" in url
+    assert "tags[terms]=147,148" in url
+    assert "tags[operator]=AND" in url
 
 
 def test_resolve_tags_ids_no_iris():

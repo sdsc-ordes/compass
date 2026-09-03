@@ -14,9 +14,10 @@ Response status values:
 - "no_ID_mapping":   None of the provided IRIs have a compass:wpTagId mapping.
 - "upstream_error":  The OceanCare WordPress API returned an error or was unreachable.
 
-DISCLAIMER: The WordPress REST API uses OR logic for comma-separated tags.
-            Stories tagged with ANY of the provided tags are counted.
-            True AND filtering is not supported by the standard endpoint.
+Filtering logic:
+- A single tag uses the standard `?tags=<id>` endpoint.
+- Multiple tags use `?tags[terms]=<id1>,<id2>&tags[operator]=AND`, so only
+  stories tagged with ALL provided tags are counted.
 
 Concepts without a compass:wpTagId triple are silently skipped.
 If no IRIs map to WP IDs, returns count=0 and the base stories URL.
@@ -64,9 +65,19 @@ def _build_frontend_url(wp_ids: List[int], lang: str) -> str:
 
 
 def _build_api_url(wp_ids: List[int]) -> str:
-    """Construct the WordPress REST API URL for counting stories."""
-    tags_param = ",".join(str(i) for i in wp_ids)
-    return f"{OCEANCARE_API_STORIES}?tags={tags_param}&per_page=1&_fields=id"
+    """Construct the WordPress REST API URL for counting stories.
+
+    A single tag uses the simple `tags=<id>` form. Multiple tags use the
+    array-style `tags[terms]=...&tags[operator]=AND` form so that only stories
+    tagged with all of them are returned.
+    """
+    if len(wp_ids) == 1:
+        return f"{OCEANCARE_API_STORIES}?tags={wp_ids[0]}&per_page=1&_fields=id"
+    terms = ",".join(str(i) for i in wp_ids)
+    return (
+        f"{OCEANCARE_API_STORIES}?tags[terms]={terms}"
+        f"&tags[operator]=AND&per_page=1&_fields=id"
+    )
 
 
 @router.get("/stories/count")
