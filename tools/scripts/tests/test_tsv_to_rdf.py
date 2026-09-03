@@ -73,6 +73,39 @@ def test_only_pins_carry_links():
     assert "links" not in gen.CONCEPT_COLUMNS
 
 
+def test_every_language_paired_field_reaches_both_languages(tables):
+    """No German reader sees a blank where an English one sees text.
+
+    An empty German cell takes the English text, so the two languages emit the
+    same number of literals per predicate; a mismatch means a field was written
+    in one language only.
+    """
+    _, concepts, pins = tables
+    fallbacks = gen.Fallbacks()
+    problems = gen.Problems()
+    kinds = gen.index_terms(concepts, pins, gen.Problems())
+
+    for rows, build in (
+        (concepts, lambda r: gen.concept_triples(r, problems, fallbacks)),
+        (pins, lambda r: gen.pin_triples(r, kinds, problems, fallbacks)),
+    ):
+        for row in rows:
+            counts: dict[tuple[str, str], int] = {}
+            for predicate, value in build(row):
+                if value.endswith(('"@en', '"@de')):
+                    counts[(predicate, value[-3:])] = counts.get(
+                        (predicate, value[-3:]), 0
+                    ) + 1
+            predicates = {p for p, _ in counts}
+            for predicate in predicates:
+                english = counts.get((predicate, "@en"), 0)
+                german = counts.get((predicate, "@de"), 0)
+                assert english == german, (
+                    f"{row.table}:{row.number} {row['id']}: {predicate} has "
+                    f"{english} English and {german} German literal(s)"
+                )
+
+
 def test_every_pin_has_a_name_and_coordinates(tables):
     _, _, pins = tables
     for pin in pins:

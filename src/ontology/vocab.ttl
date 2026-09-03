@@ -22,6 +22,7 @@ compass:WorkAreaScheme
     skos:prefLabel "Work Area"@en ;
     skos:prefLabel "Arbeitsbereich"@de ;
     skos:definition "Types of work OceanCare performs."@en ;
+    skos:definition "Arten der Arbeit, die OceanCare leistet."@de ;
     skos:hasTopConcept compass:AdvocacyWork ;
     skos:hasTopConcept compass:CommunityInvolvement ;
     skos:hasTopConcept compass:Events ;
@@ -94,6 +95,7 @@ compass:ConservationScheme
     skos:prefLabel "Conservation"@en ;
     skos:prefLabel "Schutz"@de ;
     skos:definition "Conservation focus areas."@en ;
+    skos:definition "Schwerpunkte der Schutzarbeit."@de ;
     skos:hasTopConcept compass:AnimalConservation ;
     skos:hasTopConcept compass:OceanConservation ;
     skos:hasTopConcept compass:SpeciesConservation ;
@@ -130,6 +132,7 @@ compass:TopicScheme
     skos:prefLabel "Topic"@en ;
     skos:prefLabel "Thema"@de ;
     skos:definition "Thematic topics addressed by OceanCare."@en ;
+    skos:definition "Themen, mit denen sich OceanCare befasst."@de ;
     skos:hasTopConcept compass:AquaticWildMeat ;
     skos:hasTopConcept compass:ClimateProtection ;
     skos:hasTopConcept compass:Collisions ;
@@ -230,6 +233,7 @@ compass:PollutionScheme
     skos:prefLabel "Pollution"@en ;
     skos:prefLabel "Verschmutzung"@de ;
     skos:definition "Types of ocean pollution."@en ;
+    skos:definition "Arten der Meeresverschmutzung."@de ;
     skos:hasTopConcept compass:ChemicalPollution ;
     skos:hasTopConcept compass:OceanNoisePollution ;
     skos:hasTopConcept compass:PlasticPollution ;
@@ -268,6 +272,7 @@ compass:SpeciesScheme
     skos:prefLabel "Species"@en ;
     skos:prefLabel "Arten"@de ;
     skos:definition "Marine and aquatic species relevant to OceanCare's work."@en ;
+    skos:definition "Meeres- und Wasserlebewesen, die für die Arbeit von OceanCare relevant sind."@de ;
     skos:hasTopConcept compass:Corals ;
     skos:hasTopConcept compass:Dolphins ;
     skos:hasTopConcept compass:Fish ;
@@ -376,6 +381,7 @@ compass:CountryAreaScheme
     skos:prefLabel "Country / Area"@en ;
     skos:prefLabel "Land / Gebiet"@de ;
     skos:definition "Countries and geographic areas relevant to OceanCare's work."@en ;
+    skos:definition "Länder und geografische Gebiete, die für die Arbeit von OceanCare relevant sind."@de ;
     skos:hasTopConcept compass:Arctic ;
     skos:hasTopConcept compass:Australia ;
     skos:hasTopConcept compass:Austria ;

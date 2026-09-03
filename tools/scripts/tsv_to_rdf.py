@@ -66,13 +66,13 @@ TAG_PREDICATE = {
 # compass:managedByOceanCare is true for every Project plus these ids.
 MANAGED_BY_OCEANCARE = {"OceanCare"}
 
-SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition"]
+SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition_en", "definition_de"]
 CONCEPT_COLUMNS = [
     "id", "dimension", "name_en", "name_de", "wp_tag_id", "iso_codes", "notes",
 ]
 PIN_COLUMNS = [
     "id", "class", "name_en", "name_de", "long_name_en", "long_name_de",
-    "lat", "lon", "location",
+    "lat", "lon", "location_en", "location_de",
     "description_en", "description_de", "url", "logo",
     "wp_entity_tag_id", "links", "notes",
 ]
@@ -333,6 +333,50 @@ def coordinate(value: str) -> str:
     return f'"{float(value):.5f}"^^xsd:float'
 
 
+@dataclass
+class Fallbacks:
+    """Counts German cells that were empty and took the English text instead."""
+
+    counts: dict[str, int] = field(default_factory=dict)
+
+    def note(self, table: str, column: str) -> None:
+        key = f"{table}.{column}"
+        self.counts[key] = self.counts.get(key, 0) + 1
+
+    def summary(self) -> str:
+        if not self.counts:
+            return "every German cell is filled"
+        listed = ", ".join(f"{key} x{count}" for key, count in sorted(self.counts.items()))
+        return f"English stood in for an empty German cell: {listed}"
+
+
+def bilingual(row: Row, column: str, fallbacks: Fallbacks) -> tuple[str, str] | None:
+    """The English and German text of a `<column>_en` / `<column>_de` pair.
+
+    An empty German cell takes the English text, so a German reader never gets
+    a blank where an English one gets prose. Each substitution is counted, so a
+    missing translation stays visible instead of silently shipping.
+    """
+    english = row[f"{column}_en"]
+    if not english:
+        return None
+    german = row[f"{column}_de"]
+    if not german:
+        fallbacks.note(row.table, f"{column}_de")
+        german = english
+    return english, german
+
+
+def bilingual_triples(
+    row: Row, column: str, predicate: str, fallbacks: Fallbacks
+) -> Triples:
+    pair = bilingual(row, column, fallbacks)
+    if pair is None:
+        return []
+    english, german = pair
+    return [(predicate, literal(english, "en")), (predicate, literal(german, "de"))]
+
+
 def link_triples(grouped: dict[str, set[str]]) -> Triples:
     return [
         (predicate, ", ".join(sorted(objects)))
@@ -340,14 +384,11 @@ def link_triples(grouped: dict[str, set[str]]) -> Triples:
     ]
 
 
-def concept_triples(row: Row, problems: Problems) -> Triples:
+def concept_triples(row: Row, problems: Problems, fallbacks: Fallbacks) -> Triples:
     dimension = row["dimension"]
     scheme = f"compass:{dimension}Scheme"
-    triples: Triples = [
-        ("a", f"skos:Concept, compass:{dimension}"),
-        ("skos:prefLabel", literal(row["name_en"], "en")),
-        ("skos:prefLabel", literal(row["name_de"] or row["name_en"], "de")),
-    ]
+    triples: Triples = [("a", f"skos:Concept, compass:{dimension}")]
+    triples += bilingual_triples(row, "name", "skos:prefLabel", fallbacks)
     wp_tag_id = number(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
@@ -357,25 +398,25 @@ def concept_triples(row: Row, problems: Problems) -> Triples:
     return triples
 
 
-def pin_triples(row: Row, kinds: dict[str, str], problems: Problems) -> Triples:
-    name_de = row["name_de"] or row["name_en"]
-    triples: Triples = [
-        ("a", f"compass:{row['class']}"),
-        ("compass:name", literal(row["name_en"], "en")),
-        ("compass:name", literal(name_de, "de")),
-        ("rdfs:label", literal(row["name_en"], "en")),
-        ("rdfs:label", literal(name_de, "de")),
-    ]
-    for language in ("en", "de"):
-        for column, predicate in (
-            ("long_name", "skos:altLabel"),
-            ("description", "compass:description"),
-        ):
-            value = row[f"{column}_{language}"]
-            if value:
-                triples.append((predicate, literal(value, language)))
-    if row["location"]:
-        triples.append(("compass:location", literal(row["location"], "en")))
+def pin_triples(
+    row: Row, kinds: dict[str, str], problems: Problems, fallbacks: Fallbacks
+) -> Triples:
+    triples: Triples = [("a", f"compass:{row['class']}")]
+    name = bilingual(row, "name", fallbacks)
+    if name is None:
+        problems.add(row.table, row.number, f"{row['id']!r} has no English name")
+    else:
+        for predicate in ("compass:name", "rdfs:label"):
+            triples += [
+                (predicate, literal(name[0], "en")),
+                (predicate, literal(name[1], "de")),
+            ]
+    for column, predicate in (
+        ("long_name", "skos:altLabel"),
+        ("description", "compass:description"),
+        ("location", "compass:location"),
+    ):
+        triples += bilingual_triples(row, column, predicate, fallbacks)
 
     if row["url"]:
         triples.append(("schema:url", typed(row["url"], "xsd:anyURI")))
@@ -444,7 +485,9 @@ def render_file(sections: list[tuple[str, list[str]]]) -> str:
     return "\n".join(parts).rstrip("\n") + "\n"
 
 
-def build_vocab(schemes: list[Row], concepts: list[Row], problems) -> str:
+def build_vocab(
+    schemes: list[Row], concepts: list[Row], problems, fallbacks: Fallbacks
+) -> str:
     by_id = {row["id"]: row for row in schemes}
     missing = [d for d in DIMENSIONS if d not in by_id]
     if missing:
@@ -459,12 +502,11 @@ def build_vocab(schemes: list[Row], concepts: list[Row], problems) -> str:
         if not members:
             raise SheetError(f"dimension {dimension} has no concepts")
 
-        scheme_triples: Triples = [
-            ("a", "skos:ConceptScheme"),
-            ("skos:prefLabel", literal(scheme["name_en"], "en")),
-            ("skos:prefLabel", literal(scheme["name_de"], "de")),
-            ("skos:definition", literal(scheme["definition"], "en")),
-        ]
+        scheme_triples: Triples = [("a", "skos:ConceptScheme")]
+        scheme_triples += bilingual_triples(scheme, "name", "skos:prefLabel", fallbacks)
+        scheme_triples += bilingual_triples(
+            scheme, "definition", "skos:definition", fallbacks
+        )
         scheme_triples += [
             ("skos:hasTopConcept", f"compass:{m['id']}") for m in members
         ]
@@ -472,21 +514,25 @@ def build_vocab(schemes: list[Row], concepts: list[Row], problems) -> str:
 
         blocks = [render_subject(f"compass:{dimension}Scheme", scheme_triples)]
         blocks += [
-            render_subject(f"compass:{m['id']}", concept_triples(m, problems))
+            render_subject(
+                f"compass:{m['id']}", concept_triples(m, problems, fallbacks)
+            )
             for m in members
         ]
         sections.append((f"{scheme['name_en']} ({len(members)} concepts)", blocks))
     return render_file(sections)
 
 
-def build_data(pins: list[Row], kinds, problems) -> str:
+def build_data(pins: list[Row], kinds, problems, fallbacks: Fallbacks) -> str:
     sections: list[tuple[str, list[str]]] = []
     for entity_class, title in CLASSES.items():
         members = sorted(
             (r for r in pins if r["class"] == entity_class), key=lambda r: r["id"]
         )
         blocks = [
-            render_subject(f"ocinst:{m['id']}", pin_triples(m, kinds, problems))
+            render_subject(
+                f"ocinst:{m['id']}", pin_triples(m, kinds, problems, fallbacks)
+            )
             for m in members
         ]
         sections.append((f"{title} ({len(members)})", blocks))
@@ -513,17 +559,19 @@ def validate(data: str, vocab: str) -> None:
         raise SheetError(f"SHACL validation failed:\n{report}")
 
 
-def generate() -> tuple[str, str]:
+def generate(fallbacks: Fallbacks | None = None) -> tuple[str, str]:
+    """The two Turtle files. Pass a Fallbacks to learn which translations are missing."""
     schemes = read_table(SCHEMES, SCHEME_COLUMNS)
     concepts = read_table(CONCEPTS, CONCEPT_COLUMNS)
     pins = read_table(PINS, PIN_COLUMNS)
 
     problems = Problems()
+    fallbacks = fallbacks if fallbacks is not None else Fallbacks()
     kinds = index_terms(concepts, pins, problems)
     problems.raise_if_any()  # ids must be sound before links can be checked
 
-    vocab = build_vocab(schemes, concepts, problems)
-    data = build_data(pins, kinds, problems)
+    vocab = build_vocab(schemes, concepts, problems, fallbacks)
+    data = build_data(pins, kinds, problems, fallbacks)
     problems.raise_if_any()
     return data, vocab
 
@@ -542,8 +590,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    fallbacks = Fallbacks()
     try:
-        data, vocab = generate()
+        data, vocab = generate(fallbacks)
         if not args.skip_validation:
             validate(data, vocab)
     except SheetError as exc:
@@ -569,6 +618,7 @@ def main(argv: list[str] | None = None) -> int:
     OUT_DATA.write_text(data, encoding="utf-8", newline="\n")
     OUT_VOCAB.write_text(vocab, encoding="utf-8", newline="\n")
     print(f"wrote {OUT_DATA.relative_to(REPO)} and {OUT_VOCAB.relative_to(REPO)}")
+    print(fallbacks.summary())
     return 0
 
 

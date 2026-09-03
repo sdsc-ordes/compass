@@ -26,6 +26,7 @@ ocinst:ACCOBAMS
     skos:altLabel "Agreement on the Conservation of Cetaceans in the Black Sea, Mediterranean Sea and contiguous Atlantic Area"@en ;
     skos:altLabel "Abkommen zur Erhaltung der Wale und Delfine im Schwarzen Meer, im Mittelmeer und im angrenzenden Atlantik"@de ;
     compass:location "Secretariat in Monaco"@en ;
+    compass:location "Sekretariat in Monaco"@de ;
     compass:description "Since 2004, OceanCare has been a partner organisation of the Agreement on the Conservation of Cetaceans in the Black Sea, Mediterranean Sea and contiguous Atlantic Area (ACCOBAMS), contributing its expertise in the areas of species conservation, underwater noise, plastic pollution and bycatch."@en ;
     compass:description "Seit 2004 ist OceanCare Partnerorganisation des Abkommens zur Erhaltung der Wale und Delfine im Schwarzen Meer, im Mittelmeer und im angrenzenden Atlantik (ACCOBAMS) und bringt ihre Expertise in den Bereichen Artenschutz, Unterwasserlärm, Plastikverschmutzung und Beifang ein."@de ;
     compass:managedByOceanCare false ;
@@ -48,6 +49,7 @@ ocinst:ASCOBANS
     skos:altLabel "Agreement on the Conservation of Small Cetaceans of the Baltic, North East Atlantic, Irish and North Seas"@en ;
     skos:altLabel "Abkommen zur Erhaltung der Kleinwale der Ostsee, des Nordostatlantiks sowie der Irischen See und der Nordsee"@de ;
     compass:location "Secretariat, UN Campus, Bonn, Germany"@en ;
+    compass:location "Sekretariat, UN Campus, Bonn, Deutschland"@de ;
     compass:description "The Agreement on the Conservation of Small Cetaceans of the Baltic, North East Atlantic, Irish and North Seas (ASCOBANS) aims to promote close international cooperation among nations to achieve and maintain a favourable conservation status for small whales, dolphins, and porpoises. OceanCare contributes its expertise in the areas of species conservation, climate change impacts, animal welfare, the protection of marine habitats, and marine pollution."@en ;
     compass:description "Das Abkommen zur Erhaltung der Kleinwale der Ostsee, des Nordostatlantiks sowie der Irischen See und der Nordsee (ASCOBANS) fördert die enge internationale Zusammenarbeit zwischen den Vertragsstaaten, um einen günstigen Erhaltungszustand von Kleinwalen, Delfinen und Schweinswalen zu erreichen und langfristig zu sichern. OceanCare bringt ihre Expertise in den Bereichen Artenschutz, Auswirkungen des Klimawandels, Tierwohl, Schutz mariner Lebensräume und Meeresverschmutzung ein."@de ;
     compass:managedByOceanCare false ;
@@ -66,6 +68,7 @@ ocinst:AbidjanConvention
     rdfs:label "Abidjan Convention"@en ;
     rdfs:label "Abidjan-Konvention"@de ;
     compass:location "Headquartered Abidjan, Côte d'Ivoire"@en ;
+    compass:location "Hauptsitz in Abidjan, Côte d'Ivoire"@de ;
     compass:description "Since 2017, OceanCare has been involved in the Conference of the Parties to the Abidjan Convention, which addresses the state of the seas and coastal areas in West, Central and Southern Africa, as well as the protection of endangered marine animals from poaching"@en ;
     compass:description "Seit 2017 engagiert sich OceanCare an Vertragsstaatenkonferenzen der Abidjan-Konvention, die sich um den Zustand der Meere und Küstengebiete in West-, Zentral- und Südafrika sowie um den Schutz gefährdeter Meerestiere vor Wilderei kümmert."@de ;
     compass:managedByOceanCare false ;
@@ -83,8 +86,8 @@ ocinst:BBNJ
     compass:name "BBNJ-Abkommen"@de ;
     rdfs:label "BBNJ Agreement"@en ;
     rdfs:label "BBNJ-Abkommen"@de ;
-    skos:altLabel "Hochseeschutzabkommen"@de ;
     compass:location "UN Headquarter, NY - ad interim"@en ;
+    compass:location "UN-Hauptquartier, New York – ad interim"@de ;
     compass:description "OceanCare has been monitoring the development of the BBNJ Agreement since 2007, actively supported the intergovernmental negotiations from 2018 to 2023, and has consistently advocated for its rapid ratification and implementation following the adoption of the treaty text."@en ;
     compass:description "OceanCare verfolgt den Entstehungsprozess des BBNJ-Abkommens seit 2007, begleitete die zwischenstaatlichen Verhandlungen von 2018 bis 2023 aktiv und setzte sich nach der Verabschiedung des Vertragstextes konsequent für eine rasche Ratifizierung und Implementierung des Abkommens ein."@de ;
     compass:managedByOceanCare false ;
@@ -106,6 +109,7 @@ ocinst:CBD
     skos:altLabel "Convention on Biological Diversity"@en ;
     skos:altLabel "Übereinkommen über die biologische Vielfalt"@de ;
     compass:location "Secretariat, Montreal, Canada"@en ;
+    compass:location "Sekretariat, Montreal, Kanada"@de ;
     compass:description "In 2021, OceanCare was granted observer status at the UN Convention on Biological Diversity and now contributes its expertise on various topics to the CBD and its global action plan, the Kunming-Montreal Global Biodiversity Framework."@en ;
     compass:description "2021 erlangte OceanCare Beobachterstatus beim UN-Übereinkommen über die biologische Vielfalt und kann ihre Expertise zu diversen Themen bei CBD sowie dessen globalem Aktionsplan, dem Kunming-Montreal Global Biodiversity Framework, einbringen."@de ;
     compass:managedByOceanCare false ;
@@ -125,6 +129,7 @@ ocinst:CMSBonnConvention
     skos:altLabel "Convention on the Conservation of Migratory Species of Wild Animals"@en ;
     skos:altLabel "Übereinkommen zur Erhaltung der wandernden wild lebenden Tierarten"@de ;
     compass:location "UN Campus, Bonn, Germany"@en ;
+    compass:location "UN Campus, Bonn, Deutschland"@de ;
     compass:description "CMS is part of the UN Environment Programme and is dedicated to the conservation of migratory wildlife. OceanCare has been a partner organisation since 2016 and is committed to the protection of marine animals and the marine environment."@en ;
     compass:description "CMS ist Teil des Umweltprogramms der Vereinten Nationen und widmet sich dem Schutz wandernder wildlebender Tierarten. OceanCare ist seit 2016 Partnerorganisation und setzt sich für den Schutz der Meerestiere und des Lebensraums Meer ein."@de ;
     compass:managedByOceanCare false ;
@@ -143,6 +148,7 @@ ocinst:EUCommission
     rdfs:label "EU Commission"@en ;
     rdfs:label "EU-Kommission"@de ;
     compass:location "Brussels, Belgium"@en ;
+    compass:location "Brüssel, Belgien"@de ;
     compass:description "Since 2014, OceanCare has been a member of the Marine Strategy Coordination Group and of the working group responsible for implementing the new Marine Strategy Framework Directive (MSFD), which requires European coastal states to improve the health of the marine environment within their territorial waters. Dr Lindy Weilgart and Nicolas Entrup are members of the EU’s technical working group on underwater noise."@en ;
     compass:description "OceanCare ist seit 2014 Mitglied der Koordinierungsgruppe für die Meeresstrategie (MSCG) und der Arbeitsgruppe für die Implementierung der neuen Meeresstrategie-Rahmenrichtlinie (MSRL), die europäische Meeresanrainerstaaten dazu verpflichtet, in ihren Hoheitsgewässern den Zustand der Meereswelt zu verbessern. In der technischen EU-Arbeitsgruppe zu Unterwasserlärm arbeiten Dr. Lindy Weilgart und Nicolas Entrup mit."@de ;
     compass:managedByOceanCare false ;
@@ -164,6 +170,7 @@ ocinst:FAOCOFI
     skos:altLabel "Committee on Fisheries of the Food and Agriculture Organization"@en ;
     skos:altLabel "Fischereiausschuss der Welternährungsorganisation der Vereinten Nationen"@de ;
     compass:location "FAO Headquarters, Rome, Italy"@en ;
+    compass:location "FAO-Hauptsitz, Rom, Italien"@de ;
     compass:description "As part of the International Ocean Noise Coalition, OceanCare has been drawing attention to serious risks to fish within the Committee on Fisheries (COFI) of the Food and Agriculture Organisation (FAO) since 2009, and is working, amongst other things, to ensure that the socio-economic impacts of marine noise pollution on fish and fisheries are investigated."@en ;
     compass:description "Im Rahmen der International Ocean Noise Coalition verweist OceanCare seit 2009 im Fischereiausschuss (COFI) der Welternährungsorganisation (FAO) auf schwerwiegende Gefahren für Fische und wirkt unter anderem darauf hin, dass die sozioökonomischen Auswirkungen der Lärmverschmutzung der Meere auf Fischbestände und auf die Fischerei untersucht werden."@de ;
     compass:managedByOceanCare false ;
@@ -184,6 +191,7 @@ ocinst:FAOGFCM
     skos:altLabel "General Fisheries Commission for the Mediterranean of the Food and Agriculture Organization"@en ;
     skos:altLabel "Allgemeine Kommission für die Fischerei im Mittelmeer der Welternährungsorganisation der Vereinten Nationen"@de ;
     compass:location "FAO Headquarters, Rome, Italy"@en ;
+    compass:location "FAO-Hauptsitz, Rom, Italien"@de ;
     compass:description "Since 2016, OceanCare has been a partner organisation of the General Fisheries Commission for the Mediterranean (GFCM) of the Food and Agriculture Organization (FAO) and contributes its expertise in the areas of underwater noise, bycatch, plastic pollution, illegal fishing activities and ocean governance."@en ;
     compass:description "Seit 2016 ist OceanCare Partnerorganisation der Allgemeine Kommission für die Fischerei im Mittelmeer (GFCM) der Welternährungsorganisation (FAO) und bringt ihre Expertise in den Bereichen Unter­wasserlärm, Beifang, Plastikverschmutzung sowie zu illegalen Fischereiaktivitäten und Meeresgovernance ein."@de ;
     compass:managedByOceanCare false ;
@@ -205,6 +213,7 @@ ocinst:IMO
     skos:altLabel "International Maritime Organization"@en ;
     skos:altLabel "Internationale Seeschifffahrts-Organisation"@de ;
     compass:location "Secretariat in London, UK"@en ;
+    compass:location "Sekretariat in London, Vereinigtes Königreich"@de ;
     compass:description "OceanCare does not hold official observer status with the International Maritime Organization (IMO) but is regularly consulted to provide expertise. The organisation maintains close, dialogue-based engagement with the shipping sector and relevant ministries and contributes its expertise, particularly on the impacts of shipping on marine wildlife and their habitats. OceanCare's work focuses on reducing underwater noise and greenhouse gas emissions from shipping, as well as minimising the risk of collisions with whales. Since 2024, OceanCare has held observer status at meetings of the London Convention and London Protocol, which operate under the auspices of the IMO and regulate the dumping of wastes and other matter at sea."@en ;
     compass:description "OceanCare verfügt bei der Internationalen Seeschifffahrtsorganisation (IMO) über keinen offiziellen Beobachterstatus, wird jedoch regelmässig zur Bereitstellung von Expertise zugezogen. Die Organisation steht in engem, dialogorientiertem Austausch mit Akteuren der Schifffahrt und verantwortlichen Ministerien und bringt ihre Expertise insbesondere zu den Auswirkungen des Schiffsverkehrs auf Meerestiere und ihre Lebensräume ein. Im Zentrum der Arbeit von OceanCare steht die Reduktion von Unterwasserlärm und Treibhausgasen durch die Schifffahrt sowie die Verringerung des Kollisionsrisikos mit Walen. Seit 2024 ist OceanCare als Beobachterorganisation zu den Treffen des Londoner Übereinkommens und des Londoner Protokolls zugelassen, die unter dem Dach der IMO die Einbringung von Abfällen und anderen Stoffen ins Meer regeln."@de ;
     compass:managedByOceanCare false ;
@@ -225,6 +234,7 @@ ocinst:ISA
     skos:altLabel "International Seabed Authority"@en ;
     skos:altLabel "Internationale Meeresbodenbehörde"@de ;
     compass:location "Secretariat in Kingston, Jamaica"@en ;
+    compass:location "Sekretariat in Kingston, Jamaika"@de ;
     compass:description "In 2021, OceanCare was accredited as an observer organisation by the International Seabed Authority (ISA). The ISA manages the mineral resources of the seabed as the heritage of mankind and is the main point of contact for matters relating to deep-sea mining."@en ;
     compass:description "2021 wurde OceanCare von der Internationalen Meeresbodenbehörde (ISA) als Beobachterorganisation akkreditiert. Die ISA verwaltet die Bodenschätze als Erbe der Menschheit und ist die wichtigste Anlaufstelle bezüglich Tiefseebergbau."@de ;
     compass:managedByOceanCare false ;
@@ -246,6 +256,7 @@ ocinst:IWC
     skos:altLabel "International Whaling Commission"@en ;
     skos:altLabel "Internationale Walfangkommission"@de ;
     compass:location "Secretariat in Cambridge, UK"@en ;
+    compass:location "Sekretariat in Cambridge, Vereinigtes Königreich"@de ;
     compass:description "OceanCare has been advocating for the protection of whales at the meetings of the International Whaling Commission (IWC) since 1992. The organisation engaged in improving transparency and NGO participation at IWC and adresses environmental threats to whales. As an observer, OceanCare supports the IWC small cetacean and bycatch working groups and the strandings response network."@en ;
     compass:description "Seit 1992 setzt sich OceanCare an den Tagungen der Internationalen Walfangkommission (IWC) für den Schutz der Wale ein. Die Organisation engagierte sich für mehr Transparenz innerhalb der IWC sowie für die Beteiligung von NGOs und adressiert Umweltgefahren, denen die Wale ausgesetzt sind. Als Beobachterorganisation unterstützt OceanCare die IWC-Arbeitsgruppen für Kleinwale und zur Verhinderung von Beifang sowie das Strandungsnetzwerk."@de ;
     compass:managedByOceanCare false ;
@@ -267,6 +278,7 @@ ocinst:LondonConvention
     skos:altLabel "London Convention & Protocol"@en ;
     skos:altLabel "Londoner Übereinkommen und Londoner Protokoll"@de ;
     compass:location "Secretariat at IMO, London, UK"@en ;
+    compass:location "Sekretariat bei der IMO, London, Vereinigtes Königreich"@de ;
     compass:description "The London Convention and its 1996 Protocol regulate the dumping of wastes and other matter at sea. The Protocol, which entered into force in 2006, modernised and strengthened the original Convention. OceanCare was admitted as an observer to the London Convention and London Protocol meetings in 2024"@en ;
     compass:description "Das Londoner Übereinkommen und das dazugehörige Protokoll von 1996 regeln die Einbringung von Abfällen und anderen Stoffen ins Meer. Das 2006 in Kraft getretene Protokoll modernisierte und stärkte das ursprüngliche Übereinkommen. OceanCare wurde 2024 als Beobachterorganisation zu den Treffen des Londoner Übereinkommens und des Londoner Protokolls zugelassen."@de ;
     compass:managedByOceanCare false ;
@@ -285,6 +297,7 @@ ocinst:UNCLOS
     skos:altLabel "United Nations Convention on the Law of the Sea"@en ;
     skos:altLabel "UN-Seerechtsabkommens"@de ;
     compass:location "UN Headquarter, NY"@en ;
+    compass:location "UN-Hauptquartier, New York"@de ;
     compass:description "OceanCare has been participating in the Informal Consultative Process (ICP) meetings of the United Nations Convention on the Law of the Sea (UNCLOS) since 2004, raising awareness of the multiple threats to the ocean and emerging challenges in marine conservation."@en ;
     compass:description "OceanCare nimmt seit 2004 am informellen Konsultationsprozess der Vereinten Nationen über das Seerecht (United Nations Convention on the Law of the Sea, UNCLOS) teil und sensibilisiert für multiple Gefahren für die Meere und für sich anbahnende Herausforderungen im Meeresschutz."@de ;
     compass:managedByOceanCare false ;
@@ -303,6 +316,7 @@ ocinst:UNECOSOC
     skos:altLabel "United Nations Economic and Social Council"@en ;
     skos:altLabel "Wirtschafts- und Sozialrat der Vereinten Nationen"@de ;
     compass:location "UN Headquarter, NY"@en ;
+    compass:location "UN-Hauptquartier, New York"@de ;
     compass:description "Since 2011, the United Nations Economic and Social Council (ECOSOC) has granted OceanCare Special Consultative Status on marine issues. This status gives OceanCare the opportunity to participate in UN processes and to speak in UN bodies on key aspects on oceans and the law of the sea."@en ;
     compass:description "Seit 2011 anerkennt der Wirtschafts- und Sozialrat der Vereinten Nationen (ECOSOC) OceanCare als Organisation mit Sonderberaterstatus für Meeresfragen. Der Status eröffnet die Möglichkeit, an UN-Prozessen teilzunehmen und in UN-Gremien zu wichtigen Aspekten des Seerechts zu sprechen."@de ;
     compass:managedByOceanCare false ;
@@ -320,6 +334,7 @@ ocinst:UNEPGPML
     skos:altLabel "UN Environment Programme’s Global Partnership on Marine Litter"@en ;
     skos:altLabel "Globale Partnerschaft für Meeresmüll des UN-Umweltprogramms"@de ;
     compass:location "UNEP Campus, Nairobi, Kenya"@en ;
+    compass:location "UNEP Campus, Nairobi, Kenia"@de ;
     compass:description "OceanCare has been part of the UN Environment Programme’s Global Partnership on Marine Litter (GPML) since 2014. This global network of government bodies, NGOs, scientific experts, representatives of the private sector and civil society develops solutions to reduce marine plastic pollution."@en ;
     compass:description "OceanCare ist seit 2014 Teil der Global Partnership on Marine Litter (GPML) des UN-Umwelt­programms. Dieses weltweite Netzwerk aus Regierungsstellen, NGOs, wissenschaftlichen Experten, Vertreter­innen der Privatwirtschaft und Repräsentanten der Zivilbevölkerung erarbeitet Lösungen zur Reduktion der Plastikverschmutzung im Meer."@de ;
     compass:managedByOceanCare false ;
@@ -338,6 +353,7 @@ ocinst:UNEPMAP
     skos:altLabel "Mediterranean Action Plan/Barcelona Convention"@en ;
     skos:altLabel "Mittelmeer-Aktionsplan/Barcelona-Konvention"@de ;
     compass:location "Secretariat in Athens, Greece"@en ;
+    compass:location "Sekretariat in Athen, Griechenland"@de ;
     compass:description "In 2019, OceanCare became a partner organisation of the UNEP Mediterranean Action Plan, a framework agreement that addresses marine environmental threats and coordinates the Barcelona Convention as the legal basis for protecting the Mediterranean Sea from pollution."@en ;
     compass:description "2019 wurde OceanCare Partnerorganisation des UNEP Mediterranean Action Plan, einer Rahmenvereinbarung, die marine Umweltgefahren adressiert und die Barcelona-Konvention als rechtliche Basis für den Schutz des Mittelmeers vor Verschmutzung koordiniert."@de ;
     compass:managedByOceanCare false ;
@@ -357,6 +373,7 @@ ocinst:UNEPUNEA
     skos:altLabel "United Nations Environment Programme/United Nations Environment Assembly"@en ;
     skos:altLabel "Verwaltungsgremium des UN-Umweltprogramms"@de ;
     compass:location "UNEP Campus, Nairobi, Kenya"@en ;
+    compass:location "UNEP Campus, Nairobi, Kenia"@de ;
     compass:description "In 2015, OceanCare was accredited to the United Nations Environment Programme (UNEP) and its governing body, the United Nations Environment Assembly (UNEA). The UN Environment Programme plays a leading role in global environmental protection. It is the only UN body dedicated exclusively to the environment. With its consistently scientific approach, OceanCare is an important voice within the UNEP Scientific and Technological Community Major Group."@en ;
     compass:description "2015 wurde OceanCare für das UN-Umweltprogramm (United Nations Environment Programme, UNEP) und dessen Verwaltungsgremium (United Nations Environment Assembly, UNEA) akkreditiert. Das UN-Umweltprogramm spielt im globalen Umweltschutz eine führende Rolle. Es ist die einzige Einrichtung der Vereinten Nationen, die sich ausschliesslich mit der Umwelt befasst. Mit ihrem konsequent wissenschaftlichen Ansatz ist OceanCare eine wichtige Stimme innerhalb der UNEP Scientific and Technological Community Major Group."@de ;
     compass:managedByOceanCare false ;
@@ -377,6 +394,7 @@ ocinst:UNFCCC
     skos:altLabel "UN Framework Convention on Climate Change"@en ;
     skos:altLabel "Klimarahmenkonvention der Vereinten Nationen"@de ;
     compass:location "UN Campus, Bonn, Germany"@en ;
+    compass:location "UN Campus, Bonn, Deutschland"@de ;
     compass:description "In 2023, OceanCare was accredited by the UN Framework Convention on Climate Change (UNFCCC). The UNFCCC is an international environmental agreement aimed at halting the climate crisis caused by human activities, slowing down global warming and mitigating its consequences."@en ;
     compass:description "2023 wurde OceanCare bei der Klimarahmenkonvention der Vereinten Nationen akkreditiert. UNFCCC ist ein internationales Umweltabkommen mit dem Ziel, die von Menschen verursachte Klimakrise zu stoppen, die globale Erwärmung zu verlangsamen und deren Folgen zu mildern."@de ;
     compass:managedByOceanCare false ;
@@ -395,6 +413,7 @@ ocinst:UNOC
     skos:altLabel "UN Ocean Conference"@en ;
     skos:altLabel "UN-Ozeankonferenz"@de ;
     compass:location "UN Headquarter, NY"@en ;
+    compass:location "UN-Hauptquartier, New York"@de ;
     compass:description "The UN Ocean Conference is a triennial conference held by the United Nations to support the implementation of Sustainable Development Goal 14 \"Life Below Water\" as part of the 2030 Agenda. OceanCare has attended UNOC since 2017."@en ;
     compass:description "Die UN-Ozeankonferenz (UN Ocean Conference, UNOC) wird von den Vereinten Nationen alle drei Jahre ausgerichtet, um die Umsetzung des Nachhaltigkeitsziels 14 (Sustainable Development Goal 14) \"Leben unter Wasser\" als Teil der Agenda 2030 zu unterstützen. OceanCare nimmt seit 2017 an der UNOC teil."@de ;
     compass:managedByOceanCare false ;
@@ -415,6 +434,7 @@ ocinst:BFFP
     rdfs:label "Break Free From Plastic"@en ;
     rdfs:label "Break Free From Plastic"@de ;
     compass:location "Manila, Philippines"@en ;
+    compass:location "Manila, Philippinen"@de ;
     compass:description "In 2016, OceanCare joined this coalition of international organisations committed to reducing plastic pollution and driving systemic change by tackling plastic pollution across the entire value chain. Since 2019, OceanCare has been a core member of BFFP and contributes to both global efforts and its European policy strategy."@en ;
     compass:description "2016 wurde OceanCare Teil dieser Koalition aus inter­nationalen Organisationen, die sich für die Reduktion der Plastikverschmutzung und für einen systemischen Wandel einsetzen, indem sie die Plastikverschmutzung über die gesamte Wertschöpfungskette hinweg angehen. Seit 2019 ist OceanCare Kernmitglied von BFFP und arbeitet auf globaler Ebene sowie bei der europäischen Policy-Strategie mit."@de ;
     compass:managedByOceanCare false ;
@@ -430,6 +450,7 @@ ocinst:DSCC
     rdfs:label "Deep Sea Conservation Coalition"@en ;
     rdfs:label "Deep Sea Conservation Coalition"@de ;
     compass:location "Amsterdam, Netherlands"@en ;
+    compass:location "Amsterdam, Niederlande"@de ;
     compass:description "OceanCare joined the coalition in 2021 as part of its programme to prevent deep-sea mining, with a particular focus on underwater noise. DSCC is committed to protecting sensitive deep-sea ecosystems and preserving biodiversity in the high seas. The Coalition and its members campaign for a global moratorium on deep-sea mining to prevent irreversible ocean damage."@en ;
     compass:description "OceanCare trat der Koalition 2021 im Rahmen ihres Programms zur Verhinderung des Tiefseebergbaus bei, mit inhaltlichem Schwerpunkt auf Unterwasserlärm. DSCC engagiert sich für den Schutz der empfindlichen Tiefsee-Ökosysteme und für den Erhalt der biologischen Vielfalt auf hoher See. Die Koalition und ihre Mitglieder setzen sich für ein weltweites Moratorium für den Tiefseebergbau ein, um irreversible Schäden in den Ozeanen zu verhindern."@de ;
     compass:managedByOceanCare false ;
@@ -447,6 +468,7 @@ ocinst:GGGI
     rdfs:label "Global Ghost Gear Initiative"@en ;
     rdfs:label "Global Ghost Gear Initiative"@de ;
     compass:location "Washington DC, USA"@en ;
+    compass:location "Washington, D.C., USA"@de ;
     compass:description "In 2019, OceanCare joined the GGGI, which campaigns for lost fishing gear to be recovered and for nets to be marked so that they can be traced back to their owners."@en ;
     compass:description "2019 wurde OceanCare Mitglied der GGGI, die sich dafür einsetzt, dass verloren gegangenes Fischereigerät geborgen und Netze gekennzeichnet werden, damit diese den Besitzenden zugeordnet werden können."@de ;
     compass:managedByOceanCare false ;
@@ -464,6 +486,7 @@ ocinst:HSA
     rdfs:label "High Seas Alliance"@en ;
     rdfs:label "High Seas Alliance"@de ;
     compass:location "Amsterdam, Netherlands"@en ;
+    compass:location "Amsterdam, Niederlande"@de ;
     compass:description "Since 2011, OceanCare has been part of the High Seas Alliance, whose more than 70 members advocate for the ecologically sound conservation and management of marine areas beyond national jurisdiction."@en ;
     compass:description "Seit 2011 ist OceanCare Teil der Allianz zum Schutz der Hochsee, deren mehr als 70 Mitglieder sich für den Schutz und einen ökologischen Umgang mit Meeresgebieten ausserhalb nationaler Gesetzgebungen einsetzen."@de ;
     compass:managedByOceanCare false ;
@@ -479,6 +502,7 @@ ocinst:STRA
     rdfs:label "Sea Turtle Rescue Alliance"@en ;
     rdfs:label "Sea Turtle Rescue Alliance"@de ;
     compass:location "Registered in Bristol, UK"@en ;
+    compass:location "Eingetragen in Bristol, Vereinigtes Königreich"@de ;
     compass:description "In 2021, OceanCare launched the alliance for the rescue and care of injured sea turtles. Led by Dr Claire Petros, the alliance brings together rescue centres from around the world, which share medical expertise and data with one another."@en ;
     compass:description "OceanCare hat 2021 die Allianz zur Rettung und Pflege von verletzten Meeresschildkröten ins Leben gerufen. Unter der Leitung von Dr. Claire Petros kooperieren darin weltweit Rettungszentren, die untereinander medizinisches Fachwissen und Daten austauschen."@de ;
     compass:managedByOceanCare false ;
@@ -495,6 +519,7 @@ ocinst:SeasAtRisk
     rdfs:label "Seas at Risk"@en ;
     rdfs:label "Seas at Risk"@de ;
     compass:location "Brussels, Belgium"@en ;
+    compass:location "Brüssel, Belgien"@de ;
     compass:description "Since 2014, OceanCare has been a member of this alliance of 40 organisations, which advocates effective marine policy in European waters with the aim of improving the protection of marine animals and the living conditions in the oceans."@en ;
     compass:description "Seit 2014 ist OceanCare Mitglied dieser Allianz aus 40 Organisationen, die sich für eine griffige Meerespolitik in europäischen Gewässern einsetzt, um den Schutz der Meerestiere und die Lebensbedingungen in den Ozeanen zu verbessern."@de ;
     compass:managedByOceanCare false ;
@@ -510,6 +535,7 @@ ocinst:SpeciesSurvivalNetwork
     rdfs:label "Species Survival Network"@en ;
     rdfs:label "Species Survival Network"@de ;
     compass:location "Washington DC, USA"@en ;
+    compass:location "Washington, D.C., USA"@de ;
     compass:description "OceanCare has been a member of SSN since 1997 and is committed to ensuring that endangered animal and plant species are listed and protected under the CITES Appendices I-III. OceanCare is part of the SSN working groups on the protection of polar bears, whales and dolphins, as well as sharks, rays and other fish species."@en ;
     compass:description "Seit 1997 ist OceanCare Mitglied von SSN und engagiert sich dafür, dass gefährdete Tier- und Pflanzenarten durch das Artenschutzabkommen CITES geschützt werden. OceanCare ist Teil der SSN-Arbeitsgruppen zum Schutz der Eisbären, der Wale und Delfine sowie der Haie, Rochen und weiterer Fischarten."@de ;
     compass:managedByOceanCare false ;
@@ -529,6 +555,7 @@ ocinst:AlnitakResearchInstitute
     rdfs:label "Alnitak Research Institute"@en ;
     rdfs:label "Alnitak Research Institute"@de ;
     compass:location "Sóller, Mallorca, Spain"@en ;
+    compass:location "Sóller, Mallorca, Spanien"@de ;
     compass:description "Alnitak works to tackle the harmful impacts of abandoned, lost and discarded fishing gear in the Mediterranean Sea, with support from OceanCare since 2021. This gear is estimated to account for 46–70% of  marine microplastic litter and can continue trapping and killing marine wildlife long after it has been lost, with sea turtles particularly at risk."@en ;
     compass:description "Alnitak setzt sich dafür ein, die schädlichen Auswirkungen von aufgegebenen, verlorenen und entsorgten Fanggeräten im Mittelmeer zu reduzieren, und wird dabei seit 2021 von OceanCare unterstützt. Schätzungen zufolge machen solche Fanggeräte 46–70 % des marinen Mikroplastikmülls aus und können noch lange nach ihrem Verlust Meerestiere fangen und töten, wobei insbesondere Meeresschildkröten gefährdet sind."@de ;
     compass:managedByOceanCare false ;
@@ -548,7 +575,9 @@ ocinst:BEES
     rdfs:label "BEES"@en ;
     rdfs:label "BEES"@de ;
     skos:altLabel "Benin Environment and Education Society"@en ;
+    skos:altLabel "Benin Environment and Education Society"@de ;
     compass:location "Porto Novo, Benin"@en ;
+    compass:location "Porto Novo, Benin"@de ;
     compass:description "Declining fish species and harmful fishing practices threaten marine ecosystems and coastal livelihoods, while scarcity is driving the hunting of protected species such as dolphins, manatees, sharks, and rays for aquatic wild meat. OceanCare has been working with Benin Environment and Education Society (BEES) to promote sustainable solutions in the Gulf of Guinea since 2018."@en ;
     compass:description "Rückläufige Fischbestände und zerstörerische Fischereipraktiken bedrohen Meeresökosysteme und die Lebensgrundlagen der Küstengemeinschaften. Gleichzeitig führt die zunehmende Knappheit dazu, dass geschützte Arten wie Delfine, Seekühe, Haie und Rochen als sogenanntes Aquatic Wild Meat gejagt werden. Gemeinsam mit der Benin Environment and Education Society (BEES) setzt sich OceanCare im Golf von Guinea seit 2018 für nachhaltige Lösungen ein."@de ;
     compass:managedByOceanCare false ;
@@ -568,7 +597,9 @@ ocinst:BritishDiversMarineLifeRescue
     rdfs:label "BDMLR"@en ;
     rdfs:label "BDMLR"@de ;
     skos:altLabel "British Divers Marine Life Rescue"@en ;
+    skos:altLabel "British Divers Marine Life Rescue"@de ;
     compass:location "Cornwall, UK"@en ;
+    compass:location "Cornwall, Vereinigtes Königreich"@de ;
     compass:description "British Divers Marine Life Rescue (BDMLR) rescues and treats marine animals in distress, including disentangling whales and dolphins, assisting stranded animals, and rehabilitating injured seals. OceanCare has supported the organisation since 2019, including the construction of a seal hospital in Cornwall."@en ;
     compass:description "British Divers Marine Life Rescue (BDMLR) rettet und versorgt Meerestiere in Not. Dazu gehören die Befreiung von Walen und Delfinen aus Verstrickungen, die Hilfe für gestrandete Meerestiere sowie die Rehabilitation verletzter Robben. OceanCare unterstützt die Arbeit der Organisation seit 2019 und förderte u. a. den Bau einer Robbenklinik in Cornwall."@de ;
     compass:managedByOceanCare false ;
@@ -586,6 +617,7 @@ ocinst:CBDHabitat
     rdfs:label "CBD-Hábitat"@en ;
     rdfs:label "CBD-Hábitat"@de ;
     compass:location "Fundación CBD-Habitat – Cabo Blanco Field Station, near Nouadhibou, Mauretania"@en ;
+    compass:location "Fundación CBD-Habitat – Feldstation Cabo Blanco, bei Nouadhibou, Mauretanien"@de ;
     compass:description "Since 2005, OceanCare has been supporting the organisation CBD-Hábitat in protecting the last large colony of endangered Mediterranean monk seals at Cabo Blanco in Mauritania, home to around half of the global population. The ‘Costa de las Focas’ Reserve has been monitored year-round and around the clock for 25 years."@en ;
     compass:description "Seit 2005 unterstützt OceanCare die Organisation CBD-Hábitat beim Schutz der letzten grossen Kolonie der gefährdeten Mittelmeer-Mönchsrobbe am Cabo Blanco in Mauretanien, wo etwa die Hälfte des weltweiten Bestands lebt. Das Schutzgebiet «Costa de las Focas» wird seit 25 Jahren ganzjährig und rund um die Uhr überwacht."@de ;
     compass:managedByOceanCare false ;
@@ -603,7 +635,9 @@ ocinst:CIT
     rdfs:label "CIT"@en ;
     rdfs:label "CIT"@de ;
     skos:altLabel "Centro para la Investigación de Tiburones"@en ;
+    skos:altLabel "Centro para la Investigación de Tiburones"@de ;
     compass:location "Caracas, Venezuela"@en ;
+    compass:location "Caracas, Venezuela"@de ;
     compass:description "CIT has made significant progress in Venezuela since 2017: whale shark fishing has effectively ceased and the trade in shark fins has been significantly reduced. In addition, three areas have been designated as Important Shark and Ray Areas (ISRAs). OceanCare has been collaborating with CIT since 2017."@en ;
     compass:description "CIT konnte in Venezuela seit 2017 grosse Fortschritte erzielen: Die Walhai-Fischerei ist faktisch zum Erliegen gekommen und der Handel mit Haiflossen wurde stark reduziert. Zudem wurden drei Gebiete als Important Shark and Ray Areas (ISRAs) ausgewiesen. OceanCare unterstützt CIT seit 2017."@de ;
     compass:managedByOceanCare false ;
@@ -622,6 +656,7 @@ ocinst:DolphinBiologyAndConservation
     rdfs:label "Dolphin Biology and Conservation"@en ;
     rdfs:label "Dolphin Biology and Conservation"@de ;
     compass:location "Cordenons, PN, Italy"@en ;
+    compass:location "Cordenons, PN, Italien"@de ;
     compass:description "Dolphin Biology and Conservation, is committed to preserving marine biodiversity and reducing human impacts on cetaceans in various Mediterranean areas. DBC produces  publications and disseminates science-based information with a focus on factors threatening dolphins and marine life. DBC studies and monitors dolphin populations to assess abundance, detect trends and identify important habitat. OceanCare supports and closely collaborates with DBC since 2007."@en ;
     compass:description "Dolphin Biology and Conservation setzt sich für den Erhalt der marinen Biodiversität und die Verringerung menschlicher Einflüsse auf Wale und Delfine in verschiedenen Gebieten des Mittelmeers ein. DBC erforscht Delfinpopulationen, erstellt wissenschaftliche Publikationen und verbreitet fundierte, wissenschaftsbasierte Informationen mit besonderem Fokus auf die Faktoren, die Delfine und andere Meereslebewesen bedrohen. OceanCare unterstützt DBC seit 2007 und arbeitet eng mit der Organisation zusammen."@de ;
     compass:managedByOceanCare false ;
@@ -640,7 +675,9 @@ ocinst:FORTH
     rdfs:label "FORTH"@en ;
     rdfs:label "FORTH"@de ;
     skos:altLabel "The Foundation for Research and Technology – Hellas"@en ;
+    skos:altLabel "Foundation for Research and Technology – Hellas"@de ;
     compass:location "Heraklion, Crete, Greece"@en ;
+    compass:location "Heraklion, Kreta, Griechenland"@de ;
     compass:description "OceanCare plays a pivotal role in the development of SAvE Whales in collaboration with the Pelagos Cetacean Research Institute and the Foundation for Research and Technology - Hellas  (FORTH). SAvE Whales is the world’s first integrated system that can localise sperm whales and inform ship captains of their presence in real time."@en ;
     compass:description "OceanCare spielt eine Schlüsselrolle bei der Entwicklung von SAvE Whales in Zusammenarbeit mit dem Pelagos Cetacean Research Institute und der Foundation for Research and Technology - Hellas (FORTH). SAvE Whales ist das weltweit erste Warnsystem, das Pottwale lokalisieren und Schiffskapitän:innen in Echtzeit über die Anwesenheit der Tiere informieren kann."@de ;
     compass:managedByOceanCare false ;
@@ -659,6 +696,7 @@ ocinst:GreenBalcans
     rdfs:label "Green Balkans"@en ;
     rdfs:label "Green Balkans"@de ;
     compass:location "Plovdiv, Bulgaria"@en ;
+    compass:location "Plovdiv, Bulgarien"@de ;
     compass:description "Since 2018, OceanCare has been supporting the research activities of the organisation Green Balkans into the distribution, population trends and threats facing the protected harbour porpoises, bottlenose dolphins and common dolphins in Bulgarian waters."@en ;
     compass:description "Seit 2018 unterstützt OceanCare die Forschungstätigkeiten der Organisation Green Balkans zu Verbreitung, Bestandsentwicklung und Bedrohungen der geschützten Schweinswale, Grossen Tümmler und Gewöhnlichen Delfine in bulgarischen Gewässern."@de ;
     compass:managedByOceanCare false ;
@@ -676,7 +714,9 @@ ocinst:IonianDolphinProject
     rdfs:label "IDP"@en ;
     rdfs:label "IDP"@de ;
     skos:altLabel "Ionian Dolphin Project"@en ;
+    skos:altLabel "Ionian Dolphin Project"@de ;
     compass:location "Vonitsa, Greece"@en ;
+    compass:location "Vonitsa, Griechenland"@de ;
     compass:description "The Ionian Dolphin Project (IDP) researches and protects dolphins in three Natura 2000 areas: the Central Ionian Sea, the Ambracian Gulf and the waters around Paxos and Antipaxos. OceanCare has been supporting its work since 2004."@en ;
     compass:description "Das Ionian Dolphin Project (IDP) erforscht und schützt Delfine in drei Natura-2000-Gebieten: dem zentralionischen Meer, dem Ambrakischen Golf und den Gewässern um Paxos und Antipaxos. OceanCare unterstützt diese Arbeit seit 2004."@de ;
     compass:managedByOceanCare false ;
@@ -694,7 +734,9 @@ ocinst:LPACalais
     rdfs:label "LPA Calais"@en ;
     rdfs:label "LPA Calais"@de ;
     skos:altLabel "Ligue de Protection des Animaux du Calaisis"@en ;
+    skos:altLabel "Ligue de Protection des Animaux du Calaisis"@de ;
     compass:location "Calais, France"@en ;
+    compass:location "Calais, Frankreich"@de ;
     compass:description "Since 2018, OceanCare has supported the LPA Calais rehabilitation centre in northern France, where weakened and injured seals are rescued, rehabilitated, and released back into the wild."@en ;
     compass:description "Seit 2018 unterstützt OceanCare das Rehabilitationszentrum von LPA Calais in Nordfrankreich, das geschwächte und verletzte Robben aufnimmt, pflegt und wieder auswildert."@de ;
     compass:managedByOceanCare false ;
@@ -711,6 +753,7 @@ ocinst:Morigenos
     rdfs:label "Morigenos"@en ;
     rdfs:label "Morigenos"@de ;
     compass:location "Piran, Slovenia"@en ;
+    compass:location "Piran, Slowenien"@de ;
     compass:description "In Slovenia, OceanCare has supported the Morigenos Dolphin Centre since 2020. It serves as a field station for research projects on the protection of bottlenose dolphins in the Gulf of Trieste, where fishing poses a particular threat."@en ;
     compass:description "In Slowenien unterstützt OceanCare das Delfinzentrum von Morigenos seit 2020. Es dient als Feldstation für Forschungsprojekte zum Schutz der Grossen Tümmler im Golf von Triest, wo insbesondere die Fischerei eine Bedrohung darstellt."@de ;
     compass:managedByOceanCare false ;
@@ -728,6 +771,7 @@ ocinst:OceanCare
     rdfs:label "OceanCare"@en ;
     rdfs:label "OceanCare"@de ;
     compass:location "Wädenswil, Switzerland"@en ;
+    compass:location "Wädenswil, Schweiz"@de ;
     compass:description "OceanCare is an international marine conservation non-governmental organisation, founded in Switzerland in 1989. The organisation pursues the protection and restoration of the marine environment and marine wildlife with a strong policy focus, combining research, conservation projects and education. OceanCare’s remit includes marine pollution, climate change, marine mammal hunting and the environmental consequences of fisheries. Its work is supported by a team of scientific, legal and policy experts, and involves strategic collaboration with civil society organisations and coalitions around the world. OceanCare is an officially accredited partner and observer to several UN conventions and other international fora."@en ;
     compass:description "OceanCare ist eine Nichtregierungsorganisation, die sich seit 1989 weltweit für die Wiederherstellung der Meeresumwelt sowie den Schutz der Meerestiere einsetzt. Mit Forschungs- und Schutzprojekten, Umweltbildungskampagnen sowie intensivem Einsatz in internationalen Gremien unternimmt die Organisation konkrete Schritte zur Verbesserung der Lebensbedingungen in den Weltmeeren. OceanCare kümmert sich u. a. um Meeresverschmutzung, Klimawandel, Jagd auf Meeressäuger und Umweltfolgen der Fischerei. Diese Arbeit wird von einem Team mit wissenschaftlicher, juristischer und politischer Expertise unterstützt und umfasst die strategische Zusammenarbeit mit zivilgesellschaftlichen Organisationen und Koalitionen auf der ganzen Welt. OceanCare wurde vom Wirtschafts- und Sozialrat der Vereinten Nationen als Sonderberaterin für den Meeresschutz anerkannt und ist offizielle Partnerorganisation in zahlreichen UN-Abkommen und internationalen Konventionen."@de ;
     schema:url "https://www.oceancare.org"^^xsd:anyURI ;
@@ -747,7 +791,9 @@ ocinst:OliveRidleyProject
     rdfs:label "ORP"@en ;
     rdfs:label "ORP"@de ;
     skos:altLabel "Olive Ridley Project"@en ;
+    skos:altLabel "Olive Ridley Project"@de ;
     compass:location "Baa Atoll, Maldives"@en ;
+    compass:location "Baa-Atoll, Malediven"@de ;
     compass:description "OceanCare has supported the Olive Ridley Project (ORP) in the rescue and treatment of, and research into injured sea turtles since 2017. With the establishment of the new Sea Turtle Health Institute, new standards for sea turtle medicine in the Indian Ocean are being set."@en ;
     compass:description "OceanCare unterstützt das Olive Ridley Project bei der Rettung, Behandlung und Erforschung verletzter Meeresschildkröten seit 2017. Mit dem neuen Sea Turtle Health Institute werden neue Standards für die Meeresschildkrötenmedizin im Indischen Ozean gesetzt."@de ;
     compass:managedByOceanCare false ;
@@ -766,6 +812,7 @@ ocinst:PelagosCetaceanResearchInstitute
     rdfs:label "Pelagos Cetacean Research Institute"@en ;
     rdfs:label "Pelagos Cetacean Research Institute"@de ;
     compass:location "Heraklion, Crete, Greece"@en ;
+    compass:location "Heraklion, Kreta, Griechenland"@de ;
     compass:description "OceanCare has supported the Pelagos Cetacean Research Institute since 2007 and plays a pivotal role in the development of SAvE Whales in collaboration with the Pelagos Cetacean Research Institute and the Foundation for Research and Technology - Hellas  (FORTH). SAvE Whales is the world’s first integrated system that can localise sperm whales and inform ship captains of their presence in real time."@en ;
     compass:description "OceanCare unterstützt das Pelagos Cetacean Research Institute seit 2007 und spielt gemeinsam mit diesem Forschungsinstitut und der Foundation for Research and Technology - Hellas (FORTH) eine Schlüsselrolle bei der Entwicklung von SAvE Whales, dem weltweit ersten Warnsystem, das Pottwale lokalisieren und Schiffskapitän:innen in Echtzeit über die Anwesenheit der Tiere informieren kann."@de ;
     compass:managedByOceanCare false ;
@@ -784,6 +831,7 @@ ocinst:TethysResearchInstitute
     rdfs:label "Tethys Research Institute"@en ;
     rdfs:label "Tethys Research Institute"@de ;
     compass:location "Milan, Italy"@en ;
+    compass:location "Mailand, Italien"@de ;
     compass:description "Tethys Research Institute is a non-profit research organisation supporting marine conservation through science and public awareness with a focus on large marine vertebrates. OceanCare has cooperated with Tethys since 2004 in various areas – most recently as part of the Pelagos Consortium in the north-western Mediterranean Sea, where a PSSA (Particularly Sensitive Sea Area) was adopted by the International Maritime Organization (IMO) in July 2023 and came into force in January 2024. It is the first PSSA to be designated by the IMO explicitly to protect whales from the impact of maritime traffic."@en ;
     compass:description "Das Tethys Research Institute ist ein gemeinnütziges Forschungsinstitut mit Fokus auf den Schutz von Waltieren und ihrer Lebensräume. OceanCare arbeitet seit 2004 in verschiedenen Bereichen mit Tethys zusammen – unter anderem im nordwestlichen Mittelmeer, wo die Internationale Seeschifffahrts-Organisation (IMO) im Juli 2023 eine Particularly Sensitive Sea Area (PSSA, «Besonders empfindliches Meeresgebiet») auswies, die im Januar 2024 in Kraft trat. Es ist die erste PSSA der IMO, die ausdrücklich dem Schutz von Walen vor den Auswirkungen des Schiffsverkehrs dient."@de ;
     compass:managedByOceanCare false ;
@@ -800,6 +848,7 @@ ocinst:iSeas
     rdfs:label "iSea"@en ;
     rdfs:label "iSea"@de ;
     compass:location "Thessaloniki, Greece"@en ;
+    compass:location "Thessaloniki, Griechenland"@de ;
     compass:description "iSea works to protect endangered sharks and rays in the Ambracian Gulf in western Greece, an Important Shark and Ray Area and key breeding and nursery ground for several species. Its #zeroplastic campaign also tackles plastic pollution through education and efforts to reduce single-use plastic. OceanCare has supported iSea and both areas of its work since 2019."@en ;
     compass:description "iSea setzt sich für den Schutz gefährdeter Haie und Rochen im Ambrakischen Golf im Westen Griechenlands ein, einem als «Important Shark and Ray Area» ausgewiesenen Gebiet, das ein wichtiges Fortpflanzungs- und Aufwuchsgebiet für mehrere Arten ist. Mit der Kampagne #zeroplastic engagiert sich iSea zudem durch Bildungsarbeit und Massnahmen zur Reduktion von Einwegplastik gegen die Plastikverschmutzung. OceanCare unterstützt iSea in beiden Arbeitsbereichen seit 2019."@de ;
     compass:managedByOceanCare false ;
@@ -823,6 +872,7 @@ ocinst:BecauseOurPlanetIsBlue
     rdfs:label "Because Our Planet Is Blue"@en ;
     rdfs:label "Because Our Planet Is Blue"@de ;
     compass:location "Wädenswil, Switzerland"@en ;
+    compass:location "Wädenswil, Schweiz"@de ;
     compass:managedByOceanCare true ;
     compass:topic compass:DeepSeaMining, compass:Fisheries, compass:FossilFuels, compass:Shipping ;
     compass:pollution compass:PlasticPollution ;
@@ -840,7 +890,9 @@ ocinst:SAVEWhales
     rdfs:label "SAvE Whales"@en ;
     rdfs:label "SAvE Whales"@de ;
     compass:location "Kythira Strait, Greece"@en ;
+    compass:location "Meerenge von Kythira, Griechenland"@de ;
     compass:description "OceanCare enables the development of the SAvE Whales warning system"@en ;
+    compass:description "OceanCare ermöglicht die Entwicklung des Frühwarnsystems SAvE Whales."@de ;
     compass:managedByOceanCare true ;
     compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
     compass:conservation compass:AnimalConservation, compass:SpeciesConservation ;
