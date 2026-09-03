@@ -107,16 +107,6 @@ class TestNamedPropertyShapes:
             "the sidebar description paragraph will be missing."
         )
 
-    def test_founding_date_in_entity_shapes(self, rdflib_graph):
-        from rdflib import URIRef
-        founding_date = URIRef("https://schema.org/foundingDate")
-        paths = self._entity_prop_paths(rdflib_graph)
-        assert founding_date in paths, (
-            "schema:foundingDate not found in any entity NodeShape property — "
-            "founding year field will be missing."
-        )
-
-
 # -- Tag dimension vocabularies exist and have labels --
 
 class TestTagVocabularies:

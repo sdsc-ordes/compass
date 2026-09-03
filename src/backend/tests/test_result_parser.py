@@ -15,14 +15,13 @@ from app.sparql_builder import build_entities_query
 
 
 class TestParseSpecialProperties:
-    def test_extracts_entity_tag_ids(self):
-        props = _parse_special_properties({"wpEntityTagIdEn": "921"})
-        assert props["wpEntityTagIdEn"] == "921"
+    def test_extracts_entity_tag_id(self):
+        props = _parse_special_properties({"wpEntityTagId": "921"})
+        assert props["wpEntityTagId"] == "921"
 
     def test_missing_fields_default_empty(self):
         props = _parse_special_properties({})
-        assert props["wpEntityTagIdEn"] == ""
-        assert props["wpEntityTagIdDe"] == ""
+        assert props["wpEntityTagId"] == ""
 
 
 class TestExtractProperty:
@@ -86,15 +85,23 @@ class TestResultsToGeojsonIntegration:
             assert -180 <= coords[0] <= 180, f"Invalid longitude: {coords[0]}"
             assert -90 <= coords[1] <= 90, f"Invalid latitude: {coords[1]}"
 
-    def test_country_areas_emitted_as_regions(self, store, property_specs):
-        """Every CountryArea concept should surface as a geometry-less region."""
-        sparql = build_entities_query(property_specs, "en", QueryParams(""))
-        results = store.query(sparql)
-        geojson = results_to_geojson(results, property_specs)
+    def test_regions_are_exactly_those_a_pin_refers_to(self, store, property_specs):
+        """A region reaches the map only because some pin records it.
 
+        An unreferenced region is never shaded, and every referenced one is.
+        """
+        referenced = store.query("""
+            PREFIX compass: <http://example.org/ocean-org/ontology#>
+            SELECT DISTINCT ?region WHERE { ?pin compass:countryArea ?region . }
+        """)
+        expected = {str(row["region"]).rsplit("#", 1)[-1] for row in referenced}
+
+        sparql = build_entities_query(property_specs, "en", QueryParams(""))
+        geojson = results_to_geojson(store.query(sparql), property_specs)
         regions = [f for f in geojson["features"] if f["properties"].get("is_region")]
-        assert len(regions) >= 20, f"Expected >=20 region features, got {len(regions)}"
+
+        assert expected, "the ontology records no pin-to-region link at all"
+        assert {r["properties"]["regionKey"] for r in regions} == expected
         for region in regions:
             assert region["geometry"] is None
-            assert region["properties"]["regionKey"]
             assert region["properties"]["typeIri"].endswith("CountryArea")

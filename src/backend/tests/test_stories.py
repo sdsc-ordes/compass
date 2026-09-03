@@ -79,24 +79,24 @@ def test_resolve_wp_tag_ids_unmapped():
 
 def test_resolve_wp_tag_ids_known():
     store = MagicMock()
-    store.query.return_value = [{"wpTagId": "148"}]
+    store.query.return_value = [{"wpTagId": "147"}]
     result = _resolve_wp_tag_ids(
-        ["http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"], store
+        ["http://example.org/ocean-org/ontology#Whales"], store
     )
-    assert result == [148]
+    assert result == [147]
 
 
 def test_resolve_wp_tag_ids_multiple():
     store = MagicMock()
-    store.query.return_value = [{"wpTagId": "148"}, {"wpTagId": "455"}]
+    store.query.return_value = [{"wpTagId": "147"}, {"wpTagId": "455"}]
     result = _resolve_wp_tag_ids(
         [
-            "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans",
+            "http://example.org/ocean-org/ontology#Whales",
             "http://example.org/ocean-org/ontology#AnimalAndSpeciesConservation",
         ],
         store,
     )
-    assert set(result) == {148, 455}
+    assert set(result) == {147, 455}
 
 
 # ---------------------------------------------------------------------------
@@ -114,12 +114,23 @@ def test_stories_count_no_tags():
     assert "oceancare.org" in data["url"]
 
 
-def test_stories_count_unmapped_tag():
-    """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
-    resp = client.get(
-        "/api/stories/count",
-        params={"tag": "http://example.org/ocean-org/ontology#Geoengineering"},
-    )
+def test_stories_count_unmapped_tag(store):
+    """A tag with no compass:wpTagId returns count=0 without an HTTP call.
+
+    The concept is resolved from the graph, so mapping another WordPress term
+    cannot turn this into a test that makes a real request.
+    """
+    unmapped = store.query("""
+        PREFIX compass: <http://example.org/ocean-org/ontology#>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        SELECT ?c WHERE {
+            ?c a skos:Concept .
+            FILTER NOT EXISTS { ?c compass:wpTagId ?id . }
+        } LIMIT 1
+    """)
+    assert unmapped, "every concept now carries a wpTagId; pick another branch to test"
+
+    resp = client.get("/api/stories/count", params={"tag": str(unmapped[0]["c"])})
     assert resp.status_code == 200
     assert resp.json()["count"] == 0
 
@@ -143,13 +154,13 @@ def test_stories_count_mapped_tag(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tag": "http://example.org/ocean-org/ontology#Whales"},
         )
 
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 3
-    assert "?tag=148" in data["url"]
+    assert "?tag=147" in data["url"]
 
 
 def test_stories_count_url_contains_tag_ids(monkeypatch):
@@ -165,7 +176,7 @@ def test_stories_count_url_contains_tag_ids(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tag": "http://example.org/ocean-org/ontology#Whales"},
         )
 
     assert resp.status_code == 200
@@ -183,10 +194,10 @@ def test_stories_count_proxy_error(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tag": "http://example.org/ocean-org/ontology#Whales"},
         )
 
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
-    assert "?tag=148" in data["url"]
+    assert "?tag=147" in data["url"]

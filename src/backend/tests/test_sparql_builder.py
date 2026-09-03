@@ -5,12 +5,17 @@ actually returns all expected entities from the real ontology.
 """
 from starlette.datastructures import QueryParams
 
+import pytest
 from app.sparql_builder import (
+    PIN_CLASSES,
     build_entities_query,
+    build_facet_query,
     build_optional,
     build_select_expr,
     to_prefixed,
-    _sparql_preamble,
+    _pin_branch,
+    _region_branch,
+    _shared_optionals,
 )
 from app.namespaces import COMPASS
 
@@ -66,32 +71,59 @@ class TestBuildSelectExpr:
         assert "SAMPLE" in result
 
 
-class TestSparqlPreamble:
-    """The preamble UNION must reference the 4 entity classes."""
+class TestPinBranch:
+    """The pin branch must offer every class that can carry coordinates."""
 
-    def test_preamble_contains_international_forum(self):
-        assert "compass:InternationalForum" in _sparql_preamble("en")
+    @pytest.mark.parametrize("entity_class", PIN_CLASSES)
+    def test_branch_offers_class(self, entity_class):
+        assert f"compass:{entity_class}" in _pin_branch([])
 
-    def test_preamble_contains_network(self):
-        assert "compass:Network" in _sparql_preamble("en")
+    def test_branch_excludes_regions(self):
+        """Regions are derived, so they must never be a pin alternative."""
+        assert "compass:CountryArea" not in _pin_branch([])
 
-    def test_preamble_contains_forum(self):
-        assert "compass:InternationalForum" in _sparql_preamble("en")
+    def test_shared_optionals_bind_geometry_and_name(self):
+        optionals = _shared_optionals("en")
+        assert "geo:lat" in optionals
+        assert "geo:long" in optionals
+        assert "compass:name" in optionals
 
-    def test_preamble_contains_project(self):
-        assert "compass:Project" in _sparql_preamble("en")
 
-    def test_preamble_contains_partner_organization(self):
-        assert "compass:PartnerOrganization" in _sparql_preamble("en")
+class TestRegionBranch:
+    """A region reaches the map only through a pin that points at it."""
 
-    def test_preamble_geo_bindings(self):
-        preamble = _sparql_preamble("en")
-        assert "geo:lat" in preamble
-        assert "geo:long" in preamble
+    def test_requires_a_referring_pin(self):
+        branch = _region_branch([])
+        assert "FILTER EXISTS" in branch
+        assert "?pin compass:countryArea ?s ." in branch
 
-    def test_preamble_name_binding(self):
-        preamble = _sparql_preamble("en")
-        assert "compass:name" in preamble
+    def test_filters_apply_to_the_referring_pin(self):
+        """A region carries no tags, so the filters must constrain the pin."""
+        branch = _region_branch(["?pin compass:topic compass:Shipping ."])
+        assert "?pin compass:topic compass:Shipping ." in branch
+        assert "?s compass:topic" not in branch
+
+
+class TestFilterSubjects:
+    """Both copies of a filter must constrain their own subject."""
+
+    def test_entities_query_filters_pins_and_referring_pins(self, property_specs):
+        sparql = build_entities_query(
+            property_specs, "en", QueryParams(f"countryArea={COMPASS.Greece}")
+        )
+        assert f"?s compass:countryArea <{COMPASS.Greece}> ." in sparql
+        assert f"?pin compass:countryArea <{COMPASS.Greece}> ." in sparql
+
+    def test_entity_type_reaches_regions_through_their_pins(self):
+        sparql = build_entities_query(
+            [], "en", QueryParams(f"entityType={COMPASS.Project}")
+        )
+        assert f"FILTER(?type IN (<{COMPASS.Project}>))" in sparql
+        assert f"?pin a ?pinType . FILTER(?pinType IN (<{COMPASS.Project}>))" in sparql
+
+    def test_facet_query_counts_pins_only(self, property_specs):
+        sparql = build_facet_query(property_specs, "en", QueryParams(""), "topic")
+        assert "compass:CountryArea" not in sparql
 
 
 class TestBuildEntitiesQueryExecutes:

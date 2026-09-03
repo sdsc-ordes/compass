@@ -65,7 +65,7 @@ class TestEntitiesEndpoint:
     def test_region_features(self, client):
         data = client.get("/api/entities?lang=en").json()
         regions = [f for f in data["features"] if f["properties"].get("is_region")]
-        assert len(regions) >= 20
+        assert regions, "no region reached the map"
         assert all(r["geometry"] is None for r in regions)
         assert all(r["properties"].get("regionKey") for r in regions)
 

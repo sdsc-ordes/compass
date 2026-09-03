@@ -47,42 +47,30 @@ def test_every_id_is_unique_and_typed(tables, kinds):
     assert len(kinds) == len(concepts) + len(pins)
 
 
-def test_dimension_membership(tables):
-    _, concepts, _ = tables
-    counts: dict[str, int] = {}
-    for concept in concepts:
-        counts[concept["dimension"]] = counts.get(concept["dimension"], 0) + 1
-    assert counts == {
-        "WorkArea": 7,
-        "Conservation": 2,
-        "Topic": 9,
-        "Pollution": 3,
-        "Species": 10,
-        "CountryArea": 23,
-    }
+def test_every_dimension_and_class_is_populated(tables):
+    """Each declared dimension and class has members, and no row invents one.
 
-
-def test_class_membership(tables):
-    _, _, pins = tables
-    counts: dict[str, int] = {}
-    for pin in pins:
-        counts[pin["class"]] = counts.get(pin["class"], 0) + 1
-    assert counts == {
-        "InternationalForum": 19,
-        "Network": 7,
-        "PartnerOrganization": 16,
-        "Project": 2,
-    }
+    build_vocab raises on a dimension with no concepts, so an empty one is a
+    build failure rather than a quiet gap.
+    """
+    _, concepts, pins = tables
+    assert {c["dimension"] for c in concepts} == set(gen.DIMENSIONS)
+    assert {p["class"] for p in pins} == set(gen.CLASSES)
 
 
 def test_every_link_resolves(tables, kinds):
-    """No link anywhere in the tables points at an id that does not exist."""
-    _, concepts, pins = tables
+    """No link on any pin points at an id that does not exist."""
+    _, _, pins = tables
     problems = gen.Problems()
-    for table_rows in (concepts, pins):
-        for table_row in table_rows:
-            gen.parse_links(table_row, kinds, problems)
+    for pin in pins:
+        gen.parse_links(pin, kinds, problems)
     problems.raise_if_any()
+
+
+def test_only_pins_carry_links():
+    """Concepts never link out, so the sheet gives them nowhere to record a link."""
+    assert "links" in gen.PIN_COLUMNS
+    assert "links" not in gen.CONCEPT_COLUMNS
 
 
 def test_every_pin_has_a_name_and_coordinates(tables):
@@ -201,7 +189,7 @@ def test_repeated_cells_expand():
 @pytest.mark.parametrize(
     "target, predicate",
     [
-        ("DolphinsAndSmallCetaceans", "compass:species"),
+        ("Dolphins", "compass:species"),
         ("Greece", "compass:countryArea"),
         ("AdvocacyWork", "compass:workArea"),
         ("PlasticPollution", "compass:pollution"),
