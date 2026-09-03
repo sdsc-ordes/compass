@@ -3,6 +3,16 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+    environment:
+      # Read the Turtle from the mount below rather than the copy baked into
+      # the image, so an editorial update needs no rebuild.
+      COMPASS_ONTOLOGY_DIR: /data/ontology
+      # Without this the reload endpoint stays closed. Override it in
+      # deployment; anyone holding it can make the API re-parse on demand.
+      COMPASS_RELOAD_TOKEN: ${COMPASS_RELOAD_TOKEN:-change-me}
+    volumes:
+      # Read-only: the API serves this data, the update job writes it.
+      - ./src/ontology:/data/ontology:ro
     healthcheck:
       # The ontology is parsed at startup, so the API is not ready immediately.
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
@@ -16,6 +26,10 @@ services:
     build:
       context: .
       dockerfile: docker/web.Dockerfile
+    volumes:
+      # Built by `just tiles`, kept out of the image and out of git: ~53 MB of
+      # regenerable raster. Absent is fine -- the map falls back to vector.
+      - ./tools/tiles:/data/tiles:ro
     ports:
       - "8080:80"
     depends_on:

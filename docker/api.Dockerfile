@@ -11,6 +11,10 @@ COPY src/backend/pyproject.toml src/backend/uv.lock src/backend/.python-version 
 RUN uv sync --frozen --no-dev
 
 COPY src/backend/app ./app
+
+# A baseline copy, so the image runs on its own. Compose mounts the live data
+# over COMPASS_ONTOLOGY_DIR instead, which is what keeps editorial updates from
+# needing a rebuild.
 COPY src/ontology /srv/src/ontology
 
 EXPOSE 8000

@@ -2,16 +2,17 @@
 
 An interactive map of ocean-focused research institutes, NGOs, and intergovernmental bodies, driven by a SHACL-validated RDF ontology.
 
-The map has no backend. The ontology and a SPARQL engine (oxigraph, compiled to WebAssembly) are bundled into a single JavaScript file and run in the visitor's browser, so deploying it means serving one static file.
+The widget is a `<compass-map>` custom element; a FastAPI service holds the ontology and answers its queries. Data lives in one place and an editorial change reaches the map without rebuilding or restarting anything. `docker compose up` brings up both.
 
 ```
 src/ontology/   – source-data.ods (source of truth), SHACL shapes, generated Turtle
-src/frontend/   – Svelte + MapLibre widget; the in-browser query engine is in src/engine/
-src/backend/    – FastAPI reference implementation and the build-time export script
+src/frontend/   – Svelte + MapLibre widget; src/engine/ is its thin API client
+src/backend/    – FastAPI service: SPARQL over the ontology, filter schema, reload
 tools/scripts/  – the ontology generator and its tests
 tools/nix/      – the Nix flake providing the dev shell
-share/          – standalone demo page for the built widget
-docs/           – deployment and WordPress integration guides
+share/          – standalone demo page; needs an apiurl to point at
+docker/         – Dockerfiles, nginx config and the compose entry page
+docs/           – contributor docs
 ```
 
 ## Setup
@@ -48,13 +49,24 @@ On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel th
 
 ## Run it locally
 
+Both halves, together:
+
 ```bash
-cd src/frontend
-npm install
-npm run dev
+docker compose up --build
 ```
 
-Open <http://localhost:5173>. There is no backend to start and no `apiurl` to configure — the map queries the ontology bundled into it.
+Open <http://localhost:8080>. nginx serves the widget and proxies `/api/` to the
+API, so the two share an origin and no CORS is involved.
+
+For frontend work, run the API separately and point the widget at it:
+
+```bash
+cd src/backend && uv run uvicorn app.main:app --reload --port 8000   # terminal 1
+cd src/frontend && npm install && npm run dev                        # terminal 2
+```
+
+Open <http://localhost:5173>; `index.html` already passes
+`apiurl="http://localhost:8000"`.
 
 ## Build it
 
@@ -63,18 +75,17 @@ cd src/frontend
 npm run build         # → dist/compass-map.js
 ```
 
-That file is the entire widget; nothing else is emitted. Loading it defines a `<compass-map>` element, so a complete page is:
+That file is the entire widget; nothing else is emitted. Loading it defines a
+`<compass-map>` element, which needs `apiurl` pointing at the API:
 
 ```html
 <script src="compass-map.js"></script>
-<compass-map lang="en" style="display:block;height:90vh"></compass-map>
+<compass-map lang="en" apiurl="https://compass.example.org"
+             style="display:block;height:90vh"></compass-map>
 ```
 
-No web server is required — copy it next to the demo page, then open that page in a browser:
-
-```bash
-cp dist/compass-map.js ../share/
-```
+Serve it from the same origin as the API and `apiurl="/"` is enough, which is
+what `docker/index.html` does with `location.origin`.
 
 ## Change the map data
 
@@ -83,14 +94,12 @@ a spreadsheet with three sheets. Edit it, regenerate, rebuild:
 
 ```bash
 just data          # regenerate the Turtle; SHACL validation gates it
-just export        # refresh src/frontend/src/generated/*.json
 git diff src/ontology/
 ```
 
-Both steps matter. The Turtle files are read by the in-browser engine, but the
-filter schema and property specs are derived from the SHACL shapes by Python and
-baked into `src/frontend/src/generated/` at build time — skip `just export` and
-the widget ships a stale filter panel.
+The API reads the Turtle at runtime, so a data change needs no rebuild of
+anything. In a running deployment it also needs no restart — see
+**Editorial updates** below.
 
 | File | Purpose |
 |---|---|
@@ -99,7 +108,6 @@ the widget ships a stale filter panel.
 | `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
 | `src/ontology/compass.ttl` | *Generated* — instance data (the pins on the map) |
 | `src/ontology/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
-| `src/frontend/src/generated/` | *Generated* — filter schema and property specs for the browser engine |
 
 Every row carries its own `id`, and **pins** link to other rows by id in a
 `links` column. **The predicate a link becomes is decided by what it points
@@ -139,16 +147,126 @@ region with a code needs no change there; the `MARINE` table for seas is still
 maintained by hand in `src/frontend/scripts/build-regions.mjs`. A new region also
 needs a pin pointing at it before anything shades.
 
-## Optional backend
+## Widget requirements
 
-Two features need a server: the OceanCare story counts (a cross-origin page fetch) and `?state=` share links. Everything else runs in the browser.
+Three constraints the widget has to satisfy wherever it is embedded.
+
+### No third-party requests at runtime
+
+The widget contacts nothing but its own origin, so embedding it leaks no
+visitor data. The basemap is drawn from Natural Earth land and border geometry
+bundled into the build (`src/frontend/src/map/basemap.json`, rebuilt with
+`just basemap`), not from a tile service, and it carries no labels — labels
+would need glyph files from a font server, and every label the map does show
+comes from the ontology anyway. Cluster tallies and the OceanCare star are
+drawn on a canvas at runtime for the same reason.
+
+The bathymetry is pre-rendered by `just tiles` into `tools/tiles/` (1365 JPEG
+tiles, ~53 MB, gitignored) and served by nginx from a read-only mount. The map
+probes one tile on load and only adds the raster if it resolves, so a
+deployment that skipped `just tiles` falls back to the vector basemap.
+
+`just check` fails if any new host appears in the widget source. The allowlist
+in `src/frontend/scripts/check-offline.mjs` holds only inert entries: RDF
+namespace IRIs, which are identifiers and never fetched, and oceancare.org,
+which the visitor reaches by clicking a link.
+
+The one deliberate exception is the story counter, which calls the API origin
+passed in as the `apiurl` attribute.
+
+### Accessibility
+
+Targeting the German BFSG criteria, which follow WCAG 2.1 AA.
+
+The map is a canvas and carries nothing for a screen reader, so the same
+results are always rendered as a table in the accessibility tree — the map view
+includes an off-screen `ListView`, the very component the list view shows. One
+renderer means the alternative cannot drift from what the map displays. The map
+itself is a labelled `role="application"` region describing where that
+alternative is.
+
+Filtering changes results without a page load, so the result count is announced
+through a polite live region. Every control has a localised accessible name,
+text meets the 4.5:1 contrast floor, focus is always visible, and
+`prefers-reduced-motion` suppresses the fly-to animation.
+
+### Bilingual content
+
+Language variants are RDF language tags, not separate records: one subject
+carries `"Whales"@en` and `"Wale"@de`, and the SPARQL layer filters on the
+requested language. In the workbook a translatable field is a column pair —
+`name_en`/`name_de`, `description_en`/`description_de`,
+`location_en`/`location_de`, `definition_en`/`definition_de` — and every pair
+reaches the RDF in both languages.
+
+An empty German cell takes the English text so a German reader never sees a
+blank where an English one sees prose. `just data` reports every substitution,
+so a missing translation is visible rather than silently shipped; a clean run
+prints `every German cell is filled`. Some pairs are legitimately identical:
+`Caracas, Venezuela` reads the same in both, and registered names such as
+`British Divers Marine Life Rescue` are not translated.
+
+## Editorial updates
+
+The API owns the data: it reads `src/ontology/*.ttl` from disk and serves both
+the entities and the filter schema, so adding a pin never touches the widget
+build. `COMPASS_ONTOLOGY_DIR` points it at those files, and the compose setup
+mounts them read-only from the host so the running container sees an edit
+immediately.
+
+Picking the edit up is one request:
 
 ```bash
-cd backend
-uv run uvicorn app.main:app --reload --port 8000
+just data                       # regenerate; SHACL validation gates it
+curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
+     http://localhost:8080/api/admin/reload
 ```
 
-Then open [test_embed.html](test_embed.html), which passes `apiurl="http://localhost:8000"`.
+The reload builds a **second** store, derives the property specs from it and
+checks it can answer a query, and only then swaps it in. So a bad edit cannot
+take the map down: the endpoint answers `409` naming the line that failed to
+parse, and the previous version keeps serving. `503` means no
+`COMPASS_RELOAD_TOKEN` is set — the endpoint is closed rather than open when
+unconfigured — and `401` means the header did not match.
+
+Nothing here needs a developer: the whole loop is regenerate, then POST.
+
+## The API
+
+| Route | Purpose |
+|---|---|
+| `GET /api/entities/` | pins and regions as GeoJSON, filtered by the query string |
+| `GET /api/entities/facets` | per-tag counts for the current selection |
+| `GET /api/entities/detail` | one entity by IRI |
+| `GET /api/filters/schema` | the filter panel, derived from the SHACL shapes |
+| `POST /api/admin/reload` | re-read the Turtle from disk (see **Editorial updates**) |
+| `GET /api/stories/count` | OceanCare story counts, a cross-origin page fetch |
+| `POST /api/states/save`, `GET /api/states/{id}` | `?state=` share links |
+
+Both queries the widget makes are shaped by `shapes.ttl`: add a property shape
+and the filter panel, the SPARQL and the API response all follow.
+
+## Attribution and licences
+
+Two data sources carry obligations, and both are surfaced in the map's
+attribution control at runtime rather than only in the repository:
+
+- **Natural Earth** (land, borders, lakes, rivers) is public domain; credit is
+  requested, not required, and is given.
+- **GEBCO** bathymetry is free to use with attribution. The map states
+  `Imagery reproduced from the GEBCO_2026 Grid, GEBCO Compilation Group` and
+  carries GEBCO's condition that it is **not to be used for navigation or any
+  purpose relating to safety at sea**.
+
+`attributionControl` is set explicitly in `Map.svelte`; leaving a licence
+obligation resting on a library default would be a mistake.
+
+The widget bundle carries third-party code under BSD-3-Clause, MIT and ISC,
+all of which require their notice to accompany a distribution. Two things
+satisfy that: esbuild's `legalComments: 'eof'` keeps the packages' own banners
+inside the minified file, and `THIRD-PARTY-NOTICES.md` is generated from
+`node_modules` on every `npm run build` and served next to the bundle. Embed
+the widget elsewhere and that file has to travel with it.
 
 ## Tests
 

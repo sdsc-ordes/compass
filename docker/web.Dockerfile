@@ -9,6 +9,8 @@ RUN npm run build && gzip -9 -k dist/compass-map.js
 FROM nginx:alpine
 
 COPY --from=build /app/dist/compass-map.js /app/dist/compass-map.js.gz /usr/share/nginx/html/
+# The bundle's licences require their notice to accompany it.
+COPY --from=build /app/THIRD-PARTY-NOTICES.md /usr/share/nginx/html/
 COPY docker/index.html /usr/share/nginx/html/index.html
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 

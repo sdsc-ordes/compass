@@ -12,10 +12,6 @@ default:
 data:
     cd "{{root_dir}}/tools/scripts" && uv run tsv_to_rdf.py
 
-# Refresh the filter schema and property specs the browser engine is built with.
-export:
-    cd "{{root_dir}}/src/backend" && uv run python scripts/export_static.py
-
 # Fail if the committed ontology differs from a fresh run.
 data-check:
     cd "{{root_dir}}/tools/scripts" && uv run tsv_to_rdf.py --check
@@ -24,14 +20,23 @@ data-check:
 regions:
     cd "{{root_dir}}/src/frontend" && node scripts/build-regions.mjs
 
+# Rebuild the bundled land and border geometry the map draws itself from (needs network).
+basemap:
+    cd "{{root_dir}}/src/frontend" && node scripts/build-basemap.mjs
+
+# Pre-render GEBCO bathymetry tiles we serve ourselves (needs network, ~53 MB).
+tiles maxzoom="5":
+    node "{{root_dir}}/tools/scripts/build-tiles.mjs" {{maxzoom}}
+
 # Run the backend and generator test suites.
 test *args:
     cd "{{root_dir}}/src/backend" && uv run pytest tests/ "$@"
     cd "{{root_dir}}/tools/scripts" && uv run --group dev pytest "$@"
 
-# Type-check the frontend.
+# Type-check the frontend and verify it contacts no third party at runtime.
 check:
     cd "{{root_dir}}/src/frontend" && npm run check
+    cd "{{root_dir}}/src/frontend" && node scripts/check-offline.mjs
 
 # Serve the widget's dev server.
 web:
