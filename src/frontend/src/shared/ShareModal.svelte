@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, Copy, Check } from 'lucide-svelte';
-  // @ts-ignore — qrcode has no bundled types
+  // @ts-expect-error — qrcode ships no type declarations
   import QRCode from 'qrcode';
   import { i18n, type Lang } from './i18n';
 
@@ -19,11 +19,13 @@
       width: 200,
       margin: 2,
       color: { dark: '#1e293b', light: '#ffffff' },
-    }).then((dataUrl: string) => {
-      qrDataUrl = dataUrl;
-    }).catch((e: Error) => {
-      console.error('[Compass] QR code generation failed:', e);
-    });
+    })
+      .then((dataUrl: string) => {
+        qrDataUrl = dataUrl;
+      })
+      .catch((e: Error) => {
+        console.error('[Compass] QR code generation failed:', e);
+      });
   }
 
   function copyLink() {
@@ -41,7 +43,13 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-noninteractive-element-interactions -->
-<div class="backdrop" on:click|self={onClose} role="dialog" aria-modal="true" aria-label={t.shareTitle}>
+<div
+  class="backdrop"
+  on:click|self={onClose}
+  role="dialog"
+  aria-modal="true"
+  aria-label={t.shareTitle}
+>
   <div class="modal">
     <div class="modal-header">
       <h3>{t.shareTitle}</h3>
@@ -86,8 +94,12 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   .modal {
@@ -101,8 +113,14 @@
   }
 
   @keyframes slideUp {
-    from { transform: translateY(16px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+    from {
+      transform: translateY(16px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 
   .modal-header {
@@ -129,7 +147,9 @@
     display: flex;
     align-items: center;
     border-radius: 4px;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
   .close-btn:hover {
     background: #f1f5f9;
@@ -191,7 +211,9 @@
     border-radius: 6px;
     cursor: pointer;
     color: #475569;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
   .copy-btn:hover {
     background: #f1f5f9;

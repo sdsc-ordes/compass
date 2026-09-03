@@ -12,12 +12,15 @@
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        buildInputs = [
-          pkgs.just
-          pkgs.uv
-          pkgs.nodejs_22
-          pkgs.python311
-          pkgs.stdenv.cc.cc.lib
+        buildInputs = with pkgs; [
+          just
+          nodejs_22
+          python311
+          # Linter and formatter for both Python projects. Pinned here rather
+          # than resolved per project so `just lint` applies one version.
+          ruff
+          stdenv.cc.cc.lib
+          uv
         ];
         shellHook = ''
           export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH
