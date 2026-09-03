@@ -1,4 +1,5 @@
 """SPARQL generation from SHACL property specs plus the active filters."""
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from .namespaces import PREFIX_MAP, SPARQL_PREFIXES, ITEM_SEP, FIELD_SEP
@@ -54,32 +55,65 @@ def build_select_expr(spec: dict) -> str:
     return f'(SAMPLE(?{sid}) AS ?{sid}Result)'
 
 
-def _sparql_preamble(lang: str) -> str:
-    """Type resolution, geometry and label binding, shared by both queries.
+PIN_CLASSES = ("InternationalForum", "Network", "Project", "PartnerOrganization")
 
-    The four entity classes carry coordinates and a compass:name. Country/Area
-    concepts are additionally surfaced as map *regions*: they have no coordinates
-    and label themselves with skos:prefLabel, so geometry is OPTIONAL and the
-    label is COALESCEd across both naming properties.
+
+@dataclass(frozen=True)
+class Subject:
+    """Which variable a set of filter clauses constrains.
+
+    Filters read the same for a pin the map draws and for the pin that puts a
+    region on the map, but they cannot share variable names: the region branch
+    nests its copy inside FILTER EXISTS, where the outer ?type is already bound
+    to compass:CountryArea.
     """
-    return f"""
-        {{
-            ?s a compass:InternationalForum .
-            BIND(compass:InternationalForum AS ?type)
-        }} UNION {{
-            ?s a compass:Network .
-            BIND(compass:Network AS ?type)
-        }} UNION {{
-            ?s a compass:Project .
-            BIND(compass:Project AS ?type)
-        }} UNION {{
-            ?s a compass:PartnerOrganization .
-            BIND(compass:PartnerOrganization AS ?type)
-        }} UNION {{
-            ?s a compass:CountryArea .
-            BIND(compass:CountryArea AS ?type)
-        }}
-        OPTIONAL {{ ?s geo:lat ?lat . }}
+
+    var: str
+    type_var: str
+    suffix: str  # keeps helper variables distinct across the two copies
+    declare_type: bool  # bind type_var here, rather than relying on an outer BIND
+
+
+PIN = Subject(var="?s", type_var="?type", suffix="", declare_type=False)
+REGION_PIN = Subject(var="?pin", type_var="?pinType", suffix="Pin", declare_type=True)
+
+
+def _pin_branch(where_clauses: List[str], indent: str = "        ") -> str:
+    """The four entity classes that carry coordinates -- the pins on the map."""
+    branches = f"\n{indent}UNION ".join(
+        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}"
+        for name in PIN_CLASSES
+    )
+    body = f"{indent}{branches}\n"
+    if where_clauses:
+        body += indent + f"\n{indent}".join(where_clauses) + "\n"
+    return body
+
+
+def _region_branch(where_clauses: List[str], indent: str = "        ") -> str:
+    """Country/Area concepts, reachable only through a pin that points at one.
+
+    A region is a shaded polygon rather than a result, and it carries no tags of
+    its own: it reaches the map because some pin passing the same filters
+    records it, so shading always means "matching pins are in here".
+    """
+    inner = f"{indent}    ?pin compass:countryArea ?s .\n"
+    if where_clauses:
+        inner += indent + "    " + f"\n{indent}    ".join(where_clauses) + "\n"
+    return (
+        f"{indent}?s a compass:CountryArea .\n"
+        f"{indent}BIND(compass:CountryArea AS ?type)\n"
+        f"{indent}FILTER EXISTS {{\n{inner}{indent}}}\n"
+    )
+
+
+def _shared_optionals(lang: str) -> str:
+    """Geometry and label binding, applied to pins and regions alike.
+
+    Regions have no coordinates and label themselves with skos:prefLabel, so
+    geometry is OPTIONAL and the label is COALESCEd across both properties.
+    """
+    return f"""        OPTIONAL {{ ?s geo:lat ?lat . }}
         OPTIONAL {{ ?s geo:long ?long . }}
         OPTIONAL {{ ?s compass:name ?nameLabel . FILTER(lang(?nameLabel) = "{lang}") }}
         OPTIONAL {{ ?s skos:prefLabel ?prefLabel . FILTER(lang(?prefLabel) = "{lang}") }}
@@ -92,15 +126,13 @@ def _sparql_preamble(lang: str) -> str:
 def _special_optionals() -> str:
     """Properties fetched for display that no entity NodeShape declares."""
     return """
-        OPTIONAL { ?s compass:wpEntityTagIdEn ?wpEntityTagIdEn . }
-        OPTIONAL { ?s compass:wpEntityTagIdDe ?wpEntityTagIdDe . }
+        OPTIONAL { ?s compass:wpEntityTagId ?wpEntityTagId . }
 """
 
 
 def _special_selects() -> str:
     return (
-        '           (SAMPLE(?wpEntityTagIdEn) AS ?wpEntityTagIdEn)\n'
-        '           (SAMPLE(?wpEntityTagIdDe) AS ?wpEntityTagIdDe)\n'
+        '           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n'
     )
 
 
@@ -115,26 +147,29 @@ def _build_where_clauses(
     filter_map: Dict[str, str],
     range_filters: Dict[str, str],
     date_filters: Dict[str, str],
+    subject: Subject = PIN,
     exclude_key: Optional[str] = None,
 ) -> List[str]:
     """exclude_key drops that dimension's own constraints, so facet counts for a
     dimension are not shrunk by the selection within it (drill-down faceting)."""
     where_clauses = []
+    subj = subject.var
 
     for key, val in query_params.items():
         if key == "lang" or key == exclude_key or not val:
             continue
         values = query_params.getlist(key)
+        var = f"?{key}{subject.suffix}Val"
 
         if key in filter_map:
             prop = filter_map[key]
             parts = []
             for v in values:
                 if v.startswith("http") and ">" not in v:
-                    parts.append(f"?s {prop} <{v}> .")
+                    parts.append(f"{subj} {prop} <{v}> .")
                 else:
                     safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
-                    parts.append(f'?s {prop} ?{key}Val . FILTER(str(?{key}Val) = "{safe_v}")')
+                    parts.append(f'{subj} {prop} {var} . FILTER(str({var}) = "{safe_v}")')
             if parts:
                 where_clauses.append(_union_or_single(parts))
 
@@ -142,8 +177,8 @@ def _build_where_clauses(
             safe_v = val.replace('\\', '\\\\').replace('"', '\\"')
             prop = date_filters[key]
             where_clauses.append(
-                f'OPTIONAL {{ ?s {prop} ?{key}Val . }} '
-                f'FILTER(!BOUND(?{key}Val) || ?{key}Val >= "{safe_v}"^^xsd:date)'
+                f'OPTIONAL {{ {subj} {prop} {var} . }} '
+                f'FILTER(!BOUND({var}) || {var} >= "{safe_v}"^^xsd:date)'
             )
 
         elif key == "entityType":
@@ -151,11 +186,13 @@ def _build_where_clauses(
                 f"<{v}>" for v in values if v.startswith("http") and ">" not in v
             )
             if iri_list:
-                # Regions (CountryArea) are a separate visual layer and stay
-                # visible regardless of the entity-type (pin) filter.
-                where_clauses.append(
-                    f"FILTER(?type IN ({iri_list}) || ?type = compass:CountryArea)"
-                )
+                # A region has no type of its own to filter, so the legend
+                # reaches it through the pins: hide every Project and a region
+                # holding only projects stops being shaded.
+                clause = f"FILTER({subject.type_var} IN ({iri_list}))"
+                if subject.declare_type:
+                    clause = f"{subj} a {subject.type_var} . {clause}"
+                where_clauses.append(clause)
 
         elif key in range_filters:
             prop, datatype = range_filters[key]
@@ -164,13 +201,13 @@ def _build_where_clauses(
                 if datatype and "gYear" in datatype:
                     year_int = int(numeric_val)
                     where_clauses.append(
-                        f'OPTIONAL {{ ?s {prop} ?{key}Val . }} '
-                        f'FILTER(!BOUND(?{key}Val) || ?{key}Val >= "{year_int}"^^xsd:gYear)'
+                        f'OPTIONAL {{ {subj} {prop} {var} . }} '
+                        f'FILTER(!BOUND({var}) || {var} >= "{year_int}"^^xsd:gYear)'
                     )
                 else:
                     where_clauses.append(
-                        f'OPTIONAL {{ ?s {prop} ?{key}Val . }} '
-                        f'FILTER(!BOUND(?{key}Val) || ?{key}Val >= {numeric_val})'
+                        f'OPTIONAL {{ {subj} {prop} {var} . }} '
+                        f'FILTER(!BOUND({var}) || {var} >= {numeric_val})'
                     )
             except ValueError:
                 continue
@@ -198,24 +235,19 @@ def build_facet_query(
 ) -> str:
     """Count entities per value of one tag dimension.
 
-    The preamble is shared with build_entities_query so ?s ranges over exactly
-    the same entity set the map renders.
+    Regions are background context rather than results (see the map's result
+    badge, which counts point features only), so only the pin branch is counted.
     """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
     target_path = filter_map[target_id]
 
-    preamble = _sparql_preamble(lang)
     where_clauses = _build_where_clauses(
         query_params, filter_map, range_filters, date_filters, exclude_key=target_id
     )
 
-    # Country/Area regions are background context, not results (see the map's
-    # result badge, which counts point features only) — exclude them so facet
-    # counts match what the map reports.
-    sparql_where = preamble + f"        ?s {target_path} ?val .\n"
-    sparql_where += "        FILTER(?type != compass:CountryArea)\n"
-    if where_clauses:
-        sparql_where += "        " + "\n        ".join(where_clauses) + "\n"
+    sparql_where = _pin_branch(where_clauses)
+    sparql_where += f"        ?s {target_path} ?val .\n"
+    sparql_where += _shared_optionals(lang)
 
     return (
         SPARQL_PREFIXES
@@ -230,14 +262,22 @@ def build_entities_query(
 ) -> str:
     filter_map, range_filters, date_filters = _categorize_specs(specs)
 
-    preamble = _sparql_preamble(lang)
     auto_optionals = "\n        ".join(build_optional(spec, lang) for spec in specs)
     auto_selects = "\n           ".join(build_select_expr(spec) for spec in specs)
-    where_clauses = _build_where_clauses(query_params, filter_map, range_filters, date_filters)
+    pin_clauses = _build_where_clauses(
+        query_params, filter_map, range_filters, date_filters
+    )
+    region_clauses = _build_where_clauses(
+        query_params, filter_map, range_filters, date_filters, subject=REGION_PIN
+    )
 
-    sparql_where = preamble + "        " + auto_optionals + "\n" + _special_optionals()
-    if where_clauses:
-        sparql_where += "        " + "\n        ".join(where_clauses) + "\n"
+    sparql_where = (
+        "        {\n" + _pin_branch(pin_clauses, "            ")
+        + "        } UNION {\n" + _region_branch(region_clauses, "            ")
+        + "        }\n"
+    )
+    sparql_where += _shared_optionals(lang)
+    sparql_where += "        " + auto_optionals + "\n" + _special_optionals()
 
     return (
         SPARQL_PREFIXES

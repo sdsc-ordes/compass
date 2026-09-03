@@ -46,8 +46,7 @@ def extract_property(spec: dict, res: dict) -> Any:
 def _parse_special_properties(res: dict) -> dict:
     """Fields queried outside the SHACL-driven specs (see sparql_builder)."""
     return {
-        "wpEntityTagIdEn": res.get("wpEntityTagIdEn", ""),
-        "wpEntityTagIdDe": res.get("wpEntityTagIdDe", ""),
+        "wpEntityTagId": res.get("wpEntityTagId", ""),
     }
 
 
