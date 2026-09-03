@@ -241,7 +241,13 @@ Nothing here needs a developer: the whole loop is regenerate, then POST.
 | `GET /api/filters/schema` | the filter panel, derived from the SHACL shapes |
 | `POST /api/admin/reload` | re-read the Turtle from disk (see **Editorial updates**) |
 | `GET /api/stories/count` | OceanCare story counts, a cross-origin page fetch |
-| `POST /api/states/save`, `GET /api/states/{id}` | `?state=` share links |
+
+Share links carry the filter selection in the query string itself, so there is
+no server-side state to save or expire.
+
+Deployment serves the widget and the API from one origin (nginx proxies
+`/api/`), so the API allows no cross-origin caller by default. The Vite dev
+server is the exception, and `COMPASS_CORS_ORIGINS` overrides the list.
 
 Both queries the widget makes are shaped by `shapes.ttl`: add a property shape
 and the filter panel, the SPARQL and the API response all follow.
@@ -271,6 +277,14 @@ the widget elsewhere and that file has to travel with it.
 ## Tests
 
 ```bash
-just test          # backend (API, SHACL, SPARQL builder, ontology contract) and generator
-just check         # Svelte + TypeScript
+just all           # everything below, in the order CI runs it
+just test          # backend (API, SHACL, SPARQL builder, ontology contract),
+                   # generator, and the widget's map logic
+just check         # Svelte + TypeScript, and the no-third-party-hosts gate
+just lint          # ruff over both Python projects, ESLint + Prettier over the widget
+just format        # rewrite every source file in the project's style
 ```
+
+Python style is one shared `tools/configs/ruff.toml`; the widget's ESLint and
+Prettier configs sit next to its `tsconfig.json`, and both read the repository
+`.editorconfig`.
