@@ -4,7 +4,6 @@
 **/__pycache__
 **/.pytest_cache
 src/frontend/dist
-src/backend/states.db
 share
 docs
 *.md
