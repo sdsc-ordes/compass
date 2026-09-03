@@ -1,16 +1,33 @@
 """SPARQL generation from SHACL property specs plus the active filters."""
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 
-from .namespaces import PREFIX_MAP, SPARQL_PREFIXES, ITEM_SEP, FIELD_SEP
+from dataclasses import dataclass
+from datetime import date
+from typing import Any
+
+from .namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
+from .sparql_terms import iri_term, is_iri, string_literal
+
+# Property id -> (prefixed predicate, datatype IRI or None)
+RangeFilters = dict[str, tuple[str, str | None]]
 
 
 def to_prefixed(iri: str) -> str:
     """Convert a full IRI to a SPARQL prefixed name (e.g. compass:country)."""
     for ns, prefix in PREFIX_MAP.items():
         if iri.startswith(ns):
-            return prefix + iri[len(ns):]
-    return f"<{iri}>"
+            return prefix + iri[len(ns) :]
+    return iri_term(iri)
+
+
+def _is_iri_value(value: str) -> bool:
+    """True when a filter value names a concept rather than a literal tag.
+
+    A tag dimension can be filtered either by concept IRI or by literal text,
+    so the two are told apart by shape. The IRI check is the grammar's, not a
+    guess: a value that cannot be written as an IRIREF is treated as a literal
+    rather than interpolated between brackets.
+    """
+    return value.startswith(("http://", "https://")) and is_iri(value)
 
 
 def build_optional(spec: dict, lang: str) -> str:
@@ -21,15 +38,17 @@ def build_optional(spec: dict, lang: str) -> str:
     if cat == "lang_literal":
         return f'OPTIONAL {{ ?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}") }}'
     if cat in ("simple_literal", "uri_literal", "boolean"):
-        return f'OPTIONAL {{ ?s {path} ?{sid} . }}'
+        return f"OPTIONAL {{ ?s {path} ?{sid} . }}"
     if cat == "iri_with_label":
         return (
-            f'OPTIONAL {{\n'
-            f'            ?s {path} ?{sid}Node .\n'
-            f'            OPTIONAL {{ ?{sid}Node skos:prefLabel ?{sid}Skos . FILTER(lang(?{sid}Skos) = "{lang}") }}\n'
-            f'            OPTIONAL {{ ?{sid}Node rdfs:label ?{sid}Rdfs . FILTER(lang(?{sid}Rdfs) = "{lang}") }}\n'
-            f'            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)\n'
-            f'        }}'
+            f"OPTIONAL {{\n"
+            f"            ?s {path} ?{sid}Node .\n"
+            f"            OPTIONAL {{ ?{sid}Node skos:prefLabel ?{sid}Skos . "
+            f'FILTER(lang(?{sid}Skos) = "{lang}") }}\n'
+            f"            OPTIONAL {{ ?{sid}Node rdfs:label ?{sid}Rdfs . "
+            f'FILTER(lang(?{sid}Rdfs) = "{lang}") }}\n'
+            f"            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)\n"
+            f"        }}"
         )
     return ""
 
@@ -47,12 +66,12 @@ def build_select_expr(spec: dict) -> str:
                 f'COALESCE(?{sid}Lab, "")); separator="{ITEM_SEP}") AS ?{sid}Raw)'
             )
         return (
-            f'(SAMPLE(?{sid}Node) AS ?{sid}Iri)\n'
-            f'           (SAMPLE(?{sid}Lab) AS ?{sid}Label)'
+            f"(SAMPLE(?{sid}Node) AS ?{sid}Iri)\n"
+            f"           (SAMPLE(?{sid}Lab) AS ?{sid}Label)"
         )
     if is_multi:
         return f'(GROUP_CONCAT(DISTINCT ?{sid}; separator="{ITEM_SEP}") AS ?{sid}Raw)'
-    return f'(SAMPLE(?{sid}) AS ?{sid}Result)'
+    return f"(SAMPLE(?{sid}) AS ?{sid}Result)"
 
 
 PIN_CLASSES = ("InternationalForum", "Network", "Project", "PartnerOrganization")
@@ -78,11 +97,10 @@ PIN = Subject(var="?s", type_var="?type", suffix="", declare_type=False)
 REGION_PIN = Subject(var="?pin", type_var="?pinType", suffix="Pin", declare_type=True)
 
 
-def _pin_branch(where_clauses: List[str], indent: str = "        ") -> str:
+def _pin_branch(where_clauses: list[str], indent: str = "        ") -> str:
     """The four entity classes that carry coordinates -- the pins on the map."""
     branches = f"\n{indent}UNION ".join(
-        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}"
-        for name in PIN_CLASSES
+        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}" for name in PIN_CLASSES
     )
     body = f"{indent}{branches}\n"
     if where_clauses:
@@ -90,7 +108,7 @@ def _pin_branch(where_clauses: List[str], indent: str = "        ") -> str:
     return body
 
 
-def _region_branch(where_clauses: List[str], indent: str = "        ") -> str:
+def _region_branch(where_clauses: list[str], indent: str = "        ") -> str:
     """Country/Area concepts, reachable only through a pin that points at one.
 
     A region is a shaded polygon rather than a result, and it carries no tags of
@@ -131,12 +149,10 @@ def _special_optionals() -> str:
 
 
 def _special_selects() -> str:
-    return (
-        '           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n'
-    )
+    return "           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n"
 
 
-def _union_or_single(parts: List[str]) -> str:
+def _union_or_single(parts: list[str]) -> str:
     if len(parts) > 1:
         return "{ " + " } UNION { ".join(parts) + " }"
     return parts[0]
@@ -144,19 +160,19 @@ def _union_or_single(parts: List[str]) -> str:
 
 def _build_where_clauses(
     query_params,
-    filter_map: Dict[str, str],
-    range_filters: Dict[str, str],
-    date_filters: Dict[str, str],
+    filter_map: dict[str, str],
+    range_filters: RangeFilters,
+    date_filters: dict[str, str],
     subject: Subject = PIN,
-    exclude_key: Optional[str] = None,
-) -> List[str]:
+    exclude_key: str | None = None,
+) -> list[str]:
     """exclude_key drops that dimension's own constraints, so facet counts for a
     dimension are not shrunk by the selection within it (drill-down faceting)."""
     where_clauses = []
     subj = subject.var
 
     for key, val in query_params.items():
-        if key == "lang" or key == exclude_key or not val:
+        if key in ("lang", exclude_key) or not val:
             continue
         values = query_params.getlist(key)
         var = f"?{key}{subject.suffix}Val"
@@ -165,26 +181,28 @@ def _build_where_clauses(
             prop = filter_map[key]
             parts = []
             for v in values:
-                if v.startswith("http") and ">" not in v:
-                    parts.append(f"{subj} {prop} <{v}> .")
+                if _is_iri_value(v):
+                    parts.append(f"{subj} {prop} {iri_term(v)} .")
                 else:
-                    safe_v = v.replace('\\', '\\\\').replace('"', '\\"')
-                    parts.append(f'{subj} {prop} {var} . FILTER(str({var}) = "{safe_v}")')
+                    parts.append(
+                        f"{subj} {prop} {var} . FILTER(str({var}) = {string_literal(v)})"
+                    )
             if parts:
                 where_clauses.append(_union_or_single(parts))
 
         elif key in date_filters:
-            safe_v = val.replace('\\', '\\\\').replace('"', '\\"')
+            try:
+                date.fromisoformat(val)
+            except ValueError:
+                continue  # not a date, so it constrains nothing
             prop = date_filters[key]
             where_clauses.append(
-                f'OPTIONAL {{ {subj} {prop} {var} . }} '
-                f'FILTER(!BOUND({var}) || {var} >= "{safe_v}"^^xsd:date)'
+                f"OPTIONAL {{ {subj} {prop} {var} . }} "
+                f"FILTER(!BOUND({var}) || {var} >= {string_literal(val)}^^xsd:date)"
             )
 
         elif key == "entityType":
-            iri_list = ", ".join(
-                f"<{v}>" for v in values if v.startswith("http") and ">" not in v
-            )
+            iri_list = ", ".join(iri_term(v) for v in values if _is_iri_value(v))
             if iri_list:
                 # A region has no type of its own to filter, so the legend
                 # reaches it through the pins: hide every Project and a region
@@ -201,13 +219,13 @@ def _build_where_clauses(
                 if datatype and "gYear" in datatype:
                     year_int = int(numeric_val)
                     where_clauses.append(
-                        f'OPTIONAL {{ {subj} {prop} {var} . }} '
+                        f"OPTIONAL {{ {subj} {prop} {var} . }} "
                         f'FILTER(!BOUND({var}) || {var} >= "{year_int}"^^xsd:gYear)'
                     )
                 else:
                     where_clauses.append(
-                        f'OPTIONAL {{ {subj} {prop} {var} . }} '
-                        f'FILTER(!BOUND({var}) || {var} >= {numeric_val})'
+                        f"OPTIONAL {{ {subj} {prop} {var} . }} "
+                        f"FILTER(!BOUND({var}) || {var} >= {numeric_val})"
                     )
             except ValueError:
                 continue
@@ -215,10 +233,12 @@ def _build_where_clauses(
     return where_clauses
 
 
-def _categorize_specs(specs: List[Dict[str, Any]]):
-    filter_map: Dict[str, str] = {}
-    range_filters: Dict[str, str] = {}
-    date_filters: Dict[str, str] = {}
+def _categorize_specs(
+    specs: list[dict[str, Any]],
+) -> tuple[dict[str, str], RangeFilters, dict[str, str]]:
+    filter_map: dict[str, str] = {}
+    range_filters: RangeFilters = {}
+    date_filters: dict[str, str] = {}
     for spec in specs:
         prefixed = to_prefixed(spec["path_iri"])
         if spec["filter_type"] in ("multiselect", "toggle"):
@@ -231,7 +251,7 @@ def _categorize_specs(specs: List[Dict[str, Any]]):
 
 
 def build_facet_query(
-    specs: List[Dict[str, Any]], lang: str, query_params, target_id: str
+    specs: list[dict[str, Any]], lang: str, query_params, target_id: str
 ) -> str:
     """Count entities per value of one tag dimension.
 
@@ -252,14 +272,14 @@ def build_facet_query(
     return (
         SPARQL_PREFIXES
         + "    SELECT ?val (COUNT(DISTINCT ?s) AS ?n)\n"
-        + "    WHERE {\n" + sparql_where + "    }\n"
+        + "    WHERE {\n"
+        + sparql_where
+        + "    }\n"
         + "    GROUP BY ?val\n"
     )
 
 
-def build_entities_query(
-    specs: List[Dict[str, Any]], lang: str, query_params
-) -> str:
+def build_entities_query(specs: list[dict[str, Any]], lang: str, query_params) -> str:
     filter_map, range_filters, date_filters = _categorize_specs(specs)
 
     auto_optionals = "\n        ".join(build_optional(spec, lang) for spec in specs)
@@ -272,8 +292,10 @@ def build_entities_query(
     )
 
     sparql_where = (
-        "        {\n" + _pin_branch(pin_clauses, "            ")
-        + "        } UNION {\n" + _region_branch(region_clauses, "            ")
+        "        {\n"
+        + _pin_branch(pin_clauses, "            ")
+        + "        } UNION {\n"
+        + _region_branch(region_clauses, "            ")
         + "        }\n"
     )
     sparql_where += _shared_optionals(lang)
@@ -283,8 +305,12 @@ def build_entities_query(
         SPARQL_PREFIXES
         + "    SELECT ?s ?label ?lat ?long ?type\n"
         + "           (SAMPLE(?typeLabel) AS ?typeLabelResult)\n"
-        + "           " + auto_selects + "\n"
+        + "           "
+        + auto_selects
+        + "\n"
         + _special_selects()
-        + "    WHERE {\n" + sparql_where + "    }\n"
+        + "    WHERE {\n"
+        + sparql_where
+        + "    }\n"
         + "    GROUP BY ?s ?label ?lat ?long ?type\n"
     )

@@ -11,29 +11,32 @@ GET /api/stories/count?tag=<iri>&tag=<iri>&lang=de
 Concepts without a compass:wpTagId triple are silently skipped.
 If no IRIs map to WP IDs, returns count=0 and the base stories URL.
 """
+
 import logging
-from typing import List
 
 import httpx
 from fastapi import APIRouter, Depends, Query
 
 from ..config import stories_base_url
+from ..namespaces import COMPASS
 from ..rdf import RDFStore, get_store
+from ..sparql_terms import iri_term, is_iri
 
 logger = logging.getLogger(__name__)
-
-COMPASS_NS = "http://example.org/ocean-org/ontology#"
 
 router = APIRouter()
 
 
-def _resolve_wp_tag_ids(iris: List[str], store: RDFStore) -> List[int]:
+def _resolve_wp_tag_ids(iris: list[str], store: RDFStore) -> list[int]:
     """Return the WordPress term IDs for the given IRIs (skips unmapped ones)."""
-    if not iris:
+    # A tag IRI arrives from the query string, so one that cannot be written
+    # as an IRIREF is dropped rather than interpolated into the query.
+    terms = [iri_term(iri) for iri in iris if is_iri(iri)]
+    if not terms:
         return []
-    values_clause = " ".join(f"<{iri}>" for iri in iris)
+    values_clause = " ".join(terms)
     sparql = f"""
-    PREFIX compass: <{COMPASS_NS}>
+    PREFIX compass: <{COMPASS}>
     SELECT DISTINCT ?wpTagId WHERE {{
         VALUES ?concept {{ {values_clause} }}
         ?concept compass:wpTagId ?wpTagId .
@@ -48,7 +51,7 @@ def _count_story_cards(html: str) -> int:
     return html.count('<div class="col grid-3">')
 
 
-def _build_stories_url(wp_ids: List[int], lang: str) -> str:
+def _build_stories_url(wp_ids: list[int], lang: str) -> str:
     """Construct the language-specific filtered stories URL from WP term IDs."""
     base = stories_base_url(lang)
     if not wp_ids:
@@ -59,7 +62,7 @@ def _build_stories_url(wp_ids: List[int], lang: str) -> str:
 
 @router.get("/stories/count")
 async def get_stories_count(
-    tag: List[str] = Query(default=[]),
+    tag: list[str] = Query(default=[]),
     lang: str = Query("en", pattern="^(en|de)$"),
     store: RDFStore = Depends(get_store),
 ):

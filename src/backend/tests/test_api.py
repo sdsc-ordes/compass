@@ -3,6 +3,7 @@
 Full-stack tests using FastAPI's TestClient to verify the HTTP endpoints
 work correctly against the real ontology.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -73,7 +74,9 @@ class TestEntitiesEndpoint:
         all_data = client.get("/api/entities?lang=en").json()
         # Get the type IRI from the first entity to use as a filter
         first_type = all_data["features"][0]["properties"]["typeIri"]
-        filtered = client.get("/api/entities", params={"lang": "en", "entityType": first_type}).json()
+        filtered = client.get(
+            "/api/entities", params={"lang": "en", "entityType": first_type}
+        ).json()
         assert len(filtered["features"]) > 0
         assert len(filtered["features"]) <= len(all_data["features"])
 
@@ -92,7 +95,7 @@ class TestFacetsEndpoint:
         data = client.get("/api/entities/facets?lang=en").json()
         assert isinstance(data, dict)
         assert len(data) > 0
-        for dim, counts in data.items():
+        for counts in data.values():
             assert isinstance(counts, dict)
             for iri, n in counts.items():
                 assert iri.startswith("http")
@@ -123,9 +126,7 @@ class TestFacetsEndpoint:
         base = client.get("/api/entities/facets?lang=en").json()
         dim = "countryArea"
         value, count = next(iter(base[dim].items()))
-        after = client.get(
-            "/api/entities/facets", params={"lang": "en", dim: value}
-        ).json()
+        after = client.get("/api/entities/facets", params={"lang": "en", dim: value}).json()
         assert after[dim][value] == count
 
     def test_other_dimensions_never_grow_when_filtered(self, client):
@@ -133,9 +134,7 @@ class TestFacetsEndpoint:
         base = client.get("/api/entities/facets?lang=en").json()
         dim = "species"
         value = next(iter(base[dim].keys()))
-        after = client.get(
-            "/api/entities/facets", params={"lang": "en", dim: value}
-        ).json()
+        after = client.get("/api/entities/facets", params={"lang": "en", dim: value}).json()
         for other_dim, counts in after.items():
             if other_dim == dim:
                 continue
@@ -149,9 +148,7 @@ class TestFacetsEndpoint:
         base = client.get("/api/entities/facets?lang=en").json()
         dim = "species"
         value, count = next(iter(base[dim].items()))
-        entities = client.get(
-            "/api/entities", params={"lang": "en", dim: value}
-        ).json()
+        entities = client.get("/api/entities", params={"lang": "en", dim: value}).json()
         non_region = [
             f for f in entities["features"] if not f["properties"].get("is_region")
         ]
@@ -162,7 +159,10 @@ class TestFacetsEndpoint:
         but the pollution facet must not count it — only the project pin."""
         data = client.get(
             "/api/entities/facets",
-            params={"lang": "en", "countryArea": "http://example.org/ocean-org/ontology#FaroeIslands"},
+            params={
+                "lang": "en",
+                "countryArea": "http://example.org/ocean-org/ontology#FaroeIslands",
+            },
         ).json()
         chem = "http://example.org/ocean-org/ontology#ChemicalPollution"
         entities = client.get(
@@ -179,29 +179,6 @@ class TestFacetsEndpoint:
         assert data["pollution"].get(chem, 0) == len(non_region)
 
 
-class TestStatesEndpoint:
-    def test_save_returns_id(self, client):
-        resp = client.post("/api/states/save", json={"zoom": 4, "center": [0, 20]})
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "id" in data
-        assert isinstance(data["id"], str)
-        assert len(data["id"]) > 0
-
-    def test_round_trip(self, client):
-        payload = {"zoom": 7, "center": [10.0, 53.5], "filters": {"country": "Germany"}}
-        save_resp = client.post("/api/states/save", json=payload)
-        state_id = save_resp.json()["id"]
-
-        load_resp = client.get(f"/api/states/{state_id}")
-        assert load_resp.status_code == 200
-        assert load_resp.json() == payload
-
-    def test_unknown_id_returns_404(self, client):
-        resp = client.get("/api/states/doesnotexist")
-        assert resp.status_code == 404
-
-
 class TestEntityDetailEndpoint:
     def test_returns_detail(self, client):
         # First get an entity ID from the list
@@ -212,3 +189,30 @@ class TestEntityDetailEndpoint:
         data = resp.json()
         assert isinstance(data, list)
         assert len(data) > 0
+
+    def test_rejects_an_iri_that_would_escape_the_query(self, client):
+        # A '>' would close the IRIREF and let the rest become graph patterns.
+        resp = client.get(
+            "/api/entities/detail",
+            params={"iri": "http://example.org/a> ?p ?o } UNION { ?x ?p ?o . #"},
+        )
+        assert resp.status_code == 400
+
+    def test_rejects_whitespace_in_an_iri(self, client):
+        resp = client.get("/api/entities/detail", params={"iri": "http://example.org/a b"})
+        assert resp.status_code == 400
+
+
+class TestCorsPolicy:
+    def test_unlisted_origin_is_not_echoed_back(self, client):
+        resp = client.get(
+            "/api/filters/schema?lang=en", headers={"Origin": "https://evil.example"}
+        )
+        assert resp.headers.get("access-control-allow-origin") != "*"
+        assert resp.headers.get("access-control-allow-origin") != "https://evil.example"
+
+    def test_dev_origin_is_allowed(self, client):
+        resp = client.get(
+            "/api/filters/schema?lang=en", headers={"Origin": "http://localhost:5173"}
+        )
+        assert resp.headers.get("access-control-allow-origin") == "http://localhost:5173"

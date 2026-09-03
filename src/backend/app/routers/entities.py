@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from ..rdf import get_store, RDFStore
-from ..sparql_builder import build_entities_query, build_facet_query
+from ..namespaces import SPARQL_PREFIXES
+from ..rdf import RDFStore, get_store
 from ..result_parser import results_to_geojson
+from ..sparql_builder import build_entities_query, build_facet_query
+from ..sparql_terms import InvalidTerm, iri_term
 
 router = APIRouter()
 
@@ -21,7 +23,7 @@ async def get_entities(
     specs = store.get_property_specs()
     sparql = build_entities_query(specs, lang, request.query_params)
     results = store.query(sparql)
-    return results_to_geojson(results, specs)
+    return results_to_geojson(results, specs, lang)
 
 
 @router.get("/facets")
@@ -56,14 +58,13 @@ async def get_facets(
 @router.get("/detail")
 async def get_entity_detail(
     iri: str = Query(..., description="Full IRI of the entity"),
-    lang: str = Query("en", pattern="^(en|de)$"),
     store: RDFStore = Depends(get_store),
 ):
     """Returns single entity detail for popup."""
-    sparql = f"""
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    SELECT ?p ?o WHERE {{
-        <{iri}> ?p ?o .
-    }}
-    """
+    try:
+        subject = iri_term(iri)
+    except InvalidTerm as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    sparql = f"{SPARQL_PREFIXES}\n    SELECT ?p ?o WHERE {{ {subject} ?p ?o . }}"
     return store.query(sparql)
