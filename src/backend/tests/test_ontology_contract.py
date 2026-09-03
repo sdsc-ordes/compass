@@ -6,13 +6,16 @@ hardcoded in sparql_builder.py, schema.py, and result_parser.py.
 If any of these fail after an ontology edit, the corresponding backend code
 will break silently (empty results, missing fields, etc.).
 """
+
 import os
+from typing import ClassVar
 
 import pyshacl
-from rdflib import RDF, RDFS, Graph, Namespace, URIRef, SH
-from rdflib.namespace import SKOS, XSD
+from rdflib import RDF, RDFS, SH, Graph, URIRef
+from rdflib.namespace import SKOS
 
-from app.namespaces import GEO, COMPASS
+from app.namespaces import COMPASS, GEO
+from app.schema import _add_entity_type_filter
 
 _ONTOLOGY_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -22,10 +25,11 @@ _ONTOLOGY_DIR = os.path.join(
 
 # -- Top-level entity classes the SPARQL preamble UNION relies on --
 
+
 class TestTopLevelEntityClasses:
     """The UNION in _sparql_preamble() requires exactly these 4 classes."""
 
-    REQUIRED_CLASSES = [
+    REQUIRED_CLASSES: ClassVar[list] = [
         COMPASS.InternationalForum,
         COMPASS.Network,
         COMPASS.Project,
@@ -44,19 +48,19 @@ class TestTopLevelEntityClasses:
     def test_entity_type_filter_classes_match_ontology(self, rdflib_graph):
         """schema.py _add_entity_type_filter() hardcodes a list of type classes.
         Verify every class in that list matches what the ontology declares."""
-        from app.schema import _add_entity_type_filter
-
         dummy_filters = []
         _add_entity_type_filter(rdflib_graph, dummy_filters, "en")
         schema_type_iris = {opt["value"] for opt in dummy_filters[0]["options"]}
 
         expected = {str(cls) for cls in self.REQUIRED_CLASSES}
+        missing = expected - schema_type_iris
         assert expected <= schema_type_iris, (
-            f"Entity classes missing from _add_entity_type_filter: {expected - schema_type_iris}"
+            f"Entity classes missing from _add_entity_type_filter: {missing}"
         )
 
 
 # -- Required predicates that the SPARQL preamble hardcodes --
+
 
 class TestRequiredPredicates:
     """Predicates that _sparql_preamble() and _special_optionals() reference directly."""
@@ -74,9 +78,10 @@ class TestRequiredPredicates:
 
 # -- Named property shapes drive schema.py (via entity NodeShapes) --
 
+
 class TestNamedPropertyShapes:
-    """schema.py reads named sh:Shape IRIs from entity NodeShapes (those with sh:targetClass).
-    If entity NodeShapes lose their sh:property references, filters and SPARQL break."""
+    """schema.py reads named sh:Shape IRIs from entity NodeShapes -- those with a
+    sh:targetClass. Lose their sh:property references and filters and SPARQL break."""
 
     def _entity_prop_paths(self, g):
         paths = set()
@@ -107,12 +112,14 @@ class TestNamedPropertyShapes:
             "the sidebar description paragraph will be missing."
         )
 
+
 # -- Tag dimension vocabularies exist and have labels --
+
 
 class TestTagVocabularies:
     """All 6 SKOS-based tag dimension classes must have instances with prefLabels."""
 
-    TAG_CLASSES = [
+    TAG_CLASSES: ClassVar[list] = [
         COMPASS.WorkArea,
         COMPASS.Conservation,
         COMPASS.Topic,
@@ -133,8 +140,9 @@ class TestTagVocabularies:
         for cls in self.TAG_CLASSES:
             for s in rdflib_graph.subjects(RDF.type, cls):
                 labels = [
-                    l for l in rdflib_graph.objects(s, SKOS.prefLabel)
-                    if hasattr(l, 'language') and l.language == "en"
+                    label
+                    for label in rdflib_graph.objects(s, SKOS.prefLabel)
+                    if getattr(label, "language", None) == "en"
                 ]
                 assert labels, f"{s} (a {cls}) has no English skos:prefLabel"
 
@@ -142,13 +150,15 @@ class TestTagVocabularies:
         for cls in self.TAG_CLASSES:
             for s in rdflib_graph.subjects(RDF.type, cls):
                 labels = [
-                    l for l in rdflib_graph.objects(s, SKOS.prefLabel)
-                    if hasattr(l, 'language') and l.language == "de"
+                    label
+                    for label in rdflib_graph.objects(s, SKOS.prefLabel)
+                    if getattr(label, "language", None) == "de"
                 ]
                 assert labels, f"{s} (a {cls}) has no German skos:prefLabel"
 
 
 # -- Forum/Project entities have rdfs:label for tag label discovery --
+
 
 class TestForumProjectLabels:
     """InternationalForum and Project entities are used as tag values.
@@ -162,7 +172,8 @@ class TestForumProjectLabels:
             if not labels:
                 missing.append(str(s))
         assert not missing, (
-            f"InternationalForum entities missing rdfs:label (tag labels will be blank): {missing}"
+            "InternationalForum entities missing rdfs:label "
+            f"(tag labels will be blank): {missing}"
         )
 
     def test_projects_have_rdfs_label(self, rdflib_graph):
@@ -177,6 +188,7 @@ class TestForumProjectLabels:
 
 
 # -- All geo-located entities have a compass:name --
+
 
 class TestAllGeoEntitiesHaveLabels:
     """_sparql_preamble() does FILTER(BOUND(?label)) via compass:name.
@@ -195,6 +207,7 @@ class TestAllGeoEntitiesHaveLabels:
 
 
 # -- SHACL validation of instance data --
+
 
 class TestShaclValidation:
     """Instance data in compass.ttl must conform to shapes.ttl.

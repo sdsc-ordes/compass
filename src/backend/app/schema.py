@@ -5,14 +5,14 @@ from shapes.ttl, so adding a property shape is enough to make it filterable.
   get_filters_schema(): filter definitions for the UI
   get_property_specs(): property metadata driving SPARQL generation and parsing
 """
-from typing import Any, Dict, List
 
-from rdflib import Graph, Literal, Namespace, RDF, RDFS, SH, URIRef
+from typing import Any
+
+from rdflib import RDF, RDFS, SH, Graph, Literal, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import SKOS, XSD
 
 from .namespaces import COMPASS, GEO, SCHEMA
-
 
 # Handled by hand in the SPARQL preamble, so not filter dimensions
 _PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.name}
@@ -20,8 +20,12 @@ _PREAMBLE_PROPS = {GEO.lat, GEO.long, COMPASS.name}
 # Fetched for display but not filterable. relatedOrganization connects pins on
 # the map rather than filtering.
 _DISPLAY_ONLY = {
-    SCHEMA.url, SCHEMA.image, COMPASS.description, COMPASS.location,
-    SKOS.altLabel, COMPASS.relatedOrganization,
+    SCHEMA.url,
+    SCHEMA.image,
+    COMPASS.description,
+    COMPASS.location,
+    SKOS.altLabel,
+    COMPASS.relatedOrganization,
 }
 
 _SKIP_PROPS = _PREAMBLE_PROPS | _DISPLAY_ONLY
@@ -54,9 +58,9 @@ def get_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
     return str(subject).split("#")[-1].split("/")[-1]
 
 
-def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
+def get_filters_schema(g: Graph, lang: str = "en") -> list[dict[str, Any]]:
     """Build the filter UI schema from the SHACL property shapes."""
-    filters: List[Dict[str, Any]] = []
+    filters: list[dict[str, Any]] = []
 
     for prop in _entity_property_nodes(g):
         path = g.value(prop, SH.path)
@@ -70,10 +74,10 @@ def get_filters_schema(g: Graph, lang: str = "en") -> List[Dict[str, Any]]:
         target_class = g.value(prop, SH["class"])
         sh_in_list = list(g.objects(prop, SH["in"]))
         path_str = str(path)
-        local_name = path_str.split("#")[-1].split("/")[-1]
+        local_name = path_str.rsplit("#", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1]
 
         widget = _infer_widget(datatype)
-        filter_item: Dict[str, Any] = {
+        filter_item: dict[str, Any] = {
             "id": local_name,
             "path": path_str,
             "label": get_label(g, prop, SH.name, lang),
@@ -113,7 +117,9 @@ def _multiselect_options(g, path, target_class, sh_in_list, lang) -> list:
             options.append({"value": str(s), "label": get_label(g, s, RDFS.label, lang)})
     elif sh_in_list:
         for member in Collection(g, sh_in_list[0]):
-            options.append({"value": str(member), "label": get_label(g, member, RDFS.label, lang)})
+            options.append(
+                {"value": str(member), "label": get_label(g, member, RDFS.label, lang)}
+            )
     else:
         seen: dict = {}
         for val in g.objects(None, path):
@@ -124,7 +130,9 @@ def _multiselect_options(g, path, target_class, sh_in_list, lang) -> list:
                         "value": key,
                         "label": get_label(g, val, RDFS.label, lang),
                     }
-            elif isinstance(val, Literal) and (val.language == lang or val.language is None):
+            elif isinstance(val, Literal) and (
+                val.language == lang or val.language is None
+            ):
                 key = str(val)
                 if key not in seen:
                     seen[key] = {"value": key, "label": key}
@@ -132,11 +140,23 @@ def _multiselect_options(g, path, target_class, sh_in_list, lang) -> list:
     return sorted(options, key=lambda x: x["label"])
 
 
+def _numeric_values(g: Graph, path) -> list[float]:
+    """Every value of *path* that reads as a number; the rest are ignored.
+
+    A slider is only offered for numeric datatypes, so a value that will not
+    parse is a defect in the data rather than a case to widen the bounds for.
+    """
+    values = []
+    for value in g.objects(None, path):
+        try:
+            values.append(float(value))
+        except (TypeError, ValueError):
+            continue
+    return values
+
+
 def _slider_bounds(g, prop, path, datatype) -> dict:
-    vals = [
-        float(v) for v in g.objects(None, path)
-        if v.isnumeric() or isinstance(v, (int, float, Literal))
-    ]
+    vals = _numeric_values(g, path)
     if datatype == XSD.gYear:
         return {"min": min(vals) if vals else 1900, "max": max(vals) if vals else 2026}
     return {
@@ -156,23 +176,27 @@ def _datepicker_bounds(g, path) -> dict:
 def _add_entity_type_filter(g: Graph, filters: list, lang: str) -> None:
     """Append an entity-type multiselect for the 4 Compass entity classes."""
     type_classes = [
-        COMPASS.InternationalForum, COMPASS.Network,
-        COMPASS.PartnerOrganization, COMPASS.Project,
+        COMPASS.InternationalForum,
+        COMPASS.Network,
+        COMPASS.PartnerOrganization,
+        COMPASS.Project,
     ]
-    filters.append({
-        "id": "entityType",
-        "path": str(RDF.type),
-        "label": "Entity Type" if lang == "en" else "Eintragsart",
-        "type": "multiselect",
-        "order": 0,
-        "options": [
-            {"value": str(cls), "label": get_label(g, cls, RDFS.label, lang)}
-            for cls in type_classes
-        ],
-    })
+    filters.append(
+        {
+            "id": "entityType",
+            "path": str(RDF.type),
+            "label": "Entity Type" if lang == "en" else "Eintragsart",
+            "type": "multiselect",
+            "order": 0,
+            "options": [
+                {"value": str(cls), "label": get_label(g, cls, RDFS.label, lang)}
+                for cls in type_classes
+            ],
+        }
+    )
 
 
-def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
+def get_property_specs(g: Graph) -> list[dict[str, Any]]:
     """Metadata for every property needing an OPTIONAL clause and an output field."""
     specs = []
 
@@ -206,14 +230,16 @@ def get_property_specs(g: Graph) -> List[Dict[str, Any]]:
         category = _infer_category(datatype, is_iri)
         filter_type = _infer_filter_type(path, category, datatype)
 
-        specs.append({
-            "id": path_str.split("#")[-1].split("/")[-1],
-            "path_iri": path_str,
-            "category": category,
-            "is_multi": is_multi,
-            "filter_type": filter_type,
-            "datatype": str(datatype) if datatype else None,
-        })
+        specs.append(
+            {
+                "id": path_str.rsplit("#", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1],
+                "path_iri": path_str,
+                "category": category,
+                "is_multi": is_multi,
+                "filter_type": filter_type,
+                "datatype": str(datatype) if datatype else None,
+            }
+        )
 
     return specs
 
@@ -230,19 +256,29 @@ def _infer_category(datatype, is_iri: bool) -> str:
     return "simple_literal"  # integer, gYear, date, float, double
 
 
+# The widget a property gets, by category first and datatype second. A
+# category that settles the question never reaches the datatype table.
+_FILTER_BY_CATEGORY = {
+    "boolean": "toggle",
+    "iri_with_label": "multiselect",
+}
+_FILTER_BY_DATATYPE = {
+    str(XSD.integer): "slider",
+    str(XSD.float): "slider",
+    str(XSD.double): "slider",
+    str(XSD.gYear): "slider",
+    str(XSD.date): "datepicker",
+}
+
+
 def _infer_filter_type(path, category: str, datatype) -> str:
+    """The widget this property is filtered with, or "none" if it is display-only."""
     if path in _DISPLAY_ONLY or category == "uri_literal":
         return "none"
-    if category == "boolean":
-        return "toggle"
-    if category == "iri_with_label":
-        return "multiselect"
-    if datatype is not None and str(datatype) in {
-        str(XSD.integer), str(XSD.float), str(XSD.double), str(XSD.gYear)
-    }:
-        return "slider"
-    if datatype is not None and str(datatype) == str(XSD.date):
-        return "datepicker"
-    if category == "lang_literal":
-        return "multiselect"
-    return "none"
+    if category in _FILTER_BY_CATEGORY:
+        return _FILTER_BY_CATEGORY[category]
+    by_datatype = _FILTER_BY_DATATYPE.get(str(datatype) if datatype is not None else "")
+    if by_datatype:
+        return by_datatype
+    # Free-text values are still offered as a pick-list of what exists.
+    return "multiselect" if category == "lang_literal" else "none"

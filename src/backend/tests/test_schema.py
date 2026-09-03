@@ -3,8 +3,9 @@
 Validates that get_filters_schema() and get_property_specs() produce
 consistent, complete output from the real ontology shapes.
 """
-from app.schema import get_filters_schema, get_property_specs, _SKIP_PROPS, _DISPLAY_ONLY
+
 from app.namespaces import COMPASS, GEO
+from app.schema import _DISPLAY_ONLY, get_filters_schema, get_property_specs
 
 
 class TestGetFiltersSchema:
@@ -27,8 +28,10 @@ class TestGetFiltersSchema:
         et_filter = next(f for f in filters if f["id"] == "entityType")
         type_iris = {opt["value"] for opt in et_filter["options"]}
         expected = {
-            str(COMPASS.InternationalForum), str(COMPASS.Network),
-            str(COMPASS.PartnerOrganization), str(COMPASS.Project),
+            str(COMPASS.InternationalForum),
+            str(COMPASS.Network),
+            str(COMPASS.PartnerOrganization),
+            str(COMPASS.Project),
         }
         assert expected <= type_iris, (
             f"Missing entity types in filter: {expected - type_iris}"
@@ -39,7 +42,9 @@ class TestGetFiltersSchema:
         for f in filters:
             if f["type"] == "multiselect":
                 assert "options" in f, f"Multiselect filter {f['id']} has no options"
-                assert len(f["options"]) > 0, f"Multiselect filter {f['id']} has empty options"
+                assert len(f["options"]) > 0, (
+                    f"Multiselect filter {f['id']} has empty options"
+                )
 
     def test_slider_filters_have_bounds(self, rdflib_graph):
         filters = get_filters_schema(rdflib_graph, "en")
@@ -83,14 +88,24 @@ class TestGetPropertySpecs:
             )
 
     def test_spec_categories_valid(self, rdflib_graph):
-        valid = {"lang_literal", "simple_literal", "uri_literal", "iri_with_label", "boolean"}
+        valid = {
+            "lang_literal",
+            "simple_literal",
+            "uri_literal",
+            "iri_with_label",
+            "boolean",
+        }
         for spec in get_property_specs(rdflib_graph):
-            assert spec["category"] in valid, f"Invalid category '{spec['category']}' for {spec['id']}"
+            assert spec["category"] in valid, (
+                f"Invalid category '{spec['category']}' for {spec['id']}"
+            )
 
     def test_spec_filter_types_valid(self, rdflib_graph):
         valid = {"multiselect", "slider", "datepicker", "toggle", "none"}
         for spec in get_property_specs(rdflib_graph):
-            assert spec["filter_type"] in valid, f"Invalid filter_type '{spec['filter_type']}' for {spec['id']}"
+            assert spec["filter_type"] in valid, (
+                f"Invalid filter_type '{spec['filter_type']}' for {spec['id']}"
+            )
 
     def test_display_only_props_have_none_filter(self, rdflib_graph):
         """Properties in _DISPLAY_ONLY should get filter_type='none'."""
@@ -99,8 +114,8 @@ class TestGetPropertySpecs:
         for spec in specs:
             if spec["path_iri"] in display_iris:
                 assert spec["filter_type"] == "none", (
-                    f"Display-only property {spec['id']} has filter_type='{spec['filter_type']}' "
-                    f"instead of 'none'"
+                    f"Display-only property {spec['id']} has "
+                    f"filter_type='{spec['filter_type']}' instead of 'none'"
                 )
 
     def test_unique_lang_literals_are_single_valued(self, rdflib_graph):

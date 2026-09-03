@@ -1,9 +1,9 @@
 """RDF store wrapper: Oxigraph for SPARQL, rdflib for SHACL introspection."""
+
 import logging
 import os
 import time
-import traceback
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pyoxigraph
 from rdflib import Graph
@@ -13,14 +13,22 @@ from . import schema as _schema
 logger = logging.getLogger(__name__)
 
 
+class QueryError(Exception):
+    """A SPARQL query could not be executed. Carries the query for the log."""
+
+    def __init__(self, sparql: str, cause: Exception):
+        super().__init__(f"{type(cause).__name__}: {cause}")
+        self.sparql = sparql
+
+
 class RDFStore:
     def __init__(self, data_path: str, shapes_path: str, vocab_path: str):
         self.store = pyoxigraph.Store()
         self.data_path = data_path
         self.shapes_path = shapes_path
         self.vocab_path = vocab_path
-        self._rdflib_graph: Optional[Graph] = None
-        self._property_specs_cache: Optional[List[Dict[str, Any]]] = None
+        self._rdflib_graph: Graph | None = None
+        self._property_specs_cache: list[dict[str, Any]] | None = None
         self.load_data()
 
     def load_data(self) -> None:
@@ -42,8 +50,12 @@ class RDFStore:
             self._rdflib_graph = g
         return self._rdflib_graph
 
-    def query(self, sparql: str) -> List[Dict[str, Any]]:
-        """Run a SPARQL SELECT; one dict per row, unbound variables omitted."""
+    def query(self, sparql: str) -> list[dict[str, Any]]:
+        """Run a SPARQL SELECT; one dict per row, unbound variables omitted.
+
+        Raise QueryError, with the query that failed attached, so the cause is
+        recoverable from the trace rather than surfacing as a bare 500.
+        """
         start = time.time()
         try:
             results = self.store.query(sparql)
@@ -53,24 +65,28 @@ class RDFStore:
                 for var in results.variables:
                     val = row[var]
                     if val is not None:
-                        item[var.value] = f"_:{val.value}" if isinstance(val, pyoxigraph.BlankNode) else val.value
+                        item[var.value] = (
+                            f"_:{val.value}"
+                            if isinstance(val, pyoxigraph.BlankNode)
+                            else val.value
+                        )
                 parsed.append(item)
             logger.debug("SPARQL query executed in %.4fs", time.time() - start)
             return parsed
-        except Exception:
-            traceback.print_exc()
-            raise
+        except Exception as exc:
+            logger.exception("SPARQL query failed:\n%s", sparql)
+            raise QueryError(sparql, exc) from exc
 
-    def get_filters_schema(self, lang: str = "en") -> List[Dict[str, Any]]:
+    def get_filters_schema(self, lang: str = "en") -> list[dict[str, Any]]:
         return _schema.get_filters_schema(self.rdflib_graph, lang)
 
-    def get_property_specs(self) -> List[Dict[str, Any]]:
+    def get_property_specs(self) -> list[dict[str, Any]]:
         if self._property_specs_cache is None:
             self._property_specs_cache = _schema.get_property_specs(self.rdflib_graph)
         return self._property_specs_cache
 
 
-store_instance: Optional[RDFStore] = None
+store_instance: RDFStore | None = None
 
 # Where the Turtle files live. Set COMPASS_ONTOLOGY_DIR to read them from a
 # mounted volume instead of the copy inside the image, so editorial updates do
@@ -116,17 +132,21 @@ def _validate(candidate: RDFStore) -> None:
         "SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s geo:lat ?lat . }"
     )
     if not rows or int(rows[0].get("n", 0)) == 0:
-        raise ReloadError("no entity in the data has coordinates, so the map would be empty")
+        raise ReloadError(
+            "no entity in the data has coordinates, so the map would be empty"
+        )
 
 
-def reload_store() -> Dict[str, Any]:
+def reload_store() -> dict[str, Any]:
     """Swap in the files currently on disk, keeping the live store on failure.
 
     The candidate is built and validated in full before `store_instance` moves,
     so a bad edit leaves the last good version serving rather than taking the
     API down with it.
     """
-    global store_instance
+    # The single live store is the whole point of this module: a reload swaps
+    # it atomically so in-flight requests keep the version they started with.
+    global store_instance  # noqa: PLW0603
     try:
         candidate = _build_store()
         _validate(candidate)
@@ -146,7 +166,7 @@ def reload_store() -> Dict[str, Any]:
 
 
 def get_store() -> RDFStore:
-    global store_instance
+    global store_instance  # noqa: PLW0603 -- see reload_store
     if store_instance is None:
         store_instance = _build_store()
     return store_instance

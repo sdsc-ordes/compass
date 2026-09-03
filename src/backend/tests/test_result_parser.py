@@ -3,25 +3,30 @@
 Unit tests for the SPARQL-result-to-GeoJSON conversion layer, plus
 integration tests that verify the full round-trip from real SPARQL queries.
 """
-import pytest
+
 from starlette.datastructures import QueryParams
 
 from app.result_parser import (
+    _parse_special_properties,
     extract_property,
     results_to_geojson,
-    _parse_special_properties,
 )
 from app.sparql_builder import build_entities_query
 
 
 class TestParseSpecialProperties:
-    def test_extracts_entity_tag_id(self):
-        props = _parse_special_properties({"wpEntityTagId": "921"})
-        assert props["wpEntityTagId"] == "921"
+    def test_builds_the_english_stories_url(self):
+        props = _parse_special_properties({"wpEntityTagId": "921"}, "en")
+        assert props["storiesUrl"].endswith("?tag=921")
+        assert "/en/" in props["storiesUrl"]
 
-    def test_missing_fields_default_empty(self):
-        props = _parse_special_properties({})
-        assert props["wpEntityTagId"] == ""
+    def test_builds_the_german_stories_url(self):
+        props = _parse_special_properties({"wpEntityTagId": "921"}, "de")
+        assert props["storiesUrl"].endswith("?tag=921")
+        assert "/de/" in props["storiesUrl"]
+
+    def test_no_tag_id_means_no_url(self):
+        assert _parse_special_properties({}, "en")["storiesUrl"] == ""
 
 
 class TestExtractProperty:
@@ -50,10 +55,10 @@ class TestExtractProperty:
         assert result == ["Research", "Education", "Policy"]
 
 
-
 # ---------------------------------------------------------------------------
 # Integration: full round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestResultsToGeojsonIntegration:
     def test_round_trip_produces_features(self, store, property_specs):
