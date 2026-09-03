@@ -8,10 +8,10 @@
   import EntitySidebar from './shared/EntitySidebar.svelte';
   import ShareModal from './shared/ShareModal.svelte';
   import { i18n, type Lang } from './shared/i18n';
-  import { getEntities, getFacets } from './engine';
+  import { getEntities, getFacets, init as initEngine } from './engine';
   import { Map as MapIcon, List, Globe, Languages, ChevronRight, ChevronLeft, Share2 } from 'lucide-svelte';
 
-  /** Only used by the story-count proxy and ?state= links. */
+  /** The API the widget reads its data from, and posts share links to. */
   export let apiurl = '';
   export let lang: Lang = 'en';
 
@@ -27,6 +27,9 @@
   let filterOpen = true;
   let sidebarVisible = false;
   let mounted = false;
+  // The filter panel and the tag chips read the schema synchronously as they
+  // render, so nothing depending on it may mount before init() resolves.
+  let engineReady = false;
 
   $: t = i18n[lang] || i18n.en;
 
@@ -43,6 +46,17 @@
   onMount(async () => {
     // Start with filters collapsed on small screens so the map is visible first.
     if (typeof window !== 'undefined' && window.innerWidth < 900) filterOpen = false;
+
+    // The filter panel and the tag chips read the schema synchronously, so it
+    // has to be in hand before anything renders against it.
+    try {
+      await initEngine(apiurl);
+      engineReady = true;
+    } catch (e: any) {
+      error = `Cannot reach the API at ${apiurl || '(no apiurl set)'}: ${e?.message ?? e}`;
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     if (params.has('lang')) lang = params.get('lang') as Lang;
     
@@ -83,7 +97,7 @@
   // Discards the results of a query that a newer one has superseded.
   let loadSeq = 0;
 
-  // The SPARQL calls are synchronous wasm; yielding lets Svelte paint first.
+  // Facets are a second request; yielding lets the map paint before it runs.
   const nextTick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
   async function loadData(l: Lang, f: any) {
@@ -242,7 +256,7 @@
   }
 </script>
 
-<main class="compass-app">
+<main class="compass-app" lang={lang}>
   <header class="app-header">
     <div class="brand">
       <div class="logo">
@@ -252,7 +266,7 @@
     </div>
     
     <div class="controls">
-      <div class="view-toggle">
+      <div class="view-toggle" role="group" aria-label={t.viewSwitcher}>
         <button class:active={viewMode === 'map'} aria-pressed={viewMode === 'map'} on:click={() => viewMode = 'map'}>
           <MapIcon size={16} />
           <span>{t.mapView}</span>
@@ -268,7 +282,11 @@
         <span>{t.share}</span>
       </button>
 
-      <button class="lang-toggle" on:click={toggleLang}>
+      <button
+        class="lang-toggle"
+        on:click={toggleLang}
+        aria-label={lang === 'de' ? t.switchToEnglish : t.switchToGerman}
+      >
         <Languages size={18} />
         <span>{lang.toUpperCase()}</span>
       </button>
@@ -277,12 +295,23 @@
   </header>
 
   <div class="content">
+    {#if error && !engineReady}
+      <div class="status-overlay error">
+        <p>{error}</p>
+        <button on:click={() => location.reload()}>Retry</button>
+      </div>
+    {:else if !engineReady}
+      <div class="status-overlay loading">
+        <div class="spinner"></div>
+        <p>{t.loading}</p>
+      </div>
+    {:else}
     {#if !filterOpen}
-      <button class="filter-reopen-tab" on:click={() => (filterOpen = true)} title="Show filters" aria-label="Open filter panel">
+      <button class="filter-reopen-tab" on:click={() => (filterOpen = true)} aria-label={t.openFilters}>
         <ChevronRight size={16} />
       </button>
     {/if}
-    <div class="sidebar" class:closed={!filterOpen}>
+    <div class="sidebar" class:closed={!filterOpen} role="region" aria-label={t.filterRegion}>
       <TagPanel
         {lang}
         initialFilters={activeFilters}
@@ -292,7 +321,12 @@
         {resultCount}
       />
     </div>
-    <div class="main-area">
+    <div class="main-area" aria-busy={isLoading}>
+      <!-- Filtering happens without a page change, so the new result count is
+           announced; without this a screen reader user gets silence. -->
+      <p class="visually-hidden" role="status" aria-live="polite">
+        {isLoading ? t.loading : `${resultCount} ${t.resultsAnnouncement}`}
+      </p>
       {#if error}
         <div class="status-overlay error">
           <p>{error}</p>
@@ -310,13 +344,20 @@
       {/if}
 
       {#if selectedEntity && !sidebarVisible}
-        <button class="sidebar-reopen-tab" on:click={() => (sidebarVisible = true)} title="Show detail panel" aria-label="Open detail panel">
+        <button class="sidebar-reopen-tab" on:click={() => (sidebarVisible = true)} aria-label={t.openDetails}>
           <ChevronLeft size={16} />
         </button>
       {/if}
 
       {#if viewMode === 'map'}
-        <Map {lang} {entities} {resultCount} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
+        <Map {lang} {entities} {resultCount} tileurl={apiurl} frameRegions={thematicFilterActive} detailOpen={!!(selectedEntity && sidebarVisible)} onEntitySelect={handleEntitySelect} activeTypeFilters={legendTypeFilters} onTypeFilterChange={handleTypeFilterChange} {storyCount} {storyCountLoading} storyActive={storyTagIris.length > 0} />
+        <!-- A canvas map carries nothing for a screen reader, so the same
+             results are rendered as a table off-screen. Reusing ListView keeps
+             the alternative complete by construction. -->
+        <div class="visually-hidden">
+          <h3>{t.textAlternative}</h3>
+          <ListView {entities} {lang} />
+        </div>
       {:else}
         <ListView {entities} {lang} />
       {/if}
@@ -331,6 +372,7 @@
         />
       {/if}
     </div>
+    {/if}
   </div>
 
   {#if showShareModal && shareLink}
@@ -339,6 +381,29 @@
 </main>
 
 <style>
+  /* Off-screen but in the accessibility tree. Not display:none, which would
+     hide it from screen readers too, and not width/height 0, which drops the
+     text from the a11y tree in some engines. */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* A visible focus ring on every interactive element; several controls are
+     icon-only, where the browser default is easy to lose. */
+  .compass-app :is(button, a, input, select, [tabindex]):focus-visible {
+    outline: 2px solid #0284c7;
+    outline-offset: 2px;
+  }
+
   :host {
     display: block;
     width: 100%;
@@ -447,7 +512,7 @@
     border: none;
     border-right: 1px solid #e2e8f0;
     background: #f8fafc;
-    color: #94a3b8;
+    color: #64748b;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
     padding: 0;

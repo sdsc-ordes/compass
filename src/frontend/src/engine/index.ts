@@ -1,57 +1,77 @@
-/** Everything the UI needs from the ontology: entities, facet counts, filters. */
-import { initStore, query } from './oxigraph';
-import { buildEntitiesQuery, buildFacetQuery, toParamMap } from './sparqlBuilder';
-import { resultsToGeojson, type FeatureCollection } from './resultParser';
-import type { Spec, Filters } from './namespaces';
+/**
+ * Everything the UI needs from the ontology, fetched from the API.
+ *
+ * The API owns the data, so an editorial update reaches the widget on the next
+ * request -- no rebuild, and no second copy of the query layer to keep in step
+ * with the backend's.
+ */
+import type { Filters } from './namespaces';
 
-import specsJson from '../generated/specs.json';
-import filtersEn from '../generated/filters.en.json';
-import filtersDe from '../generated/filters.de.json';
-
-const specs = specsJson as unknown as Spec[];
-const filtersByLang: Record<string, any[]> = {
-  en: filtersEn as unknown as any[],
-  de: filtersDe as unknown as any[],
+export type Feature = {
+  type: 'Feature';
+  geometry: { type: string; coordinates: any } | null;
+  properties: Record<string, any>;
 };
+export type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] };
 
-// entityType is the map legend; relatedProject and forum are relations, not tags.
-const FACET_EXCLUDED = new Set(['entityType', 'relatedProject', 'forum']);
+/** Filter schema per language, fetched once by init(). */
+const schemaByLang: Record<string, any[]> = {};
+let apiBase = '';
 
-let ready = false;
+/** Turn the UI's filter object into query parameters, one entry per value. */
+function toParams(lang: string, filters: Filters): URLSearchParams {
+  const params = new URLSearchParams({ lang });
+  for (const [key, value] of Object.entries(filters ?? {})) {
+    if (value === undefined || value === null) continue;
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item !== undefined && item !== null && item !== '') {
+        params.append(key, String(item));
+      }
+    }
+  }
+  return params;
+}
 
-/** Load the RDF into oxigraph. Idempotent; safe to await repeatedly. */
-export async function init(): Promise<void> {
-  if (ready) return;
-  await initStore();
-  ready = true;
+async function getJson(path: string, params?: URLSearchParams): Promise<any> {
+  const query = params ? `?${params}` : '';
+  const response = await fetch(`${apiBase}${path}${query}`);
+  if (!response.ok) {
+    throw new Error(`${path} returned HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+/**
+ * Point the engine at an API and load the filter schema for both languages.
+ *
+ * The schema is prefetched rather than requested per render so that
+ * getFiltersSchema stays synchronous for the components that read it during
+ * reactive updates. It lists every tag value, so it has to come from the API:
+ * adding a concept changes it.
+ */
+export async function init(url: string): Promise<void> {
+  apiBase = (url ?? '').replace(/\/$/, '');
+  const [en, de] = await Promise.all([
+    getJson('/api/filters/schema', new URLSearchParams({ lang: 'en' })),
+    getJson('/api/filters/schema', new URLSearchParams({ lang: 'de' })),
+  ]);
+  schemaByLang.en = en;
+  schemaByLang.de = de;
 }
 
 export async function getEntities(lang: string, filters: Filters): Promise<FeatureCollection> {
-  await init();
-  const sparql = buildEntitiesQuery(specs, lang, toParamMap(filters));
-  return resultsToGeojson(query(sparql), specs);
+  return getJson('/api/entities/', toParams(lang, filters));
 }
 
 /** Drill-down counts per tag: { dimensionId: { tagIri: count } }. */
-export async function getFacets(lang: string, filters: Filters): Promise<Record<string, Record<string, number>>> {
-  await init();
-  const params = toParamMap(filters);
-  const facets: Record<string, Record<string, number>> = {};
-  for (const spec of specs) {
-    if (spec.filter_type !== 'multiselect' || spec.category !== 'iri_with_label' || FACET_EXCLUDED.has(spec.id)) {
-      continue;
-    }
-    const rows = query(buildFacetQuery(specs, lang, params, spec.id));
-    const counts: Record<string, number> = {};
-    for (const row of rows) {
-      if (row['val'] && row['n']) counts[row['val']] = parseInt(row['n'], 10);
-    }
-    facets[spec.id] = counts;
-  }
-  return facets;
+export async function getFacets(
+  lang: string,
+  filters: Filters,
+): Promise<Record<string, Record<string, number>>> {
+  return getJson('/api/entities/facets', toParams(lang, filters));
 }
 
-/** Precomputed filter UI schema for a language (falls back to English). */
+/** Filter UI schema for a language, from init()'s prefetch (English fallback). */
 export function getFiltersSchema(lang: string): any[] {
-  return filtersByLang[lang] ?? filtersByLang.en;
+  return schemaByLang[lang] ?? schemaByLang.en ?? [];
 }

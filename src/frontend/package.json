@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-notices.mjs && vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
@@ -22,7 +22,6 @@
     "geojson": "^0.5.0",
     "lucide-svelte": "^0.300.0",
     "maplibre-gl": "^5.0.0",
-    "oxigraph": "^0.4.11",
     "qrcode": "^1.5.4"
   }
 }
