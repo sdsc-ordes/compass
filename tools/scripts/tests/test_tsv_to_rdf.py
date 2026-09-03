@@ -1,14 +1,17 @@
 """Tests for the source-data to RDF generator."""
+
 import sys
 from pathlib import Path
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from odf.table import TableCell, TableRow
+from odf.text import P
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import tsv_to_rdf as gen  # noqa: E402
+import tsv_to_rdf as gen
 
 
 @pytest.fixture(scope="module")
@@ -93,9 +96,9 @@ def test_every_language_paired_field_reaches_both_languages(tables):
             counts: dict[tuple[str, str], int] = {}
             for predicate, value in build(row):
                 if value.endswith(('"@en', '"@de')):
-                    counts[(predicate, value[-3:])] = counts.get(
-                        (predicate, value[-3:]), 0
-                    ) + 1
+                    counts[(predicate, value[-3:])] = (
+                        counts.get((predicate, value[-3:]), 0) + 1
+                    )
             predicates = {p for p, _ in counts}
             for predicate in predicates:
                 english = counts.get((predicate, "@en"), 0)
@@ -155,8 +158,10 @@ def test_problems_accumulate(kinds):
 def test_duplicate_id_is_reported():
     problems = gen.Problems()
     gen.index_terms(
-        [row(gen.CONCEPTS, id="Whales", dimension="Species"),
-         row(gen.CONCEPTS, id="Whales", dimension="Species")],
+        [
+            row(gen.CONCEPTS, id="Whales", dimension="Species"),
+            row(gen.CONCEPTS, id="Whales", dimension="Species"),
+        ],
         [],
         problems,
     )
@@ -173,13 +178,18 @@ def test_unknown_dimension_is_reported():
 
 def test_non_numeric_cell_is_reported():
     problems = gen.Problems()
-    assert gen.number(row(gen.CONCEPTS, wp_tag_id="four-five-five"), "wp_tag_id", problems, int) == ""
+    assert (
+        gen.number(
+            row(gen.CONCEPTS, wp_tag_id="four-five-five"), "wp_tag_id", problems, int
+        )
+        == ""
+    )
     assert len(problems.items) == 1
 
 
 def test_a_wrong_header_names_the_columns():
     with pytest.raises(gen.SheetError, match="missing"):
-        gen.read_table(gen.CONCEPTS, gen.CONCEPT_COLUMNS + ["no_such_column"])
+        gen.read_table(gen.CONCEPTS, [*gen.CONCEPT_COLUMNS, "no_such_column"])
 
 
 def test_an_unknown_sheet_is_named():
@@ -193,19 +203,15 @@ def test_an_unknown_sheet_is_named():
 )
 def test_stored_numbers_beat_displayed_text(text, expected):
     """A spreadsheet may display a rounded number; the stored value is authoritative."""
-    from odf.table import TableCell
-    from odf.text import P
-
-    cell = TableCell(valuetype="float", value=text) if text else TableCell(valuetype="string")
+    cell = (
+        TableCell(valuetype="float", value=text) if text else TableCell(valuetype="string")
+    )
     cell.addElement(P(text="rounded"))
     assert gen._cell_text(cell) == (expected if text else "rounded")
 
 
 def test_repeated_cells_expand():
     """Spreadsheets pack runs of identical cells; the reader must unpack them."""
-    from odf.table import TableCell, TableRow
-    from odf.text import P
-
     row = TableRow()
     first = TableCell(valuetype="string")
     first.addElement(P(text="a"))
@@ -256,7 +262,7 @@ def test_coordinates_keep_five_decimals(value):
 @pytest.mark.parametrize(
     "text, expected",
     [
-        ('plain', '"plain"@en'),
+        ("plain", '"plain"@en'),
         ('a "quoted" word', '"a \\"quoted\\" word"@en'),
         ("back\\slash", '"back\\\\slash"@en'),
     ],
@@ -286,8 +292,12 @@ def test_predicates_emit_in_a_fixed_order():
 
 def test_output_matches_the_committed_files():
     data, vocab = gen.generate()
-    assert gen.OUT_DATA.read_text(encoding="utf-8") == data, "compass.ttl is stale; run `just data`"
-    assert gen.OUT_VOCAB.read_text(encoding="utf-8") == vocab, "vocab.ttl is stale; run `just data`"
+    assert gen.OUT_DATA.read_text(encoding="utf-8") == data, (
+        "compass.ttl is stale; run `just data`"
+    )
+    assert gen.OUT_VOCAB.read_text(encoding="utf-8") == vocab, (
+        "vocab.ttl is stale; run `just data`"
+    )
 
 
 def test_generation_is_repeatable():
@@ -297,3 +307,26 @@ def test_generation_is_repeatable():
 def test_generated_data_passes_shacl():
     data, vocab = gen.generate()
     gen.validate(data, vocab)
+
+
+class TestMissingSchemeRow:
+    """The error path for an absent scheme row used to crash on a str attribute."""
+
+    def test_reports_the_missing_dimension(self):
+        schemes = [
+            gen.Row(
+                number=2,
+                table="schemes",
+                cells={
+                    "id": d,
+                    "name_en": d,
+                    "name_de": d,
+                    "definition_en": "",
+                    "definition_de": "",
+                },
+            )
+            for d in gen.DIMENSIONS[:-1]
+        ]
+        with pytest.raises(gen.SheetError) as excinfo:
+            gen.build_vocab(schemes, [], gen.Problems(), gen.Fallbacks())
+        assert gen.DIMENSIONS[-1] in str(excinfo.value)

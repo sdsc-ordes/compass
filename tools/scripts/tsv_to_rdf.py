@@ -16,6 +16,7 @@ region is on the map only because some pin points at it.
 Subject order, predicate order and float precision are all pinned, so unchanged
 input produces byte-identical output.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,6 +24,10 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import pyshacl
+from odf.opendocument import load
+from odf.table import Table, TableCell, TableRow
+from odf.text import P
 from rdflib import Graph
 
 REPO = Path(__file__).resolve().parents[2]
@@ -68,13 +73,32 @@ MANAGED_BY_OCEANCARE = {"OceanCare"}
 
 SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition_en", "definition_de"]
 CONCEPT_COLUMNS = [
-    "id", "dimension", "name_en", "name_de", "wp_tag_id", "iso_codes", "notes",
+    "id",
+    "dimension",
+    "name_en",
+    "name_de",
+    "wp_tag_id",
+    "iso_codes",
+    "notes",
 ]
 PIN_COLUMNS = [
-    "id", "class", "name_en", "name_de", "long_name_en", "long_name_de",
-    "lat", "lon", "location_en", "location_de",
-    "description_en", "description_de", "url", "logo",
-    "wp_entity_tag_id", "links", "notes",
+    "id",
+    "class",
+    "name_en",
+    "name_de",
+    "long_name_en",
+    "long_name_de",
+    "lat",
+    "lon",
+    "location_en",
+    "location_de",
+    "description_en",
+    "description_de",
+    "url",
+    "logo",
+    "wp_entity_tag_id",
+    "links",
+    "notes",
 ]
 
 # Emission order within a subject block. Anything unlisted sorts last, by name.
@@ -174,8 +198,6 @@ class Row:
 
 def _cell_text(cell) -> str:
     """A cell's value, preferring the stored number over its displayed form."""
-    from odf.text import P
-
     if cell.getAttribute("valuetype") == "float":
         stored = cell.getAttribute("value")
         if stored is not None:
@@ -186,8 +208,6 @@ def _cell_text(cell) -> str:
 
 def _row_values(row, width: int) -> list[str]:
     """Expand a row's cells, honouring the repeat counts spreadsheets pack with."""
-    from odf.table import TableCell
-
     values: list[str] = []
     for cell in row.getElementsByType(TableCell):
         if len(values) >= width:
@@ -198,9 +218,6 @@ def _row_values(row, width: int) -> list[str]:
 
 
 def _sheet(name: str):
-    from odf.opendocument import load
-    from odf.table import Table
-
     if not WORKBOOK.exists():
         raise SheetError(f"{display(WORKBOOK)} is missing")
     for table in load(WORKBOOK).spreadsheet.getElementsByType(Table):
@@ -211,8 +228,6 @@ def _sheet(name: str):
 
 def read_table(name: str, columns: list[str]) -> list[Row]:
     """Read one sheet of the workbook, requiring exactly the expected header."""
-    from odf.table import TableRow
-
     sheet_rows = _sheet(name).getElementsByType(TableRow)
     if not sheet_rows:
         raise SheetError(f"sheet {name!r} is empty")
@@ -241,7 +256,14 @@ def read_table(name: str, columns: list[str]) -> list[Row]:
         for _ in range(repeat if any(values) else 1):
             number += 1
             if any(values):
-                rows.append(Row(number=number, table=name, cells=dict(zip(columns, values))))
+                rows.append(
+                    Row(
+                        number=number,
+                        table=name,
+                        # _row_values pads to len(columns), so the two always match.
+                        cells=dict(zip(columns, values, strict=True)),
+                    )
+                )
     return rows
 
 
@@ -254,7 +276,10 @@ def index_terms(concepts: list[Row], pins: list[Row], problems: Problems) -> dic
     """Map every id to the dimension or class it belongs to."""
     kinds: dict[str, str] = {}
     seen: dict[str, Row] = {}
-    for rows, column, allowed in ((concepts, "dimension", DIMENSIONS), (pins, "class", CLASSES)):
+    for rows, column, allowed in (
+        (concepts, "dimension", DIMENSIONS),
+        (pins, "class", CLASSES),
+    ):
         for row in rows:
             identifier = row["id"]
             if not identifier:
@@ -262,14 +287,16 @@ def index_terms(concepts: list[Row], pins: list[Row], problems: Problems) -> dic
                 continue
             if identifier in seen:
                 problems.add(
-                    row.table, row.number,
+                    row.table,
+                    row.number,
                     f"id {identifier!r} is already used by "
                     f"{seen[identifier].table}:{seen[identifier].number}",
                 )
                 continue
             if row[column] not in allowed:
                 problems.add(
-                    row.table, row.number,
+                    row.table,
+                    row.number,
                     f"{column} {row[column]!r} is not one of {sorted(allowed)}",
                 )
                 continue
@@ -289,7 +316,8 @@ def parse_links(row: Row, kinds: dict[str, str], problems: Problems) -> dict[str
             continue
         if target not in kinds:
             problems.add(
-                row.table, row.number,
+                row.table,
+                row.number,
                 f"link to unknown id {target!r} -- check the spelling, or add the row",
             )
             continue
@@ -437,7 +465,8 @@ def pin_triples(
         triples.append(("geo:long", coordinate(longitude)))
     else:
         problems.add(
-            row.table, row.number,
+            row.table,
+            row.number,
             f"{row['id']!r} has no coordinates, so it can never reach the map",
         )
     return triples
@@ -458,7 +487,9 @@ def order_key(triple: tuple[str, str]) -> tuple[int, str, int, str]:
     else:
         rank = len(PREDICATE_ORDER)
     suffix = value[-3:]
-    language = LANGUAGE_ORDER.index(suffix) if suffix in LANGUAGE_ORDER else len(LANGUAGE_ORDER)
+    language = (
+        LANGUAGE_ORDER.index(suffix) if suffix in LANGUAGE_ORDER else len(LANGUAGE_ORDER)
+    )
     return (rank, predicate if rank == len(PREDICATE_ORDER) else "", language, value)
 
 
@@ -486,12 +517,12 @@ def render_file(sections: list[tuple[str, list[str]]]) -> str:
 
 
 def build_vocab(
-    schemes: list[Row], concepts: list[Row], problems, fallbacks: Fallbacks
+    schemes: list[Row], concepts: list[Row], problems: Problems, fallbacks: Fallbacks
 ) -> str:
     by_id = {row["id"]: row for row in schemes}
     missing = [d for d in DIMENSIONS if d not in by_id]
     if missing:
-        raise SheetError(f"{SCHEMES.name} has no row for {missing}")
+        raise SheetError(f"sheet {SCHEMES!r} has no row for {missing}")
 
     sections: list[tuple[str, list[str]]] = []
     for dimension in DIMENSIONS:
@@ -507,32 +538,31 @@ def build_vocab(
         scheme_triples += bilingual_triples(
             scheme, "definition", "skos:definition", fallbacks
         )
-        scheme_triples += [
-            ("skos:hasTopConcept", f"compass:{m['id']}") for m in members
-        ]
+        scheme_triples += [("skos:hasTopConcept", f"compass:{m['id']}") for m in members]
         scheme_triples.append(("dct:isPartOf", f"<{ONTOLOGY_NS.rstrip('#')}>"))
 
         blocks = [render_subject(f"compass:{dimension}Scheme", scheme_triples)]
         blocks += [
-            render_subject(
-                f"compass:{m['id']}", concept_triples(m, problems, fallbacks)
-            )
+            render_subject(f"compass:{m['id']}", concept_triples(m, problems, fallbacks))
             for m in members
         ]
         sections.append((f"{scheme['name_en']} ({len(members)} concepts)", blocks))
     return render_file(sections)
 
 
-def build_data(pins: list[Row], kinds, problems, fallbacks: Fallbacks) -> str:
+def build_data(
+    pins: list[Row],
+    kinds: dict[str, str],
+    problems: Problems,
+    fallbacks: Fallbacks,
+) -> str:
     sections: list[tuple[str, list[str]]] = []
     for entity_class, title in CLASSES.items():
         members = sorted(
             (r for r in pins if r["class"] == entity_class), key=lambda r: r["id"]
         )
         blocks = [
-            render_subject(
-                f"ocinst:{m['id']}", pin_triples(m, kinds, problems, fallbacks)
-            )
+            render_subject(f"ocinst:{m['id']}", pin_triples(m, kinds, problems, fallbacks))
             for m in members
         ]
         sections.append((f"{title} ({len(members)})", blocks))
@@ -545,8 +575,6 @@ def build_data(pins: list[Row], kinds, problems, fallbacks: Fallbacks) -> str:
 
 
 def validate(data: str, vocab: str) -> None:
-    import pyshacl
-
     shapes = Graph().parse(SHAPES, format="turtle")
     graph = Graph()
     graph.parse(data=data, format="turtle")
