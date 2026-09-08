@@ -9,11 +9,12 @@ from fastapi.responses import JSONResponse
 
 from app.core.exceptions import (
     AppError,
+    QueryError,
+    ReloadError,
     ReloadNotConfiguredError,
     UnauthorizedError,
     UnsupportedLangError,
 )
-from app.rdf import QueryError, ReloadError
 from app.sparql_terms import InvalidTerm
 
 logger = logging.getLogger(__name__)

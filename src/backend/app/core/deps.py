@@ -9,7 +9,7 @@ from fastapi import Depends, Query
 from app.config import Config, config
 from app.core.exceptions import UnsupportedLangError
 from app.core.settings import Settings, settings
-from app.rdf import RDFStore, get_store
+from app.rdf import RDFStore
 
 
 def get_settings() -> Settings:
@@ -32,6 +32,6 @@ def get_lang(
 
 
 Lang = Annotated[str, Depends(get_lang)]
-StoreDep = Annotated[RDFStore, Depends(get_store)]
+StoreDep = Annotated[RDFStore, Depends(RDFStore.instance)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 ConfigDep = Annotated[Config, Depends(get_config)]

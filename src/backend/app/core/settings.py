@@ -7,7 +7,17 @@ from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_DEV_ORIGINS = "http://localhost:5173,http://localhost:4173"
+# Origins of the *page* that calls the API (Vite / preview), not the API port.
+# Include both localhost and 127.0.0.1 — browsers treat them as different origins.
+_DEV_ORIGINS = (
+    "http://localhost:5173,http://127.0.0.1:5173,"
+    "http://localhost:5174,http://127.0.0.1:5174,"
+    "http://localhost:4173,http://127.0.0.1:4173"
+)
+
+# Any loopback Vite/preview port (5173 busy → 5174, etc.). Used when the widget
+# still calls the API cross-origin instead of via the Vite /api proxy.
+_DEV_ORIGIN_REGEX = r"https?://(localhost|127\.0\.0\.1)(:\d+)?"
 
 
 def _default_ontology_dir() -> Path:

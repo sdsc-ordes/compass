@@ -19,3 +19,15 @@ class UnauthorizedError(AppError):
 
 class UnsupportedLangError(AppError):
     """The lang query parameter is not in the use-case Config."""
+
+
+class ReloadError(AppError):
+    """The files on disk are not usable. The store already serving is untouched."""
+
+
+class QueryError(AppError):
+    """A SPARQL query could not be executed. Carries the query for the log."""
+
+    def __init__(self, sparql: str, cause: Exception):
+        self.sparql = sparql
+        super().__init__(f"{type(cause).__name__}: {cause}")

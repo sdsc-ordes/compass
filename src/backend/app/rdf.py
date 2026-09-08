@@ -1,25 +1,20 @@
 """RDF store wrapper: Oxigraph for SPARQL, rdflib for SHACL introspection."""
 
+from __future__ import annotations
+
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, ClassVar
 
 import pyoxigraph
 from rdflib import Graph
 
 from . import schema as _schema
+from .core.exceptions import QueryError, ReloadError
 from .core.settings import settings
 
 logger = logging.getLogger(__name__)
-
-
-class QueryError(Exception):
-    """A SPARQL query could not be executed. Carries the query for the log."""
-
-    def __init__(self, sparql: str, cause: Exception):
-        super().__init__(f"{type(cause).__name__}: {cause}")
-        self.sparql = sparql
 
 
 class RDFStore:
@@ -86,80 +81,69 @@ class RDFStore:
             self._property_specs_cache = _schema.get_property_specs(self.rdflib_graph)
         return self._property_specs_cache
 
+    def validate(self) -> None:
+        """Reject a store that parsed but cannot answer a query.
 
-store_instance: RDFStore | None = None
+        Turtle can parse and still be useless -- a truncated file, or shapes that
+        no longer describe the data -- and a reload that swapped such a store in
+        would take the map down. Deriving the specs exercises the SHACL
+        introspection the whole query layer is built on, and counting entities
+        proves the data reached the store.
+        """
+        specs = self.get_property_specs()
+        if not specs:
+            raise ReloadError(
+                "the shapes yielded no property specs, so no filter would work"
+            )
+        rows = self.query(
+            "PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> "
+            "SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s geo:lat ?lat . }"
+        )
+        if not rows or int(rows[0].get("n", 0)) == 0:
+            raise ReloadError(
+                "no entity in the data has coordinates, so the map would be empty"
+            )
 
+    _instance: ClassVar[RDFStore | None] = None
 
-class ReloadError(Exception):
-    """The files on disk are not usable. The store already serving is untouched."""
-
-
-def ontology_dir() -> str:
-    """Where the Turtle files live (see core.settings / COMPASS_ONTOLOGY_DIR)."""
-    return str(settings.ontology_dir)
-
-
-def _build_store() -> RDFStore:
-    directory = ontology_dir()
-    return RDFStore(
-        data_path=os.path.join(directory, "compass.ttl"),
-        shapes_path=os.path.join(directory, "shapes.ttl"),
-        vocab_path=os.path.join(directory, "vocab.ttl"),
-    )
-
-
-def _validate(candidate: RDFStore) -> None:
-    """Reject a store that parsed but cannot answer a query.
-
-    Turtle can parse and still be useless -- a truncated file, or shapes that
-    no longer describe the data -- and a reload that swapped such a store in
-    would take the map down. Deriving the specs exercises the SHACL
-    introspection the whole query layer is built on, and counting entities
-    proves the data reached the store.
-    """
-    specs = candidate.get_property_specs()
-    if not specs:
-        raise ReloadError("the shapes yielded no property specs, so no filter would work")
-    rows = candidate.query(
-        "PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> "
-        "SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s geo:lat ?lat . }"
-    )
-    if not rows or int(rows[0].get("n", 0)) == 0:
-        raise ReloadError(
-            "no entity in the data has coordinates, so the map would be empty"
+    @classmethod
+    def from_settings(cls) -> RDFStore:
+        """Build a store from the configured ontology directory."""
+        directory = str(settings.ontology_dir)
+        return cls(
+            data_path=os.path.join(directory, "compass.ttl"),
+            shapes_path=os.path.join(directory, "shapes.ttl"),
+            vocab_path=os.path.join(directory, "vocab.ttl"),
         )
 
+    @classmethod
+    def instance(cls) -> RDFStore:
+        """Return the single live store, creating it from settings if needed."""
+        if cls._instance is None:
+            cls._instance = cls.from_settings()
+        return cls._instance
 
-def reload_store() -> dict[str, Any]:
-    """Swap in the files currently on disk, keeping the live store on failure.
+    @classmethod
+    def reload_instance(cls) -> dict[str, Any]:
+        """Swap in the files currently on disk, keeping the live store on failure.
 
-    The candidate is built and validated in full before `store_instance` moves,
-    so a bad edit leaves the last good version serving rather than taking the
-    API down with it.
-    """
-    # The single live store is the whole point of this module: a reload swaps
-    # it atomically so in-flight requests keep the version they started with.
-    global store_instance  # noqa: PLW0603
-    try:
-        candidate = _build_store()
-        _validate(candidate)
-    except ReloadError:
-        raise
-    except Exception as exc:
-        raise ReloadError(f"{type(exc).__name__}: {exc}") from exc
+        The candidate is built and validated in full before `_instance` moves,
+        so a bad edit leaves the last good version serving rather than taking the
+        API down with it.
+        """
+        try:
+            candidate = cls.from_settings()
+            candidate.validate()
+        except ReloadError:
+            raise
+        except Exception as exc:
+            raise ReloadError(f"{type(exc).__name__}: {exc}") from exc
 
-    previous = store_instance
-    store_instance = candidate
-    logger.info("ontology reloaded from %s", ontology_dir())
-    return {
-        "reloaded": True,
-        "source": ontology_dir(),
-        "replaced_a_running_store": previous is not None,
-    }
-
-
-def get_store() -> RDFStore:
-    global store_instance  # noqa: PLW0603 -- see reload_store
-    if store_instance is None:
-        store_instance = _build_store()
-    return store_instance
+        previous = cls._instance
+        cls._instance = candidate
+        logger.info("ontology reloaded from %s", settings.ontology_dir)
+        return {
+            "reloaded": True,
+            "source": str(settings.ontology_dir),
+            "replaced_a_running_store": previous is not None,
+        }

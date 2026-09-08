@@ -10,7 +10,7 @@ from fastapi import APIRouter, Header
 
 from app.core.deps import SettingsDep
 from app.core.exceptions import ReloadNotConfiguredError, UnauthorizedError
-from app.rdf import reload_store
+from app.rdf import RDFStore
 from app.schemas.admin import ReloadSuccess
 
 router = APIRouter()
@@ -31,5 +31,5 @@ async def reload_ontology(
     if x_reload_token != expected:
         raise UnauthorizedError("X-Reload-Token does not match")
 
-    result = reload_store()
+    result = RDFStore.reload_instance()
     return ReloadSuccess.model_validate(result)

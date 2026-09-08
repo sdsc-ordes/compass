@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Refactor: RDF store singleton lifecycle
+
+- Move the module-level `store_instance` global and its helpers (`get_store`, `reload_store`, `_build_store`, `_validate`) into `RDFStore` as class-level singleton methods (`instance`, `reload_instance`, `from_settings`) and an instance `validate` method.
+- Update FastAPI dependencies and the admin reload endpoint to use `RDFStore.instance()` and `RDFStore.reload_instance()`.
+- Centralize `ReloadError` and `QueryError` in `app/core/exceptions.py` so all API-facing errors live with the other domain exceptions.
+
 ### Refactor: API following Best Practices
 
 - Introduce `app/core/` for platform settings, shared dependencies, and exception handlers.

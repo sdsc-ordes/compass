@@ -6,14 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import config
 from .core.handlers import register_exception_handlers
 from .core.settings import settings
-from .rdf import get_store
+from .rdf import RDFStore
 from .routers import admin, entities, filters, stories
 from .schemas.admin import RootMessage
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    get_store()  # load the ontology before the first request
+    RDFStore.instance()  # load the ontology before the first request
     yield
 
 
