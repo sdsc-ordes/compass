@@ -219,7 +219,7 @@ Picking the edit up is one request:
 ```bash
 just data                       # regenerate; SHACL validation gates it
 curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
-     http://localhost:8080/api/admin/reload
+     http://localhost:8080/api/v1/admin/reload
 ```
 
 The reload builds a **second** store, derives the property specs from it and
@@ -235,12 +235,12 @@ Nothing here needs a developer: the whole loop is regenerate, then POST.
 
 | Route | Purpose |
 |---|---|
-| `GET /api/entities/` | pins and regions as GeoJSON, filtered by the query string |
-| `GET /api/entities/facets` | per-tag counts for the current selection |
-| `GET /api/entities/detail` | one entity by IRI |
-| `GET /api/filters/schema` | the filter panel, derived from the SHACL shapes |
-| `POST /api/admin/reload` | re-read the Turtle from disk (see **Editorial updates**) |
-| `GET /api/stories/count` | OceanCare story counts, a cross-origin page fetch |
+| `GET /api/v1/entities/` | pins and regions as GeoJSON, filtered by the query string |
+| `GET /api/v1/entities/facets` | per-tag counts for the current selection |
+| `GET /api/v1/entities/detail` | one entity by IRI |
+| `GET /api/v1/filters/schema` | the filter panel, derived from the SHACL shapes |
+| `POST /api/v1/admin/reload` | re-read the Turtle from disk (see **Editorial updates**) |
+| `GET /api/v1/stories/count` | story counts from the configured upstream provider |
 
 Share links carry the filter selection in the query string itself, so there is
 no server-side state to save or expire.

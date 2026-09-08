@@ -174,7 +174,7 @@
     try {
       const params = new URLSearchParams({ lang: l });
       iris.forEach((iri) => params.append('tag', iri));
-      const resp = await fetch(`${url}/api/stories/count?${params.toString()}`);
+      const resp = await fetch(`${url}/api/v1/stories/count?${params.toString()}`);
       if (resp.ok) {
         storyCount = await resp.json();
       }

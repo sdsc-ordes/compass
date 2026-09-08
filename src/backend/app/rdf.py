@@ -9,6 +9,7 @@ import pyoxigraph
 from rdflib import Graph
 
 from . import schema as _schema
+from .core.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -88,22 +89,14 @@ class RDFStore:
 
 store_instance: RDFStore | None = None
 
-# Where the Turtle files live. Set COMPASS_ONTOLOGY_DIR to read them from a
-# mounted volume instead of the copy inside the image, so editorial updates do
-# not need the image rebuilt.
-ONTOLOGY_DIR_ENV = "COMPASS_ONTOLOGY_DIR"
-
 
 class ReloadError(Exception):
     """The files on disk are not usable. The store already serving is untouched."""
 
 
 def ontology_dir() -> str:
-    configured = os.environ.get(ONTOLOGY_DIR_ENV)
-    if configured:
-        return configured
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(base_dir, "ontology")
+    """Where the Turtle files live (see core.settings / COMPASS_ONTOLOGY_DIR)."""
+    return str(settings.ontology_dir)
 
 
 def _build_store() -> RDFStore:

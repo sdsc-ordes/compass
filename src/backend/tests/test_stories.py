@@ -6,20 +6,20 @@ import httpx
 from fastapi.testclient import TestClient
 
 from app.config import (
+    STORIES_API_ERROR_MESSAGE,
     STORIES_API_URL,
     STORIES_BASE_URL_DE,
     STORIES_BASE_URL_EN,
-    STORIES_API_ERROR_MESSAGE,
     create_stories_api_url,
     create_stories_frontend_url,
 )
 from app.main import app
 from app.routers.stories import _resolve_tags_ids
 
-
 # ---------------------------------------------------------------------------
 # Unit tests for helpers
 # ---------------------------------------------------------------------------
+
 
 def test_build_frontend_url_no_ids():
     url = create_stories_frontend_url([], "en")
@@ -69,16 +69,17 @@ def test_resolve_tags_ids_no_iris():
 def test_resolve_tags_ids_unmapped():
     store = MagicMock()
     store.query.return_value = []
-    result = _resolve_tags_ids(["http://example.org/ocean-org/ontology#UnknownConcept"], store)
+    result = _resolve_tags_ids(
+        ["http://example.org/ocean-org/ontology#UnknownConcept"],
+        store,
+    )
     assert result == []
 
 
 def test_resolve_tags_ids_known():
     store = MagicMock()
     store.query.return_value = [{"wpTagId": "148"}]
-    result = _resolve_tags_ids(
-        ["http://example.org/ocean-org/ontology#Dolphins"], store
-    )
+    result = _resolve_tags_ids(["http://example.org/ocean-org/ontology#Dolphins"], store)
     assert result == [148]
 
 
@@ -103,7 +104,7 @@ client = TestClient(app)
 
 
 def test_stories_count_no_tags():
-    resp = client.get("/api/stories/count")
+    resp = client.get("/api/v1/stories/count")
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
@@ -115,7 +116,7 @@ def test_stories_count_no_tags():
 def test_stories_count_unmapped_tag():
     """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
     resp = client.get(
-        "/api/stories/count",
+        "/api/v1/stories/count",
         params={"tags": "http://example.org/ocean-org/ontology#AdvocacyWork"},
     )
     assert resp.status_code == 200
@@ -137,7 +138,7 @@ def test_stories_count_mapped_tag(monkeypatch):
         mock_client_cls.return_value = mock_client
 
         resp = client.get(
-            "/api/stories/count",
+            "/api/v1/stories/count",
             params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
@@ -161,7 +162,7 @@ def test_stories_count_url_contains_tag_ids(monkeypatch):
         mock_client_cls.return_value = mock_client
 
         resp = client.get(
-            "/api/stories/count",
+            "/api/v1/stories/count",
             params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
@@ -181,7 +182,7 @@ def test_stories_count_proxy_error(monkeypatch):
         mock_client_cls.return_value = mock_client
 
         resp = client.get(
-            "/api/stories/count",
+            "/api/v1/stories/count",
             params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 

@@ -1,10 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from __future__ import annotations
 
+from typing import Any
+
+from fastapi import APIRouter, Query, Request
+
+from app.core.deps import Lang, StoreDep
 from app.namespaces import SPARQL_PREFIXES
-from app.sparql_terms import InvalidTerm, iri_term
-from app.rdf import get_store, RDFStore
-from app.sparql_builder import build_entities_query, build_facet_query
 from app.result_parser import results_to_geojson
+from app.schemas.entities import FeatureCollection
+from app.schemas.facets import FacetCounts
+from app.sparql_builder import build_entities_query, build_facet_query
+from app.sparql_terms import iri_term
 
 router = APIRouter()
 
@@ -13,32 +19,32 @@ router = APIRouter()
 _FACET_EXCLUDED = {"entityType", "relatedProject", "forum"}
 
 
-@router.get("/")
+@router.get("/", response_model=FeatureCollection)
 async def get_entities(
     request: Request,
-    lang: str = Query("en", pattern="^(en|de)$"),
-    store: RDFStore = Depends(get_store),
-):
+    lang: Lang,
+    store: StoreDep,
+) -> FeatureCollection:
     """Returns entities as GeoJSON, with SPARQL and filters driven by SHACL shapes."""
     specs = store.get_property_specs()
     sparql = build_entities_query(specs, lang, request.query_params)
     results = store.query(sparql)
-    return results_to_geojson(results, specs, lang)
+    return FeatureCollection.model_validate(results_to_geojson(results, specs, lang))
 
 
-@router.get("/facets")
+@router.get("/facets", response_model=FacetCounts)
 async def get_facets(
     request: Request,
-    lang: str = Query("en", pattern="^(en|de)$"),
-    store: RDFStore = Depends(get_store),
-):
+    lang: Lang,
+    store: StoreDep,
+) -> FacetCounts:
     """Per-tag entity counts for the current selection (drill-down faceting).
 
     Returns {dimensionId: {tagIri: count}}. One SPARQL count query runs per tag
     dimension (~6); acceptable for the in-process Oxigraph store and dataset size.
     """
     specs = store.get_property_specs()
-    facets: dict = {}
+    facets: dict[str, dict[str, int]] = {}
     for spec in specs:
         sid = spec["id"]
         if (
@@ -57,14 +63,10 @@ async def get_facets(
 
 @router.get("/detail")
 async def get_entity_detail(
+    store: StoreDep,
     iri: str = Query(..., description="Full IRI of the entity"),
-    store: RDFStore = Depends(get_store),
-):
+) -> list[dict[str, Any]]:
     """Returns single entity detail for popup."""
-    try:
-        subject = iri_term(iri)
-    except InvalidTerm as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
+    subject = iri_term(iri)
     sparql = f"{SPARQL_PREFIXES}\n    SELECT ?p ?o WHERE {{ {subject} ?p ?o . }}"
     return store.query(sparql)

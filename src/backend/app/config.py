@@ -1,100 +1,129 @@
-"""Deployment-configurable settings, read from the environment at import."""
+"""Use-case configuration. Adapt a deployment by editing this file (and env overrides)."""
 
-import os
+from __future__ import annotations
 
-# In production nginx proxies /api on the widget's own origin, so no cross
-# origin request is made and this list stays empty. It exists for development,
-# where the Vite dev server and the API sit on different ports.
-CORS_ORIGINS_ENV = "COMPASS_CORS_ORIGINS"
-_DEV_ORIGINS = "http://localhost:5173,http://localhost:4173"
+import httpx
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-# API metadata
-# ------------
+class Config(BaseSettings):
+    """Use-case knobs: API metadata, languages, and the stories provider."""
 
-API_TITLE: str = os.getenv("API_TITLE", "Compass API")
-API_WELCOME_MESSAGE: str = os.getenv(
-    "API_WELCOME_MESSAGE", "Compass API is running."
-)
+    model_config = SettingsConfigDict(extra="ignore")
+
+    api_title: str = Field(default="Compass API", validation_alias="API_TITLE")
+    api_welcome_message: str = Field(
+        default="Compass API is running.",
+        validation_alias="API_WELCOME_MESSAGE",
+    )
+
+    stories_provider_name: str = Field(
+        default="OceanCare",
+        validation_alias="STORIES_PROVIDER_NAME",
+    )
+    stories_base_url_en: str = Field(
+        default="https://www.oceancare.org/en/stories-and-news/",
+        validation_alias="STORIES_BASE_URL_EN",
+    )
+    stories_base_url_de: str = Field(
+        default="https://www.oceancare.org/de/storys-and-news/",
+        validation_alias="STORIES_BASE_URL_DE",
+    )
+    stories_api_url: str = Field(
+        default="https://www.oceancare.org/wp-json/wp/v2/stories",
+        validation_alias="STORIES_API_URL",
+    )
+    stories_api_error_message: str = Field(
+        default="Unable to load story count. Please try again or contact OceanCare.",
+        validation_alias="STORIES_API_ERROR_MESSAGE",
+    )
+
+    # Default upstream count header for the OceanCare WordPress REST API.
+    # Override parse_stories_count for a different provider.
+    stories_count_header: str = Field(default="x-wp-total")
+
+    @property
+    def stories_base_urls(self) -> dict[str, str]:
+        return {
+            "en": self.stories_base_url_en,
+            "de": self.stories_base_url_de,
+        }
+
+    @property
+    def supported_langs(self) -> list[str]:
+        return list(self.stories_base_urls.keys())
+
+    def create_stories_base_url(self, lang: str) -> str:
+        """The stories index for *lang*, falling back to English."""
+        return self.stories_base_urls.get(lang, self.stories_base_url_en)
+
+    def entity_stories_url(self, entity_tag_id: str, lang: str) -> str:
+        """Public stories index filtered to one entity's term id."""
+        return f"{self.create_stories_base_url(lang)}?tag={entity_tag_id}"
+
+    def create_stories_frontend_url(self, ids: list[int], lang: str) -> str:
+        """Public stories index URL filtered to *ids*.
+
+        Default shape: `?tag=<id1,id2,...>`. Override for a different scheme.
+        """
+        base = self.create_stories_base_url(lang)
+        if not ids:
+            return base
+        tags_param = ",".join(str(i) for i in ids)
+        return f"{base}?tag={tags_param}"
+
+    def create_stories_api_url(self, ids: list[int], lang: str) -> str:
+        """Upstream stories API URL that returns a count for *ids*.
+
+        Default query shape matches the OceanCare WordPress REST API.
+        Override for a different API.
+        """
+        if len(ids) == 1:
+            return f"{self.stories_api_url}?tags={ids[0]}&lang={lang}&per_page=1&_fields=id"
+        terms = ",".join(str(i) for i in ids)
+        return (
+            f"{self.stories_api_url}?tags[terms]={terms}"
+            f"&tags[operator]=AND&lang={lang}&per_page=1&_fields=id"
+        )
+
+    def parse_stories_count(self, response: httpx.Response) -> int:
+        """Extract the story count from an upstream HTTP response.
+
+        Default: read the configured count header (WordPress `X-WP-Total`).
+        Override for a different response shape.
+        """
+        return int(response.headers.get(self.stories_count_header, 0))
 
 
-# Stories provider configuration
-# ------------------------------
-# The provider name is used in log messages. The base URLs and API URL drive
-# the /api/stories/count endpoint.
+config = Config()
 
-STORIES_PROVIDER_NAME: str = os.getenv("STORIES_PROVIDER_NAME", "OceanCare")
-
-STORIES_BASE_URL_EN: str = os.getenv(
-    "STORIES_BASE_URL_EN",
-    "https://www.oceancare.org/en/stories-and-news/",
-)
-STORIES_BASE_URL_DE: str = os.getenv(
-    "STORIES_BASE_URL_DE",
-    "https://www.oceancare.org/de/storys-and-news/",
-)
-
-STORIES_BASE_URLS: dict[str, str] = {
-    "en": STORIES_BASE_URL_EN,
-    "de": STORIES_BASE_URL_DE,
-}
-
-STORIES_API_URL: str = os.getenv(
-    "STORIES_API_URL",
-    "https://www.oceancare.org/wp-json/wp/v2/stories",
-)
-
-STORIES_API_ERROR_MESSAGE: str = os.getenv(
-    "STORIES_API_ERROR_MESSAGE",
-    "Unable to load story count. Please try again or contact OceanCare.",
-)
+# Module-level aliases kept for callers and tests that import constants/helpers.
+API_TITLE = config.api_title
+API_WELCOME_MESSAGE = config.api_welcome_message
+STORIES_PROVIDER_NAME = config.stories_provider_name
+STORIES_BASE_URL_EN = config.stories_base_url_en
+STORIES_BASE_URL_DE = config.stories_base_url_de
+STORIES_BASE_URLS = config.stories_base_urls
+STORIES_API_URL = config.stories_api_url
+STORIES_API_ERROR_MESSAGE = config.stories_api_error_message
 
 
 def create_stories_base_url(lang: str) -> str:
-    """The stories index for *lang*, English for anything but 'de'."""
-    return STORIES_BASE_URLS.get(lang, STORIES_BASE_URL_EN)
+    return config.create_stories_base_url(lang)
 
 
-def entity_stories_url(wp_entity_tag_id: str, lang: str) -> str:
-    """The stories index filtered to one entity's term id.
-
-    One term id serves both language sites; only the base URL differs.
-    """
-    return f"{create_stories_base_url(lang)}?tag={wp_entity_tag_id}"
+def entity_stories_url(entity_tag_id: str, lang: str) -> str:
+    return config.entity_stories_url(entity_tag_id, lang)
 
 
 def create_stories_frontend_url(ids: list[int], lang: str) -> str:
-    """The public stories index URL filtered to *ids*.
-
-    The default shape appends `?tag=<id1,id2,...>` to the language-specific
-    base URL. Override this function if the provider uses a different query
-    parameter or path scheme.
-    """
-    base = create_stories_base_url(lang)
-    if not ids:
-        return base
-    tags_param = ",".join(str(i) for i in ids)
-    return f"{base}?tag={tags_param}"
+    return config.create_stories_frontend_url(ids, lang)
 
 
 def create_stories_api_url(ids: list[int], lang: str) -> str:
-    """The upstream stories API URL that returns a count for *ids*.
-
-    The default query shape matches the OceanCare WordPress REST API:
-    a single tag uses `?tags=<id>`; multiple tags use the array-style
-    `?tags[terms]=...&tags[operator]=AND` form so only stories tagged with
-    all of them are counted. Override this function for a different API.
-    """
-    if len(ids) == 1:
-        return f"{STORIES_API_URL}?tags={ids[0]}&lang={lang}&per_page=1&_fields=id"
-    terms = ",".join(str(i) for i in ids)
-    return (
-        f"{STORIES_API_URL}?tags[terms]={terms}"
-        f"&tags[operator]=AND&lang={lang}&per_page=1&_fields=id"
-    )
+    return config.create_stories_api_url(ids, lang)
 
 
-def cors_origins() -> list[str]:
-    """Origins allowed to call the API cross-origin, empty for same-origin only."""
-    configured = os.environ.get(CORS_ORIGINS_ENV, _DEV_ORIGINS)
-    return [origin.strip() for origin in configured.split(",") if origin.strip()]
+def parse_stories_count(response: httpx.Response) -> int:
+    return config.parse_stories_count(response)

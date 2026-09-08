@@ -70,19 +70,19 @@ async function getJson<T>(path: string, params?: URLSearchParams): Promise<T> {
 export async function init(url: string): Promise<void> {
   apiBase = (url ?? '').replace(/\/$/, '');
   const [en, de] = await Promise.all([
-    getJson<FilterSchemaEntry[]>('/api/filters/schema', new URLSearchParams({ lang: 'en' })),
-    getJson<FilterSchemaEntry[]>('/api/filters/schema', new URLSearchParams({ lang: 'de' })),
+    getJson<FilterSchemaEntry[]>('/api/v1/filters/schema', new URLSearchParams({ lang: 'en' })),
+    getJson<FilterSchemaEntry[]>('/api/v1/filters/schema', new URLSearchParams({ lang: 'de' })),
   ]);
   schemaByLang.en = en;
   schemaByLang.de = de;
 }
 
 export async function getEntities(lang: string, filters: Filters): Promise<FeatureCollection> {
-  return getJson<FeatureCollection>('/api/entities/', toParams(lang, filters));
+  return getJson<FeatureCollection>('/api/v1/entities/', toParams(lang, filters));
 }
 
 export async function getFacets(lang: string, filters: Filters): Promise<FacetCounts> {
-  return getJson<FacetCounts>('/api/entities/facets', toParams(lang, filters));
+  return getJson<FacetCounts>('/api/v1/entities/facets', toParams(lang, filters));
 }
 
 /** Filter UI schema for a language, from init()'s prefetch (English fallback). */

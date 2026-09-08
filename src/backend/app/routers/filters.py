@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, Query
-from app.rdf import get_store, RDFStore
+from __future__ import annotations
+
+from fastapi import APIRouter
+
+from app.core.deps import Lang, StoreDep
+from app.schemas.filters import FilterSchemaEntry
 
 router = APIRouter()
 
 
-@router.get("/schema")
-async def get_filters_schema(
-    lang: str = Query("en", pattern="^(en|de)$"), store: RDFStore = Depends(get_store)
-):
+@router.get("/schema", response_model=list[FilterSchemaEntry])
+async def get_filters_schema(lang: Lang, store: StoreDep) -> list[FilterSchemaEntry]:
     """Returns the filter schema based on SHACL shapes."""
-    return store.get_filters_schema(lang=lang)
+    raw = store.get_filters_schema(lang=lang)
+    return [FilterSchemaEntry.model_validate(item) for item in raw]
