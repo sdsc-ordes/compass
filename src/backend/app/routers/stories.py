@@ -69,19 +69,20 @@ def _build_frontend_url(wp_ids: List[int], lang: str) -> str:
     return f"{base}?tag={tags_param}"
 
 
-def _build_api_url(wp_ids: List[int]) -> str:
+def _build_api_url(wp_ids: List[int], lang: str) -> str:
     """Construct the WordPress REST API URL for counting stories.
 
     A single tag uses the simple `tags=<id>` form. Multiple tags use the
     array-style `tags[terms]=...&tags[operator]=AND` form so that only stories
-    tagged with all of them are returned.
+    tagged with all of them are returned. The `lang` parameter is required by
+    the OceanCare API to return counts for the requested language.
     """
     if len(wp_ids) == 1:
-        return f"{OCEANCARE_API_STORIES}?tags={wp_ids[0]}&per_page=1&_fields=id"
+        return f"{OCEANCARE_API_STORIES}?tags={wp_ids[0]}&lang={lang}&per_page=1&_fields=id"
     terms = ",".join(str(i) for i in wp_ids)
     return (
         f"{OCEANCARE_API_STORIES}?tags[terms]={terms}"
-        f"&tags[operator]=AND&per_page=1&_fields=id"
+        f"&tags[operator]=AND&lang={lang}&per_page=1&_fields=id"
     )
 
 
@@ -112,7 +113,7 @@ async def get_stories_count(
         }
 
     frontend_url = _build_frontend_url(wp_ids, lang)
-    api_url = _build_api_url(wp_ids)
+    api_url = _build_api_url(wp_ids, lang)
 
     try:
         async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:

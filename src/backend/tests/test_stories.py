@@ -35,16 +35,18 @@ def test_build_frontend_url_lang_specific_base():
 
 
 def test_build_api_url_single():
-    url = _build_api_url([148])
+    url = _build_api_url([148], "en")
     assert "tags=148" in url
+    assert "lang=en" in url
     assert "per_page=1" in url
     assert "_fields=id" in url
 
 
 def test_build_api_url_multiple():
-    url = _build_api_url([147, 148])
+    url = _build_api_url([147, 148], "en")
     assert "tags[terms]=147,148" in url
     assert "tags[operator]=AND" in url
+    assert "lang=en" in url
 
 
 def test_resolve_tags_ids_no_iris():
@@ -65,18 +67,18 @@ def test_resolve_tags_ids_known():
     store = MagicMock()
     store.query.return_value = [{"wpTagId": "148"}]
     result = _resolve_tags_ids(
-        ["http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"], store
+        ["http://example.org/ocean-org/ontology#Dolphins"], store
     )
     assert result == [148]
 
 
 def test_resolve_tags_ids_multiple():
     store = MagicMock()
-    store.query.return_value = [{"wpTagId": "148"}, {"wpTagId": "455"}]
+    store.query.return_value = [{"wpTagId": "147"}, {"wpTagId": "455"}]
     result = _resolve_tags_ids(
         [
             "http://example.org/ocean-org/ontology#Whales",
-            "http://example.org/ocean-org/ontology#AnimalAndSpeciesConservation",
+            "http://example.org/ocean-org/ontology#SpeciesConservation",
         ],
         store,
     )
@@ -104,7 +106,7 @@ def test_stories_count_unmapped_tag():
     """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
     resp = client.get(
         "/api/stories/count",
-        params={"tags": "http://example.org/ocean-org/ontology#Geoengineering"},
+        params={"tags": "http://example.org/ocean-org/ontology#AdvocacyWork"},
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -126,7 +128,7 @@ def test_stories_count_mapped_tag(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tags": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
     assert resp.status_code == 200
@@ -150,7 +152,7 @@ def test_stories_count_url_contains_tag_ids(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tags": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
     assert resp.status_code == 200
@@ -170,7 +172,7 @@ def test_stories_count_proxy_error(monkeypatch):
 
         resp = client.get(
             "/api/stories/count",
-            params={"tags": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
     assert resp.status_code == 200
