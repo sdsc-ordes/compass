@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from ..namespaces import SPARQL_PREFIXES
-from ..rdf import RDFStore, get_store
-from ..result_parser import results_to_geojson
-from ..sparql_builder import build_entities_query, build_facet_query
-from ..sparql_terms import InvalidTerm, iri_term
+from app.namespaces import SPARQL_PREFIXES
+from app.sparql_terms import InvalidTerm, iri_term
+from app.rdf import get_store, RDFStore
+from app.sparql_builder import build_entities_query, build_facet_query
+from app.result_parser import results_to_geojson
 
 router = APIRouter()
 
