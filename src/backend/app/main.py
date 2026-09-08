@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import cors_origins
+from .config import API_TITLE, API_WELCOME_MESSAGE, cors_origins
 from .rdf import get_store
 from .routers import admin, entities, filters, stories
 
@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="OceanCare Compass API", lifespan=lifespan)
+app = FastAPI(title=API_TITLE, lifespan=lifespan)
 
 # Deployment serves the widget and the API from one origin (see docker/nginx.conf),
 # so this is an allowlist for development rather than a wildcard.
@@ -28,7 +28,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "OceanCare Compass API is running."}
+    return {"message": API_WELCOME_MESSAGE}
 
 
 app.include_router(filters.router, prefix="/api/filters", tags=["Filters"])

@@ -1,7 +1,7 @@
 [project]
 name = "backend"
 version = "0.1.0"
-description = "OceanCare Compass API: SHACL-driven filters and SPARQL over the ontology"
+description = "Compass API: SHACL-driven filters and SPARQL over the ontology"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

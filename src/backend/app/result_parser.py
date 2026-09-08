@@ -59,7 +59,7 @@ def _parse_special_properties(res: dict, lang: str) -> dict:
     """Fields queried outside the SHACL-driven specs (see sparql_builder).
 
     The stories URL is assembled here rather than in the widget so the base URL
-    stays configurable in one place (see config.OCEANCARE_STORIES_URL_*).
+    stays configurable in one place (see config.STORIES_BASE_URLS).
     """
     wp_entity_tag_id = res.get("wpEntityTagId", "")
     return {
