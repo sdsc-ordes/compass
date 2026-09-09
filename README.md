@@ -244,7 +244,7 @@ Nothing here needs a developer: the whole loop is regenerate, then POST.
 
 | Route | Purpose |
 |---|---|
-| `GET /api/v1/entities/` | pins and regions as GeoJSON, filtered by the query string |
+| `GET /api/v1/entities` | pins and regions as GeoJSON, filtered by the query string |
 | `GET /api/v1/entities/facets` | per-tag counts for the current selection |
 | `GET /api/v1/entities/detail` | one entity by IRI |
 | `GET /api/v1/filters` | the filter panel, derived from the SHACL shapes |
