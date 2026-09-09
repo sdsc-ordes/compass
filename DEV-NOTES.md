@@ -9,3 +9,7 @@
 
 - Oceancare specifics and wordpress specifics. The PR addresses this. 
 - Is the entire nomenclature for SHACL, SPARQL to geojson flows correct? Please check it. 
+
+## Docs
+
+- please read them, especially `configuration.md` and `design.md`.

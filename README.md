@@ -15,11 +15,22 @@ tools/docker/   – Dockerfiles, nginx config and the compose entry page
 docs/           – contributor docs; docs/backend is the backend MkDocs site
 ```
 
-## Setup
+## Configuration
+
+### Backend
+
+See [`docs/backend/configuration.md`](docs/backend/configuration.md) for how to
+configure the backend and adapt it for a new Compass use-case. It covers API
+metadata, the stories provider, language support, and deployment settings such
+as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
+
+## Development: Run it locally
+
+### Setup
 
 Pick one option. Every command in the rest of this README is the same either way.
 
-### Option A — uv and Node
+#### Option A — uv and Node
 
 Works on macOS, Linux and Windows (WSL). Install [uv](https://docs.astral.sh/uv/) and [Node](https://nodejs.org) 20 or newer:
 
@@ -31,7 +42,7 @@ node --version                                     # expect v20 or newer
 
 No system Python needed — uv fetches its own Python 3.11, pinned in `src/backend/.python-version`.
 
-### Option B — Nix on Linux
+#### Option B — Nix on Linux and MacOS
 
 Supplies uv, Node 22 and Python 3.11 in one shell:
 
@@ -46,8 +57,6 @@ cd src/frontend && nix develop ../../tools/nix --command npm run dev
 ```
 
 On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel that links `libstdc++.so.6`, which NixOS does not provide globally; the flake sets the `LD_LIBRARY_PATH` that makes it loadable. Outside the shell, any Python command fails.
-
-## Run it locally
 
 Both halves, together:
 
