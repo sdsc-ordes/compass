@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Refactor: query / GeoJSON layer
+
+- Split `schema.py` into `shacl_to_filters.py` (UI `FilterWidget`) and
+  `shacl_to_entities.py` (typed `EntityShape` for SPARQL + GeoJSON).
+- Rename `result_parser.py` → `sparql_to_geojson_translator.py`.
+- Wire builder, translator, RDF store, and tests to `EntityShape` attribute access.
+- Clarify shapes vs instances: `get_entity_shape_from_shacl` / `get_entities`,
+  `sparql_for_instances`, `instances_to_geojson`.
+- Rename helpers: `get_filters_from_shacl`, `read_graph`, `get_shacl_property`,
+  `get_shacl_label`; type `EntityShape` (was `EntityProperty`).
+- Move filter UI route from `GET /api/v1/filters/schema` to
+  `GET /api/v1/filters`; expose `FilterWidget` (was `FilterDimension` /
+  `FilterSchemaEntry`).
+
 ### Refactor: RDF store singleton lifecycle
 
 - Move the module-level `store_instance` global and its helpers (`get_store`, `reload_store`, `_build_store`, `_validate`) into `RDFStore` as class-level singleton methods (`instance`, `reload_instance`, `from_settings`) and an instance `validate` method.

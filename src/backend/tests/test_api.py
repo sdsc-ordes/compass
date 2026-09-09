@@ -18,16 +18,16 @@ def client():
 
 class TestFiltersEndpoint:
     def test_returns_200(self, client):
-        resp = client.get("/api/v1/filters/schema?lang=en")
+        resp = client.get("/api/v1/filters?lang=en")
         assert resp.status_code == 200
 
     def test_returns_list(self, client):
-        data = client.get("/api/v1/filters/schema?lang=en").json()
+        data = client.get("/api/v1/filters?lang=en").json()
         assert isinstance(data, list)
         assert len(data) > 0
 
     def test_each_filter_has_required_keys(self, client):
-        data = client.get("/api/v1/filters/schema?lang=en").json()
+        data = client.get("/api/v1/filters?lang=en").json()
         for f in data:
             assert "id" in f
             assert "label" in f
@@ -35,7 +35,7 @@ class TestFiltersEndpoint:
             assert f["type"] in {"multiselect", "slider", "datepicker", "toggle"}
 
     def test_german_works(self, client):
-        data = client.get("/api/v1/filters/schema?lang=de").json()
+        data = client.get("/api/v1/filters?lang=de").json()
         assert isinstance(data, list)
         assert len(data) > 0
 
@@ -213,13 +213,13 @@ class TestEntityDetailEndpoint:
 class TestCorsPolicy:
     def test_unlisted_origin_is_not_echoed_back(self, client):
         resp = client.get(
-            "/api/v1/filters/schema?lang=en", headers={"Origin": "https://evil.example"}
+            "/api/v1/filters?lang=en", headers={"Origin": "https://evil.example"}
         )
         assert resp.headers.get("access-control-allow-origin") != "*"
         assert resp.headers.get("access-control-allow-origin") != "https://evil.example"
 
     def test_dev_origin_is_allowed(self, client):
         resp = client.get(
-            "/api/v1/filters/schema?lang=en", headers={"Origin": "http://localhost:5173"}
+            "/api/v1/filters?lang=en", headers={"Origin": "http://localhost:5173"}
         )
         assert resp.headers.get("access-control-allow-origin") == "http://localhost:5173"

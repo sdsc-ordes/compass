@@ -20,8 +20,8 @@ export type Filters = Record<string, string | string[] | undefined>;
 /** One selectable value of a multiselect dimension, labelled in the active language. */
 export type FilterOption = { value: string; label: string };
 
-/** One dimension of the filter schema the API derives from the SHACL shapes. */
-export type FilterSchemaEntry = {
+/** One filter-panel dimension the API derives from the SHACL shapes. */
+export type FilterWidget = {
   id: string;
   path: string;
   label: string;

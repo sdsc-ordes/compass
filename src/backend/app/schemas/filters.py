@@ -1,27 +1,11 @@
-"""Filter schema response models (SHACL-derived UI contract)."""
+"""Filter widget response models (SHACL-derived UI contract)."""
 
 from __future__ import annotations
 
-from typing import Literal
+from app.shacl_to_filters import FilterWidget, FilterOption, FilterWidgetType
 
-from pydantic import BaseModel
-
-FilterWidgetType = Literal["multiselect", "slider", "datepicker", "toggle"]
-
-
-class FilterOption(BaseModel):
-    value: str
-    label: str
-
-
-class FilterSchemaEntry(BaseModel):
-    """One filter dimension. Optional fields depend on `type`."""
-
-    id: str
-    path: str
-    label: str
-    type: FilterWidgetType
-    order: int = 0
-    options: list[FilterOption] | None = None
-    min: float | int | str | None = None
-    max: float | int | str | None = None
+__all__ = [
+    "FilterWidget",
+    "FilterOption",
+    "FilterWidgetType",
+]

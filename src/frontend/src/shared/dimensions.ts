@@ -3,17 +3,17 @@
  * shapes. Only multiselect widgets qualify; sliders, toggles and the synthetic
  * entity-type filter do not.
  */
-import { getFiltersSchema } from '../engine';
-import type { FilterOption, FilterSchemaEntry } from '../engine/namespaces';
+import { getFilterWidgets } from '../engine';
+import type { FilterOption, FilterWidget } from '../engine/namespaces';
 
 export type Dimension = { id: string; label: string };
 
 /** A multiselect entry, narrowed so its options are known to be present. */
-export type MultiselectFilter = FilterSchemaEntry & { options: FilterOption[] };
+export type MultiselectFilter = FilterWidget & { options: FilterOption[] };
 
 /** Every dimension the UI renders as chips, in the schema's own order. */
 export function multiselectFilters(lang: string): MultiselectFilter[] {
-  return getFiltersSchema(lang).filter(
+  return getFilterWidgets(lang).filter(
     (f): f is MultiselectFilter => f.type === 'multiselect' && Array.isArray(f.options),
   );
 }
@@ -73,5 +73,5 @@ export function entityTypes(lang: string): FilterOption[] {
 
 /** Every query parameter the widget owns, so it can rewrite only its own. */
 export function ownedUrlParams(lang: string): string[] {
-  return [...getFiltersSchema(lang).map((f) => f.id), 'lang'];
+  return [...getFilterWidgets(lang).map((f) => f.id), 'lang'];
 }

@@ -1,8 +1,8 @@
 """
 Shared RDF namespace definitions and SPARQL prefix declarations.
 
-Single source of truth for all namespace URIs and prefix shorthands used
-across rdf.py, schema.py, sparql_builder.py, and result_parser.py.
+Single source of truth for namespace URIs and prefix shorthands used across
+the query layer (shacl_to_entities, sparql_builder, sparql_to_geojson_translator).
 """
 
 from rdflib import Namespace
@@ -11,7 +11,7 @@ COMPASS = Namespace("http://example.org/ocean-org/ontology#")
 GEO = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
 SCHEMA = Namespace("https://schema.org/")
 
-# Separators used by SPARQL GROUP_CONCAT expressions and result_parser
+# Separators used by SPARQL GROUP_CONCAT expressions and the GeoJSON translator
 ITEM_SEP = ";;"  # between multi-valued items
 FIELD_SEP = "|"  # between fields within a single item
 

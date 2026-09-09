@@ -6,11 +6,11 @@ from fastapi import APIRouter, Query, Request
 
 from app.core.deps import Lang, StoreDep
 from app.namespaces import SPARQL_PREFIXES
-from app.result_parser import results_to_geojson
 from app.schemas.entities import FeatureCollection
 from app.schemas.facets import FacetCounts
-from app.sparql_builder import build_entities_query, build_facet_query
+from app.sparql_builder import sparql_for_instances, build_facet_query
 from app.sparql_terms import iri_term
+from app.sparql_to_geojson_translator import instances_to_geojson
 
 router = APIRouter()
 
@@ -26,10 +26,12 @@ async def get_entities(
     store: StoreDep,
 ) -> FeatureCollection:
     """Returns entities as GeoJSON, with SPARQL and filters driven by SHACL shapes."""
-    specs = store.get_property_specs()
-    sparql = build_entities_query(specs, lang, request.query_params)
-    results = store.query(sparql)
-    return FeatureCollection.model_validate(results_to_geojson(results, specs, lang))
+    shapes = store.get_entities()
+    sparql = sparql_for_instances(shapes, lang, request.query_params)
+    instances = store.query(sparql)
+    return FeatureCollection.model_validate(
+        instances_to_geojson(instances, shapes, lang)
+    )
 
 
 @router.get("/facets", response_model=FacetCounts)
@@ -43,20 +45,22 @@ async def get_facets(
     Returns {dimensionId: {tagIri: count}}. One SPARQL count query runs per tag
     dimension (~6); acceptable for the in-process Oxigraph store and dataset size.
     """
-    specs = store.get_property_specs()
+    shapes = store.get_entities()
     facets: dict[str, dict[str, int]] = {}
-    for spec in specs:
-        sid = spec["id"]
+    for field in shapes:
+        sid = field.id
         if (
-            spec["filter_type"] != "multiselect"
-            or spec["category"] != "iri_with_label"
+            field.filter_type != "multiselect"
+            or field.category != "iri_with_label"
             or sid in _FACET_EXCLUDED
         ):
             continue
-        sparql = build_facet_query(specs, lang, request.query_params, sid)
-        rows = store.query(sparql)
+        sparql = build_facet_query(shapes, lang, request.query_params, sid)
+        instances = store.query(sparql)
         facets[sid] = {
-            row["val"]: int(row["n"]) for row in rows if row.get("val") and row.get("n")
+            row["val"]: int(row["n"])
+            for row in instances
+            if row.get("val") and row.get("n")
         }
     return facets
 

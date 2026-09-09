@@ -109,7 +109,7 @@ def test_every_language_paired_field_reaches_both_languages(tables):
                 )
 
 
-def test_every_pin_has_a_name_and_coordinates(tables):
+def test_every_pin_has_a_name_and_parse_coordinates(tables):
     _, _, pins = tables
     for pin in pins:
         assert pin["name_en"], f"{pin['id']} has no English name"
@@ -251,7 +251,7 @@ def test_predicate_follows_the_target(kinds, target, predicate):
 
 
 @given(value=st.floats(min_value=-180, max_value=180, allow_nan=False))
-def test_coordinates_keep_five_decimals(value):
+def test_parse_coordinates_keep_five_decimals(value):
     rendered = gen.coordinate(str(value))
     assert rendered.endswith('"^^xsd:float')
     text = rendered.split('"')[1]

@@ -1,9 +1,8 @@
 """Thin Pydantic GeoJSON models for entity list HTTP responses / OpenAPI.
 
-Runtime GeoJSON is still built with the `geojson` package in `result_parser`.
-These models exist only so FastAPI `response_model` can document and validate
-the wire shape — `geojson.FeatureCollection` is a dict subclass, not a Pydantic
-model, so it cannot be used as `response_model` without losing OpenAPI detail.
+Runtime GeoJSON is still built with the `geojson` package in
+`sparql_to_geojson_translator`. These models exist only so FastAPI
+`response_model` can document and validate the wire shape.
 """
 
 from __future__ import annotations

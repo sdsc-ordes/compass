@@ -25,12 +25,12 @@ def store() -> RDFStore:
 
 
 @pytest.fixture(scope="session")
-def rdflib_graph(store: RDFStore):
+def read_graph(store: RDFStore):
     """Session-scoped rdflib Graph for SHACL introspection tests."""
-    return store.rdflib_graph
+    return store.read_graph
 
 
 @pytest.fixture(scope="session")
 def property_specs(store: RDFStore):
-    """Cached property specs from SHACL shapes."""
-    return store.get_property_specs()
+    """Cached EntityShape list projected from SHACL shapes."""
+    return store.get_entities()

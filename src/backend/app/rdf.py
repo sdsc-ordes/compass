@@ -10,9 +10,9 @@ from typing import Any, ClassVar
 import pyoxigraph
 from rdflib import Graph
 
-from . import schema as _schema
 from .core.exceptions import QueryError, ReloadError
 from .core.settings import settings
+from .shacl_to_entities import EntityShape, get_entity_shape_from_shacl
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class RDFStore:
         self.data_path = data_path
         self.shapes_path = shapes_path
         self.vocab_path = vocab_path
-        self._rdflib_graph: Graph | None = None
-        self._property_specs_cache: list[dict[str, Any]] | None = None
+        self._read_graph: Graph | None = None
+        self._entity_shapes_cache: list[EntityShape] | None = None
         self.load_data()
 
     def load_data(self) -> None:
@@ -36,15 +36,15 @@ class RDFStore:
             self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
 
     @property
-    def rdflib_graph(self) -> Graph:
+    def read_graph(self) -> Graph:
         """Parsed once and shared — rdflib parsing of all three files is slow."""
-        if self._rdflib_graph is None:
+        if self._read_graph is None:
             g = Graph()
             g.parse(self.shapes_path, format="turtle")
             g.parse(self.data_path, format="turtle")
             g.parse(self.vocab_path, format="turtle")
-            self._rdflib_graph = g
-        return self._rdflib_graph
+            self._read_graph = g
+        return self._read_graph
 
     def query(self, sparql: str) -> list[dict[str, Any]]:
         """Run a SPARQL SELECT; one dict per row, unbound variables omitted.
@@ -73,27 +73,24 @@ class RDFStore:
             logger.exception("SPARQL query failed:\n%s", sparql)
             raise QueryError(sparql, exc) from exc
 
-    def get_filters_schema(self, lang: str = "en") -> list[dict[str, Any]]:
-        return _schema.get_filters_schema(self.rdflib_graph, lang)
-
-    def get_property_specs(self) -> list[dict[str, Any]]:
-        if self._property_specs_cache is None:
-            self._property_specs_cache = _schema.get_property_specs(self.rdflib_graph)
-        return self._property_specs_cache
+    def get_entities(self) -> list[EntityShape]:
+        if self._entity_shapes_cache is None:
+            self._entity_shapes_cache = get_entity_shape_from_shacl(self.read_graph)
+        return self._entity_shapes_cache
 
     def validate(self) -> None:
         """Reject a store that parsed but cannot answer a query.
 
         Turtle can parse and still be useless -- a truncated file, or shapes that
         no longer describe the data -- and a reload that swapped such a store in
-        would take the map down. Deriving the specs exercises the SHACL
+        would take the map down. Deriving entity shapes exercises the SHACL
         introspection the whole query layer is built on, and counting entities
         proves the data reached the store.
         """
-        specs = self.get_property_specs()
-        if not specs:
+        shapes = self.get_entities()
+        if not shapes:
             raise ReloadError(
-                "the shapes yielded no property specs, so no filter would work"
+                "the shapes yielded no EntityShape fields, so no filter would work"
             )
         rows = self.query(
             "PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> "

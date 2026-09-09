@@ -1,10 +1,10 @@
-"""SPARQL generation from SHACL property specs plus the active filters."""
+"""SPARQL generation from EntityShape descriptors plus the active filters."""
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Any
 
 from .namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
+from .shacl_to_entities import EntityShape
 from .sparql_terms import iri_term, is_iri, string_literal
 
 # Property id -> (prefixed predicate, datatype IRI or None)
@@ -30,10 +30,10 @@ def _is_iri_value(value: str) -> bool:
     return value.startswith(("http://", "https://")) and is_iri(value)
 
 
-def build_optional(spec: dict, lang: str) -> str:
-    sid = spec["id"]
-    path = to_prefixed(spec["path_iri"])
-    cat = spec["category"]
+def build_optional(spec: EntityShape, lang: str) -> str:
+    sid = spec.id
+    path = to_prefixed(spec.path_iri)
+    cat = spec.category
 
     if cat == "lang_literal":
         return f'OPTIONAL {{ ?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}") }}'
@@ -53,11 +53,11 @@ def build_optional(spec: dict, lang: str) -> str:
     return ""
 
 
-def build_select_expr(spec: dict) -> str:
+def build_select_expr(spec: EntityShape) -> str:
     """GROUP_CONCAT for multi-valued properties, SAMPLE for single-valued ones."""
-    sid = spec["id"]
-    cat = spec["category"]
-    is_multi = spec["is_multi"]
+    sid = spec.id
+    cat = spec.category
+    is_multi = spec.is_multi
 
     if cat == "iri_with_label":
         if is_multi:
@@ -234,24 +234,24 @@ def _build_where_clauses(
 
 
 def _categorize_specs(
-    specs: list[dict[str, Any]],
+    specs: list[EntityShape],
 ) -> tuple[dict[str, str], RangeFilters, dict[str, str]]:
     filter_map: dict[str, str] = {}
     range_filters: RangeFilters = {}
     date_filters: dict[str, str] = {}
     for spec in specs:
-        prefixed = to_prefixed(spec["path_iri"])
-        if spec["filter_type"] in ("multiselect", "toggle"):
-            filter_map[spec["id"]] = prefixed
-        elif spec["filter_type"] == "slider":
-            range_filters[spec["id"]] = (prefixed, spec.get("datatype"))
-        elif spec["filter_type"] == "datepicker":
-            date_filters[spec["id"]] = prefixed
+        prefixed = to_prefixed(spec.path_iri)
+        if spec.filter_type in ("multiselect", "toggle"):
+            filter_map[spec.id] = prefixed
+        elif spec.filter_type == "slider":
+            range_filters[spec.id] = (prefixed, spec.datatype)
+        elif spec.filter_type == "datepicker":
+            date_filters[spec.id] = prefixed
     return filter_map, range_filters, date_filters
 
 
 def build_facet_query(
-    specs: list[dict[str, Any]], lang: str, query_params, target_id: str
+    specs: list[EntityShape], lang: str, query_params, target_id: str
 ) -> str:
     """Count entities per value of one tag dimension.
 
@@ -279,7 +279,7 @@ def build_facet_query(
     )
 
 
-def build_entities_query(specs: list[dict[str, Any]], lang: str, query_params) -> str:
+def sparql_for_instances(specs: list[EntityShape], lang: str, query_params) -> str:
     filter_map, range_filters, date_filters = _categorize_specs(specs)
 
     auto_optionals = "\n        ".join(build_optional(spec, lang) for spec in specs)

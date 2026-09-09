@@ -4,7 +4,7 @@
  * The API owns the data and the query layer, so an editorial update reaches
  * the widget on the next request without anything being rebuilt.
  */
-import type { Filters, FilterSchemaEntry } from './namespaces';
+import type { Filters, FilterWidget } from './namespaces';
 
 /** The properties the API puts on every feature, whatever the shapes add. */
 export type EntityProperties = {
@@ -32,8 +32,8 @@ export type FeatureCollection = { type: 'FeatureCollection'; features: Feature[]
 /** Drill-down counts per tag: { dimensionId: { tagIri: count } }. */
 export type FacetCounts = Record<string, Record<string, number>>;
 
-/** Filter schema per language, fetched once by init(). */
-const schemaByLang: Record<string, FilterSchemaEntry[]> = {};
+/** Filter widgets per language, fetched once by init(). */
+const widgetsByLang: Record<string, FilterWidget[]> = {};
 let apiBase = '';
 
 /** Turn the UI's filter object into query parameters, one entry per value. */
@@ -60,21 +60,21 @@ async function getJson<T>(path: string, params?: URLSearchParams): Promise<T> {
 }
 
 /**
- * Point the engine at an API and load the filter schema for both languages.
+ * Point the engine at an API and load filter widgets for both languages.
  *
- * The schema is prefetched rather than requested per render so that
- * getFiltersSchema stays synchronous for the components that read it during
- * reactive updates. It lists every tag value, so it has to come from the API:
- * adding a concept changes it.
+ * Widgets are prefetched rather than requested per render so that
+ * getFilterWidgets stays synchronous for the components that read them during
+ * reactive updates. They list every tag value, so they have to come from the API:
+ * adding a concept changes them.
  */
 export async function init(url: string): Promise<void> {
   apiBase = (url ?? '').replace(/\/$/, '');
   const [en, de] = await Promise.all([
-    getJson<FilterSchemaEntry[]>('/api/v1/filters/schema', new URLSearchParams({ lang: 'en' })),
-    getJson<FilterSchemaEntry[]>('/api/v1/filters/schema', new URLSearchParams({ lang: 'de' })),
+    getJson<FilterWidget[]>('/api/v1/filters', new URLSearchParams({ lang: 'en' })),
+    getJson<FilterWidget[]>('/api/v1/filters', new URLSearchParams({ lang: 'de' })),
   ]);
-  schemaByLang.en = en;
-  schemaByLang.de = de;
+  widgetsByLang.en = en;
+  widgetsByLang.de = de;
 }
 
 export async function getEntities(lang: string, filters: Filters): Promise<FeatureCollection> {
@@ -85,7 +85,7 @@ export async function getFacets(lang: string, filters: Filters): Promise<FacetCo
   return getJson<FacetCounts>('/api/v1/entities/facets', toParams(lang, filters));
 }
 
-/** Filter UI schema for a language, from init()'s prefetch (English fallback). */
-export function getFiltersSchema(lang: string): FilterSchemaEntry[] {
-  return schemaByLang[lang] ?? schemaByLang.en ?? [];
+/** Filter UI widgets for a language, from init()'s prefetch (English fallback). */
+export function getFilterWidgets(lang: string): FilterWidget[] {
+  return widgetsByLang[lang] ?? widgetsByLang.en ?? [];
 }

@@ -1,7 +1,8 @@
 """Ontology contract tests.
 
 These tests verify that the RDF data satisfies the structural assumptions
-hardcoded in sparql_builder.py, schema.py, and result_parser.py.
+hardcoded in sparql_builder.py, shacl_to_filters.py, and
+sparql_to_geojson_translator.py.
 
 If any of these fail after an ontology edit, the corresponding backend code
 will break silently (empty results, missing fields, etc.).
@@ -15,7 +16,7 @@ from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib.namespace import SKOS
 
 from app.namespaces import COMPASS, GEO
-from app.schema import _add_entity_type_filter
+from app.shacl_to_filters import _entity_type_dimension
 
 _ONTOLOGY_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -36,26 +37,25 @@ class TestTopLevelEntityClasses:
         COMPASS.PartnerOrganization,
     ]
 
-    def test_classes_have_instances(self, rdflib_graph):
+    def test_classes_have_instances(self, read_graph):
         """Each of the 4 entity types must have at least one instance in compass.ttl."""
         for cls in self.REQUIRED_CLASSES:
-            subjects = list(rdflib_graph.subjects(RDF.type, cls))
+            subjects = list(read_graph.subjects(RDF.type, cls))
             assert subjects, (
                 f"{cls} has no instances in compass.ttl. "
                 f"Add at least one instance or remove from _sparql_preamble()."
             )
 
-    def test_entity_type_filter_classes_match_ontology(self, rdflib_graph):
-        """schema.py _add_entity_type_filter() hardcodes a list of type classes.
+    def test_entity_type_filter_classes_match_ontology(self, read_graph):
+        """shacl_to_filters entity-type dimension hardcodes type classes.
         Verify every class in that list matches what the ontology declares."""
-        dummy_filters = []
-        _add_entity_type_filter(rdflib_graph, dummy_filters, "en")
-        schema_type_iris = {opt["value"] for opt in dummy_filters[0]["options"]}
+        widget = _entity_type_dimension(read_graph, "en")
+        schema_type_iris = {opt.value for opt in widget.options}
 
         expected = {str(cls) for cls in self.REQUIRED_CLASSES}
         missing = expected - schema_type_iris
         assert expected <= schema_type_iris, (
-            f"Entity classes missing from _add_entity_type_filter: {missing}"
+            f"Entity classes missing from _entity_type_dimension: {missing}"
         )
 
 
@@ -65,22 +65,22 @@ class TestTopLevelEntityClasses:
 class TestRequiredPredicates:
     """Predicates that _sparql_preamble() and _special_optionals() reference directly."""
 
-    def test_geometry_predicates_in_data(self, rdflib_graph):
-        lat_triples = list(rdflib_graph.triples((None, GEO.lat, None)))
-        long_triples = list(rdflib_graph.triples((None, GEO.long, None)))
+    def test_geometry_predicates_in_data(self, read_graph):
+        lat_triples = list(read_graph.triples((None, GEO.lat, None)))
+        long_triples = list(read_graph.triples((None, GEO.long, None)))
         assert lat_triples, "No geo:lat triples found — map will be empty"
         assert long_triples, "No geo:long triples found — map will be empty"
 
-    def test_name_predicate_in_data(self, rdflib_graph):
-        names = list(rdflib_graph.triples((None, COMPASS.name, None)))
+    def test_name_predicate_in_data(self, read_graph):
+        names = list(read_graph.triples((None, COMPASS.name, None)))
         assert names, "No compass:name triples — all entities will be invisible on the map"
 
 
-# -- Named property shapes drive schema.py (via entity NodeShapes) --
+# -- Named property shapes drive shacl_to_entities / filter widgets --
 
 
 class TestNamedPropertyShapes:
-    """schema.py reads named sh:Shape IRIs from entity NodeShapes -- those with a
+    """shacl_to_entities reads named sh:Shape IRIs from entity NodeShapes -- those with a
     sh:targetClass. Lose their sh:property references and filters and SPARQL break."""
 
     def _entity_prop_paths(self, g):
@@ -93,11 +93,11 @@ class TestNamedPropertyShapes:
                         paths.add(path)
         return paths
 
-    def test_entity_nodeshapes_have_named_properties(self, rdflib_graph):
+    def test_entity_nodeshapes_have_named_properties(self, read_graph):
         count = sum(
             1
-            for node_shape in rdflib_graph.subjects(SH.targetClass, None)
-            for p in rdflib_graph.objects(node_shape, SH.property)
+            for node_shape in read_graph.subjects(SH.targetClass, None)
+            for p in read_graph.objects(node_shape, SH.property)
             if isinstance(p, URIRef)
         )
         assert count > 0, (
@@ -105,8 +105,8 @@ class TestNamedPropertyShapes:
             "filters will be empty and SPARQL will have no OPTIONAL clauses."
         )
 
-    def test_description_in_entity_shapes(self, rdflib_graph):
-        paths = self._entity_prop_paths(rdflib_graph)
+    def test_description_in_entity_shapes(self, read_graph):
+        paths = self._entity_prop_paths(read_graph)
         assert COMPASS.description in paths, (
             "compass:description not found in any entity NodeShape property — "
             "the sidebar description paragraph will be missing."
@@ -128,30 +128,30 @@ class TestTagVocabularies:
         COMPASS.CountryArea,
     ]
 
-    def test_tag_classes_have_instances(self, rdflib_graph):
+    def test_tag_classes_have_instances(self, read_graph):
         for cls in self.TAG_CLASSES:
-            subjects = list(rdflib_graph.subjects(RDF.type, cls))
+            subjects = list(read_graph.subjects(RDF.type, cls))
             assert len(subjects) > 0, (
                 f"No instances of {cls} found. "
                 f"The corresponding filter will have no options."
             )
 
-    def test_tag_instances_have_en_prefLabel(self, rdflib_graph):
+    def test_tag_instances_have_en_prefLabel(self, read_graph):
         for cls in self.TAG_CLASSES:
-            for s in rdflib_graph.subjects(RDF.type, cls):
+            for s in read_graph.subjects(RDF.type, cls):
                 labels = [
                     label
-                    for label in rdflib_graph.objects(s, SKOS.prefLabel)
+                    for label in read_graph.objects(s, SKOS.prefLabel)
                     if getattr(label, "language", None) == "en"
                 ]
                 assert labels, f"{s} (a {cls}) has no English skos:prefLabel"
 
-    def test_tag_instances_have_de_prefLabel(self, rdflib_graph):
+    def test_tag_instances_have_de_prefLabel(self, read_graph):
         for cls in self.TAG_CLASSES:
-            for s in rdflib_graph.subjects(RDF.type, cls):
+            for s in read_graph.subjects(RDF.type, cls):
                 labels = [
                     label
-                    for label in rdflib_graph.objects(s, SKOS.prefLabel)
+                    for label in read_graph.objects(s, SKOS.prefLabel)
                     if getattr(label, "language", None) == "de"
                 ]
                 assert labels, f"{s} (a {cls}) has no German skos:prefLabel"
@@ -165,10 +165,10 @@ class TestForumProjectLabels:
     build_optional() looks up labels via skos:prefLabel / rdfs:label,
     so every Forum/Project entity must have rdfs:label."""
 
-    def test_forums_have_rdfs_label(self, rdflib_graph):
+    def test_forums_have_rdfs_label(self, read_graph):
         missing = []
-        for s in rdflib_graph.subjects(RDF.type, COMPASS.InternationalForum):
-            labels = list(rdflib_graph.objects(s, RDFS.label))
+        for s in read_graph.subjects(RDF.type, COMPASS.InternationalForum):
+            labels = list(read_graph.objects(s, RDFS.label))
             if not labels:
                 missing.append(str(s))
         assert not missing, (
@@ -176,10 +176,10 @@ class TestForumProjectLabels:
             f"(tag labels will be blank): {missing}"
         )
 
-    def test_projects_have_rdfs_label(self, rdflib_graph):
+    def test_projects_have_rdfs_label(self, read_graph):
         missing = []
-        for s in rdflib_graph.subjects(RDF.type, COMPASS.Project):
-            labels = list(rdflib_graph.objects(s, RDFS.label))
+        for s in read_graph.subjects(RDF.type, COMPASS.Project):
+            labels = list(read_graph.objects(s, RDFS.label))
             if not labels:
                 missing.append(str(s))
         assert not missing, (
@@ -194,10 +194,10 @@ class TestAllGeoEntitiesHaveLabels:
     """_sparql_preamble() does FILTER(BOUND(?label)) via compass:name.
     Entities without compass:name will be silently dropped from the map."""
 
-    def test_geo_entities_have_name(self, rdflib_graph):
+    def test_geo_entities_have_name(self, read_graph):
         missing = []
-        for subj in rdflib_graph.subjects(GEO.lat, None):
-            names = list(rdflib_graph.objects(subj, COMPASS.name))
+        for subj in read_graph.subjects(GEO.lat, None):
+            names = list(read_graph.objects(subj, COMPASS.name))
             if not names:
                 missing.append(str(subj))
         assert not missing, (
