@@ -2,9 +2,15 @@
 
 ## Unreleased
 
+### Development settings
+
+- Add `COMPASS_ENVIRONMENT` setting (`development` default locally, `production`
+  in `docker-compose.yml`) and `app/core/development.py` for development-only
+  middleware such as CORS.
+
 ### Docs: MkDocs for the backend
 
-- Add Material MkDocs under `docs/backend/` 
+- Add Material MkDocs under `docs/backend/`
 - Add `docs` dependency group, `just docs` / `just docs-build`
 - Add `.github/workflows/mkdocs-ci.yml` (deploy to GitHub Pages on `main`)
 - Drop `README-config.md` to bring the markdown documentation under docs (one sourth of truth).

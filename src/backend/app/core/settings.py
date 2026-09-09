@@ -36,6 +36,10 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(extra="ignore")
 
+    compass_environment: str = Field(
+        default="development",
+        description="Runtime environment: 'development' enables dev-only behavior.",
+    )
     compass_cors_origins: str = Field(
         default=_DEV_ORIGINS,
         description="Comma-separated browser origins allowed for CORS.",
@@ -48,6 +52,15 @@ class Settings(BaseSettings):
         default=None,
         description="Directory containing compass.ttl, shapes.ttl, and vocab.ttl.",
     )
+
+    @property
+    def is_development(self) -> bool:
+        """Whether the app is running in a development environment.
+
+        Returns:
+            ``True`` when ``compass_environment`` is 'development' or 'dev'.
+        """
+        return self.compass_environment.lower() in {"development", "dev"}
 
     @field_validator("compass_ontology_dir", mode="before")
     @classmethod

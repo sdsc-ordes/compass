@@ -15,6 +15,15 @@ cd src/backend
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
+## Environment
+
+`COMPASS_ENVIRONMENT` controls development-only middleware:
+
+- `development` (default) — enables CORS for local frontends.
+- `production` — disables CORS; `docker-compose.yml` defaults to this.
+
+Override with the env var, e.g. `COMPASS_ENVIRONMENT=production`.
+
 ## Tests
 
 ```bash

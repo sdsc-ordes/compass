@@ -7,9 +7,9 @@ decorators, and the interactive UI at ``/docs`` when the API is running).
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from .config import config
+from .core.development import configure_development
 from .core.handlers import register_exception_handlers
 from .core.settings import settings
 from .rdf import RDFStore
@@ -34,14 +34,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=config.api_title, lifespan=lifespan)
 register_exception_handlers(app)
 
-# Deployment serves the widget and the API from one origin (see docker/nginx.conf),
-# so this is an allowlist for development rather than a wildcard.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
-)
+if settings.is_development:
+    configure_development(app)
 
 
 @app.get(

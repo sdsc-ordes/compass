@@ -7,6 +7,9 @@ services:
       # Read the Turtle from the mount below rather than the copy baked into
       # the image, so an editorial update needs no rebuild.
       COMPASS_ONTOLOGY_DIR: /data/ontology
+      # Production deployment serves widget and API from the same origin, so
+      # development-only middleware (CORS, debug endpoints, etc.) is disabled.
+      COMPASS_ENVIRONMENT: ${COMPASS_ENVIRONMENT:-production}
       # Without this the reload endpoint stays closed. Override it in
       # deployment; anyone holding it can make the API re-parse on demand.
       COMPASS_RELOAD_TOKEN: ${COMPASS_RELOAD_TOKEN:-change-me}

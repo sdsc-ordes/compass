@@ -11,6 +11,10 @@ Module docs and architecture: see [docs/backend](../../docs/backend/index.md)
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
+`COMPASS_ENVIRONMENT` defaults to `development` locally, enabling CORS for the
+Vite dev server. Set it to `production` to disable development-only middleware;
+`docker-compose.yml` defaults to `production`.
+
 ## Tests
 
 ```bash
