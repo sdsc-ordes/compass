@@ -28,7 +28,14 @@ class InvalidTerm(ValueError):
 
 
 def is_iri(value: str) -> bool:
-    """True when *value* can be written between angle brackets unchanged."""
+    """True when *value* can be written between angle brackets unchanged.
+
+    Args:
+        value: Candidate IRI string.
+
+    Returns:
+        Whether *value* matches SPARQL 1.1 IRIREF character rules.
+    """
     return bool(value) and _NOT_IN_IRIREF.search(value) is None
 
 
@@ -37,6 +44,15 @@ def iri_term(value: str) -> str:
 
     Raise InvalidTerm when the value carries a character that would escape the
     brackets, so a caller-supplied IRI can never extend the query.
+
+    Args:
+        value: Absolute IRI.
+
+    Returns:
+        SPARQL ``<...>`` term.
+
+    Raises:
+        InvalidTerm: When *value* is not a safe IRIREF.
     """
     if not is_iri(value):
         raise InvalidTerm(f"{value!r} is not a valid IRI")
@@ -44,6 +60,13 @@ def iri_term(value: str) -> str:
 
 
 def string_literal(value: str) -> str:
-    """Render *value* as a quoted SPARQL string literal, escapes included."""
+    """Render *value* as a quoted SPARQL string literal, escapes included.
+
+    Args:
+        value: Untrusted string content.
+
+    Returns:
+        Double-quoted SPARQL literal with escapes applied.
+    """
     escaped = "".join(_LITERAL_ESCAPES.get(char, char) for char in value)
     return f'"{escaped}"'

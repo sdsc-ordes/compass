@@ -1,0 +1,54 @@
+name: mkdocs-ci
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/backend/**"
+      - "docs/backend/**"
+      - ".github/workflows/mkdocs-ci.yml"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the built site to GitHub Pages
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: uv sync --frozen --group docs
+
+      - name: Build documentation
+        run: uv run mkdocs build --strict
+
+      - name: Upload site artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-docs-site
+          path: src/backend/site
+
+      - name: Configure Git Credentials
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Deploy documentation
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)
+        run: uv run mkdocs gh-deploy --force --strict

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Docs: MkDocs for the backend
+
+- Add Material MkDocs under `docs/backend/` 
+- Add `docs` dependency group, `just docs` / `just docs-build`
+- Add `.github/workflows/mkdocs-ci.yml` (deploy to GitHub Pages on `main`)
+- Drop `README-config.md` to bring the markdown documentation under docs (one sourth of truth).
+
 ### Refactor: query / GeoJSON layer
 
 - Split `schema.py` into `shacl_to_filters.py` (UI `FilterWidget`) and
@@ -41,4 +48,4 @@
   - updated log messages and the upstream-error response to use the configured provider name and error message.
 - Added API metadata environment variables (`API_TITLE`, `API_WELCOME_MESSAGE`) and removed hard-coded "OceanCare" references from `app/main.py` and `pyproject.toml`.
 - Updated `tests/test_stories.py` to assert against the new configurable constants.
-- Added `README-config.md` documenting how to adapt the backend for a new use-case by editing `app/config.py`.
+- Added `docs/backend/configuration.md` documenting how to adapt the backend for a new use-case by editing `app/config.py`.

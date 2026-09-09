@@ -1,3 +1,9 @@
+"""FastAPI application entrypoint.
+
+HTTP routes are documented via OpenAPI (``summary`` / ``description`` on
+decorators, and the interactive UI at ``/docs`` when the API is running).
+"""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -13,6 +19,14 @@ from .schemas.admin import RootMessage
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Load the ontology into the process-wide store before serving requests.
+
+    Args:
+        app: FastAPI application (unused; required by the lifespan protocol).
+
+    Yields:
+        Control to the running server until shutdown.
+    """
     RDFStore.instance()  # load the ontology before the first request
     yield
 
@@ -30,7 +44,12 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_model=RootMessage)
+@app.get(
+    "/",
+    response_model=RootMessage,
+    summary="API root",
+    description="Returns the configured welcome message.",
+)
 async def root() -> RootMessage:
     return RootMessage(message=config.api_welcome_message)
 

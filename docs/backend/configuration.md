@@ -1,9 +1,9 @@
 # Configuring the Backend for a New Use-case
 
-Use-case settings live in `app/config.py` (pydantic `Config`). Platform / deployment
-settings live in `app/core/settings.py`. A Python-proficient user should be able to
-adapt the backend for a new use-case by editing `app/config.py` (and optional env
-overrides).
+Use-case settings live in `app/config.py` (pydantic `Config`). Platform /
+deployment settings live in `app/core/settings.py`. A Python-proficient user
+should be able to adapt the backend for a new use-case by editing
+`app/config.py` (and optional env overrides).
 
 ## Minimal Checklist
 
@@ -31,3 +31,6 @@ overrides).
    ```bash
    uv run pytest tests/ -v
    ```
+
+See also the [Config](reference/config.md) and [Core](reference/core.md) API
+reference.

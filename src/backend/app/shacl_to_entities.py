@@ -7,12 +7,14 @@ data is filled later by SPARQL over ``compass.ttl``.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from rdflib import RDF, SH, Graph, URIRef
 from rdflib import Literal as RDFLiteral
 from rdflib.namespace import SKOS, XSD
+from rdflib.term import Node
 
 from .namespaces import COMPASS, GEO, SCHEMA
 
@@ -54,16 +56,32 @@ class EntityShape(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    id: str
-    path_iri: str
-    category: PropertyCategory
-    is_multi: bool
-    filter_type: FilterType
-    datatype: str | None = None
+    id: str = Field(description="Local name of the property path (SPARQL variable base).")
+    path_iri: str = Field(description="Full IRI of the sh:path predicate.")
+    category: PropertyCategory = Field(
+        description="How values are bound in SPARQL and decoded into GeoJSON."
+    )
+    is_multi: bool = Field(
+        description="True when multiple values are expected (GROUP_CONCAT path)."
+    )
+    filter_type: FilterType = Field(
+        description="Widget used to filter this property, or ``none`` if display-only."
+    )
+    datatype: str | None = Field(
+        default=None,
+        description="XSD datatype IRI from sh:datatype, when present.",
+    )
 
 
-def get_shacl_property(g: Graph):
-    """Yield every sh:property IRI of every NodeShape that has a sh:targetClass."""
+def get_shacl_property(g: Graph) -> Iterator[URIRef]:
+    """Yield every sh:property IRI of every NodeShape that has a sh:targetClass.
+
+    Args:
+        g: Merged ontology graph (shapes + data + vocab).
+
+    Yields:
+        ``URIRef`` property-shape subjects, de-duplicated.
+    """
     seen: set = set()
     for node_shape in g.subjects(SH.targetClass, None):
         for p in g.objects(node_shape, SH.property):
@@ -73,7 +91,17 @@ def get_shacl_property(g: Graph):
 
 
 def get_shacl_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
-    """Return a label in *lang*, falling back to English, then any available label."""
+    """Return a label in *lang*, falling back to English, then any available label.
+
+    Args:
+        g: Ontology graph.
+        subject: Resource whose label is sought.
+        predicate: Preferred label predicate (e.g. ``sh:name``, ``rdfs:label``).
+        lang: BCP 47 language tag.
+
+    Returns:
+        Best-matching label string, or the subject's local name as last resort.
+    """
     candidates = list(g.objects(subject, predicate))
     if predicate != SKOS.prefLabel:
         candidates += list(g.objects(subject, SKOS.prefLabel))
@@ -90,7 +118,14 @@ def get_shacl_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> 
 
 
 def get_entity_shape_from_shacl(g: Graph) -> list[EntityShape]:
-    """Project SHACL property shapes into EntityShape descriptors for query and decode."""
+    """Project SHACL property shapes into EntityShape descriptors for query and decode.
+
+    Args:
+        g: Merged ontology graph.
+
+    Returns:
+        One ``EntityShape`` per filterable/display property (builtins skipped).
+    """
     fields: list[EntityShape] = []
 
     for property_node in get_shacl_property(g):
@@ -135,7 +170,16 @@ def get_entity_shape_from_shacl(g: Graph) -> list[EntityShape]:
     return fields
 
 
-def _infer_category(datatype, is_iri: bool) -> PropertyCategory:
+def _infer_category(datatype: Node | None, is_iri: bool) -> PropertyCategory:
+    """Map SHACL datatype / IRI-ness to a SPARQL binding category.
+
+    Args:
+        datatype: ``sh:datatype`` value, or ``None``.
+        is_iri: True when the property values are IRIs (class, nodeKind, or sh:in).
+
+    Returns:
+        Category string consumed by the SPARQL builder and GeoJSON translator.
+    """
     if is_iri:
         return "iri_with_label"
     if datatype is not None and str(datatype) == str(XSD.anyURI):
@@ -147,8 +191,17 @@ def _infer_category(datatype, is_iri: bool) -> PropertyCategory:
     return "simple_literal"
 
 
-def _infer_filter_type(path, category: str, datatype) -> FilterType:
-    """The widget this property is filtered with, or "none" if it is display-only."""
+def _infer_filter_type(path: Node, category: str, datatype: Node | None) -> FilterType:
+    """Choose the filter widget for a property, or ``none`` if display-only.
+
+    Args:
+        path: Property path URIRef.
+        category: Inferred ``PropertyCategory``.
+        datatype: ``sh:datatype`` value, or ``None``.
+
+    Returns:
+        Filter widget type used by the panel, or ``none``.
+    """
     if path in DISPLAY_ONLY or category == "uri_literal":
         return "none"
     if category in _FILTER_BY_CATEGORY:

@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RootMessage(BaseModel):
-    message: str
+    """Payload returned by ``GET /``."""
+
+    message: str = Field(description="Welcome / status message from use-case config.")
 
 
 class ReloadSuccess(BaseModel):
-    reloaded: bool
-    source: str
-    replaced_a_running_store: bool
+    """Payload returned when ontology reload succeeds."""
+
+    reloaded: bool = Field(description="Always true on success.")
+    source: str = Field(description="Ontology directory that was loaded.")
+    replaced_a_running_store: bool = Field(
+        description="True when a previous live store was swapped out.",
+    )

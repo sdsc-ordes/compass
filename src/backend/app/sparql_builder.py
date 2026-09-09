@@ -1,7 +1,10 @@
 """SPARQL generation from EntityShape descriptors plus the active filters."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
 
 from .namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
 from .shacl_to_entities import EntityShape
@@ -12,7 +15,14 @@ RangeFilters = dict[str, tuple[str, str | None]]
 
 
 def to_prefixed(iri: str) -> str:
-    """Convert a full IRI to a SPARQL prefixed name (e.g. compass:country)."""
+    """Convert a full IRI to a SPARQL prefixed name (e.g. ``compass:country``).
+
+    Args:
+        iri: Absolute property IRI.
+
+    Returns:
+        Prefixed name when the namespace is known, otherwise an ``<IRIREF>``.
+    """
     for ns, prefix in PREFIX_MAP.items():
         if iri.startswith(ns):
             return prefix + iri[len(ns) :]
@@ -26,11 +36,26 @@ def _is_iri_value(value: str) -> bool:
     so the two are told apart by shape. The IRI check is the grammar's, not a
     guess: a value that cannot be written as an IRIREF is treated as a literal
     rather than interpolated between brackets.
+
+    Args:
+        value: Raw query-parameter value.
+
+    Returns:
+        Whether *value* is a safe absolute HTTP(S) IRI.
     """
     return value.startswith(("http://", "https://")) and is_iri(value)
 
 
 def build_optional(spec: EntityShape, lang: str) -> str:
+    """Build the OPTIONAL clause that binds one EntityShape property.
+
+    Args:
+        spec: Property descriptor from SHACL.
+        lang: Preferred language for labels / langString filters.
+
+    Returns:
+        SPARQL OPTIONAL fragment, or empty string for unknown categories.
+    """
     sid = spec.id
     path = to_prefixed(spec.path_iri)
     cat = spec.category
@@ -54,7 +79,14 @@ def build_optional(spec: EntityShape, lang: str) -> str:
 
 
 def build_select_expr(spec: EntityShape) -> str:
-    """GROUP_CONCAT for multi-valued properties, SAMPLE for single-valued ones."""
+    """GROUP_CONCAT for multi-valued properties, SAMPLE for single-valued ones.
+
+    Args:
+        spec: Property descriptor from SHACL.
+
+    Returns:
+        SELECT projection expression(s) for this property.
+    """
     sid = spec.id
     cat = spec.category
     is_multi = spec.is_multi
@@ -83,14 +115,20 @@ class Subject:
 
     Filters read the same for a pin the map draws and for the pin that puts a
     region on the map, but they cannot share variable names: the region branch
-    nests its copy inside FILTER EXISTS, where the outer ?type is already bound
-    to compass:CountryArea.
+    nests its copy inside FILTER EXISTS, where the outer ``?type`` is already
+    bound to ``compass:CountryArea``.
+
+    Attributes:
+        var: Subject variable (e.g. ``?s`` or ``?pin``).
+        type_var: Variable holding the entity class IRI.
+        suffix: Keeps helper variables distinct across the two copies.
+        declare_type: Bind ``type_var`` here rather than relying on an outer BIND.
     """
 
     var: str
     type_var: str
-    suffix: str  # keeps helper variables distinct across the two copies
-    declare_type: bool  # bind type_var here, rather than relying on an outer BIND
+    suffix: str
+    declare_type: bool
 
 
 PIN = Subject(var="?s", type_var="?type", suffix="", declare_type=False)
@@ -98,7 +136,15 @@ REGION_PIN = Subject(var="?pin", type_var="?pinType", suffix="Pin", declare_type
 
 
 def _pin_branch(where_clauses: list[str], indent: str = "        ") -> str:
-    """The four entity classes that carry coordinates -- the pins on the map."""
+    """Build the UNION of the four entity classes that carry coordinates.
+
+    Args:
+        where_clauses: Extra FILTER / pattern lines applied to each pin.
+        indent: Leading whitespace for generated lines.
+
+    Returns:
+        SPARQL WHERE fragment for map pins.
+    """
     branches = f"\n{indent}UNION ".join(
         f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}" for name in PIN_CLASSES
     )
@@ -109,11 +155,18 @@ def _pin_branch(where_clauses: list[str], indent: str = "        ") -> str:
 
 
 def _region_branch(where_clauses: list[str], indent: str = "        ") -> str:
-    """Country/Area concepts, reachable only through a pin that points at one.
+    """Build the Country/Area branch reachable only through a matching pin.
 
     A region is a shaded polygon rather than a result, and it carries no tags of
     its own: it reaches the map because some pin passing the same filters
     records it, so shading always means "matching pins are in here".
+
+    Args:
+        where_clauses: Filter clauses applied to the nested ``?pin``.
+        indent: Leading whitespace for generated lines.
+
+    Returns:
+        SPARQL WHERE fragment for shaded regions.
     """
     inner = f"{indent}    ?pin compass:countryArea ?s .\n"
     if where_clauses:
@@ -130,6 +183,12 @@ def _shared_optionals(lang: str) -> str:
 
     Regions have no coordinates and label themselves with skos:prefLabel, so
     geometry is OPTIONAL and the label is COALESCEd across both properties.
+
+    Args:
+        lang: Preferred language tag.
+
+    Returns:
+        SPARQL OPTIONAL / BIND / FILTER block.
     """
     return f"""        OPTIONAL {{ ?s geo:lat ?lat . }}
         OPTIONAL {{ ?s geo:long ?long . }}
@@ -142,32 +201,63 @@ def _shared_optionals(lang: str) -> str:
 
 
 def _special_optionals() -> str:
-    """Properties fetched for display that no entity NodeShape declares."""
+    """Return OPTIONAL patterns for properties not declared on entity NodeShapes.
+
+    Returns:
+        SPARQL fragment fetching ``compass:wpEntityTagId``.
+    """
     return """
         OPTIONAL { ?s compass:wpEntityTagId ?wpEntityTagId . }
 """
 
 
 def _special_selects() -> str:
+    """Return SELECT projections for special (non-SHACL) properties.
+
+    Returns:
+        SPARQL SELECT fragment for ``wpEntityTagId``.
+    """
     return "           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n"
 
 
 def _union_or_single(parts: list[str]) -> str:
+    """Join alternative graph patterns with UNION, or return the sole pattern.
+
+    Args:
+        parts: Individual pattern strings.
+
+    Returns:
+        A single pattern or a braced UNION of several.
+    """
     if len(parts) > 1:
         return "{ " + " } UNION { ".join(parts) + " }"
     return parts[0]
 
 
 def _build_where_clauses(
-    query_params,
+    query_params: Any,
     filter_map: dict[str, str],
     range_filters: RangeFilters,
     date_filters: dict[str, str],
     subject: Subject = PIN,
     exclude_key: str | None = None,
 ) -> list[str]:
-    """exclude_key drops that dimension's own constraints, so facet counts for a
-    dimension are not shrunk by the selection within it (drill-down faceting)."""
+    """Translate HTTP query params into SPARQL WHERE fragments.
+
+    ``exclude_key`` drops that dimension's own constraints, so facet counts for a
+    dimension are not shrunk by the selection within it (drill-down faceting).
+
+    Args:
+        query_params: Starlette/FastAPI query parameter multi-dict.
+        filter_map: Multiselect/toggle property id → prefixed predicate.
+        range_filters: Slider property id → (predicate, datatype).
+        date_filters: Datepicker property id → prefixed predicate.
+        subject: Variable naming for pin vs region-pin copies.
+        exclude_key: Dimension id to ignore (faceting).
+
+    Returns:
+        List of SPARQL pattern / FILTER lines.
+    """
     where_clauses = []
     subj = subject.var
 
@@ -236,6 +326,14 @@ def _build_where_clauses(
 def _categorize_specs(
     specs: list[EntityShape],
 ) -> tuple[dict[str, str], RangeFilters, dict[str, str]]:
+    """Split EntityShape list into multiselect, range, and date filter maps.
+
+    Args:
+        specs: SHACL-projected property descriptors.
+
+    Returns:
+        Tuple of ``(filter_map, range_filters, date_filters)``.
+    """
     filter_map: dict[str, str] = {}
     range_filters: RangeFilters = {}
     date_filters: dict[str, str] = {}
@@ -251,12 +349,21 @@ def _categorize_specs(
 
 
 def build_facet_query(
-    specs: list[EntityShape], lang: str, query_params, target_id: str
+    specs: list[EntityShape], lang: str, query_params: Any, target_id: str
 ) -> str:
     """Count entities per value of one tag dimension.
 
     Regions are background context rather than results (see the map's result
     badge, which counts point features only), so only the pin branch is counted.
+
+    Args:
+        specs: EntityShape list for the ontology.
+        lang: Preferred language for shared optionals.
+        query_params: Active filter query parameters.
+        target_id: Dimension whose values are counted.
+
+    Returns:
+        Complete SPARQL SELECT counting ``?val``.
     """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
     target_path = filter_map[target_id]
@@ -279,7 +386,17 @@ def build_facet_query(
     )
 
 
-def sparql_for_instances(specs: list[EntityShape], lang: str, query_params) -> str:
+def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any) -> str:
+    """Compile the main entity SELECT (pins UNION regions) for the map.
+
+    Args:
+        specs: EntityShape list for the ontology.
+        lang: Preferred language.
+        query_params: Active filter query parameters.
+
+    Returns:
+        Complete SPARQL SELECT returning one grouped row per entity.
+    """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
 
     auto_optionals = "\n        ".join(build_optional(spec, lang) for spec in specs)

@@ -58,6 +58,14 @@ check:
 # Everything CI runs: lint, type-check, tests, and the ontology freshness gate.
 all: lint check test data-check
 
+# Serve the backend MkDocs site locally (http://127.0.0.1:8888).
+docs:
+    cd "{{root_dir}}/src/backend" && uv run --group docs mkdocs serve
+
+# Build the backend MkDocs site into src/backend/site/.
+docs-build:
+    cd "{{root_dir}}/src/backend" && uv run --group docs mkdocs build --strict
+
 # Serve the widget's dev server.
 web:
     cd "{{root_dir}}/src/frontend" && npm run dev

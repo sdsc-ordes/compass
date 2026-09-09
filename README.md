@@ -12,7 +12,7 @@ tools/scripts/  – the ontology generator and its tests
 tools/nix/      – the Nix flake providing the dev shell
 share/          – standalone demo page; needs an apiurl to point at
 docker/         – Dockerfiles, nginx config and the compose entry page
-docs/           – contributor docs
+docs/           – contributor docs; docs/backend is the backend MkDocs site
 ```
 
 ## Setup

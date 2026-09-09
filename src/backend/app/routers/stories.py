@@ -1,21 +1,8 @@
-"""
-Stories proxy router.
+"""Stories proxy router.
 
-GET /api/v1/stories/count?tags=<iri>&tags=<iri>&lang=de
-
-1. Maps each IRI to a term ID via compass:wpTagId in the RDF graph.
-2. Builds a frontend stories URL for user navigation.
-3. Queries the configured upstream stories API for the story count.
-4. Returns {"count": N, "url": "...", "status": "...", "message": "..."}.
-
-Response status values:
-- "ok":              Count retrieved successfully.
-- "no_tags":         No tag IRIs were provided in the request.
-- "no_ID_mapping":   None of the provided IRIs have a term-id mapping.
-- "upstream_error":  The upstream stories API returned an error or was unreachable.
-
-Concepts without a mapping triple are silently skipped.
-If no IRIs map to IDs, returns count=0 and the base stories URL.
+Maps concept IRIs to upstream term IDs via ``compass:wpTagId``, then queries
+the configured stories provider for a count. HTTP route descriptions live in
+OpenAPI (``summary`` / ``description`` on the route decorators).
 """
 
 from __future__ import annotations
@@ -37,7 +24,18 @@ router = APIRouter()
 
 
 def _resolve_tags_ids(iris: list[str], store: RDFStore) -> list[int]:
-    """Return the term IDs for the given IRIs (skips unmapped ones)."""
+    """Return upstream term IDs for the given concept IRIs.
+
+    Concepts without a ``compass:wpTagId`` mapping are skipped. Invalid IRIs
+    are ignored.
+
+    Args:
+        iris: Concept IRIs from the ``tags`` query parameter.
+        store: Live RDF store.
+
+    Returns:
+        Distinct term IDs found in the graph.
+    """
     terms = [iri_term(iri) for iri in iris if is_iri(iri)]
     if not terms:
         return []
@@ -53,14 +51,23 @@ def _resolve_tags_ids(iris: list[str], store: RDFStore) -> list[int]:
     return [int(row["wpTagId"]) for row in rows if row.get("wpTagId")]
 
 
-@router.get("/count", response_model=StoriesCountResponse)
+@router.get(
+    "/count",
+    response_model=StoriesCountResponse,
+    summary="Count stories for tag IRIs",
+    description=(
+        "Maps each IRI to a term ID via compass:wpTagId, builds a frontend "
+        "stories URL, queries the upstream stories API, and returns "
+        '{"count", "url", "status", "message"}. Status values: ok, no_tags, '
+        "no_ID_mapping, upstream_error."
+    ),
+)
 async def get_stories_count(
     cfg: ConfigDep,
     lang: Lang,
     store: StoreDep,
     tags: list[str] = Query(default=[]),
 ) -> StoriesCountResponse:
-    """Return the number of stories matching the given tag IRIs."""
     if not tags:
         logger.info("Stories count requested with no tags")
         return StoriesCountResponse(

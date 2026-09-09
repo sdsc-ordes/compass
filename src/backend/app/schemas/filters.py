@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from app.shacl_to_filters import FilterWidget, FilterOption, FilterWidgetType
+from app.shacl_to_filters import FilterOption, FilterWidget, FilterWidgetType
 
 __all__ = [
-    "FilterWidget",
     "FilterOption",
+    "FilterWidget",
     "FilterWidgetType",
 ]

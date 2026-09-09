@@ -18,7 +18,20 @@ logger = logging.getLogger(__name__)
 
 
 class RDFStore:
+    """In-process ontology store used by every query route.
+
+    Oxigraph answers SPARQL; a lazily built rdflib ``Graph`` serves SHACL
+    introspection. A single process-wide instance is held on ``_instance``.
+    """
+
     def __init__(self, data_path: str, shapes_path: str, vocab_path: str):
+        """Load Turtle files into a fresh Oxigraph store.
+
+        Args:
+            data_path: Path to ``compass.ttl`` (instance data).
+            shapes_path: Path to ``shapes.ttl`` (SHACL).
+            vocab_path: Path to ``vocab.ttl`` (SKOS / class labels).
+        """
         self.store = pyoxigraph.Store()
         self.data_path = data_path
         self.shapes_path = shapes_path
@@ -28,6 +41,7 @@ class RDFStore:
         self.load_data()
 
     def load_data(self) -> None:
+        """Parse the three Turtle files into the Oxigraph store."""
         with open(self.data_path, "rb") as f:
             self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
         with open(self.shapes_path, "rb") as f:
@@ -37,7 +51,11 @@ class RDFStore:
 
     @property
     def read_graph(self) -> Graph:
-        """Parsed once and shared — rdflib parsing of all three files is slow."""
+        """Merged rdflib graph of shapes, data, and vocab (parsed once).
+
+        Returns:
+            Shared ``Graph`` used by SHACL projection helpers.
+        """
         if self._read_graph is None:
             g = Graph()
             g.parse(self.shapes_path, format="turtle")
@@ -49,8 +67,15 @@ class RDFStore:
     def query(self, sparql: str) -> list[dict[str, Any]]:
         """Run a SPARQL SELECT; one dict per row, unbound variables omitted.
 
-        Raise QueryError, with the query that failed attached, so the cause is
-        recoverable from the trace rather than surfacing as a bare 500.
+        Args:
+            sparql: Full SELECT query string.
+
+        Returns:
+            List of row dicts keyed by variable name.
+
+        Raises:
+            QueryError: When Oxigraph rejects or fails the query. The failing
+                query text is attached for logging.
         """
         start = time.time()
         try:
@@ -74,6 +99,11 @@ class RDFStore:
             raise QueryError(sparql, exc) from exc
 
     def get_entities(self) -> list[EntityShape]:
+        """Return cached ``EntityShape`` descriptors projected from SHACL.
+
+        Returns:
+            Property descriptors used to build SPARQL and decode GeoJSON.
+        """
         if self._entity_shapes_cache is None:
             self._entity_shapes_cache = get_entity_shape_from_shacl(self.read_graph)
         return self._entity_shapes_cache
@@ -81,11 +111,14 @@ class RDFStore:
     def validate(self) -> None:
         """Reject a store that parsed but cannot answer a query.
 
-        Turtle can parse and still be useless -- a truncated file, or shapes that
-        no longer describe the data -- and a reload that swapped such a store in
+        Turtle can parse and still be useless — a truncated file, or shapes that
+        no longer describe the data — and a reload that swapped such a store in
         would take the map down. Deriving entity shapes exercises the SHACL
         introspection the whole query layer is built on, and counting entities
         proves the data reached the store.
+
+        Raises:
+            ReloadError: When shapes yield nothing or no entity has coordinates.
         """
         shapes = self.get_entities()
         if not shapes:
@@ -105,7 +138,12 @@ class RDFStore:
 
     @classmethod
     def from_settings(cls) -> RDFStore:
-        """Build a store from the configured ontology directory."""
+        """Build a store from the configured ontology directory.
+
+        Returns:
+            New ``RDFStore`` pointing at ``compass.ttl`` / ``shapes.ttl`` /
+            ``vocab.ttl`` under ``settings.ontology_dir``.
+        """
         directory = str(settings.ontology_dir)
         return cls(
             data_path=os.path.join(directory, "compass.ttl"),
@@ -115,7 +153,11 @@ class RDFStore:
 
     @classmethod
     def instance(cls) -> RDFStore:
-        """Return the single live store, creating it from settings if needed."""
+        """Return the single live store, creating it from settings if needed.
+
+        Returns:
+            Process-wide ``RDFStore`` singleton.
+        """
         if cls._instance is None:
             cls._instance = cls.from_settings()
         return cls._instance
@@ -124,9 +166,16 @@ class RDFStore:
     def reload_instance(cls) -> dict[str, Any]:
         """Swap in the files currently on disk, keeping the live store on failure.
 
-        The candidate is built and validated in full before `_instance` moves,
+        The candidate is built and validated in full before ``_instance`` moves,
         so a bad edit leaves the last good version serving rather than taking the
         API down with it.
+
+        Returns:
+            Status dict with ``reloaded``, ``source``, and
+            ``replaced_a_running_store``.
+
+        Raises:
+            ReloadError: When the on-disk ontology is not usable.
         """
         try:
             candidate = cls.from_settings()

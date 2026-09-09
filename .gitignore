@@ -11,6 +11,7 @@ share/compass-map.js
 # Python / backend
 .venv/
 src/backend/.venv/
+src/backend/site/
 __pycache__/
 *.py[cod]
 *.pyo

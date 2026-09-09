@@ -21,6 +21,11 @@ _DEV_ORIGIN_REGEX = r"https?://(localhost|127\.0\.0\.1)(:\d+)?"
 
 
 def _default_ontology_dir() -> Path:
+    """Resolve the default ontology directory relative to this package.
+
+    Returns:
+        ``src/ontology`` when the layout matches a normal checkout.
+    """
     # app/core/settings.py -> app -> backend -> src -> ontology
     base = Path(__file__).resolve().parents[3]
     return base / "ontology"
@@ -31,20 +36,41 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(extra="ignore")
 
-    compass_cors_origins: str = Field(default=_DEV_ORIGINS)
-    compass_reload_token: str = Field(default="")
-    compass_ontology_dir: Path | None = Field(default=None)
+    compass_cors_origins: str = Field(
+        default=_DEV_ORIGINS,
+        description="Comma-separated browser origins allowed for CORS.",
+    )
+    compass_reload_token: str = Field(
+        default="",
+        description="Shared secret for POST /api/v1/admin/reload; empty disables reload.",
+    )
+    compass_ontology_dir: Path | None = Field(
+        default=None,
+        description="Directory containing compass.ttl, shapes.ttl, and vocab.ttl.",
+    )
 
     @field_validator("compass_ontology_dir", mode="before")
     @classmethod
     def _empty_ontology_dir_is_none(cls, value: object) -> object:
+        """Treat an empty string env override as unset.
+
+        Args:
+            value: Raw field value before validation.
+
+        Returns:
+            ``None`` for empty input, otherwise *value* unchanged.
+        """
         if value == "" or value is None:
             return None
         return value
 
     @property
     def cors_origins(self) -> list[str]:
-        """Origins allowed to call the API cross-origin; empty for same-origin only."""
+        """Origins allowed to call the API cross-origin; empty for same-origin only.
+
+        Returns:
+            Stripped origin strings from ``compass_cors_origins``.
+        """
         return [
             origin.strip()
             for origin in self.compass_cors_origins.split(",")
@@ -53,10 +79,20 @@ class Settings(BaseSettings):
 
     @property
     def reload_token(self) -> str:
+        """Token expected in the ``X-Reload-Token`` header.
+
+        Returns:
+            Configured reload secret (may be empty).
+        """
         return self.compass_reload_token
 
     @property
     def ontology_dir(self) -> Path:
+        """Directory that holds the Turtle ontology files.
+
+        Returns:
+            Explicit ``compass_ontology_dir`` or the package-relative default.
+        """
         if self.compass_ontology_dir is not None:
             return self.compass_ontology_dir
         return _default_ontology_dir()

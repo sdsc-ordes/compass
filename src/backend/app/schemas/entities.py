@@ -13,18 +13,34 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class GeoJSONGeometry(BaseModel):
+    """GeoJSON geometry object (Point or opaque dict for OpenAPI)."""
+
     model_config = ConfigDict(extra="allow")
 
-    type: str
-    coordinates: Any = None
+    type: str = Field(description="GeoJSON geometry type (e.g. Point).")
+    coordinates: Any = Field(
+        default=None,
+        description="Coordinate array; shape depends on ``type``.",
+    )
 
 
 class GeoJSONFeature(BaseModel):
+    """Single GeoJSON Feature returned for a pin or region."""
+
     model_config = ConfigDict(extra="allow")
 
-    type: Literal["Feature"] = "Feature"
-    geometry: GeoJSONGeometry | dict[str, Any] | None = None
-    properties: dict[str, Any] = Field(default_factory=dict)
+    type: Literal["Feature"] = Field(
+        default="Feature",
+        description="Always ``Feature`` per RFC 7946.",
+    )
+    geometry: GeoJSONGeometry | dict[str, Any] | None = Field(
+        default=None,
+        description="Point for pins; null for shaded regions.",
+    )
+    properties: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Entity id, label, type, tags, and display fields.",
+    )
 
 
 class FeatureCollection(BaseModel):
@@ -32,5 +48,10 @@ class FeatureCollection(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    type: Literal["FeatureCollection"] = "FeatureCollection"
-    features: list[GeoJSONFeature]
+    type: Literal["FeatureCollection"] = Field(
+        default="FeatureCollection",
+        description="Always ``FeatureCollection``.",
+    )
+    features: list[GeoJSONFeature] = Field(
+        description="Matching entities as GeoJSON Features.",
+    )
