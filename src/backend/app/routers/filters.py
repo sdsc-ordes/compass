@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/",
+    "",
     response_model=list[FilterWidget],
     summary="List filter-panel widgets",
     description="Returns filter panel widgets derived from SHACL shapes.",

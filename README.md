@@ -11,7 +11,7 @@ src/backend/    – FastAPI service: SPARQL over the ontology, filter schema, re
 tools/scripts/  – the ontology generator and its tests
 tools/nix/      – the Nix flake providing the dev shell
 share/          – standalone demo page; needs an apiurl to point at
-docker/         – Dockerfiles, nginx config and the compose entry page
+tools/docker/   – Dockerfiles, nginx config and the compose entry page
 docs/           – contributor docs; docs/backend is the backend MkDocs site
 ```
 
@@ -85,7 +85,7 @@ That file is the entire widget; nothing else is emitted. Loading it defines a
 ```
 
 Serve it from the same origin as the API and `apiurl="/"` is enough, which is
-what `docker/index.html` does with `location.origin`.
+what `tools/docker/index.html` does with `location.origin`.
 
 ## Change the map data
 

@@ -20,7 +20,7 @@ _FACET_EXCLUDED = {"entityType", "relatedProject", "forum"}
 
 
 @router.get(
-    "/",
+    "",
     response_model=FeatureCollection,
     summary="List entities as GeoJSON",
     description=(

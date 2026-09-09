@@ -31,7 +31,11 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title=config.api_title, lifespan=lifespan)
+app = FastAPI(
+    title=config.api_title,
+    lifespan=lifespan,
+    redirect_slashes=False,
+)
 register_exception_handlers(app)
 
 if settings.is_development:
@@ -45,6 +49,16 @@ if settings.is_development:
     description="Returns the configured welcome message.",
 )
 async def root() -> RootMessage:
+    return RootMessage(message=config.api_welcome_message)
+
+
+@app.get(
+    "/api/",
+    response_model=RootMessage,
+    summary="API welcome",
+    description="Returns the configured welcome message at the API prefix.",
+)
+async def api_root() -> RootMessage:
     return RootMessage(message=config.api_welcome_message)
 
 

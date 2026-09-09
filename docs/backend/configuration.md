@@ -7,11 +7,17 @@ should be able to adapt the backend for a new use-case by editing
 
 ## Minimal Checklist
 
-1. **Set API metadata** (`app/config.py` / env)
+1. **Set the reload token** (`app/core/settings.py` / env)
+   - `COMPASS_RELOAD_TOKEN` — secret token required by the `/api/admin/reload`
+     endpoint. The endpoint re-parses the ontology files without restarting the
+     container, which is useful for editorial updates. Keep this secret strong
+     in production; anyone holding it can trigger a reload on demand.
+
+2. **Set API metadata** (`app/config.py` / env)
    - `API_TITLE` — title shown in the FastAPI docs.
    - `API_WELCOME_MESSAGE` — payload returned by `GET /`.
 
-2. **Configure to your website (stories provider)** (`app/config.py`)
+3. **Configure to your website (stories provider)** (`app/config.py`)
    - `STORIES_PROVIDER_NAME` — provider name used in log messages.
    - `STORIES_BASE_URL_EN` / `STORIES_BASE_URL_DE` (and `stories_base_urls`) — public index URLs.
    - `STORIES_API_URL` — upstream endpoint queried by `/api/v1/stories/count`.
@@ -21,12 +27,12 @@ should be able to adapt the backend for a new use-case by editing
    - Override `Config.parse_stories_count` (or set `stories_count_header`) if the
      upstream count is not in the default response header.
 
-3. **Adapt language support**
+4. **Adapt language support**
    - Add or remove language base URLs on `Config` so `supported_langs` updates.
    - Routers read allowed `lang` values from `Config` via `app/core/deps.py` — do not
      hardcode `en|de` in routes.
 
-4. **Run the test suite** (sanity check)
+5. **Run the test suite** (sanity check)
 
    ```bash
    uv run pytest tests/ -v

@@ -78,7 +78,7 @@ export async function init(url: string): Promise<void> {
 }
 
 export async function getEntities(lang: string, filters: Filters): Promise<FeatureCollection> {
-  return getJson<FeatureCollection>('/api/v1/entities/', toParams(lang, filters));
+  return getJson<FeatureCollection>('/api/v1/entities', toParams(lang, filters));
 }
 
 export async function getFacets(lang: string, filters: Filters): Promise<FacetCounts> {

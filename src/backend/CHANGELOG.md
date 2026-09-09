@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Deployment / Docker
+
+- Rename Compose services: `api` → `backend`, `web` → `frontend`.
+- Move Docker assets from `docker/` to `tools/docker/` and update all
+  references (`docker-compose.yml`, `README.md`, frontend Dockerfile).
+- Add `.env.example` at the project root documenting backend environment
+  variables for both local development and Docker Compose.
+- Load the project-root `.env` file automatically in `app/core/settings.py`
+  when it exists; Docker Compose-injected variables continue to take
+  precedence.
+
+#### API / routing for Docker deployment
+
+- Add a dedicated `/api/` welcome route so the widget's API probe succeeds.
+- Disable FastAPI's automatic trailing-slash redirects
+  (`redirect_slashes=False`) to avoid 307 redirect issues with same-origin
+  nginx proxying.
+- Define collection routes without trailing slashes (`/api/v1/filters`,
+  `/api/v1/entities`) and update the frontend engine to match.
+
 ### Development settings
 
 - Add `COMPASS_ENVIRONMENT` setting (`development` default locally, `production`

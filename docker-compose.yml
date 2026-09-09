@@ -1,8 +1,8 @@
 services:
-  api:
+  backend:
     build:
       context: .
-      dockerfile: docker/api.Dockerfile
+      dockerfile: tools/docker/backend.Dockerfile
     environment:
       # Read the Turtle from the mount below rather than the copy baked into
       # the image, so an editorial update needs no rebuild.
@@ -29,10 +29,10 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  web:
+  frontend:
     build:
       context: .
-      dockerfile: docker/web.Dockerfile
+      dockerfile: tools/docker/frontend.Dockerfile
     volumes:
       # Built by `just tiles`, kept out of the image and out of git: ~53 MB of
       # regenerable raster. Absent is fine -- the map falls back to vector.
@@ -40,6 +40,6 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      api:
+      backend:
         condition: service_healthy
     restart: unless-stopped

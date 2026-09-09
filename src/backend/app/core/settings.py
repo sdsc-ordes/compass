@@ -7,19 +7,6 @@ from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Origins of the *page* that calls the API (Vite / preview), not the API port.
-# Include both localhost and 127.0.0.1 — browsers treat them as different origins.
-_DEV_ORIGINS = (
-    "http://localhost:5173,http://127.0.0.1:5173,"
-    "http://localhost:5174,http://127.0.0.1:5174,"
-    "http://localhost:4173,http://127.0.0.1:4173"
-)
-
-# Any loopback Vite/preview port (5173 busy → 5174, etc.). Used when the widget
-# still calls the API cross-origin instead of via the Vite /api proxy.
-_DEV_ORIGIN_REGEX = r"https?://(localhost|127\.0\.0\.1)(:\d+)?"
-
-
 def _default_ontology_dir() -> Path:
     """Resolve the default ontology directory relative to this package.
 
@@ -31,17 +18,33 @@ def _default_ontology_dir() -> Path:
     return base / "ontology"
 
 
+def _project_root_env_file() -> Path | None:
+    """Return the project-root .env file if it exists.
+
+    Returns:
+        Path to ``.env`` at the repository root, or ``None`` when absent.
+        Docker Compose injects variables directly, so the file is optional.
+    """
+    # app/core/settings.py -> app -> backend -> src -> project root
+    env_file = Path(__file__).resolve().parents[4] / ".env"
+    return env_file if env_file.exists() else None
+
+
 class Settings(BaseSettings):
     """Process-wide Compass knobs loaded from the environment at startup."""
 
-    model_config = SettingsConfigDict(extra="ignore")
+    model_config = SettingsConfigDict(
+        extra="ignore",
+        env_file=_project_root_env_file(),
+        env_file_encoding="utf-8",
+    )
 
     compass_environment: str = Field(
         default="development",
         description="Runtime environment: 'development' enables dev-only behavior.",
     )
     compass_cors_origins: str = Field(
-        default=_DEV_ORIGINS,
+        default="http://localhost:5173,http://127.0.0.1:5173",
         description="Comma-separated browser origins allowed for CORS.",
     )
     compass_reload_token: str = Field(
