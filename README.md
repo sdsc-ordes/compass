@@ -78,7 +78,7 @@ cp dist/compass-map.js ../share/
 
 ## Change the map data
 
-`compass.ttl` and `vocab.ttl` are **generated** from `src/ontology/source-data.ods`,
+`ocean-care.ttl` and `vocab.ttl` are **generated** from `src/ontology/source-data.ods`,
 a spreadsheet with three sheets. Edit it, regenerate, rebuild:
 
 ```bash
@@ -97,7 +97,7 @@ the widget ships a stale filter panel.
 | `src/ontology/source-data.ods` | **Source of truth** — `schemes` (the six tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
 | `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
 | `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
-| `src/ontology/compass.ttl` | *Generated* — instance data (the pins on the map) |
+| `src/ontology/ocean-care.ttl` | *Generated* — instance data (the pins on the map) |
 | `src/ontology/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
 | `src/frontend/src/generated/` | *Generated* — filter schema and property specs for the browser engine |
 

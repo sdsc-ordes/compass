@@ -21,7 +21,7 @@ compass:WorkAreaScheme
     a skos:ConceptScheme ;
     skos:prefLabel "Work Area"@en ;
     skos:prefLabel "Arbeitsbereich"@de ;
-    skos:definition "Types of work OceanCare performs."@en ;
+    skos:definition "Types of work the NGO performs."@en ;
     skos:hasTopConcept compass:AdvocacyWork ;
     skos:hasTopConcept compass:CommunityInvolvement ;
     skos:hasTopConcept compass:Events ;
@@ -116,7 +116,7 @@ compass:TopicScheme
     a skos:ConceptScheme ;
     skos:prefLabel "Topic"@en ;
     skos:prefLabel "Thema"@de ;
-    skos:definition "Thematic topics addressed by OceanCare."@en ;
+    skos:definition "Thematic topics addressed by the NGO."@en ;
     skos:hasTopConcept compass:AquaticWildMeat ;
     skos:hasTopConcept compass:ClimateProtection ;
     skos:hasTopConcept compass:DeepSeaMining ;
@@ -234,7 +234,7 @@ compass:SpeciesScheme
     a skos:ConceptScheme ;
     skos:prefLabel "Species"@en ;
     skos:prefLabel "Arten"@de ;
-    skos:definition "Marine and aquatic species relevant to OceanCare's work."@en ;
+    skos:definition "Marine and aquatic species relevant to the NGO's work."@en ;
     skos:hasTopConcept compass:Corals ;
     skos:hasTopConcept compass:DolphinsAndSmallCetaceans ;
     skos:hasTopConcept compass:Fish ;
@@ -327,7 +327,7 @@ compass:CountryAreaScheme
     a skos:ConceptScheme ;
     skos:prefLabel "Country / Area"@en ;
     skos:prefLabel "Land / Gebiet"@de ;
-    skos:definition "Countries and geographic areas relevant to OceanCare's work."@en ;
+    skos:definition "Countries and geographic areas relevant to the NGO's work."@en ;
     skos:hasTopConcept compass:Arctic ;
     skos:hasTopConcept compass:Australia ;
     skos:hasTopConcept compass:BalticSea ;

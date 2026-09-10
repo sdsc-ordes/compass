@@ -8,7 +8,7 @@
 @prefix schema: <https://schema.org/> .
 
 # ============================================================
-# SHACL Shapes: OceanCare Compass Entities
+# SHACL Shapes: Compass Entities
 # ============================================================
 
 # ============================================================
@@ -18,26 +18,26 @@
 compass:InternationalForum a rdfs:Class ;
     rdfs:label "International Forum"@en ;
     rdfs:label "Internationales Forum"@de ;
-    rdfs:comment "An international policy, governance, or coordination forum for ocean affairs."@en ;
-    rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Meeresangelegenheiten."@de .
+    rdfs:comment "An international policy, governance, or coordination forum for affairs."@en ;
+    rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Angelegenheiten."@de .
 
 compass:Network a rdfs:Class ;
     rdfs:label "Network"@en ;
     rdfs:label "Netzwerk"@de ;
-    rdfs:comment "A collaborative ocean research or monitoring network spanning multiple organizations."@en ;
-    rdfs:comment "Ein kollaboratives Netzwerk für Meeresforschung oder -überwachung über mehrere Organisationen hinweg."@de .
+    rdfs:comment "A collaborative research or monitoring network spanning multiple organizations."@en ;
+    rdfs:comment "Ein kollaboratives Netzwerk für Forschung oder Überwachung über mehrere Organisationen hinweg."@de .
 
 compass:PartnerOrganization a rdfs:Class ;
     rdfs:label "Partner Organization"@en ;
     rdfs:label "Partnerorganisation"@de ;
-    rdfs:comment "An OceanCare partner organization active in marine conservation or research."@en ;
-    rdfs:comment "Eine OceanCare-Partnerorganisation, die im Meeresschutz oder in der Meeresforschung tätig ist."@de .
+    rdfs:comment "An NGO partner organization active in conservation or research."@en ;
+    rdfs:comment "Eine Partnerorganisation, die im Schutz oder in der Forschung tätig ist."@de .
 
 compass:Project a rdfs:Class ;
     rdfs:label "Project"@en ;
     rdfs:label "Projekt"@de ;
-    rdfs:comment "A time-limited project or programme addressing ocean issues."@en ;
-    rdfs:comment "Ein zeitlich begrenztes Projekt oder Programm zur Bewältigung von Meeresfragen."@de .
+    rdfs:comment "A time-limited project or programme addressing issues."@en ;
+    rdfs:comment "Ein zeitlich begrenztes Projekt oder Programm zur Bewältigung von Fragen."@de .
 
 # ============================================================
 # Tag Dimension Classes (6 SKOS-based tag vocabularies)
@@ -46,7 +46,7 @@ compass:Project a rdfs:Class ;
 compass:WorkArea a rdfs:Class ;
     rdfs:label "Work Area"@en ;
     rdfs:label "Arbeitsbereich"@de ;
-    rdfs:comment "A type of work OceanCare performs."@en .
+    rdfs:comment "A type of work the NGO performs."@en .
 
 compass:Conservation a rdfs:Class ;
     rdfs:label "Conservation"@en ;
@@ -56,22 +56,22 @@ compass:Conservation a rdfs:Class ;
 compass:Topic a rdfs:Class ;
     rdfs:label "Topic"@en ;
     rdfs:label "Thema"@de ;
-    rdfs:comment "A thematic topic addressed by OceanCare."@en .
+    rdfs:comment "A thematic topic addressed by the NGO."@en .
 
 compass:Pollution a rdfs:Class ;
     rdfs:label "Pollution"@en ;
     rdfs:label "Verschmutzung"@de ;
-    rdfs:comment "A type of ocean pollution."@en .
+    rdfs:comment "A type of pollution."@en .
 
 compass:Species a rdfs:Class ;
     rdfs:label "Species"@en ;
     rdfs:label "Arten"@de ;
-    rdfs:comment "A marine or aquatic species relevant to OceanCare's work."@en .
+    rdfs:comment "A species relevant to the NGO's work."@en .
 
 compass:CountryArea a rdfs:Class ;
     rdfs:label "Country / Area"@en ;
     rdfs:label "Land / Gebiet"@de ;
-    rdfs:comment "A country or geographic area relevant to OceanCare's work."@en .
+    rdfs:comment "A country or geographic area relevant to the NGO's work."@en .
 
 # ============================================================
 # Property Declarations
@@ -95,12 +95,12 @@ compass:location a rdf:Property ;
 compass:description a rdf:Property ;
     rdfs:label "description"@en ;
     rdfs:label "Beschreibung"@de ;
-    rdfs:comment "A paragraph describing the entity and OceanCare's involvement with it."@en .
+    rdfs:comment "A paragraph describing the entity and the NGO's involvement with it."@en .
 
-compass:managedByOceanCare a rdf:Property ;
-    rdfs:label "managed by OceanCare"@en ;
-    rdfs:label "verwaltet von OceanCare"@de ;
-    rdfs:comment "Whether this entity is directly managed by OceanCare."@en .
+compass:managedByNGO a rdf:Property ;
+    rdfs:label "managed by the NGO"@en ;
+    rdfs:label "verwaltet von der NRO "@de ;
+    rdfs:comment "Whether this entity is directly managed by the NGO."@en .
 
 # -- Tag dimension properties --
 
@@ -151,19 +151,19 @@ compass:relatedProject a rdf:Property ;
 
 # -- Bookkeeping properties (not filter dimensions) --
 
-compass:wpTagId a rdf:Property ;
-    rdfs:label "WordPress Tag ID"@en ;
-    rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the OceanCare website."@en ;
+compass:TagId a rdf:Property ;
+    rdfs:label "Tag ID"@en ;
+    rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the NGO website."@en ;
     rdfs:range xsd:integer .
 
-compass:wpEntityTagIdEn a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (English)"@en ;
-    rdfs:comment "Numeric WP term ID of the English per-entity tag on OceanCare (used to link to English stories about this entity)."@en ;
+compass:EntityTagIdEn a rdf:Property ;
+    rdfs:label "Entity Tag ID (English)"@en ;
+    rdfs:comment "Numeric term ID of the English per-entity tag on the NGO (used to link to English stories about this entity)."@en ;
     rdfs:range xsd:integer .
 
-compass:wpEntityTagIdDe a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (German)"@en ;
-    rdfs:comment "Numeric WP term ID of the German per-entity tag on OceanCare (used to link to German stories about this entity)."@en ;
+compass:EntityTagIdDe a rdf:Property ;
+    rdfs:label "Entity Tag ID (German)"@en ;
+    rdfs:comment "Numeric term ID of the German per-entity tag on the NGO (used to link to German stories about this entity)."@en ;
     rdfs:range xsd:integer .
 
 compass:isoCode a rdf:Property ;
@@ -279,16 +279,16 @@ compass:DescriptionShape a sh:Shape ;
     sh:path compass:description ;
     sh:name "description"@en ;
     sh:name "Beschreibung"@de ;
-    sh:description "A paragraph describing the entity and OceanCare's involvement with it."@en ;
-    sh:description "Ein Absatz, der die Entität und das Engagement von OceanCare beschreibt."@de ;
+    sh:description "A paragraph describing the entity and the NGO's involvement with it."@en ;
+    sh:description "Ein Absatz, der die Entität und das Engagement von der NRO beschreibt."@de ;
     sh:datatype rdf:langString ;
     sh:uniqueLang true .
 
-compass:ManagedByOceanCareShape a sh:Shape ;
-    sh:path compass:managedByOceanCare ;
-    sh:name "Managed by OceanCare"@en ;
-    sh:name "Verwaltet von OceanCare"@de ;
-    sh:description "Whether this entity is directly managed by OceanCare."@en ;
+compass:ManagedByNGOShape a sh:Shape ;
+    sh:path compass:managedByNGO ;
+    sh:name "Managed by the NGO"@en ;
+    sh:name "Verwaltet von der NRO"@de ;
+    sh:description "Whether this entity is directly managed by the NGO."@en ;
     sh:datatype xsd:boolean ;
     sh:maxCount 1 .
 
@@ -327,14 +327,14 @@ compass:PollutionPropertyShape a sh:Shape ;
     sh:path compass:pollution ;
     sh:name "Pollution"@en ;
     sh:name "Verschmutzung"@de ;
-    sh:description "A type of ocean pollution."@en ;
+    sh:description "A type of pollution."@en ;
     sh:class compass:Pollution .
 
 compass:SpeciesPropertyShape a sh:Shape ;
     sh:path compass:species ;
     sh:name "Species"@en ;
     sh:name "Arten"@de ;
-    sh:description "A marine or aquatic species."@en ;
+    sh:description "A species."@en ;
     sh:class compass:Species .
 
 compass:CountryAreaPropertyShape a sh:Shape ;
@@ -375,7 +375,7 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:targetClass compass:InternationalForum ;
     rdfs:label "International Forum Shape"@en ;
     rdfs:label "Internationales Forum-Form"@de ;
-    rdfs:comment "Validates the expected structure of an international ocean governance forum."@en ;
+    rdfs:comment "Validates the expected structure of an international governance forum."@en ;
     sh:property compass:NameShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
@@ -384,7 +384,7 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
+    sh:property compass:ManagedByNGOShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
@@ -399,7 +399,7 @@ compass:NetworkShape a sh:NodeShape ;
     sh:targetClass compass:Network ;
     rdfs:label "Network Shape"@en ;
     rdfs:label "Netzwerk-Form"@de ;
-    rdfs:comment "Validates the expected structure of a collaborative ocean network."@en ;
+    rdfs:comment "Validates the expected structure of a collaborative network."@en ;
     sh:property compass:NameShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
@@ -408,7 +408,7 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
+    sh:property compass:ManagedByNGOShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
@@ -424,7 +424,7 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:targetClass compass:PartnerOrganization ;
     rdfs:label "Partner Organization Shape"@en ;
     rdfs:label "Partnerorganisation-Form"@de ;
-    rdfs:comment "Validates the expected structure of an OceanCare partner organization."@en ;
+    rdfs:comment "Validates the expected structure of an the NGO partner organization."@en ;
     sh:property compass:NameShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
@@ -433,7 +433,7 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
+    sh:property compass:ManagedByNGOShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
@@ -458,7 +458,7 @@ compass:ProjectShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
+    sh:property compass:ManagedByNGOShape ;
     sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;

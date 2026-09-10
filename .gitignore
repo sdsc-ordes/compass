@@ -1,6 +1,7 @@
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Node / frontend
 node_modules/
@@ -11,7 +12,7 @@ share/compass-map.js
 # Python / backend
 .venv/
 src/backend/.venv/
-src/backend/states.db
+src/backend/site/
 __pycache__/
 *.py[cod]
 *.pyo
@@ -43,3 +44,4 @@ todo.md
 AGENTS.md
 CLAUDE.md
 .claude/skills
+src/frontend/tiles/

@@ -17,7 +17,7 @@ _ONTOLOGY_DIR = os.path.join(_BASE_DIR, "ontology")
 def store() -> RDFStore:
     """Session-scoped RDFStore loaded from the real ontology files."""
     return RDFStore(
-        data_path=os.path.join(_ONTOLOGY_DIR, "compass.ttl"),
+        data_path=os.path.join(_ONTOLOGY_DIR, "ocean-care.ttl"),
         shapes_path=os.path.join(_ONTOLOGY_DIR, "shapes.ttl"),
         vocab_path=os.path.join(_ONTOLOGY_DIR, "vocab.ttl"),
     )

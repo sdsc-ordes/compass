@@ -78,7 +78,7 @@ def get_store() -> RDFStore:
     if store_instance is None:
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         store_instance = RDFStore(
-            data_path=os.path.join(base_dir, "ontology", "compass.ttl"),
+            data_path=os.path.join(base_dir, "ontology", "ocean-care.ttl"),
             shapes_path=os.path.join(base_dir, "ontology", "shapes.ttl"),
             vocab_path=os.path.join(base_dir, "ontology", "vocab.ttl"),
         )
