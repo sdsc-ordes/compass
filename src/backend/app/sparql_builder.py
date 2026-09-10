@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from .namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
-from .shacl_to_entities import EntityShape
-from .sparql_terms import iri_term, is_iri, string_literal
+from app.namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
+from app.shacl_to_entities import EntityShape
+from app.sparql_terms import iri_term, is_iri, string_literal
 
 # Property id -> (prefixed predicate, datatype IRI or None)
 RangeFilters = dict[str, tuple[str, str | None]]

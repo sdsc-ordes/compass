@@ -16,7 +16,7 @@ from rdflib import Literal as RDFLiteral
 from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
 
-from .namespaces import COMPASS, GEO, SCHEMA
+from app.namespaces import COMPASS, GEO, SCHEMA
 
 PropertyCategory = Literal[
     "lang_literal",

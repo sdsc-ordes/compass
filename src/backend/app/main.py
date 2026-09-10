@@ -8,13 +8,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .config import config
-from .core.development import configure_development
-from .core.handlers import register_exception_handlers
-from .core.settings import settings
-from .rdf import RDFStore
-from .routers import admin, entities, filters, stories
-from .schemas.admin import RootMessage
+from app.config import config
+from app.core.development import configure_development
+from app.core.handlers import register_exception_handlers
+from app.core.settings import settings
+from app.rdf import RDFStore
+from app.routers import admin, entities, filters, stories
+from app.schemas.admin import RootMessage
 
 
 @asynccontextmanager

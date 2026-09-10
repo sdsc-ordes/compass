@@ -7,9 +7,9 @@ from typing import Any
 
 from geojson import Feature, FeatureCollection, Point
 
-from .config import entity_stories_url
-from .namespaces import FIELD_SEP, ITEM_SEP
-from .shacl_to_entities import EntityShape
+from app.config import entity_stories_url
+from app.namespaces import FIELD_SEP, ITEM_SEP
+from app.shacl_to_entities import EntityShape
 
 logger = logging.getLogger(__name__)
 

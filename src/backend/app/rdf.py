@@ -10,9 +10,9 @@ from typing import Any, ClassVar
 import pyoxigraph
 from rdflib import Graph
 
-from .core.exceptions import QueryError, ReloadError
-from .core.settings import settings
-from .shacl_to_entities import EntityShape, get_entity_shape_from_shacl
+from app.core.exceptions import QueryError, ReloadError
+from app.core.settings import settings
+from app.shacl_to_entities import EntityShape, get_entity_shape_from_shacl
 
 logger = logging.getLogger(__name__)
 

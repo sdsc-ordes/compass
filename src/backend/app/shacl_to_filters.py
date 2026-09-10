@@ -11,8 +11,8 @@ from rdflib.collection import Collection
 from rdflib.namespace import XSD
 from rdflib.term import Node
 
-from .namespaces import COMPASS
-from .shacl_to_entities import (
+from app.namespaces import COMPASS
+from app.shacl_to_entities import (
     BUILTIN_PATHS,
     DISPLAY_ONLY,
     get_shacl_label,
