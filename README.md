@@ -25,49 +25,34 @@ intergovernmental bodies, driven by a SHACL-validated RDF ontology.
 Compass models a conservation organisation’s partners, projects, networks, and
 international forums as RDF instances, tagged with bilingual SKOS vocabularies
 (work area, conservation focus, topic, pollution, species, and country/area).
-The schema and validation rules live in hand-authored SHACL shapes
-(`src/ontology/shapes.ttl`); instance data and concept schemes
-(`compass.ttl`, `vocab.ttl`) are generated from an editorial spreadsheet. One
-subject carries language-tagged labels and descriptions, so English and German
-share the same record rather than duplicating it.
+Schema and validation live in SHACL (`src/ontology/shapes.ttl`); instance and
+vocabulary Turtle are generated from an editorial spreadsheet.
 
 ### A data modeling and data generator friendly to non-semantic experts
 
-Editors maintain the map in `src/ontology/source-data.ods` — three sheets
-(`schemes`, `concepts`, `pins`) and no Turtle or SPARQL required. Links between
-rows are plain ids; the generator infers the RDF predicate from the target’s
-type. `just data::update` regenerates the Turtle and refuses to write unless
-the result passes SHACL. Review happens on the deterministic, line-diffable
-Turtle, not on the spreadsheet. The workbook can be edited in Google Sheets and
-downloaded back as `.ods` over the committed file.
+Editors maintain the map in a spreadsheet — no Turtle or SPARQL required. A
+generator turns that workbook into RDF and refuses to publish unless it passes
+SHACL. See [Generate/update the map data](#generateupdate-the-map-data).
 
 ### An interactive map
 
-The map is a self-contained `<compass-map>` web component (Svelte + MapLibre)
-that plots forums, networks, partners, and projects, shades related regions,
-and offers filter, list, and detail views. The basemap and optional bathymetry
-are bundled or pre-rendered so the widget makes no third-party requests at
-runtime. Content is bilingual (EN/DE), and the same results are always exposed
-as an accessible list alongside the canvas.
+A self-contained `<compass-map>` web component (Svelte + MapLibre) plots those
+entities, shades related regions, and offers filter, list, and detail views,
+without third-party map traffic at runtime. Embedding and accessibility
+constraints are under [Widget requirements](#widget-requirements).
 
-### Map widgets and filters driven by a SHACL-validated RDF ontology
+### SHACL-driven filters and queries
 
-Filter chips and entity query shapes are projected from SHACL at runtime: the
-backend walks property shapes into filter widgets and into the SPARQL that
-answers map queries. Adding a filter dimension means adding a property shape;
-the panel and the query follow. Generated data must pass SHACL before commit;
-meta-shapes keep `shapes.ttl` itself well-formed. A token-guarded reload
-re-parses Turtle without restarting the API, so an editorial change reaches the
-map without a rebuild.
+Filter chips and entity queries are projected from SHACL at runtime, so the UI
+stays aligned with the ontology. Adding a filter dimension is documented under
+[Generate/update the map data](#generateupdate-the-map-data).
 
 ### A backend designed for integration into an existing website
 
-Compass is built to drop into a host site: embed `<compass-map>`, point its
-`apiurl` at a FastAPI ontology service, and optionally serve bathymetry tiles.
-Deploy them same-origin (nginx proxies `/api/`) or cross-origin with
-`COMPASS_CORS_ORIGINS`. Languages, story-link providers, and API metadata are
-use-case settings — the widget itself stays a reusable custom element that only
-rewrites its own URL parameters so the host page’s query string stays intact.
+Embed `<compass-map>`, point its `apiurl` at the FastAPI ontology service, and
+adapt languages and story links in use-case config. Same-origin deploy is
+covered under [Deployment](#deployment); CORS and related settings under
+[Configuration](#configuration).
 
 ---
 
@@ -79,9 +64,9 @@ rewrites its own URL parameters so the host page’s query string stays intact.
 
 OceanCare is an international marine conservation NGO founded in Switzerland in
 1989. Compass’s first deployment maps their partners, projects, research
-networks, and international policy forums — with bilingual content and deep
-links into OceanCare’s Stories & News — so visitors can explore where and how
-OceanCare works worldwide.
+networks, and international policy forums, with deep links into OceanCare’s
+Stories & News, so visitors can explore where and how OceanCare works
+worldwide.
 
 ---
 
@@ -136,17 +121,27 @@ only.
 
 ## Generate/Update the Map Data
 
-`compass.ttl` and `vocab.ttl` are **generated** from `src/ontology/source-data.ods`,
-a spreadsheet with three sheets. Edit it, regenerate, rebuild:
+Upload the workbook (`src/ontology/source-data.ods`) to Google Sheets to edit it (the three sheets import as tabs),
+then download it back as `.ods`.
+
+`compass.ttl` and `vocab.ttl` then get **generated** from `src/ontology/source-data.ods`:
 
 ```bash
-just data::update  # regenerate the Turtle; SHACL validation gates it
-git diff src/ontology/
+just data::update
 ```
 
-The API reads the Turtle at runtime, so a data change needs no rebuild of
-anything. In a running deployment it also needs no restart — see
-**Editorial updates** below.
+After regenerating Turtle (and shipping the updated files into the ontology
+directory the API reads), trigger a reload so the running service picks them
+up without a restart:
+
+```bash
+curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
+  http://localhost:8780/api/v1/admin/reload
+```
+
+Set `COMPASS_RELOAD_TOKEN` on the API (empty disables the endpoint). A rejected
+reload leaves the previous ontology serving. See
+[`docs/backend/configuration.md`](docs/backend/configuration.md).
 
 | File | Purpose |
 |---|---|
@@ -176,17 +171,6 @@ filter panel and the query follow automatically.
 A link to an id that does not exist fails the run, naming the sheet, the row and
 the id. Mistakes are collected across the whole run rather than reported one per
 attempt.
-
-`just data::check` fails if the committed Turtle differs from a fresh run, which
-catches an edit that was never regenerated.
-
-Upload the workbook to Google Sheets to edit it (the three sheets import as tabs),
-then download it back as `.ods` over the committed file and run `just data::update`.
-
-Git cannot diff a spreadsheet, so review happens on the generated Turtle: it is
-deterministic and line-diffable, and every change in the workbook shows up there
-as a changed triple. The one exception is the `notes` column, which is editorial
-and never reaches the RDF.
 
 Country and marine boundary polygons are built separately by `just map::regions`
 (needs network). It reads `compass:isoCode` out of `vocab.ttl`, so adding a

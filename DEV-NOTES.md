@@ -14,7 +14,7 @@
 ## Docs
 
 - please read them, especially `configuration.md` and `design.md`.
-- please read over the global README at root
+- please read over the root README. Notably the section `Generate/Update the Map Data` seems cluttered (can the explanations be shortened or moved into another section)
 - please read the backend READMEs
 
 ## Ontology/Semantics related
