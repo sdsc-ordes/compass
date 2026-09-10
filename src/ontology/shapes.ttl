@@ -19,25 +19,25 @@ compass:InternationalForum a rdfs:Class ;
     rdfs:label "International Forum"@en ;
     rdfs:label "Internationales Forum"@de ;
     rdfs:comment "An international policy, governance, or coordination forum for affairs."@en ;
-    rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Meeresangelegenheiten."@de .
+    rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Angelegenheiten."@de .
 
 compass:Network a rdfs:Class ;
     rdfs:label "Network"@en ;
     rdfs:label "Netzwerk"@de ;
     rdfs:comment "A collaborative research or monitoring network spanning multiple organizations."@en ;
-    rdfs:comment "Ein kollaboratives Netzwerk für Meeresforschung oder -überwachung über mehrere Organisationen hinweg."@de .
+    rdfs:comment "Ein kollaboratives Netzwerk für Forschung oder Überwachung über mehrere Organisationen hinweg."@de .
 
 compass:PartnerOrganization a rdfs:Class ;
     rdfs:label "Partner Organization"@en ;
     rdfs:label "Partnerorganisation"@de ;
-    rdfs:comment "An NGO partner organization active in marine conservation or research."@en ;
-    rdfs:comment "Eine Partnerorganisation, die im Meeresschutz oder in der Meeresforschung tätig ist."@de .
+    rdfs:comment "An NGO partner organization active in conservation or research."@en ;
+    rdfs:comment "Eine Partnerorganisation, die im Schutz oder in der Forschung tätig ist."@de .
 
 compass:Project a rdfs:Class ;
     rdfs:label "Project"@en ;
     rdfs:label "Projekt"@de ;
     rdfs:comment "A time-limited project or programme addressing issues."@en ;
-    rdfs:comment "Ein zeitlich begrenztes Projekt oder Programm zur Bewältigung von Meeresfragen."@de .
+    rdfs:comment "Ein zeitlich begrenztes Projekt oder Programm zur Bewältigung von Fragen."@de .
 
 # ============================================================
 # Tag Dimension Classes (6 SKOS-based tag vocabularies)
@@ -66,7 +66,7 @@ compass:Pollution a rdfs:Class ;
 compass:Species a rdfs:Class ;
     rdfs:label "Species"@en ;
     rdfs:label "Arten"@de ;
-    rdfs:comment "A marine or aquatic species relevant to the NGO's work."@en .
+    rdfs:comment "A species relevant to the NGO's work."@en .
 
 compass:CountryArea a rdfs:Class ;
     rdfs:label "Country / Area"@en ;
@@ -152,17 +152,17 @@ compass:relatedProject a rdf:Property ;
 # -- Bookkeeping properties (not filter dimensions) --
 
 compass:TagId a rdf:Property ;
-    rdfs:label "WordPress Tag ID"@en ;
+    rdfs:label "Tag ID"@en ;
     rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the NGO website."@en ;
     rdfs:range xsd:integer .
 
 compass:EntityTagIdEn a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (English)"@en ;
+    rdfs:label "Entity Tag ID (English)"@en ;
     rdfs:comment "Numeric term ID of the English per-entity tag on the NGO (used to link to English stories about this entity)."@en ;
     rdfs:range xsd:integer .
 
 compass:EntityTagIdDe a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (German)"@en ;
+    rdfs:label "Entity Tag ID (German)"@en ;
     rdfs:comment "Numeric term ID of the German per-entity tag on the NGO (used to link to German stories about this entity)."@en ;
     rdfs:range xsd:integer .
 
@@ -334,7 +334,7 @@ compass:SpeciesPropertyShape a sh:Shape ;
     sh:path compass:species ;
     sh:name "Species"@en ;
     sh:name "Arten"@de ;
-    sh:description "A marine or aquatic species."@en ;
+    sh:description "A species."@en ;
     sh:class compass:Species .
 
 compass:CountryAreaPropertyShape a sh:Shape ;
