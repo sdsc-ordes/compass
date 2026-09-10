@@ -1,8 +1,91 @@
 # Compass
 
-An interactive map of ocean-focused research institutes, NGOs, and intergovernmental bodies, driven by a SHACL-validated RDF ontology.
+An interactive map of ocean-focused research institutes, NGOs and
+intergovernmental bodies, driven by a SHACL-validated RDF ontology.
 
-The widget is a `<compass-map>` custom element; a FastAPI service holds the ontology and answers its queries. Data lives in one place and an editorial change reaches the map without rebuilding or restarting anything. `just deploy` brings up both.
+## Table of contents
+
+- [What Compass provides](#what-compass-provides)
+- [Use-cases](#use-cases)
+- [Code structure](#code-structure)
+- [Configuration](#configuration)
+- [Deployment](#deployment)
+- [Generate/update the map data](#generateupdate-the-map-data)
+- [Development: run it locally](#development-run-it-locally)
+- [Widget requirements](#widget-requirements)
+- [Tests](#tests)
+- [Attribution and licences](#attribution-and-licences)
+
+---
+
+## What Compass provides
+
+### Knowledge modeling via the COMPASS ontology
+
+Compass models a conservation organisation’s partners, projects, networks, and
+international forums as RDF instances, tagged with bilingual SKOS vocabularies
+(work area, conservation focus, topic, pollution, species, and country/area).
+The schema and validation rules live in hand-authored SHACL shapes
+(`src/ontology/shapes.ttl`); instance data and concept schemes
+(`compass.ttl`, `vocab.ttl`) are generated from an editorial spreadsheet. One
+subject carries language-tagged labels and descriptions, so English and German
+share the same record rather than duplicating it.
+
+### A data modeling and data generator friendly to non-semantic experts
+
+Editors maintain the map in `src/ontology/source-data.ods` — three sheets
+(`schemes`, `concepts`, `pins`) and no Turtle or SPARQL required. Links between
+rows are plain ids; the generator infers the RDF predicate from the target’s
+type. `just data::update` regenerates the Turtle and refuses to write unless
+the result passes SHACL. Review happens on the deterministic, line-diffable
+Turtle, not on the spreadsheet. The workbook can be edited in Google Sheets and
+downloaded back as `.ods` over the committed file.
+
+### An interactive map
+
+The map is a self-contained `<compass-map>` web component (Svelte + MapLibre)
+that plots forums, networks, partners, and projects, shades related regions,
+and offers filter, list, and detail views. The basemap and optional bathymetry
+are bundled or pre-rendered so the widget makes no third-party requests at
+runtime. Content is bilingual (EN/DE), and the same results are always exposed
+as an accessible list alongside the canvas.
+
+### Map widgets and filters driven by a SHACL-validated RDF ontology
+
+Filter chips and entity query shapes are projected from SHACL at runtime: the
+backend walks property shapes into filter widgets and into the SPARQL that
+answers map queries. Adding a filter dimension means adding a property shape;
+the panel and the query follow. Generated data must pass SHACL before commit;
+meta-shapes keep `shapes.ttl` itself well-formed. A token-guarded reload
+re-parses Turtle without restarting the API, so an editorial change reaches the
+map without a rebuild.
+
+### A backend designed for integration into an existing website
+
+Compass is built to drop into a host site: embed `<compass-map>`, point its
+`apiurl` at a FastAPI ontology service, and optionally serve bathymetry tiles.
+Deploy them same-origin (nginx proxies `/api/`) or cross-origin with
+`COMPASS_CORS_ORIGINS`. Languages, story-link providers, and API metadata are
+use-case settings — the widget itself stays a reusable custom element that only
+rewrites its own URL parameters so the host page’s query string stays intact.
+
+---
+
+## Use-cases
+
+### OceanCare
+
+**Website:** [https://www.oceancare.org](https://www.oceancare.org)
+
+OceanCare is an international marine conservation NGO founded in Switzerland in
+1989. Compass’s first deployment maps their partners, projects, research
+networks, and international policy forums — with bilingual content and deep
+links into OceanCare’s Stories & News — so visitors can explore where and how
+OceanCare works worldwide.
+
+---
+
+## Code Structure
 
 ```
 src/ontology/   – source-data.ods (source of truth), SHACL shapes, generated Turtle
@@ -14,6 +97,8 @@ share/          – standalone demo page; needs an apiurl to point at
 tools/docker/   – Dockerfiles, nginx config and the compose entry page
 docs/           – contributor docs; docs/backend is the backend MkDocs site
 ```
+
+---
 
 ## Configuration
 
@@ -32,41 +117,9 @@ just map::tiles
 
 Optional: the map falls back to the vector basemap if tiles are absent. The output is gitignored and belongs on the server. The script lives at `src/frontend/scripts/build-tiles.mjs`.
 
-## Development: Run it locally
+---
 
-### Setup
-
-Pick one option. Every command in the rest of this README is the same either way.
-
-#### Option A — uv and Node
-
-Works on macOS, Linux and Windows (WSL). Install [uv](https://docs.astral.sh/uv/) and [Node](https://nodejs.org) 20 or newer:
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh    # uv
-uv --version
-node --version                                     # expect v20 or newer
-```
-
-No system Python needed — uv fetches its own Python 3.11, pinned in `src/backend/.python-version`.
-
-#### Option B — Nix on Linux and MacOS
-
-Supplies uv, Node 22 and Python 3.11 in one shell:
-
-```bash
-nix develop ./tools/nix        # then run the commands below normally
-```
-
-To run a single command without entering the shell:
-
-```bash
-cd src/frontend && nix develop ../../tools/nix --command npm run dev
-```
-
-On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel that links `libstdc++.so.6`, which NixOS does not provide globally; the flake sets the `LD_LIBRARY_PATH` that makes it loadable. Outside the shell, any Python command fails.
-
-Both halves, together:
+## Deployment
 
 ```bash
 just deploy
@@ -79,38 +132,9 @@ with other local services that claim `8080`. Inside Compose, nginx still
 listens on container port `80` and the API on `8000` on the private network
 only.
 
-For local development without Docker, run the API and widget together:
+---
 
-```bash
-just dev-up
-```
-
-Open <http://localhost:5173>; `index.html` already passes
-`apiurl="http://localhost:8000"` and serves bathymetry from the Vite origin
-(`tileurl=""`). Run `just map::tiles` once so `src/frontend/tools/` exists;
-without it the map falls back to the vector basemap. Or start only the widget
-with `just frontend` (after the API is already up).
-
-## Build it
-
-```bash
-cd src/frontend
-npm run build         # → dist/compass-map.js
-```
-
-That file is the entire widget; nothing else is emitted. Loading it defines a
-`<compass-map>` element, which needs `apiurl` pointing at the API:
-
-```html
-<script src="compass-map.js"></script>
-<compass-map lang="en" apiurl="https://compass.example.org"
-             style="display:block;height:90vh"></compass-map>
-```
-
-Serve it from the same origin as the API and `apiurl="/"` is enough, which is
-what `tools/docker/index.html` does with `location.origin`.
-
-## Change the map data
+## Generate/Update the Map Data
 
 `compass.ttl` and `vocab.ttl` are **generated** from `src/ontology/source-data.ods`,
 a spreadsheet with three sheets. Edit it, regenerate, rebuild:
@@ -170,7 +194,59 @@ region with a code needs no change there; the `MARINE` table for seas is still
 maintained by hand in `src/frontend/scripts/build-regions.mjs`. A new region also
 needs a pin pointing at it before anything shades.
 
-## Widget requirements
+---
+
+## Development: Run it locally
+
+### Setup
+
+Pick one option. Every command in the rest of this README is the same either way.
+
+#### Option A — uv and Node
+
+Works on macOS, Linux and Windows (WSL). Install [uv](https://docs.astral.sh/uv/) and [Node](https://nodejs.org) 20 or newer:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh    # uv
+uv --version
+node --version                                     # expect v20 or newer
+```
+
+No system Python needed — uv fetches its own Python 3.11, pinned in `src/backend/.python-version`.
+
+#### Option B — Nix on Linux and MacOS
+
+Supplies uv, Node 22 and Python 3.11 in one shell:
+
+```bash
+nix develop ./tools/nix        # then run the commands below normally
+```
+
+To run a single command without entering the shell:
+
+```bash
+cd src/frontend && nix develop ../../tools/nix --command npm run dev
+```
+
+On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel that links `libstdc++.so.6`, which NixOS does not provide globally; the flake sets the `LD_LIBRARY_PATH` that makes it loadable. Outside the shell, any Python command fails.
+
+### Local Build
+
+For local development without Docker, run the API and widget together:
+
+```bash
+just dev-up
+```
+
+Open <http://localhost:5173>; `index.html` already passes
+`apiurl="http://localhost:8000"` and serves bathymetry from the Vite origin
+(`tileurl=""`). Run `just map::tiles` once so `src/frontend/tools/` exists;
+without it the map falls back to the vector basemap. Or start only the widget
+with `just frontend` (after the API is already up).
+
+---
+
+## Widget Requirements
 
 Three constraints the widget has to satisfy wherever it is embedded.
 
@@ -229,51 +305,25 @@ prints `every German cell is filled`. Some pairs are legitimately identical:
 `Caracas, Venezuela` reads the same in both, and registered names such as
 `British Divers Marine Life Rescue` are not translated.
 
-## Editorial updates
+--- 
 
-The API owns the data: it reads `src/ontology/*.ttl` from disk and serves both
-the entities and the filter schema, so adding a pin never touches the widget
-build. `COMPASS_ONTOLOGY_DIR` points it at those files, and the compose setup
-mounts them read-only from the host so the running container sees an edit
-immediately.
-
-Picking the edit up is one request:
+## Tests
 
 ```bash
-just data::update               # regenerate; SHACL validation gates it
-curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
-     http://localhost:8780/api/v1/admin/reload
+just check::all                   # lint, frontend-standalone, tests, then format
+just check::tests                 # backend (API, SHACL, SPARQL builder, ontology contract),
+                                  # generator, and the widget's map logic
+just check::frontend-standalone   # Svelte + TypeScript, and the no-third-party-hosts gate
+just check::lint                  # ruff over both Python projects, ESLint + Prettier over the widget
+just check::format                # rewrite every source file in the project's style
+just data::check                  # fail if the committed Turtle is stale
 ```
 
-The reload builds a **second** store, derives the property specs from it and
-checks it can answer a query, and only then swaps it in. So a bad edit cannot
-take the map down: the endpoint answers `409` naming the line that failed to
-parse, and the previous version keeps serving. `503` means no
-`COMPASS_RELOAD_TOKEN` is set — the endpoint is closed rather than open when
-unconfigured — and `401` means the header did not match.
+Python style is one shared `tools/configs/ruff.toml`; the widget's ESLint and
+Prettier configs sit next to its `tsconfig.json`, and both read the repository
+`.editorconfig`.
 
-Nothing here needs a developer: the whole loop is regenerate, then POST.
-
-## The API
-
-| Route | Purpose |
-|---|---|
-| `GET /api/v1/entities` | pins and regions as GeoJSON, filtered by the query string |
-| `GET /api/v1/entities/facets` | per-tag counts for the current selection |
-| `GET /api/v1/entities/detail` | one entity by IRI |
-| `GET /api/v1/filters` | the filter panel, derived from the SHACL shapes |
-| `POST /api/v1/admin/reload` | re-read the Turtle from disk (see **Editorial updates**) |
-| `GET /api/v1/stories/count` | story counts from the configured upstream provider |
-
-Share links carry the filter selection in the query string itself, so there is
-no server-side state to save or expire.
-
-Deployment serves the widget and the API from one origin (nginx proxies
-`/api/`), so the API allows no cross-origin caller by default. The Vite dev
-server is the exception, and `COMPASS_CORS_ORIGINS` overrides the list.
-
-Both queries the widget makes are shaped by `shapes.ttl`: add a property shape
-and the filter panel, the SPARQL and the API response all follow.
+---
 
 ## Attribution and licences
 
@@ -296,19 +346,3 @@ satisfy that: esbuild's `legalComments: 'eof'` keeps the packages' own banners
 inside the minified file, and `THIRD-PARTY-NOTICES.md` is generated from
 `node_modules` on every `npm run build` and served next to the bundle. Embed
 the widget elsewhere and that file has to travel with it.
-
-## Tests
-
-```bash
-just check::all                   # lint, frontend-standalone, tests, then format
-just check::tests                 # backend (API, SHACL, SPARQL builder, ontology contract),
-                                  # generator, and the widget's map logic
-just check::frontend-standalone   # Svelte + TypeScript, and the no-third-party-hosts gate
-just check::lint                  # ruff over both Python projects, ESLint + Prettier over the widget
-just check::format                # rewrite every source file in the project's style
-just data::check                  # fail if the committed Turtle is stale
-```
-
-Python style is one shared `tools/configs/ruff.toml`; the widget's ESLint and
-Prettier configs sit next to its `tsconfig.json`, and both read the repository
-`.editorconfig`.
