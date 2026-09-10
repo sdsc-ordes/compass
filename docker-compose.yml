@@ -34,11 +34,15 @@ services:
       context: .
       dockerfile: tools/docker/frontend.Dockerfile
     volumes:
-      # Built by `just tiles`, kept out of the image and out of git: ~53 MB of
+      # Built by `just map::tiles`, kept out of the image and out of git: ~53 MB of
       # regenerable raster. Absent is fine -- the map falls back to vector.
-      - ./tools/tiles:/data/tiles:ro
+      - ./src/frontend/tiles:/data/tiles:ro
+    # Host → container port map. nginx listens on 80 inside the frontend
+    # container; the backend stays on 8000 on the Compose network only (not
+    # published). Default host port is 8780 rather than 8080, which is often
+    # already taken. Override with: COMPASS_HTTP_PORT=9000 just deploy
     ports:
-      - "8080:80"
+      - "${COMPASS_HTTP_PORT:-8780}:80"
     depends_on:
       backend:
         condition: service_healthy

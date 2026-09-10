@@ -2,10 +2,10 @@
 // so the map has real depth data without the visitor's browser ever contacting
 // a third party.
 //
-//   node tools/scripts/build-tiles.mjs [maxZoom]
+//   just map::tiles [maxZoom]
 //
 // GEBCO's grid is free for commercial use with attribution, which the map
-// carries. Output goes to tools/tiles/{z}/{x}/{y}.jpg and is gitignored: it is
+// carries. Output goes to src/frontend/tools/{z}/{x}/{y}.jpg and is gitignored: it is
 // ~53 MB, regenerable, and belongs on the server rather than in history.
 //
 // Already-written tiles are skipped, so an interrupted run resumes.
@@ -14,7 +14,8 @@ import { mkdirSync, existsSync, writeFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'tiles');
+const HERE = dirname(fileURLToPath(import.meta.url));
+const OUT = join(HERE, '..', 'tools');
 const MAX_ZOOM = Number(process.argv[2] ?? 5);
 
 // 512px JPEG is the cheap corner of the trade: a quarter the requests of 256px
@@ -58,7 +59,8 @@ async function render([z, x, y]) {
   const response = await fetch(source(z, x, y));
   if (!response.ok) throw new Error(`z${z}/${x}/${y}: HTTP ${response.status}`);
   const body = Buffer.from(await response.arrayBuffer());
-  if (body.length < 1024) throw new Error(`z${z}/${x}/${y}: ${body.length} bytes, too small to be a tile`);
+  if (body.length < 1024)
+    throw new Error(`z${z}/${x}/${y}: ${body.length} bytes, too small to be a tile`);
   mkdirSync(dir, { recursive: true });
   writeFileSync(path, body);
   return body.length;
@@ -85,7 +87,9 @@ async function main() {
       }
       done++;
       if (done % 100 === 0 || done === tiles.length) {
-        process.stdout.write(`\r  ${done}/${tiles.length}  ${(bytes / 1e6).toFixed(0)} MB written`);
+        process.stdout.write(
+          `\r  ${done}/${tiles.length}  ${(bytes / 1e6).toFixed(0)} MB written`,
+        );
       }
     }
   }
@@ -100,4 +104,7 @@ async function main() {
   console.log(`done: ${tiles.length} tiles, ${(bytes / 1e6).toFixed(0)} MB fetched this run`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

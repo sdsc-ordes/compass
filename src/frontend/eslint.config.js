@@ -1,6 +1,7 @@
 // Flat config. Type-aware rules are deliberately left off: svelte-check
 // already type-checks the same files against tsconfig.json, and running the
-// TypeScript program twice roughly triples `just lint` for no extra findings.
+// TypeScript program twice roughly triples `just check::lint` for no extra findings.
+
 import js from '@eslint/js';
 import ts from 'typescript-eslint';
 import svelte from 'eslint-plugin-svelte';

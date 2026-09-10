@@ -1,5 +1,5 @@
 [project]
-name = "compass-tools"
+name = "compass-update-data"
 version = "0.1.0"
 description = "Ontology generation from the source-data workbook"
 requires-python = ">=3.11"

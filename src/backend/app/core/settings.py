@@ -7,6 +7,7 @@ from pathlib import Path
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 def _default_ontology_dir() -> Path:
     """Resolve the default ontology directory relative to this package.
 

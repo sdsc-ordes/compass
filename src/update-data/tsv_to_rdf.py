@@ -10,8 +10,8 @@ predicate follows what it points at, so there is no mapping to configure.
 Concepts never link out: a tag is recorded on the pin that carries it, so a
 region is on the map only because some pin points at it.
 
-    tsv_to_rdf.py            regenerate
-    tsv_to_rdf.py --check    exit 1 if the committed files are stale
+    update-data/tsv_to_rdf.py            regenerate
+    update-data/tsv_to_rdf.py --check    exit 1 if the committed files are stale
 
 Subject order, predicate order and float precision are all pinned, so unchanged
 input produces byte-identical output.
@@ -139,7 +139,7 @@ LANGUAGE_ORDER = ["@en", "@de"]
 BANNER = (
     "# GENERATED FILE -- do not edit.\n"
     "#\n"
-    "# Regenerate with `just data` after editing src/ontology/source-data.ods.\n"
+    "# Regenerate with `just data::update` after editing src/ontology/source-data.ods.\n"
 )
 
 PREFIXES = [
@@ -636,7 +636,7 @@ def main(argv: list[str] | None = None) -> int:
         if drift:
             print(
                 f"error: {', '.join(str(p) for p in drift)} differ from a fresh run. "
-                f"Run `just data`.",
+                f"Run `just data::update`.",
                 file=sys.stderr,
             )
             return 1

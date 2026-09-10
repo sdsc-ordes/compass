@@ -1,7 +1,7 @@
 """SHACL projection tests: filter widgets and entity property descriptors."""
 
-from app.shacl_to_entities import DISPLAY_ONLY, get_entity_shape_from_shacl
 from app.namespaces import COMPASS, GEO
+from app.shacl_to_entities import DISPLAY_ONLY, get_entity_shape_from_shacl
 from app.shacl_to_filters import get_filters_from_shacl
 
 

@@ -16,7 +16,7 @@ wheels = [
 ]
 
 [[package]]
-name = "compass-tools"
+name = "compass-update-data"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

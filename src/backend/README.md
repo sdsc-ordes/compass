@@ -3,9 +3,16 @@
 HTTP routes: OpenAPI UI at `/docs` when the API is running.
 
 Module docs and architecture: see [docs/backend](../../docs/backend/index.md)
-(served locally with `just docs`).
+(served locally with `just docs::dev-up`).
 
 ## Running
+
+```bash
+just backend              # http://127.0.0.1:8000
+just backend port=9000    # choose a different port
+```
+
+Or from this directory:
 
 ```bash
 uv run uvicorn app.main:app --reload --port 8000

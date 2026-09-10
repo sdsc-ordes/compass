@@ -30,6 +30,8 @@
 
   /** The API the widget reads its data from. */
   export let apiurl = '';
+  /** Origin serving /tiles/; unset falls back to apiurl (compose/share). */
+  export let tileurl: string | undefined = undefined;
   export let lang: Lang = 'en';
 
   let entities: Feature[] = [];
@@ -359,7 +361,7 @@
             {lang}
             {entities}
             {resultCount}
-            tileurl={apiurl}
+            tileurl={tileurl !== undefined ? tileurl : apiurl}
             frameRegions={thematicFilterActive}
             detailOpen={!!(selectedEntity && sidebarVisible)}
             onEntitySelect={handleEntitySelect}

@@ -34,6 +34,6 @@ uv run pytest tests/ -v
 ## Local docs
 
 ```bash
-just docs
-just docs-build
+just docs::dev-up
+just docs::build
 ```

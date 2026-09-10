@@ -1,6 +1,4 @@
-"""Development-only FastAPI configuration.
-
-"""
+"""Development-only FastAPI configuration."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

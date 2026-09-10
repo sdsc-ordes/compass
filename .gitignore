@@ -44,4 +44,4 @@ todo.md
 AGENTS.md
 CLAUDE.md
 .claude/skills
-tools/tiles/
+src/frontend/tiles/

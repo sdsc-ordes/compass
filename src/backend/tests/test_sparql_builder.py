@@ -7,17 +7,17 @@ actually returns all expected entities from the real ontology.
 import pytest
 from starlette.datastructures import QueryParams
 
-from app.shacl_to_entities import EntityShape
 from app.namespaces import COMPASS
+from app.shacl_to_entities import EntityShape
 from app.sparql_builder import (
     PIN_CLASSES,
     _pin_branch,
     _region_branch,
     _shared_optionals,
-    sparql_for_instances,
     build_facet_query,
     build_optional,
     build_select_expr,
+    sparql_for_instances,
     to_prefixed,
 )
 

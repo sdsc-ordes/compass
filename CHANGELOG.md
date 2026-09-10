@@ -2,8 +2,21 @@
 
 ## Unreleased
 
+### Justfile modules
+
+- Split recipes into `tools/just/` modules: `data`, `map`, `docs`, and `check`.
+- Root keeps local-dev and deploy entry points:
+  `dev-up`, and `deploy`.
+
+### Map asset scripts
+
+- Move `build-tiles.mjs` from `tools/scripts/` into `src/frontend/scripts/`
+  alongside `build-regions.mjs` and `build-basemap.mjs`; tiles write to
+  `src/frontend/tools/` (gitignored).
+
 ### Deployment / Docker
 
+- Default compose host port `8080` → `8780` (`COMPASS_HTTP_PORT` to override).
 - Rename Compose services: `api` → `backend`, `web` → `frontend`.
 - Move Docker assets from `docker/` to `tools/docker/` and update all
   references (`docker-compose.yml`, `README.md`, frontend Dockerfile).
@@ -31,7 +44,7 @@
 ### Docs: MkDocs for the backend
 
 - Add Material MkDocs under `docs/backend/`
-- Add `docs` dependency group, `just docs` / `just docs-build`
+- Add `docs` dependency group, `just docs::dev-up` / `just docs::build`
 - Add `.github/workflows/mkdocs-ci.yml` (deploy to GitHub Pages on `main`)
 - Drop `README-config.md` to bring the markdown documentation under docs (one sourth of truth).
 

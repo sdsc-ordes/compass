@@ -15,7 +15,7 @@ const SOURCES = {
   land: `${NE}/ne_110m_land.geojson`,
   borders: `${NE}/ne_110m_admin_0_boundary_lines_land.geojson`,
   // Lakes and rivers cost ~25 KB together and are what stop the land reading
-  // as a blank shape. Depth comes from the GEBCO tiles `just tiles` renders,
+  // as a blank shape. Depth comes from the GEBCO tiles `just map::tiles` renders,
   // not from here: Natural Earth's coarsest band is 600 KB even simplified,
   // far too much to ship inside the widget bundle.
   lakes: `${NE}/ne_110m_lakes.geojson`,

@@ -59,7 +59,7 @@
   // from a font server -- and it costs nothing here: every label on the map
   // comes from the ontology, already in both languages.
 
-  // Depth of the pyramid `just tiles` renders; the two have to agree, or
+  // Depth of the pyramid `just map::tiles` renders; the two have to agree, or
   // MapLibre requests tiles that were never written. Past it MapLibre
   // overzooms, which a smooth gradient tolerates well.
   const TILE_MAX_ZOOM = 5;
