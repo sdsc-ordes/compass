@@ -7,15 +7,12 @@
 - The script for `build-tiles.mjs` fails to fetch some tiles. Did not fix this for the moment.
 - Indicate somewhere on the map that this is a `Beta` version. (with the Beta Version mention somewhere).
 
-## Data Update 
-
-- there should be an empty template `source-data.ods`, a `template-source-data.ods` if a new project wants to start. 
-
 ## Docs
 
-- please read them, especially `configuration.md` and `design.md`.
+- please read them, especially `configuration-backend.md`, `configuration-ontology.md`, and `design.md`.
 - please read over the root README. Notably the section `Generate/Update the Map Data` seems cluttered (can the explanations be shortened or moved into another section)
-- please read the backend READMEs
+- please read the backend and turtle-generator READMEs
+- please add docs for [configuring the frontend to a new use case](docs/compass/configuration-frontend.md)
 
 ## Ontology/Semantics related
 

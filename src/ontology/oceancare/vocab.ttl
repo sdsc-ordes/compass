@@ -1,6 +1,6 @@
 # GENERATED FILE -- do not edit.
 #
-# Regenerate with `just data::update` after editing src/ontology/source-data.ods.
+# Regenerate with `just data::generate` after editing src/ontology/oceancare/source-data.ods.
 
 
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .

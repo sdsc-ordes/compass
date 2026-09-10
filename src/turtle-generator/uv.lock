@@ -16,7 +16,7 @@ wheels = [
 ]
 
 [[package]]
-name = "compass-update-data"
+name = "compass-turtle-generator"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -138,17 +138,19 @@ class RDFStore:
 
     @classmethod
     def from_settings(cls) -> RDFStore:
-        """Build a store from the configured ontology directory.
+        """Build a store from the configured ontology and use-case directories.
 
         Returns:
-            New ``RDFStore`` pointing at ``compass.ttl`` / ``shapes.ttl`` /
-            ``vocab.ttl`` under ``settings.ontology_dir``.
+            New ``RDFStore`` pointing at ``shapes.ttl`` under
+            ``settings.ontology_dir`` and ``compass.ttl`` / ``vocab.ttl`` under
+            ``settings.use_case_dir``.
         """
-        directory = str(settings.ontology_dir)
+        ontology = str(settings.ontology_dir)
+        use_case = str(settings.use_case_dir)
         return cls(
-            data_path=os.path.join(directory, "compass.ttl"),
-            shapes_path=os.path.join(directory, "shapes.ttl"),
-            vocab_path=os.path.join(directory, "vocab.ttl"),
+            data_path=os.path.join(use_case, "compass.ttl"),
+            shapes_path=os.path.join(ontology, "shapes.ttl"),
+            vocab_path=os.path.join(use_case, "vocab.ttl"),
         )
 
     @classmethod
@@ -187,9 +189,9 @@ class RDFStore:
 
         previous = cls._instance
         cls._instance = candidate
-        logger.info("ontology reloaded from %s", settings.ontology_dir)
+        logger.info("ontology reloaded from %s", settings.use_case_dir)
         return {
             "reloaded": True,
-            "source": str(settings.ontology_dir),
+            "source": str(settings.use_case_dir),
             "replaced_a_running_store": previous is not None,
         }

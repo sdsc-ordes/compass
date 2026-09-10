@@ -15,13 +15,14 @@ import pyshacl
 from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib.namespace import SKOS
 
+from app.core.settings import settings
 from app.namespaces import COMPASS, GEO
 from app.shacl_to_filters import _entity_type_dimension
 
-_ONTOLOGY_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "ontology",
-)
+_ONTOLOGY_DIR = str(settings.ontology_dir)
+_USECASE_DIR = str(settings.use_case_dir)
+_SHAPES = os.path.join(_ONTOLOGY_DIR, "shapes.ttl")
+_SHACL_SHACL = os.path.join(_ONTOLOGY_DIR, "shacl-shacl.ttl")
 
 
 # -- Top-level entity classes the SPARQL preamble UNION relies on --
@@ -219,12 +220,12 @@ class TestShaclValidation:
 
     def test_instance_data_conforms(self):
         shapes_graph = Graph()
-        shapes_graph.parse(os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle")
+        shapes_graph.parse(_SHAPES, format="turtle")
 
         data_graph = Graph()
-        data_graph.parse(os.path.join(_ONTOLOGY_DIR, "compass.ttl"), format="turtle")
-        data_graph.parse(os.path.join(_ONTOLOGY_DIR, "vocab.ttl"), format="turtle")
-        data_graph.parse(os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle")
+        data_graph.parse(os.path.join(_USECASE_DIR, "compass.ttl"), format="turtle")
+        data_graph.parse(os.path.join(_USECASE_DIR, "vocab.ttl"), format="turtle")
+        data_graph.parse(_SHAPES, format="turtle")
 
         conforms, _, report_text = pyshacl.validate(
             data_graph,
@@ -242,10 +243,10 @@ class TestShaclValidation:
         for rdf:type, rdfs:label and the sh: vocabulary.
         """
         meta_graph = Graph()
-        meta_graph.parse(os.path.join(_ONTOLOGY_DIR, "shacl-shacl.ttl"), format="turtle")
+        meta_graph.parse(_SHACL_SHACL, format="turtle")
 
         shapes_graph = Graph()
-        shapes_graph.parse(os.path.join(_ONTOLOGY_DIR, "shapes.ttl"), format="turtle")
+        shapes_graph.parse(_SHAPES, format="turtle")
 
         conforms, _, report_text = pyshacl.validate(
             shapes_graph,

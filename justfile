@@ -8,8 +8,8 @@ root_dir := `git rev-parse --show-toplevel`
 default:
     just --list
 
-# Serve the API with hot reload.
-backend port="8000":
+# Serve the API with hot reload. Default matches COMPASS_HTTP_PORT / Compose host port.
+backend port=(env("COMPASS_HTTP_PORT", "8780")):
     cd "{{root_dir}}/src/backend" && uv run uvicorn app.main:app --reload --port {{port}}
 
 # Serve the widget's dev server.

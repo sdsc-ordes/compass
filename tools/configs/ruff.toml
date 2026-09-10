@@ -1,4 +1,4 @@
-# Shared by both Python projects (src/backend and src/update-data), passed with
+# Shared by both Python projects (src/backend and src/turtle-generator), passed with
 # --config so one policy covers the repository rather than drifting per project.
 
 line-length = 92

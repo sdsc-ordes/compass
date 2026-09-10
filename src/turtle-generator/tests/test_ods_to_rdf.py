@@ -11,7 +11,7 @@ from odf.text import P
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import tsv_to_rdf as gen
+import ods_to_rdf as gen
 
 
 @pytest.fixture(scope="module")
@@ -293,10 +293,10 @@ def test_predicates_emit_in_a_fixed_order():
 def test_output_matches_the_committed_files():
     data, vocab = gen.generate()
     assert gen.OUT_DATA.read_text(encoding="utf-8") == data, (
-        "compass.ttl is stale; run `just data::update`"
+        "compass.ttl is stale; run `just data::generate`"
     )
     assert gen.OUT_VOCAB.read_text(encoding="utf-8") == vocab, (
-        "vocab.ttl is stale; run `just data::update`"
+        "vocab.ttl is stale; run `just data::generate`"
     )
 
 

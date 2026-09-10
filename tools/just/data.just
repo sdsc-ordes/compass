@@ -9,9 +9,9 @@ default:
     just --list data
 
 # Regenerate compass.ttl and vocab.ttl from the source-data workbook.
-update:
-    cd "{{root_dir}}/src/update-data" && uv run tsv_to_rdf.py
+generate:
+    cd "{{root_dir}}/src/turtle-generator" && uv run ods_to_rdf.py
 
 # Fail if the committed ontology differs from a fresh run.
 check:
-    cd "{{root_dir}}/src/update-data" && uv run tsv_to_rdf.py --check
+    cd "{{root_dir}}/src/turtle-generator" && uv run ods_to_rdf.py --check

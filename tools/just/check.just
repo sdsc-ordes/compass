@@ -3,7 +3,7 @@ set shell := ["bash", "-cue"]
 
 root_dir := `git rev-parse --show-toplevel`
 ruff_config := root_dir / "tools/configs/ruff.toml"
-python_paths := "src/backend src/update-data"
+python_paths := "src/backend src/turtle-generator"
 
 # Default recipe to list all recipes in this module.
 [private]
@@ -13,7 +13,7 @@ default:
 # Run the backend, generator and widget test suites.
 tests *args:
     cd "{{root_dir}}/src/backend" && uv run pytest tests/ "$@"
-    cd "{{root_dir}}/src/update-data" && uv run --group dev pytest "$@"
+    cd "{{root_dir}}/src/turtle-generator" && uv run --group dev pytest "$@"
     cd "{{root_dir}}/src/frontend" && npm run test
 
 # Rewrite every source file in the project's style.

@@ -4,9 +4,9 @@ services:
       context: .
       dockerfile: tools/docker/backend.Dockerfile
     environment:
-      # Read the Turtle from the mount below rather than the copy baked into
-      # the image, so an editorial update needs no rebuild.
+      # Shared ontology root (shapes); use-case Turtle lives under COMPASS_USE_CASE.
       COMPASS_ONTOLOGY_DIR: /data/ontology
+      COMPASS_USE_CASE: ${COMPASS_USE_CASE:-oceancare}
       # Production deployment serves widget and API from the same origin, so
       # development-only middleware (CORS, debug endpoints, etc.) is disabled.
       COMPASS_ENVIRONMENT: ${COMPASS_ENVIRONMENT:-production}

@@ -3,15 +3,18 @@
 # requires-python = ">=3.11"
 # dependencies = ["rdflib>=7.0,<8", "pyshacl>=0.30,<0.32", "odfpy>=1.4"]
 # ///
-"""Generate compass.ttl and vocab.ttl from src/ontology/source-data.ods.
+"""Generate compass.ttl and vocab.ttl from a use-case source-data.ods.
 
 Pin rows carry their own `id` and link by id in a `links` column; a link's
 predicate follows what it points at, so there is no mapping to configure.
 Concepts never link out: a tag is recorded on the pin that carries it, so a
 region is on the map only because some pin points at it.
 
-    update-data/tsv_to_rdf.py            regenerate
-    update-data/tsv_to_rdf.py --check    exit 1 if the committed files are stale
+The use-case subdirectory under ``src/ontology/`` is selected by
+``COMPASS_USE_CASE`` (default ``oceancare``).
+
+    turtle-generator/ods_to_rdf.py            regenerate
+    turtle-generator/ods_to_rdf.py --check    exit 1 if the committed files are stale
 
 Subject order, predicate order and float precision are all pinned, so unchanged
 input produces byte-identical output.
@@ -20,6 +23,7 @@ input produces byte-identical output.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -32,13 +36,36 @@ from rdflib import Graph
 
 REPO = Path(__file__).resolve().parents[2]
 ONTOLOGY_DIR = REPO / "src" / "ontology"
-WORKBOOK = ONTOLOGY_DIR / "source-data.ods"
+
+
+def _resolve_use_case() -> str:
+    """Return ``COMPASS_USE_CASE`` from the environment or repo ``.env``."""
+    value = os.environ.get("COMPASS_USE_CASE", "").strip()
+    if value:
+        return value
+    env_file = REPO / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("COMPASS_USE_CASE="):
+                continue
+            raw = stripped.split("=", 1)[1].strip().strip("\"'")
+            if " #" in raw:
+                raw = raw.split(" #", 1)[0].strip()
+            if raw:
+                return raw
+    return "oceancare"
+
+
+USE_CASE = _resolve_use_case()
+USE_CASE_DIR = ONTOLOGY_DIR / USE_CASE
+WORKBOOK = USE_CASE_DIR / "source-data.ods"
 SCHEMES = "schemes"
 CONCEPTS = "concepts"
 PINS = "pins"
 SHAPES = ONTOLOGY_DIR / "shapes.ttl"
-OUT_DATA = ONTOLOGY_DIR / "compass.ttl"
-OUT_VOCAB = ONTOLOGY_DIR / "vocab.ttl"
+OUT_DATA = USE_CASE_DIR / "compass.ttl"
+OUT_VOCAB = USE_CASE_DIR / "vocab.ttl"
 
 ONTOLOGY_NS = "http://example.org/ocean-org/ontology#"
 DATA_NS = "http://example.org/ocean-org/data#"
@@ -139,7 +166,8 @@ LANGUAGE_ORDER = ["@en", "@de"]
 BANNER = (
     "# GENERATED FILE -- do not edit.\n"
     "#\n"
-    "# Regenerate with `just data::update` after editing src/ontology/source-data.ods.\n"
+    "# Regenerate with `just data::generate` after editing "
+    f"src/ontology/{USE_CASE}/source-data.ods.\n"
 )
 
 PREFIXES = [
@@ -636,7 +664,7 @@ def main(argv: list[str] | None = None) -> int:
         if drift:
             print(
                 f"error: {', '.join(str(p) for p in drift)} differ from a fresh run. "
-                f"Run `just data::update`.",
+                f"Run `just data::generate`.",
                 file=sys.stderr,
             )
             return 1

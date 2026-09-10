@@ -1,6 +1,27 @@
-# Backend Changelog
+# CHANGELOG
 
 ## Unreleased
+
+### Docs refactor
+
+- Split configuration docs into `configuration-ontology.md`,
+  `configuration-backend.md`, and `configuration-frontend.md`; update the root
+  README Configuration section and MkDocs nav accordingly.
+- Rename MkDocs content directory `docs/backend/` → `docs/compass/`.
+
+### Ontology layout and turtle generator
+
+- Move OceanCare instance data under `src/ontology/oceancare/` (`source-data.ods`,
+  `compass.ttl`, `vocab.ttl`); keep shared `shapes.ttl` / `shacl-shacl.ttl` at the
+  ontology root.
+- Add `src/ontology/template-source-data.ods` as the empty workbook starter for a
+  new use-case.
+- Rename `src/update-data/` → `src/turtle-generator/` and `tsv_to_rdf.py` →
+  `ods_to_rdf.py`; rename the Just recipe `data::update` → `data::generate`.
+- Introduce `COMPASS_USE_CASE` (default `oceancare`): `COMPASS_ONTOLOGY_DIR` is
+  the ontology root; instance Turtle and the workbook live under
+  `{COMPASS_ONTOLOGY_DIR}/{COMPASS_USE_CASE}/`. Startup load, admin reload, and
+  the generator all follow that setting.
 
 ### Justfile modules
 

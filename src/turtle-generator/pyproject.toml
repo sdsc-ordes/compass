@@ -1,5 +1,5 @@
 [project]
-name = "compass-update-data"
+name = "compass-turtle-generator"
 version = "0.1.0"
 description = "Ontology generation from the source-data workbook"
 requires-python = ">=3.11"

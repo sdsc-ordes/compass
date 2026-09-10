@@ -5,7 +5,7 @@ on:
       - main
     paths:
       - "src/backend/**"
-      - "docs/backend/**"
+      - "docs/compass/**"
       - ".github/workflows/mkdocs-ci.yml"
   workflow_dispatch:
     inputs:

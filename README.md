@@ -73,34 +73,47 @@ worldwide.
 ## Code Structure
 
 ```
-src/ontology/   – source-data.ods (source of truth), SHACL shapes, generated Turtle
-src/frontend/   – Svelte + MapLibre widget; scripts/ builds regions, basemap, tiles
-src/backend/    – FastAPI service: SPARQL over the ontology, filter schema, reload
-src/update-data/ – the ontology generator and its tests
-tools/nix/      – the Nix flake providing the dev shell
-share/          – standalone demo page; needs an apiurl to point at
-tools/docker/   – Dockerfiles, nginx config and the compose entry page
-docs/           – contributor docs; docs/backend is the backend MkDocs site
+src/ontology/          – SHACL shapes, template workbook; use-case data under subdirs
+src/ontology/oceancare/ – OceanCare source-data.ods and generated Turtle
+src/frontend/          – Svelte + MapLibre widget; scripts/ builds regions, basemap, tiles
+src/backend/           – FastAPI service: SPARQL over the ontology, filter schema, reload
+src/turtle-generator/  – ODS → RDF generator and its tests
+tools/nix/             – the Nix flake providing the dev shell
+share/                 – standalone demo page; needs an apiurl to point at
+tools/docker/          – Dockerfiles, nginx config and the compose entry page
+docs/                  – contributor docs; docs/compass is the MkDocs site
 ```
 
 ---
 
 ## Configuration
 
+### Data & Ontology
+
+See [`docs/compass/configuration-ontology.md`](docs/compass/configuration-ontology.md)
+for the step-by-step checklist to set up a use-case folder, fill
+`source-data.ods`, and run `just data::generate`.
+
 ### Backend: settings
 
-See [`docs/backend/configuration.md`](docs/backend/configuration.md) for how to
-configure the backend and adapt it for a new Compass use-case. It covers API
-metadata, the stories provider, language support, and deployment settings such
-as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
+See [`docs/compass/configuration-backend.md`](docs/compass/configuration-backend.md)
+for how to configure the backend and adapt it for a new Compass use-case. It
+covers API metadata, the stories provider, language support, and deployment
+settings such as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
 
-### Frontend : pre-render bathymetry tiles
+### Frontend
+
+See [`docs/compass/configuration-frontend.md`](docs/compass/configuration-frontend.md).
+
+Pre-render bathymetry tiles (optional; the map falls back to the vector basemap
+if tiles are absent):
 
 ```bash
 just map::tiles
 ```
 
-Optional: the map falls back to the vector basemap if tiles are absent. The output is gitignored and belongs on the server. The script lives at `src/frontend/scripts/build-tiles.mjs`.
+The output is gitignored and belongs on the server. The script lives at
+`src/frontend/scripts/build-tiles.mjs`.
 
 ---
 
@@ -110,24 +123,30 @@ Optional: the map falls back to the vector basemap if tiles are absent. The outp
 just deploy
 ```
 
-Open <http://localhost:8780>. nginx serves the widget and proxies `/api/` to the
-API, so the two share an origin and no CORS is involved. The host port defaults
-to `8780` (override with `COMPASS_HTTP_PORT`) so it is less likely to collide
-with other local services that claim `8080`. Inside Compose, nginx still
-listens on container port `80` and the API on `8000` on the private network
-only.
+Open <http://localhost:8780>.
 
 ---
 
 ## Generate/Update the Map Data
 
-Upload the workbook (`src/ontology/source-data.ods`) to Google Sheets to edit it (the three sheets import as tabs),
+Start from `src/ontology/template-source-data.ods` when modeling knowledge for a
+new use-case: it has the three sheets and column headers the generator expects,
+with no data rows. Copy it into a use-case folder under `src/ontology/` (named
+to match `COMPASS_USE_CASE`, for example `src/ontology/oceancare/source-data.ods`)
+and fill it in.
+
+`COMPASS_USE_CASE` (default `oceancare`, set in `.env`) selects which subdirectory
+under `src/ontology/` the generator and the API use for `source-data.ods`,
+`compass.ttl`, and `vocab.ttl`. Shared files (`shapes.ttl`, the template) stay at
+the ontology root.
+
+Upload the workbook (`src/ontology/<COMPASS_USE_CASE>/source-data.ods`) to Google Sheets to edit it (the three sheets import as tabs),
 then download it back as `.ods`.
 
-`compass.ttl` and `vocab.ttl` then get **generated** from `src/ontology/source-data.ods`:
+`compass.ttl` and `vocab.ttl` then get **generated** into that same use-case folder:
 
 ```bash
-just data::update
+just data::generate
 ```
 
 After regenerating Turtle (and shipping the updated files into the ontology
@@ -141,15 +160,16 @@ curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
 
 Set `COMPASS_RELOAD_TOKEN` on the API (empty disables the endpoint). A rejected
 reload leaves the previous ontology serving. See
-[`docs/backend/configuration.md`](docs/backend/configuration.md).
+[`docs/compass/configuration-backend.md`](docs/compass/configuration-backend.md).
 
 | File | Purpose |
 |---|---|
-| `src/ontology/source-data.ods` | **Source of truth** — `schemes` (the six tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
+| `src/ontology/template-source-data.ods` | **Starting point** — empty workbook (headers only) for modeling a new use-case |
+| `src/ontology/<COMPASS_USE_CASE>/source-data.ods` | **Source of truth** — `schemes` (the six tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
 | `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
 | `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
-| `src/ontology/compass.ttl` | *Generated* — instance data (the pins on the map) |
-| `src/ontology/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
+| `src/ontology/<COMPASS_USE_CASE>/compass.ttl` | *Generated* — instance data (the pins on the map) |
+| `src/ontology/<COMPASS_USE_CASE>/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
 
 Every row carries its own `id`, and **pins** link to other rows by id in a
 `links` column. **The predicate a link becomes is decided by what it points
@@ -223,10 +243,9 @@ just dev-up
 ```
 
 Open <http://localhost:5173>; `index.html` already passes
-`apiurl="http://localhost:8000"` and serves bathymetry from the Vite origin
-(`tileurl=""`). Run `just map::tiles` once so `src/frontend/tools/` exists;
-without it the map falls back to the vector basemap. Or start only the widget
-with `just frontend` (after the API is already up).
+`apiurl="http://localhost:8780"` and serves bathymetry from the Vite origin
+(`tileurl=""`). Run `just map::tiles` once so `src/frontend/tiles/` exists;
+without it the map falls back to the vector basemap.
 
 ---
 
@@ -283,7 +302,7 @@ requested language. In the workbook a translatable field is a column pair —
 reaches the RDF in both languages.
 
 An empty German cell takes the English text so a German reader never sees a
-blank where an English one sees prose. `just data::update` reports every substitution,
+blank where an English one sees prose. `just data::generate` reports every substitution,
 so a missing translation is visible rather than silently shipped; a clean run
 prints `every German cell is filled`. Some pairs are legitimately identical:
 `Caracas, Venezuela` reads the same in both, and registered names such as

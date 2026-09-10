@@ -54,7 +54,17 @@ class Settings(BaseSettings):
     )
     compass_ontology_dir: Path | None = Field(
         default=None,
-        description="Directory containing compass.ttl, shapes.ttl, and vocab.ttl.",
+        description=(
+            "Root ontology directory (shapes.ttl, shacl-shacl.ttl, template). "
+            "Instance data lives under a use-case subdirectory."
+        ),
+    )
+    compass_use_case: str = Field(
+        default="oceancare",
+        description=(
+            "Use-case subdirectory under the ontology root that holds "
+            "source-data.ods, compass.ttl, and vocab.ttl."
+        ),
     )
 
     @property
@@ -81,6 +91,24 @@ class Settings(BaseSettings):
             return None
         return value
 
+    @field_validator("compass_use_case", mode="before")
+    @classmethod
+    def _strip_use_case(cls, value: object) -> object:
+        """Reject empty use-case names and strip whitespace.
+
+        Args:
+            value: Raw field value before validation.
+
+        Returns:
+            Stripped string, or *value* unchanged when not a string.
+        """
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                raise ValueError("COMPASS_USE_CASE must be a non-empty directory name")
+            return stripped
+        return value
+
     @property
     def cors_origins(self) -> list[str]:
         """Origins allowed to call the API cross-origin; empty for same-origin only.
@@ -105,7 +133,7 @@ class Settings(BaseSettings):
 
     @property
     def ontology_dir(self) -> Path:
-        """Directory that holds the Turtle ontology files.
+        """Root directory for shared ontology files (shapes, templates).
 
         Returns:
             Explicit ``compass_ontology_dir`` or the package-relative default.
@@ -113,6 +141,15 @@ class Settings(BaseSettings):
         if self.compass_ontology_dir is not None:
             return self.compass_ontology_dir
         return _default_ontology_dir()
+
+    @property
+    def use_case_dir(self) -> Path:
+        """Directory holding this deployment's ``compass.ttl`` and ``vocab.ttl``.
+
+        Returns:
+            ``ontology_dir / compass_use_case``.
+        """
+        return self.ontology_dir / self.compass_use_case
 
 
 settings = Settings()

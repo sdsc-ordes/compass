@@ -26,6 +26,7 @@ const VOCAB = join(
   '..',
   '..',
   'ontology',
+  'oceancare',
   'vocab.ttl',
 );
 

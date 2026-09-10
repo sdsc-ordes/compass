@@ -3,7 +3,7 @@ site_description: FastAPI service — SHACL-driven filters and SPARQL over the o
 site_url: https://sdsc-ordes.github.io/compass/
 repo_url: https://github.com/sdsc-ordes/compass
 repo_name: sdsc-ordes/compass
-docs_dir: ../../docs/backend
+docs_dir: ../../docs/compass
 dev_addr: 127.0.0.1:8888
 
 theme:
@@ -50,7 +50,10 @@ plugins:
 nav:
   - Overview: index.md
   - Design: design.md
-  - Configuration: configuration.md
+  - Configuration:
+      - Ontology: configuration-ontology.md
+      - Backend: configuration-backend.md
+      - Frontend: configuration-frontend.md
   - API reference:
       - RDF store: reference/rdf.md
       - SHACL → entities: reference/shacl_to_entities.md
