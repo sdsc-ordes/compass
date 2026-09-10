@@ -16,7 +16,8 @@
 
 ## Ontology/Semantics related
 
-- Oceancare specifics and wordpress specifics. The other ontology PR addresses this. 
+- Oceancare specifics and wordpress specifics. The other ontology PR addresses this. Once merged: all referenced to `wpTagID` and `wpEntityTagID` need to be transformed to `TagID` and `EntityTagID` (or whatever new term was approved in ontology PR) for the code to run properly.
+- Suggestion, also rename `http://example.org/ocean-org/ontology#` for `http://example.org/org/ontology#` for generality. It was not done in refactor/backend to avoid mixing ontology and backend refactoring
 - Is the entire nomenclature (functions, documentation) for SHACL, SPARQL to geojson flows correct? Please check it.
 - State of the tags on ESite API vs what is in the ontology. Please double check nothing is missing. 
 
