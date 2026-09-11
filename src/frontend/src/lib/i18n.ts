@@ -16,11 +16,10 @@ export const i18n = {
        statusResults speaks. */
     tallyResults: '{n} results on the map',
     tallyResultsOne: '{n} result on the map',
-    /* On the face of the stories button. It carries the count, so the sentence
-       under the button is free to carry the result count alone. */
-    storiesCta: 'Read {n} stories',
-    storiesCtaOne: 'Read {n} story',
     resetFiltersLong: 'Reset filters',
+    /* The detail pane's link only. The tally's own link is storiesRead below:
+       "Related stories" names a category, which is what the detail pane wants,
+       where the tally has just stated the count and wants the invitation. */
     relatedStories: 'Related stories',
     relatedStoriesFrom: 'Related stories from {title}',
     website: 'Website',
@@ -37,12 +36,17 @@ export const i18n = {
     errorLoad: 'The map could not be loaded: {detail}',
     statusResults: '{n} results on the map.',
     statusResultsFiltered: '{n} results on the map, filtered.',
-    storiesInSelection: '{n} stories in this selection',
-    storyInSelection: '1 story in this selection',
-    storiesCaption: 'stories in this selection',
-    storiesCaptionOne: 'story in this selection',
-    storiesPrompt: 'Filter the map to see the stories behind a selection.',
+    storiesInSelection: '{n} stories related to your selection',
+    storyInSelection: '1 story related to your selection',
+    storiesCaption: 'stories related to your selection',
+    storiesCaptionOne: 'story related to your selection',
+    storiesPrompt: 'Filter the map to see the stories behind your selection.',
     allStories: 'All stories',
+    /* Under the count in the tally box: the count has been stated, so this only
+       has to say what to do about it. The pair inflects because "them" does not
+       survive a single story. */
+    storiesRead: 'Read them here',
+    storiesReadOne: 'Read it here',
     attribution: 'Natural Earth 1:50 m',
     projection: 'Projection',
     flatMap: 'Map',
@@ -103,8 +107,6 @@ export const i18n = {
     tallyCaptionOne: 'Ergebnis in dieser Auswahl',
     tallyResults: '{n} Ergebnisse auf der Karte',
     tallyResultsOne: '{n} Ergebnis auf der Karte',
-    storiesCta: '{n} Storys lesen',
-    storiesCtaOne: '{n} Story lesen',
     resetFiltersLong: 'Filter zurücksetzen',
     relatedStories: 'Verwandte Storys',
     relatedStoriesFrom: 'Verwandte Storys zu {title}',
@@ -122,12 +124,17 @@ export const i18n = {
     errorLoad: 'Die Karte konnte nicht geladen werden: {detail}',
     statusResults: '{n} Ergebnisse auf der Karte.',
     statusResultsFiltered: '{n} Ergebnisse auf der Karte, gefiltert.',
-    storiesInSelection: '{n} Storys in dieser Auswahl',
-    storyInSelection: '1 Story in dieser Auswahl',
-    storiesCaption: 'Storys in dieser Auswahl',
-    storiesCaptionOne: 'Story in dieser Auswahl',
-    storiesPrompt: 'Karte filtern, um die Storys zu einer Auswahl zu sehen.',
+    storiesInSelection: '{n} Storys zu Ihrer Auswahl',
+    storyInSelection: '1 Story zu Ihrer Auswahl',
+    storiesCaption: 'Storys zu Ihrer Auswahl',
+    storiesCaptionOne: 'Story zu Ihrer Auswahl',
+    storiesPrompt: 'Filtern Sie die Karte, um die Storys zu Ihrer Auswahl zu sehen.',
     allStories: 'Alle Storys',
+    /* German needs no plural here: "Hier lesen" carries one story and a hundred
+       equally, so both keys hold the same words rather than the pair being
+       dropped — the caller inflects and a language that does not still answers. */
+    storiesRead: 'Hier lesen',
+    storiesReadOne: 'Hier lesen',
     attribution: 'Natural Earth 1:50 m',
     projection: 'Projektion',
     flatMap: 'Karte',

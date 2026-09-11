@@ -71,7 +71,11 @@
            to replace them (WCAG 2.5.3); only the new tab needs saying, and it
            goes in a span for the same reason. -->
       <a class="storiesgo" href={storyCount.url} target="_blank" rel="noopener noreferrer">
-        <span class="sb-lb">{counted ? t.relatedStories : t.allStories}</span>
+        <span class="sb-lb"
+          >{counted
+            ? plural(counted.count, t.storiesReadOne, t.storiesRead)
+            : t.allStories}</span
+        >
         <Icon name="extLink" />
         <span class="sr"> {t.newTab}</span>
       </a>
