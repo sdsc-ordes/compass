@@ -5,7 +5,7 @@
 //   just map::tiles [maxZoom]
 //
 // GEBCO's grid is free for commercial use with attribution, which the map
-// carries. Output goes to src/frontend/tools/{z}/{x}/{y}.jpg and is gitignored: it is
+// carries. Output goes to src/frontend/tiles/{z}/{x}/{y}.jpg and is gitignored: it is
 // ~53 MB, regenerable, and belongs on the server rather than in history.
 //
 // Already-written tiles are skipped, so an interrupted run resumes.
@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = join(HERE, '..', 'tools');
+const OUT = join(HERE, '..', 'tiles');
 const MAX_ZOOM = Number(process.argv[2] ?? 5);
 
 // 512px JPEG is the cheap corner of the trade: a quarter the requests of 256px
