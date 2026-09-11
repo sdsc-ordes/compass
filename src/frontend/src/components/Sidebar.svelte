@@ -29,6 +29,8 @@
   export let resultCount = 0;
   /** Story total for the current selection — null whenever no backend answered. */
   export let storyCount: { count: number; url: string } | null = null;
+  /** True while a story count is debouncing or in flight. */
+  export let storiesPending = false;
   export let statusText = '';
   export let anyFilters = false;
   export let selected: Proj | null = null;
@@ -134,7 +136,7 @@
     <!-- The panel's one primary action and the line under it. Also the block
          whose height is measured into --dock, so on a phone it is what the dock
          stop shows. -->
-    <Tally {t} {resultCount} {storyCount} {statusText} bind:tallyEl />
+    <Tally {t} {resultCount} {storyCount} {storiesPending} {statusText} bind:tallyEl />
     <!-- Below the tally on purpose: the counts on these pills add up to the
          result count above them, so they read as that number broken apart.
          Outside the block the mobile dock measures, though — see lib/sheet.ts. -->

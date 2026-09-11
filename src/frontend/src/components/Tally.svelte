@@ -20,6 +20,18 @@
    * The result count is the line under the box: smaller, quieter, and saying the
    * one thing the box does not.
    *
+   * And it waits visibly, which the rest of the panel does not have to. The map's
+   * own queries answer in 5-25ms; this one is the backend proxying a live call
+   * out to the stories provider, measured at 1.6-2.8s, with 300ms of debounce in
+   * front of it. Two waits follow from that:
+   *
+   *   waiting   nothing on screen yet, so two bars stand where the number and
+   *             caption will be — the box arrives at roughly its final height
+   *             and the filters below do not jump when the count lands
+   *   settling  a count is already up and a new one is coming. It stays, because
+   *             an answer one click old still reads better than a blank, but it
+   *             dims and breathes so it is not read as current
+   *
    * Three states, because the two counts do not arrive together:
    *
    *   counted   stories mapped to real tag ids: the number leads and the link
@@ -38,6 +50,8 @@
   export let resultCount = 0;
   /** Null whenever no backend answered: there is then no count and no URL. */
   export let storyCount: StoryCount | null = null;
+  /** True while a count is debouncing or in flight — see the box's two waits. */
+  export let storiesPending = false;
   export let statusText = '';
   /** Bound out for the mobile dock: this block's height plus the handle's is how
       much map the docked panel covers, so lib/sheet.ts measures it. Nothing else
@@ -57,8 +71,17 @@
 <p class="sr" role="status" aria-live="polite">{statusText}</p>
 
 <div class="tallyband" bind:this={tallyEl}>
-  {#if storyCount}
-    <div class="tallybox" class:lead={!!counted}>
+  {#if !storyCount && storiesPending}
+    <!-- The first wait, with nothing to keep on screen. Two bars where the
+         number and its caption will be, so the box arrives at roughly its final
+         height and the filters below it do not jump when the count lands. No
+         link: there is no URL yet, and a dead control is worse than none. -->
+    <div class="tallybox waiting" aria-hidden="true">
+      <span class="bar n"></span>
+      <span class="bar c"></span>
+    </div>
+  {:else if storyCount}
+    <div class="tallybox" class:lead={!!counted} class:settling={storiesPending}>
       {#if counted}
         <p class="big" aria-hidden="true">{counted.count}</p>
         <p class="lbl" aria-hidden="true">

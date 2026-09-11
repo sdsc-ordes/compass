@@ -214,6 +214,68 @@ aside.filters::-webkit-scrollbar-track {
   margin: 0 0 18px;
 }
 
+/* ---------- the two waits ----------
+
+   The stories count is the one slow thing in the panel. The map's own queries
+   answer in 5-25ms; this is the backend proxying a live call out to the provider,
+   measured at 1.6-2.8s, and there is 300ms of debounce in front of it. Up to
+   three seconds of a number that looks entirely current and is not.
+
+   Both waits use the same breath — 1.6s, opacity only. Opacity is the one
+   property that animates on the compositor without laying anything out, which
+   matters in a block sitting directly above a list that must not reflow. */
+@keyframes tally-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* The first wait, with nothing to keep. Two bars at the number's and caption's
+   own heights, so the box lands at the height it will keep and the filter
+   sections below it do not jump when the count arrives. --land-hi rather than a
+   grey: it is the panel's own rule colour, so the box reads as unfilled rather
+   than as broken. */
+.tallybox.waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.tallybox .bar {
+  display: block;
+  background: var(--land-hi);
+  animation: tally-breathe 1.6s ease-in-out infinite;
+}
+.tallybox .bar.n {
+  width: 4ch;
+  height: 42px;
+}
+.tallybox .bar.c {
+  width: 62%;
+  height: 14px;
+}
+/* The second wait: a count is up and a new one is coming. It stays — an answer
+   one click old reads better than a blank that refills on every click — but it
+   must not be read as current, so the number and its caption dim and breathe.
+   The link is deliberately left alone: it still goes somewhere useful, and a
+   control that fades under the pointer invites a second click on the same
+   thing. */
+.tallybox.settling .big,
+.tallybox.settling .lbl {
+  animation: tally-breathe 1.6s ease-in-out infinite;
+}
+/* Motion is the wrong channel for anyone who has asked for less of it, and a
+   pulse is exactly the kind that gets asked about. The state still has to read,
+   so it holds the dimmed end of the same fade instead of animating to it. */
+@media (prefers-reduced-motion: reduce) {
+  .tallybox .bar,
+  .tallybox.settling .big,
+  .tallybox.settling .lbl {
+    animation: none;
+    opacity: 0.55;
+  }
+}
+
 /* The reset, now among the filters rather than up in the results.
 
    Clearing filters is a filter action, so it is reached from where the work was
