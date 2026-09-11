@@ -1,9 +1,17 @@
 /**
- * The five filter dimensions the panel draws, resolved against the filter
- * widgets the API derives from the SHACL shapes.
+ * The filter dimensions the panel draws, resolved against the filter widgets the
+ * API derives from the SHACL shapes.
  *
  * The id list is a UI choice; every label, option and description behind it comes
  * from the ontology, so no option key is ever written down here. Keys are IRIs.
+ *
+ * It names every concept scheme the source spreadsheet defines — work area,
+ * conservation, topic, pollution, species, country/area — so the panel offers
+ * the whole vocabulary rather than a chosen half. The two ids that are not
+ * schemes are deliberate: entityType is the rdf:type, and relatedProject points
+ * at entities rather than concepts. `forum` is the one dimension the API returns
+ * that the panel still leaves out; it is a relation like relatedProject, and its
+ * twenty targets are already on the map as International Forum pins.
  *
  * entityType leads deliberately. It is the coarsest cut — what KIND of thing this
  * is — so it is the one a visitor reaches for first, and it is what the detail
@@ -22,6 +30,9 @@ export const DIM_IDS: string[] = [
   'species',
   'topic',
   'workArea',
+  'conservation',
+  'pollution',
+  'countryArea',
   'relatedProject',
 ];
 
@@ -53,6 +64,12 @@ export const DIM_ICONS: Partial<Record<string, IconName>> = {
   species: 'whale',
   topic: 'tag',
   workArea: 'briefcase',
+  conservation: 'shield',
+  pollution: 'droplet',
+  // The stage chrome's projection toggle draws the same globe. Reused rather
+  // than redrawn: these are geometry, and a second sphere would differ from the
+  // first only by being worse.
+  countryArea: 'globe',
   relatedProject: 'folder',
 };
 
