@@ -11,6 +11,11 @@ export const i18n = {
     collapseSidebar: 'Collapse sidebar',
     tallyCaption: 'results in this selection',
     tallyCaptionOne: 'result in this selection',
+    /* The line under the story count: what the map is showing those stories
+       are drawn from. No trailing stop — it is a caption, not the sentence
+       statusResults speaks. */
+    tallyResults: '{n} results on the map',
+    tallyResultsOne: '{n} result on the map',
     resetFiltersLong: 'Reset filters',
     relatedStories: 'Related stories',
     relatedStoriesFrom: 'Related stories from {title}',
@@ -92,6 +97,8 @@ export const i18n = {
     collapseSidebar: 'Seitenleiste einklappen',
     tallyCaption: 'Ergebnisse in dieser Auswahl',
     tallyCaptionOne: 'Ergebnis in dieser Auswahl',
+    tallyResults: '{n} Ergebnisse auf der Karte',
+    tallyResultsOne: '{n} Ergebnis auf der Karte',
     resetFiltersLong: 'Filter zurücksetzen',
     relatedStories: 'Verwandte Storys',
     relatedStoriesFrom: 'Verwandte Storys zu {title}',
