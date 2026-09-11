@@ -18,14 +18,14 @@ tests *args:
 
 # Rewrite every source file in the project's style.
 format:
-    cd "{{root_dir}}" && ruff format --config "{{ruff_config}}" {{python_paths}}
-    cd "{{root_dir}}" && ruff check --fix --config "{{ruff_config}}" {{python_paths}}
+    cd "{{root_dir}}" && uv run --project src/backend ruff format --config "{{ruff_config}}" {{python_paths}}
+    cd "{{root_dir}}" && uv run --project src/backend ruff check --fix --config "{{ruff_config}}" {{python_paths}}
     cd "{{root_dir}}/src/frontend" && npm run format
 
 # Report style and correctness problems without changing anything.
 lint:
-    cd "{{root_dir}}" && ruff check --config "{{ruff_config}}" {{python_paths}}
-    cd "{{root_dir}}" && ruff format --check --config "{{ruff_config}}" {{python_paths}}
+    cd "{{root_dir}}" && uv run --project src/backend ruff check --config "{{ruff_config}}" {{python_paths}}
+    cd "{{root_dir}}" && uv run --project src/backend ruff format --check --config "{{ruff_config}}" {{python_paths}}
     cd "{{root_dir}}/src/frontend" && npm run lint
     cd "{{root_dir}}/src/frontend" && npm run format:check
 

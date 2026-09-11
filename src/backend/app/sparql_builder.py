@@ -243,6 +243,7 @@ def _build_where_clauses(
     filter_map: dict[str, str],
     range_filters: RangeFilters,
     date_filters: dict[str, str],
+    *,
     subject: Subject = PIN,
     exclude_key: str | None = None,
 ) -> list[str]:
