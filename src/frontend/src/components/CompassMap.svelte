@@ -503,7 +503,6 @@
   <Sidebar
     bind:this={sidebarComp}
     {t}
-    {lang}
     {dims}
     {openDim}
     {sel}

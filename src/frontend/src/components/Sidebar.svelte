@@ -20,7 +20,6 @@
   import { TYPE_DIM, type Dim } from '../lib/schema';
 
   export let t: Strings;
-  export let lang: 'en' | 'de' = 'en';
   export let dims: Dim[] = [];
   /** The dimension ids whose accordion sections stand open. */
   export let openDim: string | null = null;
@@ -138,7 +137,9 @@
          the order is turned back over in CSS — see .pane-filters there: the dock
          stop shows whatever is first, and the tally is the band whose height is
          measured into --dock. -->
-    <StoriesBlock {t} {lang} {storyCount} />
+    {#if storyCount}
+      <StoriesBlock {t} {storyCount} />
+    {/if}
     <Tally {t} {resultCount} {anyFilters} {statusText} {onReset} bind:tallyEl />
     <!-- Below the tally on purpose: the counts on these pills add up to the
          number above them, so they read as that number broken apart. Outside the

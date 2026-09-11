@@ -24,8 +24,19 @@
 - Call the story count at `/api/v1/stories/count` with `tags`, matching the
   router; it was calling `/api/stories/count` with `tag` and silently counting
   nothing.
-- Pin the vite dev server to port 5173 with `strictPort`, so it cannot drift out
-  of the API's CORS allowlist.
+- Pin the vite dev server with `strictPort`, so it cannot drift out of the API's
+  CORS allowlist.
+
+### Frontend configuration
+
+- Read the repository-root `.env` from `vite.config.ts`, the same file Compose
+  and `settings.py` read: `COMPASS_DEV_PORT` sets the dev server's port and
+  `COMPASS_API_URL` (or `COMPASS_HTTP_PORT`) fills the dev page's `apiurl`. Both
+  default to what `settings.py` expects, so no `.env` is required.
+- Take the stories link's URL from the API instead of the two oceancare.org URLs
+  the widget hard-coded; a tagless request answers with the deployment's own.
+- Write `docs/compass/configuration-frontend.md`, including what remains
+  use-case specific in the widget and needs a rebuild.
 
 ### Filter options carry a definition
 

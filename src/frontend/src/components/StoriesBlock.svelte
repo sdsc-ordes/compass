@@ -8,8 +8,8 @@
    * errands. Here they are a single anchor, so there is one thing to read and
    * one thing to press.
    *
-   * Two states, and it is always one of them — the block never disappears,
-   * because a way to the stories is the point:
+   * Two states, and it is one of them whenever the API answered — a way to the
+   * stories is the point, so the block stays put across filter changes:
    *
    *   counted   a selection maps to real tag ids, so the number leads and the
    *             link goes to the filtered index
@@ -20,19 +20,24 @@
    * one said "0 stories" and could not be pressed, which is a dead control where
    * this is a live one. It matters more than it looks — only 3 of 60 concepts
    * carry a wpTagId, so the prompt is the common state, not the edge case.
+   *
+   * Both states need a URL, and it is the API's: the widget hard-codes no host,
+   * so a deployment that is not OceanCare's links to its own stories. Sidebar
+   * draws nothing at all when the API did not answer, which is the one case
+   * where there is no URL to offer.
    */
   import Icon from './Icon.svelte';
   import { plural, type Strings } from '../lib/i18n';
-  import { storiesBaseUrl } from '../lib/stories';
+  import type { StoryCount } from '../lib/stories';
 
   export let t: Strings;
-  export let lang = 'en';
-  /** Null whenever no backend answered; a zero count falls to the prompt. */
-  export let storyCount: { count: number; url: string } | null = null;
+  /** Never null here — Sidebar only draws the block once the API has answered. */
+  export let storyCount: StoryCount;
 
-  $: counted = storyCount && storyCount.count > 0 && storyCount.url ? storyCount : null;
-  /* The count's own url when there is one, the language's index otherwise. */
-  $: href = counted ? counted.url : storiesBaseUrl(lang);
+  $: counted = storyCount.count > 0 && storyCount.url ? storyCount : null;
+  /* The count's own filtered url when there is one, the plain index otherwise;
+     both come from the API. */
+  $: href = storyCount.url;
   $: label = counted ? t.relatedStories : t.allStories;
 </script>
 

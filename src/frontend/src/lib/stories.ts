@@ -2,23 +2,14 @@
  * The story count — the one thing on the panel that needs a backend.
  *
  * GET {apiurl}/api/v1/stories/count?lang=&tags=<iri>&tags=… -> { count, url }.
- * With no `apiurl` set there is no request and no story UI at all.
+ * Asked with no tags too, because the answer carries the deployment's stories
+ * URL. With no `apiurl` set there is no request and no story UI at all.
  */
-/**
- * The unfiltered stories index, per language.
- *
- * Needed with no backend and before any filter is set, which is exactly when
- * /api/stories/count is never called — schedule() returns early on an empty tag
- * list, so there is no response to read a base URL out of. DetailPane held its
- * own copy of these two URLs; this is the one place now.
- */
-export const storiesBaseUrl = (lang: string): string =>
-  lang === 'de'
-    ? 'https://www.oceancare.org/de/storys-and-news/'
-    : 'https://www.oceancare.org/en/stories-and-news/';
-
 export interface StoryCount {
   count: number;
+  /** Where the block links: the filtered index when tags resolved, the plain
+      index otherwise. Always the API's, which is configured per deployment
+      (STORIES_BASE_URL_* in the root .env) — the widget names no host itself. */
   url: string;
 }
 
@@ -44,11 +35,14 @@ export class Stories {
   schedule(on: boolean, apiurl: string, lang: string, iris: string[]): void {
     this.cancel();
     this.seq += 1;
-    if (!on || !apiurl || iris.length === 0) {
+    if (!on || !apiurl) {
       /* Nothing to say — and the tally's min-height reserves the line either way. */
       this.onCount(null);
       return;
     }
+    /* An empty tag list is asked anyway, rather than short-circuited: the answer
+       carries the deployment's own stories URL, which is the block's link when
+       nothing is selected. Hard-coding that URL here is what this avoids. */
     /* The previous count stays up while this settles: an answer one click old reads
        better than a line that blanks and refills on every click. */
     this.timer = setTimeout(() => this.fetch(apiurl, lang, iris), this.delayMs);
