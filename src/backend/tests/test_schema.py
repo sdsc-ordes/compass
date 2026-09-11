@@ -1,8 +1,5 @@
 """SHACL projection tests: filter widgets and entity property descriptors."""
 
-from rdflib import Literal
-from rdflib.namespace import SKOS
-
 from app.namespaces import COMPASS, GEO
 from app.shacl_to_entities import DISPLAY_ONLY, get_entity_shape_from_shacl
 from app.shacl_to_filters import get_filters_from_shacl
@@ -55,38 +52,65 @@ class TestGetFilterWidgets:
                     f"{f.id} option {opt.value} has a blank description"
                 )
 
-    def test_a_defined_concept_carries_its_definition(self, read_graph):
-        # No concept in the committed workbook defines one yet, so the definition
-        # is added to the graph here: the projection is what is under test.
-        filters = get_filters_from_shacl(read_graph, "en")
-        species = next(f for f in filters if f.id == "species")
-        assert species.options, "species has no options to define"
-        target = species.options[0].value
+    def test_every_concept_option_carries_its_definition(self, read_graph):
+        # The workbook defines all of them, so this asserts the projection and the
+        # editorial content at once: a concept whose definition cell is emptied
+        # fails here rather than quietly dropping a line from the panel. The
+        # dimensions listed are the ones whose options are skos:Concepts --
+        # relatedProject and forum point at entities, which define nothing.
+        #
+        # countryArea is a concept dimension and is still not here: a country's
+        # name is its own description, so those cells are deliberately empty.
+        # test_country_options_are_undescribed holds that end of it.
+        scheme_dims = {
+            "conservation",
+            "pollution",
+            "species",
+            "topic",
+            "workArea",
+        }
+        for lang in ("en", "de"):
+            for f in get_filters_from_shacl(read_graph, lang):
+                if f.id not in scheme_dims:
+                    continue
+                for opt in f.options or []:
+                    assert opt.description, (
+                        f"{lang}: {f.id} option {opt.label} has no definition"
+                    )
+                    assert opt.description.count(".") == 1, (
+                        f"{lang}: {f.id} option {opt.label} is more than one sentence"
+                    )
 
-        graph = read_graph
-        graph.add(
-            (
-                COMPASS[target.split("#")[-1]],
-                SKOS.definition,
-                Literal("A sea creature.", lang="en"),
+    def test_country_options_are_undescribed(self, read_graph):
+        # Twenty-five rows that say where a country is add a line each to the
+        # longest section in the panel and tell a reader nothing they did not
+        # get from the name. Asserted rather than left to drift, so filling the
+        # cells back in is a decision someone takes here too.
+        for lang in ("en", "de"):
+            countries = next(
+                f for f in get_filters_from_shacl(read_graph, lang) if f.id == "countryArea"
             )
-        )
-        try:
-            refreshed = get_filters_from_shacl(graph, "en")
-            option = next(
-                o
-                for o in next(f for f in refreshed if f.id == "species").options or []
-                if o.value == target
-            )
-            assert option.description == "A sea creature."
-        finally:
-            graph.remove(
-                (
-                    COMPASS[target.split("#")[-1]],
-                    SKOS.definition,
-                    Literal("A sea creature.", lang="en"),
+            assert countries.options
+            for opt in countries.options:
+                assert opt.description is None, (
+                    f"{lang}: countryArea option {opt.label} carries a description"
                 )
-            )
+
+    def test_a_definition_is_language_specific(self, read_graph):
+        # Same concept, two languages, two sentences: proves the projection reads
+        # the requested language rather than whichever literal rdflib hands back.
+        def described(lang: str, dim: str, value: str) -> str | None:
+            f = next(x for x in get_filters_from_shacl(read_graph, lang) if x.id == dim)
+            return next(o.description for o in f.options or [] if o.value == value)
+
+        noise = f"{COMPASS}OceanNoisePollution"
+        assert described("en", "pollution", noise) == (
+            "Human-made underwater noise that masks the sounds marine animals depend on."
+        )
+        assert described("de", "pollution", noise) == (
+            "Vom Menschen erzeugter Unterwasserlärm, der die Laute überdeckt, auf "
+            "die Meerestiere angewiesen sind."
+        )
 
     def test_scheme_dimensions_carry_the_scheme_definition(self, read_graph):
         # The section subtitle is the concept scheme's definition, not the
