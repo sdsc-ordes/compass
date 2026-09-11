@@ -88,6 +88,27 @@ class TestGetFilterWidgets:
                 )
             )
 
+    def test_scheme_dimensions_carry_the_scheme_definition(self, read_graph):
+        # The section subtitle is the concept scheme's definition, not the
+        # shape's sh:description: the workbook writes the scheme's in both
+        # languages, while shapes.ttl writes sh:description in English only.
+        en = {f.id: f for f in get_filters_from_shacl(read_graph, "en")}
+        de = {f.id: f for f in get_filters_from_shacl(read_graph, "de")}
+        assert en["workArea"].description == "Types of work OceanCare performs."
+        assert de["workArea"].description == "Arten der Arbeit, die OceanCare leistet."
+        for dim in ("conservation", "topic", "pollution", "species", "countryArea"):
+            assert en[dim].description, f"{dim} lost its English scheme definition"
+            assert de[dim].description != en[dim].description, (
+                f"{dim} shows its English definition to a German reader"
+            )
+
+    def test_dimensions_without_a_scheme_carry_no_description(self, read_graph):
+        # entityType is synthetic and relatedProject points at entities, so
+        # neither has a scheme to quote; the key is absent rather than empty.
+        filters = {f.id: f for f in get_filters_from_shacl(read_graph, "en")}
+        assert filters["entityType"].description is None
+        assert filters["relatedProject"].description is None
+
     def test_slider_filters_have_bounds(self, read_graph):
         filters = get_filters_from_shacl(read_graph, "en")
         for f in filters:

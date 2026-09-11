@@ -128,14 +128,21 @@
            the widget's own sr <h1>. The detail pane's <h2> never competes with
            these: .pane-filters is display:none while that pane shows. -->
       <h2>
+        <!-- The subtitle is described, not named: aria-label already carries the
+             header's name and would swallow the sentence whole, announcing a
+             paragraph where a section title belongs. aria-describedby leaves it
+             where AT expects a description, after the name and skippable, and
+             still points at the element the eye reads. -->
         <button
           type="button"
           class="ahbtn"
+          class:sub={!!dim.description}
           data-head={dim.id}
           id={'acch-' + dim.id}
           aria-expanded={open}
           aria-controls={'accp-' + dim.id}
           aria-label={n ? fmt(t.dimSelected, { label: dim.label, n }) : dim.label}
+          aria-describedby={dim.description ? 'accd-' + dim.id : undefined}
           on:click={() => onToggleDim(dim.id)}
         >
           <!-- Always rendered, icon or not, so every header keeps the same four
@@ -145,7 +152,15 @@
           <span class="dico"
             >{#if dim.icon}<Icon name={dim.icon} size={16} />{/if}</span
           >
-          <span class="lb">{dim.label}</span>
+          <!-- The scheme's definition shares the label's column so it starts on
+               the title's own line. Rendered only when there is one, so a
+               dimension the ontology says nothing about keeps exactly the
+               header it has today. -->
+          <span class="lb"
+            >{dim.label}{#if dim.description}<span class="dsc" id={'accd-' + dim.id}
+                >{dim.description}</span
+              >{/if}</span
+          >
           <!-- Kept at opacity 0 so the header cannot change width; hidden from AT
                because every header then announced a "0", and the count is in the
                header's name. -->

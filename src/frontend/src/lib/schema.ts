@@ -76,6 +76,10 @@ export const DIM_ICONS: Partial<Record<string, IconName>> = {
 export interface Dim {
   id: string;
   label: string;
+  /** The concept scheme's skos:definition, drawn as the section's subtitle.
+      Undefined for a dimension with no scheme behind it — entityType and
+      relatedProject, which name entities rather than concepts. */
+  description?: string;
   options: Option[];
   /** Undefined for a dimension with no entry in DIM_ICONS. */
   icon?: IconName;
@@ -87,7 +91,15 @@ export function buildDims(lang: string): Dim[] {
     const dim = widgets.find((w) => w.id === id);
     /* Passed through, not copied field by field: a copy would spell
      `description: o.description` and put the key on every option, undoing the
-     backend's care to omit it. */
-    return { id, label: dim?.label ?? id, options: dim?.options ?? [], icon: DIM_ICONS[id] };
+     backend's care to omit it. The dimension's own description is spread in for
+     the same reason — writing it flat would hand the accordion an empty subtitle
+     to draw under every section the ontology says nothing about. */
+    return {
+      id,
+      label: dim?.label ?? id,
+      ...(dim?.description ? { description: dim.description } : {}),
+      options: dim?.options ?? [],
+      icon: DIM_ICONS[id],
+    };
   });
 }
