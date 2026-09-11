@@ -7,7 +7,6 @@
 node_modules/
 src/frontend/node_modules/
 src/frontend/dist/
-share/compass-map.js
 
 # Python / backend
 .venv/
