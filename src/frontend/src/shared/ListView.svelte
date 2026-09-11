@@ -1,23 +1,30 @@
 <script lang="ts">
   import { i18n, type Lang } from './i18n';
   import { chipClass, loadDimensions } from './dimensions';
+  import type { Feature } from '../engine';
 
-  export let entities: any[] = [];
+  export let entities: Feature[] = [];
   export let lang: Lang = 'en';
 
   $: t = i18n[lang] || i18n.en;
 
   $: dimensions = loadDimensions(lang);
 
-  const tagsOf = (entity: any, id: string) => entity.properties[id] || [];
+  type Tag = { iri: string; label: string };
+
+  const tagsOf = (entity: Feature, id: string): Tag[] => {
+    const value = entity.properties[id];
+    return Array.isArray(value) ? value : [];
+  };
 </script>
 
 <div class="list-container">
   <table class="entity-table">
+    <caption class="table-caption">{t.resultsTable}</caption>
     <thead>
       <tr>
-        <th>{t.results} ({entities.length})</th>
-        <th>{t.type}</th>
+        <th scope="col">{t.results} ({entities.length})</th>
+        <th scope="col">{t.type}</th>
       </tr>
     </thead>
     <tbody>
@@ -38,13 +45,15 @@
                   {/if}
                 {/each}
               </div>
-              {#if entity.properties.foundingDate}
-                <span class="founded-year">{t.established} {entity.properties.foundingDate}</span>
-              {/if}
             </div>
           </td>
           <td>
-            <a class="type-badge" href={entity.properties.typeIri} target="_blank" rel="noopener noreferrer">{entity.properties.type}</a>
+            <a
+              class="type-badge"
+              href={entity.properties.typeIri}
+              target="_blank"
+              rel="noopener noreferrer">{entity.properties.type}</a
+            >
           </td>
         </tr>
       {/each}
@@ -60,6 +69,17 @@
 </div>
 
 <style>
+  /* The caption names the table for a screen reader; the visible header row
+     already carries the same information sighted users need. */
+  .table-caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   .list-container {
     width: 100%;
     height: 100%;
@@ -86,7 +106,10 @@
     letter-spacing: 0.05em;
   }
 
-  th:last-child { width: 1%; white-space: nowrap; }
+  th:last-child {
+    width: 1%;
+    white-space: nowrap;
+  }
 
   .entity-row {
     transition: background 0.2s;
@@ -128,7 +151,7 @@
   .prop-label {
     font-size: 0.68rem;
     font-weight: 700;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
@@ -148,15 +171,22 @@
     font-weight: 500;
   }
 
-  .chip-focus   { background: #dbeafe; color: #1d4ed8; }
-  .chip-region  { background: #ccfbf1; color: #0f766e; }
-  .chip-tag     { background: #f1f5f9; color: #475569; }
-  .chip-species { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-
-  .founded-year {
-    font-size: 0.72rem;
-    color: #94a3b8;
-    margin-top: 2px;
+  .chip-focus {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  .chip-region {
+    background: #ccfbf1;
+    color: #0f766e;
+  }
+  .chip-tag {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .chip-species {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
   }
 
   .type-badge {
@@ -180,7 +210,7 @@
   .empty-state {
     text-align: center;
     padding: 4rem 1rem;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 0.875rem;
   }
 </style>

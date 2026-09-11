@@ -3,12 +3,12 @@
 <script lang="ts">
   import { Tags, X, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-svelte';
   import { i18n, type Lang } from './i18n';
-  import { getFiltersSchema } from '../engine';
+  import { multiselectFilters, type MultiselectFilter } from './dimensions';
 
   export let lang: Lang = 'en';
   export let onTagChange: (filters: Record<string, string[]>) => void;
   export let onToggle: (() => void) | undefined = undefined;
-  export let initialFilters: Record<string, any> = {};
+  export let initialFilters: Record<string, unknown> = {};
   export let facetCounts: Record<string, Record<string, number>> = {};
   export let resultCount: number | undefined = undefined;
 
@@ -20,12 +20,11 @@
   let sectionSearch: Record<string, string> = {};
 
   $: t = i18n[lang] || i18n.en;
-  $: schema = getFiltersSchema(lang);
 
   // Only show SKOS taxonomy dimensions; entityType is handled by the legend,
   // relatedProject and forum are entity relationships not thematic tags.
   const EXCLUDED_DIMENSIONS = new Set(['entityType', 'relatedProject', 'forum']);
-  $: tagSchema = schema.filter((f: any) => f.type === 'multiselect' && !EXCLUDED_DIMENSIONS.has(f.id));
+  $: tagSchema = multiselectFilters(lang).filter((f) => !EXCLUDED_DIMENSIONS.has(f.id));
 
   // Sync selection from externally-set filters (URL restore, region CTA, etc.).
   // Runs whenever initialFilters changes; the round-trip through onTagChange →
@@ -33,13 +32,12 @@
   // toggle settles without clobbering. Guarded by a value comparison to avoid loops.
   $: syncFromExternal(initialFilters, tagSchema);
 
-  function syncFromExternal(filters: Record<string, any>, schema: any[]) {
+  function syncFromExternal(filters: Record<string, unknown>, schema: MultiselectFilter[]) {
     if (schema.length === 0) return;
     const next: Record<string, string[]> = {};
     for (const f of schema) {
-      if (Array.isArray(filters[f.id]) && filters[f.id].length > 0) {
-        next[f.id] = filters[f.id];
-      }
+      const selected = filters[f.id];
+      if (Array.isArray(selected) && selected.length > 0) next[f.id] = selected;
     }
     if (JSON.stringify(next) !== JSON.stringify(selectedTags)) {
       selectedTags = next;
@@ -81,10 +79,10 @@
   // Options filtered by the section's search term (case-insensitive substring).
   // The term is passed in (not read from sectionSearch here) so Svelte tracks it
   // as a dependency of the {#each} and re-renders as you type.
-  function visibleOptions(filter: any, search: string): any[] {
+  function visibleOptions(filter: MultiselectFilter, search: string) {
     const term = (search ?? '').trim().toLowerCase();
     if (!term) return filter.options;
-    return filter.options.filter((o: any) => o.label.toLowerCase().includes(term));
+    return filter.options.filter((o) => o.label.toLowerCase().includes(term));
   }
 
   $: hasActiveTags = Object.values(selectedTags).some((v) => v.length > 0);
@@ -94,8 +92,8 @@
     (selectedTags[f.id] ?? []).map((iri) => ({
       dimensionId: f.id,
       value: iri,
-      label: f.options.find((o: any) => o.value === iri)?.label ?? iri,
-    }))
+      label: f.options.find((o) => o.value === iri)?.label ?? iri,
+    })),
   );
 </script>
 
@@ -108,7 +106,7 @@
       <button class="reset-btn" on:click={clearAll}>{t.resetFilters}</button>
     {/if}
     {#if onToggle}
-      <button class="collapse-btn" on:click={onToggle} title="Hide panel" aria-label="Collapse tag panel">
+      <button class="collapse-btn" on:click={onToggle} aria-label={t.collapseFilters}>
         <ChevronLeft size={16} />
       </button>
     {/if}
@@ -118,7 +116,10 @@
   {#if hasActiveTags}
     <div class="active-chips">
       {#each selectedChips as chip}
-        <button class="chip chip-active" on:click={() => toggleTag(chip.dimensionId, chip.value)}>
+        <button
+          class="chip chip-active"
+          on:click={() => toggleTag(chip.dimensionId, chip.value)}
+        >
           <span>{chip.label}</span>
           <X size={11} strokeWidth={2.5} />
         </button>
@@ -143,54 +144,56 @@
   <!-- Tag dimension sections (only this region scrolls) -->
   <div class="sections-scroll">
     <div class="sections">
-    {#each tagSchema as filter}
-      <div class="section">
-        <button class="section-header" on:click={() => toggleSection(filter.id)}>
-          <span class="section-label">{filter.label}</span>
-          {#if selectedTags[filter.id]?.length}
-            <span class="section-count">{selectedTags[filter.id].length}</span>
-          {/if}
-          <span class="section-chevron">
-            {#if collapsedSections[filter.id]}
-              <ChevronRight size={13} color="#94a3b8" />
-            {:else}
-              <ChevronDown size={13} color="#94a3b8" />
+      {#each tagSchema as filter}
+        <div class="section">
+          <button class="section-header" on:click={() => toggleSection(filter.id)}>
+            <span class="section-label">{filter.label}</span>
+            {#if selectedTags[filter.id]?.length}
+              <span class="section-count">{selectedTags[filter.id].length}</span>
             {/if}
-          </span>
-        </button>
+            <span class="section-chevron">
+              {#if collapsedSections[filter.id]}
+                <ChevronRight size={13} color="#94a3b8" />
+              {:else}
+                <ChevronDown size={13} color="#94a3b8" />
+              {/if}
+            </span>
+          </button>
 
-        {#if !collapsedSections[filter.id]}
-          {#if filter.options.length > SEARCH_THRESHOLD}
-            <input
-              class="section-search"
-              type="text"
-              placeholder={t.searchPlaceholder}
-              aria-label={`${t.searchPlaceholder} ${filter.label}`}
-              bind:value={sectionSearch[filter.id]}
-            />
+          {#if !collapsedSections[filter.id]}
+            {#if filter.options.length > SEARCH_THRESHOLD}
+              <input
+                class="section-search"
+                type="text"
+                placeholder={t.searchPlaceholder}
+                aria-label={`${t.searchPlaceholder} ${filter.label}`}
+                bind:value={sectionSearch[filter.id]}
+              />
+            {/if}
+            <div class="chips">
+              {#each visibleOptions(filter, sectionSearch[filter.id]) as opt}
+                {@const selected = selectedTags[filter.id]?.includes(opt.value)}
+                {@const dimCounts = facetCounts[filter.id]}
+                {@const count = dimCounts?.[opt.value] ?? 0}
+                {@const disabled = dimCounts !== undefined && count === 0 && !selected}
+                <button
+                  class="chip"
+                  class:chip-active={selected}
+                  class:chip-disabled={disabled}
+                  aria-pressed={selected}
+                  aria-disabled={disabled}
+                  on:click={() => {
+                    if (!disabled) toggleTag(filter.id, opt.value);
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {#if count > 0}<span class="chip-count">{count}</span>{/if}
+                </button>
+              {/each}
+            </div>
           {/if}
-          <div class="chips">
-            {#each visibleOptions(filter, sectionSearch[filter.id]) as opt}
-              {@const selected = selectedTags[filter.id]?.includes(opt.value)}
-              {@const dimCounts = facetCounts[filter.id]}
-              {@const count = dimCounts?.[opt.value] ?? 0}
-              {@const disabled = dimCounts !== undefined && count === 0 && !selected}
-              <button
-                class="chip"
-                class:chip-active={selected}
-                class:chip-disabled={disabled}
-                aria-pressed={selected}
-                aria-disabled={disabled}
-                on:click={() => { if (!disabled) toggleTag(filter.id, opt.value); }}
-              >
-                <span>{opt.label}</span>
-                {#if count > 0}<span class="chip-count">{count}</span>{/if}
-              </button>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    {/each}
+        </div>
+      {/each}
     </div>
   </div>
 </div>
@@ -238,7 +241,7 @@
   }
   .reset-btn:hover {
     background: #f1f5f9;
-    border-color: #94a3b8;
+    border-color: #64748b;
     color: #0f172a;
   }
   .collapse-btn {
@@ -250,10 +253,13 @@
     background: none;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #94a3b8;
+    color: #64748b;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      border-color 0.15s;
   }
   .collapse-btn:hover {
     background: #e2e8f0;
@@ -394,7 +400,7 @@
   }
   .chip:hover {
     background: #f1f5f9;
-    border-color: #94a3b8;
+    border-color: #64748b;
     color: #0f172a;
   }
   .chip:focus-visible,
@@ -416,7 +422,7 @@
   .chip-count {
     font-size: 0.6875rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: #64748b;
     background: #f1f5f9;
     border-radius: 8px;
     padding: 0 5px;
@@ -453,5 +459,4 @@
     border-color: #0284c7;
     box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
   }
-
 </style>

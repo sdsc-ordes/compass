@@ -4,9 +4,10 @@
   import { cubicOut } from 'svelte/easing';
   import { i18n, type Lang } from './i18n';
   import { chipClass, loadDimensions } from './dimensions';
+  import type { EntityProperties } from '../engine';
 
-  // Raw MapLibre feature properties (nested objects arrive as JSON strings)
-  export let entity: any;
+  /** Structured feature properties; Map.svelte un-flattens MapLibre's strings. */
+  export let entity: EntityProperties | null = null;
   export let lang: Lang = 'en';
   export let regionCount: number | undefined = undefined;
   export let onFilterByRegion: (iri: string) => void = () => {};
@@ -14,21 +15,22 @@
 
   $: t = i18n[lang] || i18n.en;
 
-  // MapLibre stringifies nested objects — parse them back
-  function safeParseJson<T>(raw: string | undefined, fallback: T): T {
-    if (!raw) return fallback;
-    try { return JSON.parse(raw) as T; } catch { return fallback; }
-  }
+  type Tag = { iri: string; label: string };
+
+  const tagsOf = (value: unknown): Tag[] => (Array.isArray(value) ? value : []);
+
+  // Properties beyond the fixed four are shaped by the SHACL shapes, so they
+  // reach the component as unknown; read the ones rendered as text through here.
+  const text = (value: unknown): string => (typeof value === 'string' ? value : '');
 
   // Dimensions and labels come from the filter schema.
   $: dimensions = loadDimensions(lang);
 
-  // Each value arrives as a JSON-stringified array of {iri, label} objects.
   $: parsedTags = dimensions
     .map((dim) => ({
       ...dim,
       chipClass: chipClass(dim.id),
-      values: safeParseJson(entity?.[dim.id], [] as any[]),
+      values: tagsOf(entity?.[dim.id]),
     }))
     .filter((dim) => dim.values.length > 0);
 </script>
@@ -37,25 +39,23 @@
   <div class="sidebar-header">
     <div class="header-meta">
       {#if entity?.typeIri}
-        <a href={entity.typeIri} target="_blank" rel="noopener noreferrer" class="type-badge">{entity.type}</a>
+        <a href={entity.typeIri} target="_blank" rel="noopener noreferrer" class="type-badge"
+          >{entity.type}</a
+        >
       {:else}
         <span class="type-badge">{entity?.type}</span>
       {/if}
     </div>
-    <button class="close-btn" on:click={onClose} aria-label="Close panel">
+    <button class="close-btn" on:click={onClose} aria-label={t.closeDetails}>
       <X size={18} />
     </button>
   </div>
 
   <div class="sidebar-body">
-    <h2 class="entity-name" title={entity?.altLabel || ''}>{entity?.label}</h2>
+    <h2 class="entity-name" title={text(entity?.altLabel)}>{entity?.label}</h2>
 
-    {#if entity?.description}
-      <p class="description">{entity.description}</p>
-    {/if}
-
-    {#if entity?.foundingDate}
-      <p class="founded">{t.established} {entity.foundingDate}</p>
+    {#if text(entity?.description)}
+      <p class="description">{text(entity?.description)}</p>
     {/if}
 
     {#if parsedTags.length > 0}
@@ -65,11 +65,7 @@
             <span class="prop-label">{dim.label}</span>
             <div class="chips">
               {#each dim.values as tag}
-                {#if tag.iri}
-                  <span class="chip {dim.chipClass}">{tag.label}</span>
-                {:else}
-                  <span class="chip {dim.chipClass}">{tag}</span>
-                {/if}
+                <span class="chip {dim.chipClass}">{tag.label ?? tag}</span>
               {/each}
             </div>
           </div>
@@ -84,24 +80,32 @@
           {t.filterByRegion}{#if regionCount}&nbsp;({regionCount}){/if}
         </button>
       {/if}
-      {#if entity?.url}
-        <a class="visit-btn primary" href={entity.url} target="_blank" rel="noopener noreferrer">
+      {#if text(entity?.url)}
+        <a
+          class="visit-btn primary"
+          href={text(entity?.url)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <ExternalLink size={15} />
           {t.website}
         </a>
       {/if}
       {#if entity?.id}
-        <a class="visit-btn secondary" href={entity.id} target="_blank" rel="noopener noreferrer">
+        <a
+          class="visit-btn secondary"
+          href={entity.id}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <ExternalLink size={15} />
           {t.details}
         </a>
       {/if}
-      {#if entity?.wpEntityTagIdEn || entity?.wpEntityTagIdDe}
-        {@const tagId = lang === 'de' ? (entity.wpEntityTagIdDe || entity.wpEntityTagIdEn) : (entity.wpEntityTagIdEn || entity.wpEntityTagIdDe)}
-        {@const baseUrl = lang === 'de' ? 'https://www.oceancare.org/de/storys-and-news/' : 'https://www.oceancare.org/en/stories-and-news/'}
+      {#if entity?.storiesUrl}
         <a
           class="visit-btn stories"
-          href="{baseUrl}?tag={tagId}"
+          href={entity.storiesUrl}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -150,7 +154,9 @@
     font-weight: 500;
     transition: background 0.15s;
   }
-  .type-badge:hover { background: #e2e8f0; }
+  .type-badge:hover {
+    background: #e2e8f0;
+  }
 
   .close-btn {
     background: none;
@@ -161,7 +167,9 @@
     display: flex;
     align-items: center;
     border-radius: 4px;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
   }
   .close-btn:hover {
     background: #f1f5f9;
@@ -186,12 +194,6 @@
     line-height: 1.35;
   }
 
-  .founded {
-    margin: 0 0 0.25rem;
-    font-size: 0.8125rem;
-    color: #94a3b8;
-  }
-
   /* ── Property rows ── */
   .props-section {
     margin-top: 1rem;
@@ -211,7 +213,7 @@
   .prop-label {
     font-size: 10px;
     font-weight: 700;
-    color: #94a3b8;
+    color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -231,12 +233,27 @@
     text-decoration: none;
     transition: opacity 0.15s;
   }
-  .chip:hover { opacity: 0.75; }
+  .chip:hover {
+    opacity: 0.75;
+  }
 
-  .chip-focus   { background: #dbeafe; color: #1d4ed8; }
-  .chip-region  { background: #ccfbf1; color: #0f766e; }
-  .chip-tag     { background: #f1f5f9; color: #475569; }
-  .chip-species  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .chip-focus {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  .chip-region {
+    background: #ccfbf1;
+    color: #0f766e;
+  }
+  .chip-tag {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .chip-species {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
 
   .description {
     margin: 0 0 0.75rem;
@@ -264,19 +281,25 @@
     font-size: 0.875rem;
     font-weight: 600;
     text-decoration: none;
-    transition: background 0.2s, border-color 0.2s;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
   }
   .visit-btn.primary {
     background: #0284c7;
     color: white;
   }
-  .visit-btn.primary:hover { background: #0369a1; }
+  .visit-btn.primary:hover {
+    background: #0369a1;
+  }
 
   .visit-btn.donate {
     background: #ec4899;
     color: white;
   }
-  .visit-btn.donate:hover { background: #db2777; }
+  .visit-btn.donate:hover {
+    background: #db2777;
+  }
 
   .visit-btn.secondary {
     background: transparent;

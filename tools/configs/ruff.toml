@@ -1,0 +1,40 @@
+# Shared by both Python projects (src/backend and src/turtle-generator), passed with
+# --config so one policy covers the repository rather than drifting per project.
+
+line-length = 92
+target-version = "py311"
+
+[lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "I",    # import sorting
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "SIM",  # simplify
+    "RUF",  # ruff-specific
+    "PL",   # pylint
+]
+ignore = [
+    # Nested branches read better than early returns in the widget-inference
+    # and clause-building code, which is a series of parallel cases.
+    "PLR0912",
+    # Argument counts are deliberate: the query builders thread the four
+    # filter categories through rather than hiding them in a context object.
+    "PLR0913",
+]
+
+[lint.per-file-ignores]
+# Comparing against a magic number is the point of an assertion.
+"**/tests/*" = ["PLR2004"]
+# FastAPI declares dependencies as call-valued defaults (Depends, Query,
+# Header, Body); the framework re-evaluates them per request.
+"src/backend/app/routers/*" = ["B008"]
+
+[lint.isort]
+known-first-party = ["app"]
+
+[format]
+quote-style = "double"

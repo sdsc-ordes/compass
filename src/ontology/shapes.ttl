@@ -156,14 +156,9 @@ compass:wpTagId a rdf:Property ;
     rdfs:comment "Numeric term ID of the corresponding SKOS concept tag on the OceanCare website."@en ;
     rdfs:range xsd:integer .
 
-compass:wpEntityTagIdEn a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (English)"@en ;
-    rdfs:comment "Numeric WP term ID of the English per-entity tag on OceanCare (used to link to English stories about this entity)."@en ;
-    rdfs:range xsd:integer .
-
-compass:wpEntityTagIdDe a rdf:Property ;
-    rdfs:label "WordPress Entity Tag ID (German)"@en ;
-    rdfs:comment "Numeric WP term ID of the German per-entity tag on OceanCare (used to link to German stories about this entity)."@en ;
+compass:wpEntityTagId a rdf:Property ;
+    rdfs:label "WordPress Entity Tag ID"@en ;
+    rdfs:comment "Numeric WP term ID of the per-entity tag on OceanCare, used to link to stories about this entity. One term serves both language sites, which differ only in the URL the link is built on."@en ;
     rdfs:range xsd:integer .
 
 compass:isoCode a rdf:Property ;
@@ -180,10 +175,6 @@ geo:lat a rdf:Property ;
 geo:long a rdf:Property ;
     rdfs:label "longitude"@en ;
     rdfs:comment "WGS84 longitude coordinate of a spatial thing."@en .
-
-schema:foundingDate a rdf:Property ;
-    rdfs:label "founding date"@en ;
-    rdfs:comment "The date that this organization was founded."@en .
 
 schema:url a rdf:Property ;
     rdfs:label "url"@en ;
@@ -292,14 +283,6 @@ compass:ManagedByOceanCareShape a sh:Shape ;
     sh:datatype xsd:boolean ;
     sh:maxCount 1 .
 
-compass:FoundingDateShape a sh:Shape ;
-    sh:path schema:foundingDate ;
-    sh:name "Founded Year"@en ;
-    sh:name "Gründungsjahr"@de ;
-    sh:description "The year the entity was established."@en ;
-    sh:datatype xsd:gYear ;
-    sh:maxCount 1 .
-
 # -- Tag dimension property shapes --
 
 compass:WorkAreaPropertyShape a sh:Shape ;
@@ -385,7 +368,6 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
-    sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
@@ -409,7 +391,6 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
-    sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
@@ -434,7 +415,6 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
-    sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
@@ -459,7 +439,6 @@ compass:ProjectShape a sh:NodeShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
-    sh:property compass:FoundingDateShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;

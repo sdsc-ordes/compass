@@ -1,0 +1,67 @@
+site_name: Compass Backend
+site_description: FastAPI service — SHACL-driven filters and SPARQL over the ontology
+site_url: https://sdsc-ordes.github.io/compass/
+repo_url: https://github.com/sdsc-ordes/compass
+repo_name: sdsc-ordes/compass
+docs_dir: ../../docs/compass
+dev_addr: 127.0.0.1:8888
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+    - search.suggest
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.blocks.caption
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            members_order: source
+            show_source: true
+            show_root_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            merge_init_into_class: true
+            filters:
+              - "!^__"
+
+nav:
+  - Overview: index.md
+  - Design: design.md
+  - Configuration:
+      - Ontology: configuration-ontology.md
+      - Backend: configuration-backend.md
+      - Frontend: configuration-frontend.md
+  - API reference:
+      - RDF store: reference/rdf.md
+      - SHACL → entities: reference/shacl_to_entities.md
+      - SHACL → filters: reference/shacl_to_filters.md
+      - SPARQL builder: reference/sparql_builder.md
+      - SPARQL → GeoJSON: reference/sparql_to_geojson.md
+      - SPARQL terms: reference/sparql_terms.md
+      - Namespaces: reference/namespaces.md
+      - Config: reference/config.md
+      - Core: reference/core.md
+      - Schemas: reference/schemas.md

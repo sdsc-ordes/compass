@@ -1,102 +1,99 @@
 """Tests for the stories count proxy endpoint."""
-import pytest
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
-from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 
+from app.config import (
+    STORIES_API_ERROR_MESSAGE,
+    STORIES_API_URL,
+    STORIES_BASE_URL_DE,
+    STORIES_BASE_URL_EN,
+    create_stories_api_url,
+    create_stories_frontend_url,
+)
 from app.main import app
-from app.routers.stories import _count_story_cards, _resolve_wp_tag_ids, _build_stories_url
-
+from app.routers.stories import _resolve_tags_ids
 
 # ---------------------------------------------------------------------------
 # Unit tests for helpers
 # ---------------------------------------------------------------------------
 
-def test_count_story_cards_empty():
-    assert _count_story_cards("") == 0
 
-
-def test_count_story_cards_one():
-    html = '<div class="col grid-3"><div class="box">story</div></div>'
-    assert _count_story_cards(html) == 1
-
-
-def test_count_story_cards_multiple():
-    html = (
-        '<div class="col grid-3">a</div>'
-        '<div class="col grid-3">b</div>'
-        '<div class="col grid-3">c</div>'
-    )
-    assert _count_story_cards(html) == 3
-
-
-def test_count_story_cards_real_response():
-    html = """
-    <section id="story">
-      <div class="content-wrapper grid-3">
-        <div class="col grid-3"><div class="box"></div></div>
-        <div class="col grid-3"><div class="box"></div></div>
-      </div>
-    </section>
-    """
-    assert _count_story_cards(html) == 2
-
-
-def test_build_stories_url_no_ids():
-    url = _build_stories_url([], "en")
-    assert url.endswith("/stories-and-news/")
+def test_build_frontend_url_no_ids():
+    url = create_stories_frontend_url([], "en")
+    assert url == STORIES_BASE_URL_EN
     assert "?" not in url
 
 
-def test_build_stories_url_single():
-    url = _build_stories_url([148], "en")
+def test_build_frontend_url_single():
+    url = create_stories_frontend_url([148], "en")
     assert "?tag=148" in url
 
 
-def test_build_stories_url_multiple():
-    url = _build_stories_url([147, 148, 455], "en")
+def test_build_frontend_url_multiple():
+    url = create_stories_frontend_url([147, 148, 455], "en")
     assert "?tag=147,148,455" in url
 
 
-def test_build_stories_url_lang_specific_base():
-    assert "/de/" in _build_stories_url([148], "de")
-    assert "/en/" in _build_stories_url([148], "en")
+def test_build_frontend_url_lang_specific_base():
+    assert STORIES_BASE_URL_DE in create_stories_frontend_url([148], "de")
+    assert STORIES_BASE_URL_EN in create_stories_frontend_url([148], "en")
 
 
-def test_resolve_wp_tag_ids_no_iris():
+def test_build_api_url_single():
+    url = create_stories_api_url([148], "en")
+    assert STORIES_API_URL in url
+    assert "tags=148" in url
+    assert "lang=en" in url
+    assert "per_page=1" in url
+    assert "_fields=id" in url
+
+
+def test_build_api_url_multiple():
+    url = create_stories_api_url([147, 148], "en")
+    assert STORIES_API_URL in url
+    assert "tags[terms]=147,148" in url
+    assert "tags[operator]=AND" in url
+    assert "lang=en" in url
+
+
+def test_resolve_tags_ids_no_iris():
     store = MagicMock()
-    result = _resolve_wp_tag_ids([], store)
+    result = _resolve_tags_ids([], store)
     assert result == []
     store.query.assert_not_called()
 
 
-def test_resolve_wp_tag_ids_unmapped():
+def test_resolve_tags_ids_unmapped():
     store = MagicMock()
     store.query.return_value = []
-    result = _resolve_wp_tag_ids(["http://example.org/ocean-org/ontology#UnknownConcept"], store)
+    result = _resolve_tags_ids(
+        ["http://example.org/ocean-org/ontology#UnknownConcept"],
+        store,
+    )
     assert result == []
 
 
-def test_resolve_wp_tag_ids_known():
+def test_resolve_tags_ids_known():
     store = MagicMock()
     store.query.return_value = [{"wpTagId": "148"}]
-    result = _resolve_wp_tag_ids(
-        ["http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"], store
-    )
+    result = _resolve_tags_ids(["http://example.org/ocean-org/ontology#Dolphins"], store)
     assert result == [148]
 
 
-def test_resolve_wp_tag_ids_multiple():
+def test_resolve_tags_ids_multiple():
     store = MagicMock()
-    store.query.return_value = [{"wpTagId": "148"}, {"wpTagId": "455"}]
-    result = _resolve_wp_tag_ids(
+    store.query.return_value = [{"wpTagId": "147"}, {"wpTagId": "455"}]
+    result = _resolve_tags_ids(
         [
-            "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans",
-            "http://example.org/ocean-org/ontology#AnimalAndSpeciesConservation",
+            "http://example.org/ocean-org/ontology#Whales",
+            "http://example.org/ocean-org/ontology#SpeciesConservation",
         ],
         store,
     )
-    assert set(result) == {148, 455}
+    assert set(result) == {147, 455}
 
 
 # ---------------------------------------------------------------------------
@@ -107,48 +104,49 @@ client = TestClient(app)
 
 
 def test_stories_count_no_tags():
-    resp = client.get("/api/stories/count")
+    resp = client.get("/api/v1/stories/count")
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
-    assert "oceancare.org" in data["url"]
+    assert data["status"] == "no_tags"
+    assert data["message"] is None
+    assert data["url"] == STORIES_BASE_URL_EN
 
 
 def test_stories_count_unmapped_tag():
     """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
     resp = client.get(
-        "/api/stories/count",
-        params={"tag": "http://example.org/ocean-org/ontology#Geoengineering"},
+        "/api/v1/stories/count",
+        params={"tags": "http://example.org/ocean-org/ontology#AdvocacyWork"},
     )
     assert resp.status_code == 200
-    assert resp.json()["count"] == 0
+    data = resp.json()
+    assert data["count"] == 0
+    assert data["status"] == "no_ID_mapping"
+    assert data["message"] is None
 
 
 def test_stories_count_mapped_tag(monkeypatch):
-    """A mapped tag triggers a GET to the filtered stories URL; card count is returned."""
-    fake_html = (
-        '<div class="col grid-3">story1</div>'
-        '<div class="col grid-3">story2</div>'
-        '<div class="col grid-3">story3</div>'
-    )
-
+    """A mapped tag triggers a GET to the WP API; X-WP-Total header count is returned."""
     with patch("httpx.AsyncClient") as mock_client_cls:
         mock_client = AsyncMock()
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_resp = MagicMock()
-        mock_resp.text = fake_html
+        mock_resp.headers = {"x-wp-total": "42"}
         mock_client.get = AsyncMock(return_value=mock_resp)
         mock_client_cls.return_value = mock_client
 
         resp = client.get(
-            "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            "/api/v1/stories/count",
+            params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
     assert resp.status_code == 200
     data = resp.json()
-    assert data["count"] == 3
+    assert data["count"] == 42
+    assert data["status"] == "ok"
+    assert data["message"] is None
     assert "?tag=148" in data["url"]
 
 
@@ -159,17 +157,19 @@ def test_stories_count_url_contains_tag_ids(monkeypatch):
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
         mock_resp = MagicMock()
-        mock_resp.text = '<div class="col grid-3">s</div>'
+        mock_resp.headers = {"x-wp-total": "1"}
         mock_client.get = AsyncMock(return_value=mock_resp)
         mock_client_cls.return_value = mock_client
 
         resp = client.get(
-            "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            "/api/v1/stories/count",
+            params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
     assert resp.status_code == 200
-    assert "?tag=" in resp.json()["url"]
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert "?tag=" in data["url"]
 
 
 def test_stories_count_proxy_error(monkeypatch):
@@ -182,11 +182,13 @@ def test_stories_count_proxy_error(monkeypatch):
         mock_client_cls.return_value = mock_client
 
         resp = client.get(
-            "/api/stories/count",
-            params={"tag": "http://example.org/ocean-org/ontology#DolphinsAndSmallCetaceans"},
+            "/api/v1/stories/count",
+            params={"tags": "http://example.org/ocean-org/ontology#Dolphins"},
         )
 
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
+    assert data["status"] == "upstream_error"
+    assert data["message"] == STORIES_API_ERROR_MESSAGE
     assert "?tag=148" in data["url"]

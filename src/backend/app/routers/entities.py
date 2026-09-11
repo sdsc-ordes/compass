@@ -1,8 +1,16 @@
-from fastapi import APIRouter, Depends, Query, Request
+from __future__ import annotations
 
-from ..rdf import get_store, RDFStore
-from ..sparql_builder import build_entities_query, build_facet_query
-from ..result_parser import results_to_geojson
+from typing import Any
+
+from fastapi import APIRouter, Query, Request
+
+from app.core.deps import Lang, StoreDep
+from app.namespaces import SPARQL_PREFIXES
+from app.schemas.entities import FeatureCollection
+from app.schemas.facets import FacetCounts
+from app.sparql_builder import build_facet_query, sparql_for_instances
+from app.sparql_terms import iri_term
+from app.sparql_to_geojson_translator import instances_to_geojson
 
 router = APIRouter()
 
@@ -11,59 +19,69 @@ router = APIRouter()
 _FACET_EXCLUDED = {"entityType", "relatedProject", "forum"}
 
 
-@router.get("/")
+@router.get(
+    "",
+    response_model=FeatureCollection,
+    summary="List entities as GeoJSON",
+    description=(
+        "Returns entities as GeoJSON. SPARQL and filters are driven by SHACL shapes."
+    ),
+)
 async def get_entities(
     request: Request,
-    lang: str = Query("en", pattern="^(en|de)$"),
-    store: RDFStore = Depends(get_store),
-):
-    """Returns entities as GeoJSON, with SPARQL and filters driven by SHACL shapes."""
-    specs = store.get_property_specs()
-    sparql = build_entities_query(specs, lang, request.query_params)
-    results = store.query(sparql)
-    return results_to_geojson(results, specs)
+    lang: Lang,
+    store: StoreDep,
+) -> FeatureCollection:
+    shapes = store.get_entities()
+    sparql = sparql_for_instances(shapes, lang, request.query_params)
+    instances = store.query(sparql)
+    return FeatureCollection.model_validate(instances_to_geojson(instances, shapes, lang))
 
 
-@router.get("/facets")
+@router.get(
+    "/facets",
+    response_model=FacetCounts,
+    summary="Facet counts for the current selection",
+    description=(
+        "Per-tag entity counts for the current selection (drill-down faceting). "
+        "Returns {dimensionId: {tagIri: count}}. One SPARQL count query runs per "
+        "tag dimension."
+    ),
+)
 async def get_facets(
     request: Request,
-    lang: str = Query("en", pattern="^(en|de)$"),
-    store: RDFStore = Depends(get_store),
-):
-    """Per-tag entity counts for the current selection (drill-down faceting).
-
-    Returns {dimensionId: {tagIri: count}}. One SPARQL count query runs per tag
-    dimension (~6); acceptable for the in-process Oxigraph store and dataset size.
-    """
-    specs = store.get_property_specs()
-    facets: dict = {}
-    for spec in specs:
-        sid = spec["id"]
+    lang: Lang,
+    store: StoreDep,
+) -> FacetCounts:
+    shapes = store.get_entities()
+    facets: dict[str, dict[str, int]] = {}
+    for field in shapes:
+        sid = field.id
         if (
-            spec["filter_type"] != "multiselect"
-            or spec["category"] != "iri_with_label"
+            field.filter_type != "multiselect"
+            or field.category != "iri_with_label"
             or sid in _FACET_EXCLUDED
         ):
             continue
-        sparql = build_facet_query(specs, lang, request.query_params, sid)
-        rows = store.query(sparql)
+        sparql = build_facet_query(shapes, lang, request.query_params, sid)
+        instances = store.query(sparql)
         facets[sid] = {
-            row["val"]: int(row["n"]) for row in rows if row.get("val") and row.get("n")
+            row["val"]: int(row["n"])
+            for row in instances
+            if row.get("val") and row.get("n")
         }
     return facets
 
 
-@router.get("/detail")
+@router.get(
+    "/detail",
+    summary="Entity detail triples",
+    description="Returns all predicate/object pairs for a single entity IRI.",
+)
 async def get_entity_detail(
+    store: StoreDep,
     iri: str = Query(..., description="Full IRI of the entity"),
-    lang: str = Query("en", pattern="^(en|de)$"),
-    store: RDFStore = Depends(get_store),
-):
-    """Returns single entity detail for popup."""
-    sparql = f"""
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    SELECT ?p ?o WHERE {{
-        <{iri}> ?p ?o .
-    }}
-    """
+) -> list[dict[str, Any]]:
+    subject = iri_term(iri)
+    sparql = f"{SPARQL_PREFIXES}\n    SELECT ?p ?o WHERE {{ {subject} ?p ?o . }}"
     return store.query(sparql)

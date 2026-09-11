@@ -1,1 +1,1 @@
-import './App.svelte'
+import './App.svelte';

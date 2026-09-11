@@ -1,8 +1,25 @@
 services:
-  api:
+  backend:
     build:
       context: .
-      dockerfile: docker/api.Dockerfile
+      dockerfile: tools/docker/backend.Dockerfile
+    environment:
+      # Shared ontology root (shapes); use-case Turtle lives under COMPASS_USE_CASE.
+      COMPASS_ONTOLOGY_DIR: /data/ontology
+      COMPASS_USE_CASE: ${COMPASS_USE_CASE:-oceancare}
+      # Production deployment serves widget and API from the same origin, so
+      # development-only middleware (CORS, debug endpoints, etc.) is disabled.
+      COMPASS_ENVIRONMENT: ${COMPASS_ENVIRONMENT:-production}
+      # Without this the reload endpoint stays closed. Override it in
+      # deployment; anyone holding it can make the API re-parse on demand.
+      COMPASS_RELOAD_TOKEN: ${COMPASS_RELOAD_TOKEN:-change-me}
+      # nginx proxies /api on the widget's own origin, so nothing here is a
+      # cross-origin request. Set this only when the widget is served from an
+      # origin the API does not sit behind (comma-separated).
+      COMPASS_CORS_ORIGINS: ${COMPASS_CORS_ORIGINS:-}
+    volumes:
+      # Read-only: the API serves this data, the update job writes it.
+      - ./src/ontology:/data/ontology:ro
     healthcheck:
       # The ontology is parsed at startup, so the API is not ready immediately.
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
@@ -12,13 +29,21 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-  web:
+  frontend:
     build:
       context: .
-      dockerfile: docker/web.Dockerfile
+      dockerfile: tools/docker/frontend.Dockerfile
+    volumes:
+      # Built by `just map::tiles`, kept out of the image and out of git: ~53 MB of
+      # regenerable raster. Absent is fine -- the map falls back to vector.
+      - ./src/frontend/tiles:/data/tiles:ro
+    # Host → container port map. nginx listens on 80 inside the frontend
+    # container; the backend stays on 8000 on the Compose network only (not
+    # published). Default host port is 8780 rather than 8080, which is often
+    # already taken. Override with: COMPASS_HTTP_PORT=9000 just deploy
     ports:
-      - "8080:80"
+      - "${COMPASS_HTTP_PORT:-8780}:80"
     depends_on:
-      api:
+      backend:
         condition: service_healthy
     restart: unless-stopped
