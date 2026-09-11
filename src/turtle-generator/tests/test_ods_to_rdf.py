@@ -45,6 +45,41 @@ def row(table, **cells):
 # ============================================================
 
 
+def test_a_concept_definition_becomes_skos_definition():
+    """The one line the filter panel prints under an option's name."""
+    triples = gen.concept_triples(
+        row(
+            gen.CONCEPTS,
+            id="Whales",
+            dimension="Species",
+            name_en="Whales",
+            name_de="Wale",
+            definition_en="Large marine mammals of the order Cetacea.",
+            definition_de="Grosse Meeressaeugetiere der Ordnung Cetacea.",
+        ),
+        gen.Problems(),
+        gen.Fallbacks(),
+    )
+    assert (
+        "skos:definition",
+        '"Large marine mammals of the order Cetacea."@en',
+    ) in triples
+    assert (
+        "skos:definition",
+        '"Grosse Meeressaeugetiere der Ordnung Cetacea."@de',
+    ) in triples
+
+
+def test_an_undefined_concept_emits_no_definition():
+    """Empty is the normal case today, and it must not reach the graph as ""."""
+    triples = gen.concept_triples(
+        row(gen.CONCEPTS, id="Whales", dimension="Species", name_en="Whales"),
+        gen.Problems(),
+        gen.Fallbacks(),
+    )
+    assert not [p for p, _ in triples if p == "skos:definition"]
+
+
 def test_every_id_is_unique_and_typed(tables, kinds):
     _, concepts, pins = tables
     assert len(kinds) == len(concepts) + len(pins)

@@ -90,6 +90,32 @@ def get_shacl_property(g: Graph) -> Iterator[URIRef]:
                 yield p
 
 
+def get_shacl_definition(g: Graph, subject: URIRef, lang: str) -> str:
+    """Return a concept's ``skos:definition`` in *lang*, or "" when it has none.
+
+    The same language order as :func:`get_shacl_label` -- requested language,
+    then English -- but with no fallback to an arbitrary literal and nothing
+    synthesised from the IRI: a definition in a language nobody asked for is
+    worse than none, and the caller omits the field rather than sending "".
+
+    Args:
+        g: Ontology graph.
+        subject: Concept whose definition is sought.
+        lang: BCP 47 language tag.
+
+    Returns:
+        The definition, or an empty string when none is defined in either language.
+    """
+    definitions = [
+        d for d in g.objects(subject, SKOS.definition) if isinstance(d, RDFLiteral)
+    ]
+    for wanted in (lang, "en"):
+        for definition in definitions:
+            if definition.language == wanted and str(definition).strip():
+                return str(definition)
+    return ""
+
+
 def get_shacl_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
     """Return a label in *lang*, falling back to English, then any available label.
 
