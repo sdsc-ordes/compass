@@ -50,6 +50,7 @@ plugins:
 nav:
   - Overview: index.md
   - Design: design.md
+  - Devlog: devlog.md
   - Configuration:
       - Ontology: configuration-ontology.md
       - Backend: configuration-backend.md
