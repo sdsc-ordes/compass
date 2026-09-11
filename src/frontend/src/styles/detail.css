@@ -1,0 +1,346 @@
+/* The entry detail, which takes over the sidebar while one is selected. */
+
+.pane-detail {
+  display: none;
+}
+aside.filters.detail .pane-filters {
+  display: none;
+}
+aside.filters.detail .pane-detail {
+  display: block;
+  animation: panein 0.22s ease;
+}
+@keyframes panein {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  aside.filters.detail .pane-detail {
+    animation: none;
+  }
+}
+
+.detailhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+.back:hover {
+  color: var(--cerulean);
+}
+/* Same dismiss in both places, so the gesture reads the same wherever it is met. */
+.xclose {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 25px;
+  line-height: 1;
+  color: var(--astronaut);
+  opacity: 0.8;
+  transition:
+    color 0.16s ease,
+    opacity 0.16s ease;
+}
+.xclose:hover {
+  color: var(--cerulean);
+  opacity: 1;
+}
+.xclose:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .xclose {
+    transition: none;
+  }
+}
+.thumb {
+  display: block;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 20px;
+}
+.th-sea {
+  fill: #16344c;
+}
+.th-land {
+  fill: #4e7ca2;
+}
+.th-grat {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.14;
+  stroke-width: 0.5px;
+}
+.th-rim {
+  fill: none;
+  stroke: var(--astronaut);
+  stroke-opacity: 0.35;
+  stroke-width: 1px;
+}
+.th-halo {
+  fill: #fff;
+  opacity: 0.55;
+}
+.th-dot {
+  fill: var(--sienna);
+}
+
+.pane-detail h2 {
+  margin: 18px 0 0;
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+/* The entry's type, as the filter pills inverted.
+   
+   A .ptag below is an outline pill: transparent, --land-hi edge, astronaut ink.
+   This is the same pill filled — astronaut ground, white text — so it reads as
+   the same family of thing while being unmistakably not one of them. The
+   inversion is exact in contrast too: white on astronaut and astronaut on white
+   are both 8.65:1. Being filled, it also needs no border, which sidesteps the
+   1.36:1 edge --land-hi gives .ptag.
+   
+   Shape, padding, size and case all match .ptag on purpose. Only the ground and
+   the ink swap: what the entry IS, against what it carries.
+   
+   inline-block hugs the text on desktop; the mobile pane is a flex column, where
+   it needs align-self not to stretch the full width. */
+.pane-detail .etag {
+  display: inline-block;
+  align-self: flex-start;
+  margin: 18px 0 0;
+  border: 0;
+  border-radius: 60px;
+  background: var(--astronaut);
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: #fff;
+  transition: background 0.16s ease;
+}
+/* Cerulean is the interactive colour throughout the panel, and it is where
+   .ptag:active lands too — so both pills answer a press the same way. White on
+   it measures 5.22:1. */
+.pane-detail button.etag:hover {
+  background: var(--cerulean);
+}
+.pane-detail button.etag:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: 2px;
+}
+/* No typeIri, so nothing to filter by. Plain text rather than a pill that cannot
+   be pressed — and the ink has to come back, since the fill is gone and #fff
+   would leave it invisible on white. */
+.pane-detail .etag-flat {
+  background: none;
+  padding-left: 0;
+  padding-right: 0;
+  color: var(--astronaut);
+}
+.pane-detail .etag + h2 {
+  margin-top: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pane-detail .etag {
+    transition: none;
+  }
+}
+/* The place reads as the title's second line, not as a third label. */
+.pane-detail .where {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+/* The design system's 24px body copy is for full-width tiles, not a 300px column. */
+.pane-detail p.txt {
+  font-size: 17px;
+  line-height: 26px;
+  color: var(--tundora);
+  margin: 20px 0 0;
+}
+.ptags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+/* A tag is the way back into the filters, so it keeps a control's affordances. */
+.ptag {
+  background: none;
+  border: 1px solid var(--land-hi);
+  border-radius: 60px;
+  padding: 5px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--astronaut);
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+.ptag:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+  color: var(--cerulean);
+}
+.ptag:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+.ptag:active {
+  background: var(--cerulean);
+  border-color: var(--cerulean);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptag {
+    transition: none;
+  }
+}
+
+/* ---------- mobile: The entry detail, re-stacked inside the docked panel.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  .pane-detail {
+    padding: 0 18px calc(26px + var(--sbtm));
+  }
+  /* ---------- the project detail, in the same panel ---------- */
+  /* The header pins to the panel's top edge, which is the part a thumb reaches. */
+  .detailhead {
+    position: sticky;
+    top: var(--grabh);
+    z-index: 3;
+    margin: 0 -18px 14px;
+    padding: 6px 12px 6px 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--land-hi);
+    min-height: 60px;
+  }
+  .back {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+  }
+  .xclose {
+    width: 48px;
+    height: 48px;
+    font-size: 30px;
+    opacity: 0.9;
+  }
+  /* Fixed height, so what fits without a scroll is finite: name, place and tags
+       first, the locator globe last. */
+  /* Written against aside.filters.detail, not bare .pane-detail: the rule that
+       reveals this pane carries two classes, so one class here would lose. */
+  aside.filters.detail .pane-detail {
+    display: flex;
+    flex-direction: column;
+    animation: none;
+  }
+  /* Every child is ordered explicitly: a new one with no order defaults to 0 and
+       would land above the header. */
+  .pane-detail > .detailhead {
+    order: 1;
+  }
+  /* Ordered like every other child — a new one defaulting to 0 would land above
+     the header, per the note above. */
+  .pane-detail > .etag {
+    order: 2;
+    margin: 0;
+  }
+  /* The same 44px target .ptag takes here, since this is a pill you press too —
+     the old condensed badge had none. Only the button: the flat variant is not
+     interactive and a 44px floor would just pad the kicker out.
+     Size is left alone deliberately: .ptag stays at its desktop 14px on mobile,
+     and the inversion only holds while both pills are the same size. */
+  .pane-detail > button.etag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+  /* Matched through the badge: the desktop .etag + h2 rule has two classes to
+       this one's one, and a media query adds no weight. */
+  .pane-detail > .etag + h2 {
+    order: 3;
+    margin: 4px 0 0;
+    font-size: 22px;
+    line-height: 28px;
+  }
+  .pane-detail > .where {
+    order: 4;
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .pane-detail > .ptags {
+    order: 6;
+    margin: 14px 0 0;
+  }
+  .pane-detail > p.txt {
+    order: 7;
+    margin: 16px 0 0;
+    font-size: 16px;
+    line-height: 25px;
+  }
+  .pane-detail > .thumb {
+    order: 8;
+    width: 80px;
+    height: 80px;
+    margin: 18px auto 0;
+  }
+  /* See the note in sidebar.css: the 44px target is the box around the line, and
+     the 11px it puts either side of the text is what separates these two — hence
+     no margin between them. */
+  .pane-detail > .storiesbtn {
+    order: 9;
+    align-items: center;
+    margin: 10px 0 0;
+    min-height: 44px;
+  }
+  /* Every child here is ordered explicitly; the secondary link is the tenth. */
+  .pane-detail > .storiesbtn.ghost {
+    order: 10;
+    margin: 0;
+  }
+  .ptag {
+    padding: 8px 14px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}

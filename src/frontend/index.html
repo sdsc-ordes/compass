@@ -2,7 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Without this a phone lays out against a ~980px default viewport, so the
+         860px breakpoint never matches and the widget stays in its desktop
+         layout: styles/mobile.css does not apply and lib/sheet.ts's
+         Sheet.matches() reports false. viewport-fit=cover is what makes
+         env(safe-area-inset-*) resolve to anything but 0px — styles/mobile.css
+         relies on it for the docked panel and the map chrome. Matches the
+         design reference (OceanCare-v4.html). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Compass dev</title>
+    <!-- Empty icon: without it the dev page logs a 404 for /favicon.ico on
+         every load, which is noise in a console being read for real errors. -->
+    <link rel="icon" href="data:," />
+    <!-- dvh, so mobile Safari's collapsing URL bar does not leave the widget
+         taller than the visible viewport; vh first as the fallback. -->
     <style>
       html,
       body {
@@ -12,11 +25,17 @@
       compass-map {
         display: block;
         height: 100vh;
+        height: 100dvh;
       }
     </style>
   </head>
   <body>
-    <compass-map apiurl="http://localhost:8780" tileurl="" lang="en"></compass-map>
+    <!-- The widget reads its data from the API, so `npm run dev` needs one
+         running. The origin comes from the root .env (COMPASS_API_URL, or
+         COMPASS_HTTP_PORT on localhost) and is filled in by vite.config.ts, so
+         the port is settled in one place for Compose, the backend and this page
+         alike. -->
+    <compass-map apiurl="%COMPASS_API_URL%" lang="en"></compass-map>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

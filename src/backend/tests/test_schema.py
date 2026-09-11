@@ -1,5 +1,8 @@
 """SHACL projection tests: filter widgets and entity property descriptors."""
 
+from rdflib import Literal
+from rdflib.namespace import SKOS
+
 from app.namespaces import COMPASS, GEO
 from app.shacl_to_entities import DISPLAY_ONLY, get_entity_shape_from_shacl
 from app.shacl_to_filters import get_filters_from_shacl
@@ -41,6 +44,49 @@ class TestGetFilterWidgets:
             if f.type == "multiselect":
                 assert f.options is not None, f"Multiselect filter {f.id} has no options"
                 assert len(f.options) > 0, f"Multiselect filter {f.id} has empty options"
+
+    def test_option_descriptions_are_absent_not_empty(self, read_graph):
+        # The panel prints a description under the option's name, so an option
+        # with nothing to say must carry no key rather than an empty line.
+        filters = get_filters_from_shacl(read_graph, "en")
+        for f in filters:
+            for opt in f.options or []:
+                assert opt.description is None or opt.description.strip(), (
+                    f"{f.id} option {opt.value} has a blank description"
+                )
+
+    def test_a_defined_concept_carries_its_definition(self, read_graph):
+        # No concept in the committed workbook defines one yet, so the definition
+        # is added to the graph here: the projection is what is under test.
+        filters = get_filters_from_shacl(read_graph, "en")
+        species = next(f for f in filters if f.id == "species")
+        assert species.options, "species has no options to define"
+        target = species.options[0].value
+
+        graph = read_graph
+        graph.add(
+            (
+                COMPASS[target.split("#")[-1]],
+                SKOS.definition,
+                Literal("A sea creature.", lang="en"),
+            )
+        )
+        try:
+            refreshed = get_filters_from_shacl(graph, "en")
+            option = next(
+                o
+                for o in next(f for f in refreshed if f.id == "species").options or []
+                if o.value == target
+            )
+            assert option.description == "A sea creature."
+        finally:
+            graph.remove(
+                (
+                    COMPASS[target.split("#")[-1]],
+                    SKOS.definition,
+                    Literal("A sea creature.", lang="en"),
+                )
+            )
 
     def test_slider_filters_have_bounds(self, read_graph):
         filters = get_filters_from_shacl(read_graph, "en")

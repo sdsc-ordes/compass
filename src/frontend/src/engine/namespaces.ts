@@ -17,8 +17,14 @@ export const FEATURED_IRI = `${DATA_NS}OceanCare`;
 /** A filter selection: one dimension id to the values chosen under it. */
 export type Filters = Record<string, string | string[] | undefined>;
 
-/** One selectable value of a multiselect dimension, labelled in the active language. */
-export type FilterOption = { value: string; label: string };
+/**
+ * One selectable value of a multiselect dimension, labelled in the active language.
+ *
+ * `description` is the concept's skos:definition, which the filter panel prints
+ * under the option's name. The API omits the key entirely rather than sending an
+ * empty string, so an undefined concept renders as a bare name.
+ */
+export type FilterOption = { value: string; label: string; description?: string };
 
 /** One filter-panel dimension the API derives from the SHACL shapes. */
 export type FilterWidget = {

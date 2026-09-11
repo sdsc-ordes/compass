@@ -4,6 +4,5 @@
 **/__pycache__
 **/.pytest_cache
 src/frontend/dist
-share
 docs
 *.md

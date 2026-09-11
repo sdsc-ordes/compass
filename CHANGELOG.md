@@ -2,6 +2,61 @@
 
 ## Unreleased
 
+### Widget rebuilt on the v4 design
+
+- Replace `App.svelte`, `map/Map.svelte` and `shared/*` with `components/`,
+  `lib/` and `styles/`: a filter accordion with one section open at a time,
+  counted type pills as the panel's landing control, a detail pane, a coach
+  overlay and a mobile sheet.
+- Draw the basemap as SVG with `d3-geo` over the bundled Natural Earth topology
+  (`src/atlas.json`, `just map::atlas`), with pins on a canvas; drop
+  `maplibre-gl`, `lucide-svelte` and `qrcode`.
+- Keep the MapLibre-era bathymetry pipeline (`just map::tiles`, the dev-server
+  route and the nginx mount) for a later trial; the SVG stage does not draw it.
+- Take the map's data from the API rather than a bundled Oxigraph: `init(apiurl)`
+  fetches the filter widgets, and the widget no longer ships the ontology.
+- Take each entity's "read more" link from the API's `storiesUrl` instead of
+  building it from a WordPress tag id per language.
+- Drop the `?state=` restore path, whose endpoint went in the backend refactor.
+- Retire `share/index.html`; `tools/docker/index.html` is the one demo page.
+- Self-host Cabin and Cabin Condensed (`just map::fonts`) instead of loading
+  them from Google Fonts, which was the widget's last third-party request.
+- Call the story count at `/api/v1/stories/count` with `tags`, matching the
+  router; it was calling `/api/stories/count` with `tag` and silently counting
+  nothing.
+- Pin the vite dev server with `strictPort`, so it cannot drift out of the API's
+  CORS allowlist.
+
+### Frontend configuration
+
+- Read the repository-root `.env` from `vite.config.ts`, the same file Compose
+  and `settings.py` read: `COMPASS_DEV_PORT` sets the dev server's port and
+  `COMPASS_API_URL` (or `COMPASS_HTTP_PORT`) fills the dev page's `apiurl`. Both
+  default to what `settings.py` expects, so no `.env` is required.
+- Take the stories link's URL from the API instead of the two oceancare.org URLs
+  the widget hard-coded; a tagless request answers with the deployment's own.
+- Write `docs/compass/configuration-frontend.md`, including what remains
+  use-case specific in the widget and needs a rebuild.
+
+### Filter options carry a definition
+
+- Add `definition_en` / `definition_de` to the concepts sheet; a filled cell
+  becomes `skos:definition` and reaches the panel as an option's `description`.
+  The key is absent, never null, when a concept defines nothing.
+
+### Facets
+
+- Count entities per type: `/entities/facets` now returns an `entityType`
+  dimension, counted over the class `_pin_branch` binds.
+
+### Fixes
+
+- Write bathymetry tiles to `src/frontend/tiles/`, which is what compose mounts
+  and git ignores; `build-tiles.mjs` and the vite dev route wrote to
+  `src/frontend/tools/`.
+- Run `ruff` through `uv` in `check.just`: it is a dev dependency of the Python
+  projects, not a tool on `PATH` in the nix dev shell.
+
 ### Docs refactor
 
 - Split configuration docs into `configuration-ontology.md`,

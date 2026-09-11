@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.namespaces import COMPASS
 
 
 @pytest.fixture(scope="module")
@@ -101,11 +102,38 @@ class TestFacetsEndpoint:
                 assert iri.startswith("http")
                 assert isinstance(n, int) and n > 0
 
-    def test_excludes_non_thematic_dimensions(self, client):
+    def test_excludes_relations(self, client):
+        # relatedProject and forum are relations, not tags, so a count under
+        # them would not mean what a count under a tag means.
         data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert "entityType" not in data
         assert "relatedProject" not in data
         assert "forum" not in data
+
+    def test_counts_entity_types(self, client):
+        # entityType has no property shape -- it is the class _pin_branch BINDs --
+        # so it is asked for by name. The filter panel leads with these counts.
+        data = client.get("/api/v1/entities/facets?lang=en").json()
+        assert "entityType" in data
+        counts = data["entityType"]
+        assert counts, "every fixture entity has a class, so this cannot be empty"
+        assert set(counts) <= {
+            str(COMPASS[name])
+            for name in ("InternationalForum", "Network", "Project", "PartnerOrganization")
+        }
+
+    def test_entity_type_counts_match_the_entities(self, client):
+        # The same drill-down rule as every other dimension: a dimension's own
+        # selection is excluded from its counts, so these are the totals per
+        # class across the unfiltered set.
+        features = client.get("/api/v1/entities?lang=en").json()["features"]
+        expected: dict[str, int] = {}
+        for feature in features:
+            props = feature["properties"]
+            if not props.get("is_region"):
+                expected[props["typeIri"]] = expected.get(props["typeIri"], 0) + 1
+
+        counts = client.get("/api/v1/entities/facets?lang=en").json()["entityType"]
+        assert counts == expected
 
     def test_includes_expected_dimensions(self, client):
         data = client.get("/api/v1/entities/facets?lang=en").json()

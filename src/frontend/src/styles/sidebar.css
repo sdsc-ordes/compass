@@ -1,0 +1,593 @@
+/* The filter pane's chrome: header, result tally, stories button, reset. */
+
+/* scrollbar-gutter:stable: without a reserved gutter, losing the scrollbar
+   reclaims its width and reflows the pane. */
+aside.filters {
+  width: var(--rail);
+  border-right: 1px solid var(--land-hi);
+  padding: 22px 26px 30px;
+  background: #fff;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-width: 0;
+  /* The panel slides the full width of itself, on transform. Width is
+     DELIBERATELY not transitioned and must not be.
+     
+     The stage is this element's grid sibling, so animating width resizes the
+     stage on every frame — and proj() re-fits the map to the stage, so the
+     projection's basis scale would crawl 30% across the animation while a
+     fly-to tweened over it. That was "the map jumps around". Transform moves no
+     layout at all, so the slide is free.
+     
+     Width therefore changes exactly once per toggle, and CompassMap's
+     openRail/closeRail arrange for that once to fall where the panel is already
+     off screen: on the way in it happens before the slide starts, on the way out
+     after it finishes. Stage.absorbResize() cancels the map's half of it. See
+     RAIL_MS there — it matches the 0.34s below. */
+  transition:
+    opacity 0.2s ease,
+    transform 0.34s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+/* Travelling: full width still reserved, panel off to the left. The state the
+   slide runs from on the way in and to on the way out. */
+.mapc.railout aside.filters {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+/* Settled closed: the width goes, so the stage has the whole frame. Reached only
+   once the slide above has finished, so nothing about it is ever seen moving.
+   visibility, not opacity alone, so the controls are not painted; inert in
+   setCollapsed() is what takes them out of the tab order. */
+.mapc.collapsed aside.filters {
+  width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-100%);
+  pointer-events: none;
+  padding-left: 0;
+  padding-right: 0;
+  border-right: 0;
+  overflow: hidden;
+}
+/* No slide to run: both states are reached immediately. */
+@media (prefers-reduced-motion: reduce) {
+  aside.filters {
+    transition: none;
+  }
+}
+aside.filters::-webkit-scrollbar {
+  width: 9px;
+}
+aside.filters::-webkit-scrollbar-thumb {
+  background: rgba(42, 78, 113, 0.24);
+}
+aside.filters::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidehead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid var(--astronaut);
+}
+.logo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Height-driven, width auto: the source is a 232x103 raster, so pinning the
+   height keeps the aspect exact and leaves the row's rhythm to one number. 38px
+   renders the 103px original at ~0.37, so it stays sharp on a 2x screen. */
+.logomark {
+  display: block;
+  height: 38px;
+  width: auto;
+  /* The mark is bigger than the tagline's cap height; pull it flush left. */
+  margin-left: -1px;
+}
+.logo span {
+  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  color: var(--cerulean);
+}
+.collapse {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid var(--land-hi);
+  background: #fff;
+  color: var(--astronaut);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.collapse:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+}
+
+/* The results block: one line saying what the map is showing, plus the reset.
+
+   It carried a 40px number and two caption lines until the story count was
+   promoted below it. The count still leads its line, because it is the answer to
+   "how many", but it is no longer the loudest thing in the panel: the map beside
+   it already shows the result, and the errand worth inviting is going to read.
+   Still the mobile dock's floor (lib/sheet.ts measures it), and now a shorter
+   one than before — the docked panel covers LESS map than it used to. */
+.tally {
+  background: var(--sea);
+  padding: 14px 18px;
+  margin: 0 0 10px;
+  display: grid;
+  row-gap: 10px;
+}
+/* Tabular figures so the line does not reflow as the count changes width, and
+   the number bold against a regular caption — the same two-weight pairing the
+   40px version had, one step down. */
+.tally .rescount {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--astronaut);
+}
+.tally .rescount b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tally .resetwrap {
+  min-height: 22px;
+}
+
+/* ---------- the stories block ----------
+
+   The panel's invitation to read, and the one element in the sidebar that is
+   deliberately NOT the link archetype.
+
+   That archetype exists because "the map is this panel's primary action, not a
+   link off it" — true of the detail pane, which still uses it, and no longer
+   true here: driving people to the stories is the stated goal, so the count and
+   the way to it get a block of their own.
+
+   The box is the design system's Textbox, not the utility button: --sea ground,
+   square (kein Radius), and a seitlicher Akzentbalken in --cerulean. That keeps
+   the one accent this widget can spend here — Burnt Sienna means donate, and in
+   this widget it already means "selected pin" and "error" besides. No fill
+   behind the words and the ink stays --astronaut, 8.10:1 on --sea.
+
+   Rendered only for a real count (see Tally.svelte), so none of this needs a
+   dimmed state: the block is either worth pressing or it is not there. */
+.storiesblock {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  align-items: baseline;
+  margin: 0 0 16px;
+  padding: 14px 18px 14px 15px;
+  background: var(--sea);
+  border-left: 3px solid var(--cerulean);
+  color: var(--astronaut);
+  font-family: Cabin, system-ui, sans-serif;
+  text-decoration: none;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
+}
+/* Three digits reserved, as the result count used to reserve them: a count
+   crossing 99 must not narrow the caption beside it. */
+.storiesblock .stn {
+  font-size: 34px;
+  line-height: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 3ch;
+  grid-row: span 2;
+}
+.storiesblock .stcap {
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 700;
+}
+/* The way out, on its own line under the caption rather than beside it: at 368px
+   the German pair ("Storys in dieser Auswahl" over "Verwandte Storys") does not
+   share a line with a 34px number and stay unwrapped. */
+.storiesblock .stgo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+}
+/* The rule goes on the words, not the box — the same reason .storiesbtn puts it
+   on .sb-lb: on touch the box grows to a 44px target and a rule at its bottom
+   edge would detach and float under the text. */
+.storiesblock .sb-lb {
+  border-bottom: 2px solid var(--cerulean);
+  padding-bottom: 2px;
+}
+.storiesblock:hover {
+  background: var(--land-hi);
+  color: var(--cerulean);
+}
+.storiesblock:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: 2px;
+}
+/* No count to lead with: no filters yet, or none the story index knows. One
+   column, because there is no number to sit beside — and the instruction is set
+   as body copy rather than as a heading, so the link stays the loudest thing in
+   the block and the block still reads as something to press. */
+.storiesblock.prompt {
+  grid-template-columns: 1fr;
+}
+.storiesblock.prompt .stcap {
+  font-weight: 400;
+  color: var(--tundora);
+}
+.storiesblock.prompt:hover .stcap {
+  color: inherit;
+}
+/* ---------- the entity types, as counted pills in the results block ----------
+
+   The type is the coarsest cut in the data, and it is drawn here rather than as
+   an accordion section because its counts describe the result set instead of
+   narrowing it: the four numbers add up to the tally directly above them, so the
+   row reads as that number broken into its parts. Each count is also exactly
+   what pressing that pill returns — the facet query and the entities query agree
+   entity for entity.
+
+   Pills, per the sidebar's chip vocabulary, and the fill is the state: outlined
+   while off, filled astronaut while on. That is the inversion the detail pane
+   already uses between an entry's type and its tags, turned to a second purpose
+   here — shape says "type", fill says "chosen" — and both directions measure
+   8.65:1.
+
+   The edge is --chrome, not --land-hi. A pill is a control, so WCAG 1.4.11 wants
+   3:1 of its boundary, and --land-hi gives 1.36:1 on white. */
+.tpills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 18px 14px;
+}
+.tpill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  background: none;
+  border: 1px solid var(--chrome);
+  border-radius: 60px;
+  padding: 5px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--astronaut);
+  /* The names on these are short so that this can hold: a chip is one line, at
+     one height, and the row wraps between chips rather than inside them. That is
+     the whole reason the labels abbreviate — see TypePills. */
+  white-space: nowrap;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+/* All carries no count, so it needs the same optical left edge as the pills
+   below it without a number column to line up with. */
+.tpill-all {
+  font-weight: 700;
+}
+/* Tabular figures and a reserved 2ch: the counts change under every filter, and
+   the labels beside them must not slide sideways when 9 becomes 10. */
+.tpill .tn {
+  min-width: 2ch;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tpill:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+  color: var(--cerulean);
+}
+.tpill[aria-pressed='true'] {
+  background: var(--astronaut);
+  border-color: var(--astronaut);
+  color: #fff;
+}
+/* Cerulean is where every other pressed control in the panel lands, so the
+   chosen pill answers a second press the same way the rows do. White on it is
+   5.22:1. */
+.tpill[aria-pressed='true']:hover {
+  background: var(--cerulean);
+  border-color: var(--cerulean);
+  color: #fff;
+}
+.tpill:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+/* Nothing behind it in the current selection. Dimmed rather than disabled, and
+   for two reasons: the row of types is the same four whatever is filtered, so
+   removing one would make the set jump about — and a chosen pill whose count has
+   fallen to zero still has to be pressable to turn it off. Matches how .frow
+   treats an empty row. */
+.tpill[data-empty='true']:not([aria-pressed='true']) {
+  border-color: var(--land-hi);
+  color: var(--stage-dim);
+}
+/* The detail pane's type pill switches this dimension on from off screen, so the
+   pill it lands on marks itself until the eye has found it — the same mark, and
+   the same 1800ms, as a row switched on that way. */
+.tpill.juston {
+  box-shadow: inset 0 0 0 3px var(--cerulean);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tpill {
+    transition: none;
+  }
+}
+
+.reset {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--astronaut);
+  border-bottom: 2px solid var(--cerulean);
+}
+/* The design system's third archetype: a link. Cabin Bold astronaut, no fill.
+
+   It used to be the utility button with its colours turned over — a full-width
+   uppercase slab, and two of them stacked at the foot of the detail pane, which
+   is a great deal of weight for "there is more to read elsewhere". Nor was it
+   ever the panel's own primary action; the map is. The system's own «Mehr
+   erfahren» is a link, and this is that same errand, so it is a link here too.
+
+   That also fixes the state it is in almost always: with no backend the count is
+   zero and the slab was a wide grey bar. A dimmed link is merely quiet.
+
+   It joins a vocabulary rather than starting one. Every text action in this
+   panel is a bold astronaut word with a glyph that says where it goes: .back has
+   a chevron pointing back, .reset a cerulean rule under what it will clear, and
+   this an arrow leaving the corner. Hover turns cerulean, as all of them do —
+   and it takes .reset's 2px cerulean rule as well, which is what stops a link
+   with no fill reading as a caption. */
+.storiesbtn {
+  display: inline-flex;
+  /* The mobile detail pane is a flex column, where this would otherwise stretch
+     the full width and stop hugging its words. */
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: var(--astronaut);
+  font-family: Cabin, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+/* The rule goes on the words, not on the link.
+   
+   A border on the link itself would sit at the bottom of its box, which is fine
+   at rest and wrong on touch: the box grows to a 44px target there (see the
+   mobile block below) and the rule would detach and float 11px under the text.
+   On the label it hugs the words at any box height, and the arrow stays clear of
+   it, which is what an arrow leaving the corner should do.
+   
+   2px cerulean, as .reset has it — the design system's accent bar. The 2px of
+   padding is descender clearance: "Verwandte Storys" has a y. */
+.storiesbtn .sb-lb {
+  border-bottom: 2px solid var(--cerulean);
+  padding-bottom: 2px;
+}
+.storiesbtn:hover {
+  color: var(--cerulean);
+}
+.storiesbtn:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 3px;
+}
+/* The entity's own website, and the secondary of the two: the stories index is
+   the designed action, this one exists because schema:url is real data. Weight
+   is what says so now that both are links and there is no fill left to invert. */
+.storiesbtn.ghost {
+  font-weight: 500;
+}
+.pane-detail .storiesbtn {
+  margin: 24px 0 0;
+}
+/* Second in a pair, so it takes the gap between siblings rather than the gap
+   after the tags. */
+.pane-detail .storiesbtn + .storiesbtn {
+  margin-top: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .storiesbtn,
+  .storiesblock {
+    transition: none;
+  }
+}
+.reset:hover {
+  color: var(--cerulean);
+}
+.reset.off {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ---------- mobile: The sidebar becomes the docked sheet — same panel, re-stacked. Its handle,
+   grip and backdrop are mobile-only and stay in mobile.css.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  /* ---------- the docked panel ---------- */
+  /* One panel, two panes. Never dismissable: the shortest stop still shows the
+     handle and the tally. */
+  aside.filters {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: auto;
+    height: 90vh;
+    height: 90dvh;
+    max-height: 90dvh;
+    padding: 0;
+    border-right: 0;
+    border-top: 1px solid var(--land-hi);
+    border-radius: 18px 18px 0 0;
+    background: #fff;
+    box-shadow: 0 -8px 34px rgba(42, 78, 113, 0.22);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: auto;
+    /* The resting place: 90dvh tall, pushed down until only the dock's floor
+       shows. Sheet.measure() replaces it with the measured stop on mount, so this
+       matches --dock in base.css rather than being a second opinion. */
+    transform: translateY(calc(90vh - 120px));
+    transform: translateY(calc(90dvh - 120px));
+    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.3, 1);
+    will-change: transform;
+  }
+  /* While a finger is on the handle the panel must track it exactly. */
+  aside.filters.dragging {
+    transition: none;
+  }
+  /* Nothing to scroll at the dock, and scrolling there would hide the tally. */
+  aside.filters[data-sheet='dock'] {
+    overflow: hidden;
+  }
+  /* The desktop collapse has no meaning here; the dock is as small as it gets. */
+  .mapc.collapsed aside.filters {
+    width: auto;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    padding: 0;
+    border-right: 0;
+  }
+  .sidehead {
+    display: none;
+  }
+  /* No padding on the pane: the tally band and the accordion's headers both reach
+     both edges, so every block carries its own inset. Plain block flow — the
+     children used to be flex-ordered to hoist the tab strip above the tally,
+     because the strip was what the dock had to show; the tally is that now, and
+     it is already first in the DOM. */
+  /* Stories lead the pane on desktop; down here the tally leads again. The dock
+     stop shows whatever comes first, and --dock is measured from the tally band,
+     so the band has to be the thing at the top — see lib/sheet.ts. Flex exists
+     only to reorder: every child is a full-width block and flex:none holds them
+     at their content height, so the column behaves as the block flow it replaced.
+     Scrolling belongs to aside.filters, not to this. */
+  .pane-filters {
+    padding: 0 0 calc(26px + var(--sbtm));
+    display: flex;
+    flex-direction: column;
+  }
+  .pane-filters > * {
+    flex: none;
+  }
+  /* Keeps its shape on a phone; only the inset changes, to the 18px every band
+     in this panel uses. It follows the tally here rather than leading it (see
+     .pane-filters above), so it costs no map height at the dock stop: it comes
+     into view on the first drag, and the handle already carries the story count
+     as its own line. The whole box is the touch target, well past 44px, so
+     nothing here needs growing. */
+  .storiesblock {
+    margin: 0 18px 14px;
+  }
+  /* The count is in the handle, so the tally keeps only what the handle cannot say.
+     It is also the dock's floor now, which is why the safe-area inset is here: at
+     the dock stop this band's bottom edge IS the bottom of the screen, and the
+     reset button inside it would otherwise sit under the home indicator. On
+     everything without one --sbtm is 0 and this reads as padding: 9px 18px. */
+  .tally {
+    order: -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+    padding: 9px 18px calc(9px + var(--sbtm));
+  }
+  /* Nothing to hide any more: the band's one line IS the result count now,
+     where it used to hide a 40px number and show the story line instead. */
+  /* Both lines are held to one line on purpose. This band is what --dock is
+     measured from, so anything that can wrap here decides how much map the
+     phone gets: the German pair needs ~358px, which fits a 390px screen and
+     does not fit 360 or 320. The strip this replaced was nowrap and could not
+     inflate the dock; the tally has to say so itself.
+     The count is the line that gives way, since the handle above it is already
+     showing the same sentence — min-width:0 is what lets a flex item shrink
+     under its own text at all, and the ellipsis is then reachable. The reset
+     never truncates: it is the only action in the band. */
+  .tally .rescount {
+    font-size: 14px;
+    line-height: 20px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .tally .resetwrap {
+    flex: none;
+    grid-column: auto;
+    margin: 0;
+    min-height: 0;
+    white-space: nowrap;
+  }
+  /* Laid out exactly as the sidebar lays them out — same type, same padding,
+     same column gap — because there is no reason for the band to be a different
+     shape on a phone. What differs is underneath: the chips are 32px of paint
+     and a touch target has to be 44, so the target is grown past the chip rather
+     than the chip being grown to fill it. That buys back the 24px two rows of
+     44px chips used to cost, and the band reads the same at both sizes.
+
+     The 18px inset is the tally's, which keeps these on the same line down the
+     screen as the headers and the rows. The 4px above is clearance, not spacing:
+     the first row's target grows 6px up into the tally's 9px of bottom padding,
+     which would leave 3px between it and the reset button's own target. */
+  .tpills {
+    column-gap: 8px;
+    row-gap: 12px;
+    margin: 4px 18px 12px;
+  }
+  .tpill {
+    position: relative;
+  }
+  /* The 6px each chip is short of 44, top and bottom. It grows vertically only,
+     so a target never reaches the chip beside it, and the row gap above is twice
+     this — which is what keeps two rows' targets meeting rather than
+     overlapping, so no tap is ambiguous and no gap is dead. Move either number
+     and move the other. */
+  .tpill::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
+  }
+  .reset {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}

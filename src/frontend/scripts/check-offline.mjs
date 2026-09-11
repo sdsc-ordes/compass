@@ -27,6 +27,9 @@ const ALLOWED = new Map([
   // pre-rendered onto our own origin and the vector basemap is bundled.
   ['www.gebco.net', 'attribution link for the bathymetry we host ourselves'],
   ['www.naturalearthdata.com', 'attribution link for the bundled basemap geometry'],
+  // The OFL text for the Cabin faces in styles/fonts.css, which carries the
+  // licence the font files are redistributed under. A comment, never fetched.
+  ['openfontlicense.org', 'licence link for the self-hosted fonts'],
 ]);
 
 function walk(dir) {

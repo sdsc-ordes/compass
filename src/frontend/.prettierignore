@@ -1,6 +1,7 @@
 dist/
 node_modules/
 # Generated geometry: one line of megabytes, and nothing edits it by hand.
-src/map/basemap.json
-src/map/regions.json
+src/atlas.json
+# Generated font faces: base64 woff2, rebuilt by scripts/build-fonts.mjs.
+src/styles/fonts.css
 THIRD-PARTY-NOTICES.md

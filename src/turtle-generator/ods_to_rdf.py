@@ -104,6 +104,8 @@ CONCEPT_COLUMNS = [
     "dimension",
     "name_en",
     "name_de",
+    "definition_en",
+    "definition_de",
     "wp_tag_id",
     "iso_codes",
     "notes",
@@ -445,6 +447,10 @@ def concept_triples(row: Row, problems: Problems, fallbacks: Fallbacks) -> Tripl
     scheme = f"compass:{dimension}Scheme"
     triples: Triples = [("a", f"skos:Concept, compass:{dimension}")]
     triples += bilingual_triples(row, "name", "skos:prefLabel", fallbacks)
+    # One line under the option in the filter panel. An empty English cell emits
+    # no triple at all, so nothing downstream ever sees a blank definition -- and
+    # most cells are empty today, the workbook owner filling them in over time.
+    triples += bilingual_triples(row, "definition", "skos:definition", fallbacks)
     wp_tag_id = number(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))

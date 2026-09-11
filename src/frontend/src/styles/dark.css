@@ -1,0 +1,48 @@
+/* Dark stage. The sidebar stays light; only its chrome follows the theme.
+
+   Most of this file is now one token flip: the stage's own rules in chrome.css,
+   stage.css and cards.css are written against --stage-*, so night only has to
+   say what those names mean. What is left below is the handful of cases where
+   night is genuinely a different rule, not the same rule with other values. */
+.mapc.night {
+  --stage-surface: #0f2233;
+  --stage-ink: #dceaf4;
+  --stage-dim: #a8c2d5;
+  --stage-edge: var(--chrome-night);
+  --stage-accent: var(--cerulean);
+  --stage-tint: #183349;
+  --stage-scrim: 5, 16, 27;
+}
+
+/* The translucent plates are a darker tone than --stage-surface, not that
+   colour at an alpha, so they stay written out. (The coach animation needs no
+   rule here at all — it is painted entirely from --stage-* and --cerulean.) */
+.mapc.night .plate {
+  background: rgba(10, 22, 34, 0.92);
+}
+/* The opener's day border is --land-hi, not the chrome edge, so --stage-edge
+   would change how it looks in daylight. */
+.mapc.night .opener {
+  border-color: var(--chrome-night);
+}
+/* border-color is a four-side shorthand, and it wiped each card's accent edge —
+   the one thing telling the two apart. Both re-declare their own below. */
+.mapc.night .mapcard {
+  border-color: #2a4257;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.mapc.night .projcard {
+  border-left-color: var(--sienna);
+}
+.mapc.night .pinprev {
+  border-left-color: var(--cerulean);
+}
+.mapc.night .mapcard .where,
+.mapc.night .mapcard .entity {
+  color: #8fc3e4;
+}
+/* Not --stage-ink: .xclose is also the detail pane's close cross, and that pane
+   is in the sidebar, which stays light. */
+.mapc.night .projcard .xclose {
+  color: #dceaf4;
+}

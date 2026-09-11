@@ -23,7 +23,7 @@ flowchart TB
   F["get_filters_from_shacl<br/>walk SHACL into FilterWidget"]
   N["get_shacl_property<br/>yield sh:property nodes"]
   L["get_shacl_label<br/>labels in lang"]
-  OUT["JSON FilterWidget list<br/>TagPanel / legend"]
+  OUT["JSON FilterWidget list<br/>filter accordion / type pills"]
 
   API --> FR --> G
   TTL -.-> G
@@ -63,7 +63,7 @@ flowchart TB
   INST["instances<br/>one dict per entity"]
   GEO["instances_to_geojson<br/>decode via EntityShape"]
   FC["FeatureCollection"]
-  MAP["Map / ListView / sidebar"]
+  MAP["Stage / sidebar / detail pane"]
 
   API --> ER --> EF
   EF -->|cache miss| EP --> G

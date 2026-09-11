@@ -36,9 +36,9 @@ SHACL. See [Generate/update the map data](#generateupdate-the-map-data).
 
 ### An interactive map
 
-A self-contained `<compass-map>` web component (Svelte + MapLibre) plots those
-entities, shades related regions, and offers filter, list, and detail views,
-without third-party map traffic at runtime. Embedding and accessibility
+A self-contained `<compass-map>` web component (Svelte, with the map drawn as
+SVG by d3-geo and the pins on a canvas) plots those entities and offers filter
+and detail views, without third-party map traffic at runtime. Embedding and accessibility
 constraints are under [Widget requirements](#widget-requirements).
 
 ### SHACL-driven filters and queries
@@ -75,11 +75,10 @@ worldwide.
 ```
 src/ontology/          – SHACL shapes, template workbook; use-case data under subdirs
 src/ontology/oceancare/ – OceanCare source-data.ods and generated Turtle
-src/frontend/          – Svelte + MapLibre widget; scripts/ builds regions, basemap, tiles
+src/frontend/          – Svelte widget (SVG basemap, canvas pins); scripts/ builds atlas, tiles
 src/backend/           – FastAPI service: SPARQL over the ontology, filter schema, reload
 src/turtle-generator/  – ODS → RDF generator and its tests
 tools/nix/             – the Nix flake providing the dev shell
-share/                 – standalone demo page; needs an apiurl to point at
 tools/docker/          – Dockerfiles, nginx config and the compose entry page
 docs/                  – contributor docs; docs/compass is the MkDocs site
 ```
@@ -192,11 +191,9 @@ A link to an id that does not exist fails the run, naming the sheet, the row and
 the id. Mistakes are collected across the whole run rather than reported one per
 attempt.
 
-Country and marine boundary polygons are built separately by `just map::regions`
-(needs network). It reads `compass:isoCode` out of `vocab.ttl`, so adding a
-region with a code needs no change there; the `MARINE` table for seas is still
-maintained by hand in `src/frontend/scripts/build-regions.mjs`. A new region also
-needs a pin pointing at it before anything shades.
+Regions reach the widget as tags rather than as shaded polygons -- the stage
+draws no region layer -- so there is no boundary geometry to build. A region
+still needs a pin pointing at it before it appears at all.
 
 ---
 
@@ -256,25 +253,32 @@ Three constraints the widget has to satisfy wherever it is embedded.
 ### No third-party requests at runtime
 
 The widget contacts nothing but its own origin, so embedding it leaks no
-visitor data. The basemap is drawn from Natural Earth land and border geometry
-bundled into the build (`src/frontend/src/map/basemap.json`, rebuilt with
-`just map::basemap`), not from a tile service, and it carries no labels — labels
-would need glyph files from a font server, and every label the map does show
-comes from the ontology anyway. Cluster tallies and the OceanCare star are
-drawn on a canvas at runtime for the same reason.
+visitor data. The basemap is drawn from the Natural Earth topology bundled into
+the build (`src/frontend/src/atlas.json`, rebuilt with `just map::atlas`), not
+from a tile service, and its place names are drawn from that same file rather
+than from a glyph server. Cluster tallies and the OceanCare star are drawn on a
+canvas at runtime for the same reason.
 
-The bathymetry is pre-rendered by `just map::tiles` into `src/frontend/tools/` (1365 JPEG
-tiles, ~53 MB, gitignored) and served by nginx from a read-only mount. The map
-probes one tile on load and only adds the raster if it resolves, so a
-deployment that skipped `just map::tiles` falls back to the vector basemap.
+The bathymetry is pre-rendered by `just map::tiles` into `src/frontend/tiles/`
+(1365 JPEG tiles, ~53 MB, gitignored) and served by nginx from a read-only
+mount. The SVG stage does not draw it yet: the pipeline, the dev-server route
+and the nginx mount are kept for a later trial, and a deployment that skips
+`just map::tiles` is the normal case.
 
 `just check::frontend-standalone` fails if any new host appears in the widget source. The allowlist
 in `src/frontend/scripts/check-offline.mjs` holds only inert entries: RDF
 namespace IRIs, which are identifiers and never fetched, and oceancare.org,
 which the visitor reaches by clicking a link.
 
-The one deliberate exception is the story counter, which calls the API origin
-passed in as the `apiurl` attribute.
+The deliberate exception is the API origin passed in as the `apiurl` attribute,
+which serves the map's data and the story count.
+
+Cabin and Cabin Condensed are self-hosted for the same reason: a `<link>` to
+fonts.googleapis.com sends every visitor's IP to Google before a glyph is drawn.
+`just map::fonts` fetches the latin subset of each as a variable woff2 and
+writes `src/frontend/src/styles/fonts.css` with the files inlined as base64
+(41 KB of woff2, 55 KB encoded), which `lib/fonts.ts` injects into
+`document.head` — @font-face is ignored inside a shadow root.
 
 ### Accessibility
 

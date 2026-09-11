@@ -15,6 +15,7 @@ from app.namespaces import COMPASS
 from app.shacl_to_entities import (
     BUILTIN_PATHS,
     DISPLAY_ONLY,
+    get_shacl_definition,
     get_shacl_label,
     get_shacl_property,
 )
@@ -31,6 +32,13 @@ class FilterOption(BaseModel):
 
     value: str = Field(description="Wire value sent as a query parameter (often an IRI).")
     label: str = Field(description="Human-readable label shown in the filter panel.")
+    description: str | None = Field(
+        default=None,
+        description=(
+            "The concept's skos:definition, printed under the option's name. "
+            "Absent -- never empty -- when the concept defines none."
+        ),
+    )
 
 
 class FilterWidget(BaseModel):
@@ -152,27 +160,17 @@ def _multiselect_options(
     options: list[FilterOption] = []
     if target_class:
         for s in g.subjects(RDF.type, target_class):
-            options.append(
-                FilterOption(value=str(s), label=get_shacl_label(g, s, RDFS.label, lang))
-            )
+            options.append(_iri_option(g, s, lang))
     elif sh_in_list:
         for member in Collection(g, sh_in_list[0]):
-            options.append(
-                FilterOption(
-                    value=str(member),
-                    label=get_shacl_label(g, member, RDFS.label, lang),
-                )
-            )
+            options.append(_iri_option(g, member, lang))
     else:
         seen: dict[str, FilterOption] = {}
         for val in g.objects(None, path):
             if isinstance(val, URIRef):
                 key = str(val)
                 if key not in seen:
-                    seen[key] = FilterOption(
-                        value=key,
-                        label=get_shacl_label(g, val, RDFS.label, lang),
-                    )
+                    seen[key] = _iri_option(g, val, lang)
             elif isinstance(val, RDFLiteral) and (
                 val.language == lang or val.language is None
             ):
@@ -181,6 +179,25 @@ def _multiselect_options(
                     seen[key] = FilterOption(value=key, label=key)
         options = list(seen.values())
     return sorted(options, key=lambda x: x.label)
+
+
+def _iri_option(g: Graph, term: URIRef, lang: str) -> FilterOption:
+    """One option for a concept, carrying its definition only when it has one.
+
+    Args:
+        g: Ontology graph.
+        term: Concept IRI the option selects.
+        lang: Preferred language for label and definition.
+
+    Returns:
+        The option, with ``description`` left unset when the concept defines none.
+    """
+    definition = get_shacl_definition(g, term, lang)
+    return FilterOption(
+        value=str(term),
+        label=get_shacl_label(g, term, RDFS.label, lang),
+        description=definition or None,
+    )
 
 
 def _numeric_values(g: Graph, path: Node) -> list[float]:

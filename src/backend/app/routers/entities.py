@@ -14,9 +14,19 @@ from app.sparql_to_geojson_translator import instances_to_geojson
 
 router = APIRouter()
 
-# Tag dimensions excluded from facet counts — they are not thematic tags shown
-# in the TagPanel (entityType is the legend; relatedProject/forum are relations).
-_FACET_EXCLUDED = {"entityType", "relatedProject", "forum"}
+# relatedProject and forum are relations rather than tags, so a count under them
+# would not mean what a count under a tag means.
+_FACET_EXCLUDED = {"relatedProject", "forum"}
+
+# entityType is counted, but it cannot be reached by the loop over the shapes:
+# it has no property shape at all, being the rdf:type that _pin_branch BINDs
+# rather than a path. It is asked for by name instead, and build_facet_query has
+# the branch that counts that variable instead of a triple's object.
+#
+# It is worth the special case because the type counts are the filter panel's
+# landing control -- the counted pills in the results block -- rather than rows
+# that could get away with showing no number.
+_FACET_UNSHAPED = ("entityType",)
 
 
 @router.get(
@@ -54,6 +64,15 @@ async def get_facets(
     store: StoreDep,
 ) -> FacetCounts:
     shapes = store.get_entities()
+
+    def counts_for(dimension: str) -> dict[str, int]:
+        sparql = build_facet_query(shapes, lang, request.query_params, dimension)
+        return {
+            row["val"]: int(row["n"])
+            for row in store.query(sparql)
+            if row.get("val") and row.get("n")
+        }
+
     facets: dict[str, dict[str, int]] = {}
     for field in shapes:
         sid = field.id
@@ -63,13 +82,9 @@ async def get_facets(
             or sid in _FACET_EXCLUDED
         ):
             continue
-        sparql = build_facet_query(shapes, lang, request.query_params, sid)
-        instances = store.query(sparql)
-        facets[sid] = {
-            row["val"]: int(row["n"])
-            for row in instances
-            if row.get("val") and row.get("n")
-        }
+        facets[sid] = counts_for(sid)
+    for sid in _FACET_UNSHAPED:
+        facets[sid] = counts_for(sid)
     return facets
 
 
