@@ -108,6 +108,10 @@ def build_select_expr(spec: EntityShape) -> str:
 
 PIN_CLASSES = ("InternationalForum", "Network", "Project", "PartnerOrganization")
 
+# The synthetic dimension over rdf:type. shacl_to_filters builds its widget and
+# _build_where_clauses filters on it; neither reaches it through a property shape.
+ENTITY_TYPE_ID = "entityType"
+
 
 @dataclass(frozen=True)
 class Subject:
@@ -291,7 +295,7 @@ def _build_where_clauses(
                 f"FILTER(!BOUND({var}) || {var} >= {string_literal(val)}^^xsd:date)"
             )
 
-        elif key == "entityType":
+        elif key == ENTITY_TYPE_ID:
             iri_list = ", ".join(iri_term(v) for v in values if _is_iri_value(v))
             if iri_list:
                 # A region has no type of its own to filter, so the legend
@@ -366,23 +370,31 @@ def build_facet_query(
         Complete SPARQL SELECT counting ``?val``.
     """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
-    target_path = filter_map[target_id]
 
     where_clauses = _build_where_clauses(
         query_params, filter_map, range_filters, date_filters, exclude_key=target_id
     )
 
     sparql_where = _pin_branch(where_clauses)
-    sparql_where += f"        ?s {target_path} ?val .\n"
+    # entityType has no property shape and so no path in filter_map: it is the
+    # class that _pin_branch has already BOUND to ?type in every branch, so the
+    # count groups by that variable rather than by a triple's object. Aliasing it
+    # to ?val keeps one result shape for the caller; ?val cannot be aliased to
+    # itself, which is why the ordinary path selects it bare.
+    if target_id == ENTITY_TYPE_ID:
+        selected, grouped = f"({PIN.type_var} AS ?val)", PIN.type_var
+    else:
+        selected, grouped = "?val", "?val"
+        sparql_where += f"        ?s {filter_map[target_id]} ?val .\n"
     sparql_where += _shared_optionals(lang)
 
     return (
         SPARQL_PREFIXES
-        + "    SELECT ?val (COUNT(DISTINCT ?s) AS ?n)\n"
+        + f"    SELECT {selected} (COUNT(DISTINCT ?s) AS ?n)\n"
         + "    WHERE {\n"
         + sparql_where
         + "    }\n"
-        + "    GROUP BY ?val\n"
+        + f"    GROUP BY {grouped}\n"
     )
 
 
