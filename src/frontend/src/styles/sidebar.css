@@ -116,120 +116,84 @@ aside.filters::-webkit-scrollbar-track {
   border-color: var(--cerulean);
 }
 
-/* ---------- the tally: both counts and both actions, in one band ----------
+/* ---------- the stories call to action, and the line under it ----------
 
-   Two bands stood here for a while — the stories above, the result count below,
-   both on --sea and 10px apart. Two tints of the same colour separated by a seam
-   read as one region badly divided rather than as two things, and neither number
-   was clearly the more important. One band, with one number at 40px and the
-   other as a line beneath it, is what the design prototype draws and what this
-   is.
+   The design system's utility button, restored: a filled slab, centred, full
+   width, uppercase Cabin Bold on --astronaut, turning --cerulean on hover. It
+   was a text link for a while, on the reasoning that the map is this panel's
+   primary action and the stories are an errand off it. The reverse is the point
+   of the widget — getting people to read is why it exists — and a link set in a
+   panel of links reads as one more line rather than as the thing to press.
 
-   The hierarchy is carried by size and colour together, not by size alone:
-   --astronaut for the count and its caption, --tundora for the qualifying line,
-   which is 9.7:1 on --sea and still plainly subordinate to the 40px figure above
-   it. Nothing here is set in --burnt-sienna: that accent means "donate" in the
-   design system, and inside this widget it already means a selected pin and an
-   error besides.
+   White on --astronaut is 8.59:1, and on --cerulean 4.61:1, so both states clear
+   WCAG 1.4.3 for the 16px text. The accent stays --cerulean: --burnt-sienna
+   means donate in the design system, and inside this widget it already means a
+   selected pin and an error besides.
 
-   The left bar is the design system's Textbox — square, no radius, a 3px
-   --cerulean edge. It is what marks this as a block to act on rather than a
-   heading, and it is the one place the accent is spent in the filter pane.
-
-   Still the mobile dock's floor: lib/sheet.ts measures this element, so its
-   height IS the decision about how much map a docked phone covers. */
-.tally {
-  background: var(--sea);
-  border-left: 3px solid var(--cerulean);
-  margin: 0 0 16px;
-  padding: 16px 18px 16px 15px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 14px;
-  align-items: baseline;
-  color: var(--astronaut);
-}
-/* No number to sit beside, so the caption takes the whole width. The grid is
-   declared the other way round above because the counted state is the one the
-   type is tuned for. */
-.tally:not(.lead) {
-  grid-template-columns: 1fr;
-}
-/* Three digits reserved so a count crossing 99 cannot narrow the caption beside
-   it, and tabular figures so the band does not reflow as the number changes. */
-.tally .big {
-  grid-row: span 2;
-  margin: 0;
-  min-width: 3ch;
-  font-size: 40px;
-  line-height: 38px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.tally .lbl {
-  margin: 0;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 700;
-}
-/* The prompt is not a caption for a number — there is no number — so it drops to
-   body copy and to --tundora. That leaves the link the loudest thing in the
-   band, which is right: with nothing counted, going to the index is the only
-   thing here worth doing. */
-.tally .lbl.ask {
-  font-weight: 400;
-  color: var(--tundora);
-}
-/* The line that qualifies the count: what the map is showing those stories are
-   drawn from. Subordinate in size and in colour, and never the same weight as
-   the caption above it — the two were both bold and both --astronaut when they
-   were separate blocks, which is most of why neither led. */
-.tally .sub {
-  margin: 2px 0 0;
-  font-size: 15px;
-  line-height: 20px;
-  color: var(--tundora);
-  font-variant-numeric: tabular-nums;
-}
-/* Both actions on the band's bottom edge, the errand we invite at the left and
-   the one that undoes work at the right. space-between rather than a gap: the
-   reset is the destructive one and wants distance from the link, not adjacency.
-   min-height holds the row while .reset is hidden, so the band does not resize
-   when the first filter goes on. */
-.tally .acts {
-  grid-column: 1 / -1;
-  margin-top: 12px;
-  min-height: 22px;
+   The count is on the face of the button rather than beside it. That is what
+   lets the line underneath say one thing instead of two, and it is why there is
+   no 40px figure here any more: a number that large was competing with the one
+   thing this block is for. */
+.storiescta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-.storiesgo {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--astronaut);
+  justify-content: center;
+  text-align: center;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 16px;
+  background: var(--astronaut);
+  color: #fff;
+  /* Cabin, not the condensed face. Every uppercase run in this panel — the
+     section headers, the type pills — is Cabin Condensed, so the button would
+     read as one more header set in it. The prototype's own button is Cabin, and
+     the wider advance is what separates a thing to press from a thing to read. */
   font-family: Cabin, system-ui, sans-serif;
   font-size: 16px;
-  line-height: 22px;
   font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   text-decoration: none;
-  transition: color 0.16s ease;
+  transition: background-color 0.16s ease;
 }
-/* The rule goes on the words, not the box — the same reason .storiesbtn puts it
-   on .sb-lb: on touch the control grows to a 44px target and a rule at its
-   bottom edge would detach and float under the text. */
-.storiesgo .sb-lb {
-  border-bottom: 2px solid var(--cerulean);
-  padding-bottom: 2px;
+.storiescta:hover {
+  background: var(--cerulean);
 }
-.storiesgo:hover {
-  color: var(--cerulean);
-}
-.storiesgo:focus-visible {
+.storiescta:focus-visible {
   outline: 3px solid var(--cerulean);
-  outline-offset: 3px;
+  outline-offset: 2px;
+}
+/* The line under the button: what the map is showing, and nothing else. Centred
+   on the button above it, --tundora at 9.7:1 on white, and deliberately quiet —
+   it is the caption to an action, not a headline. Tabular figures so it does not
+   reflow as the count changes width. */
+.tallyband .sub {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--tundora);
+  font-variant-numeric: tabular-nums;
+}
+.tallyband {
+  margin: 0 0 18px;
+}
+
+/* The reset, now among the filters rather than up in the results.
+
+   Clearing filters is a filter action, so it is reached from where the work was
+   done. It heads the stack rather than closing it: the sections below run long
+   once every scheme is open, and an undo at the far end of a scroll is an undo
+   nobody finds. Right-aligned, because it undoes rather than begins — the eye
+   travelling down the left edge hits section titles, not a way to lose work.
+
+   min-height reserves the row while .reset is hidden, so nothing below shifts
+   when the first filter goes on. */
+.resetrow {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 22px;
+  margin: 0 0 12px;
 }
 
 /* ---------- the entity types, as counted pills in the results block ----------
@@ -412,7 +376,7 @@ aside.filters::-webkit-scrollbar-track {
 }
 @media (prefers-reduced-motion: reduce) {
   .storiesbtn,
-  .storiesgo {
+  .storiescta {
     transition: none;
   }
 }
@@ -501,57 +465,41 @@ aside.filters::-webkit-scrollbar-track {
   .pane-filters > * {
     flex: none;
   }
-  /* The band is the dock's floor, so its height is how much map a docked phone
-     loses. The 40px number and its caption go: the handle directly above is
-     already showing the story line, and repeating it here would cost ~58px of
-     map to say the same thing twice. What is left is the line the handle does
-     NOT say and the two actions — two short rows rather than the one row this
-     band had when the stories lived in a block of their own. That is the price
-     of merging them, and it is paid here: the link is now at the dock stop
-     instead of a drag away.
+  /* The block is the dock's floor, so its height is how much map a docked phone
+     loses. Both parts stay: the button is the whole point of the widget and
+     putting it a drag away at the stop where most people arrive would waste it,
+     and the line under it is the one thing the handle above does NOT say.
+     Together they are ~48 + 20px, a little taller than the single row the band
+     used to be, which is the price of the button being here at all.
 
-     The safe-area inset is here because at the dock stop this band's bottom edge
-     IS the bottom of the screen, and the actions inside it would otherwise sit
-     under the home indicator. On everything without one --sbtm is 0. */
-  .tally {
+     The safe-area inset is here because at the dock stop this block's bottom
+     edge IS the bottom of the screen, and the button inside it would otherwise
+     sit under the home indicator. On everything without one --sbtm is 0. */
+  .tallyband {
     order: -1;
     margin: 0;
-    padding: 9px 18px calc(9px + var(--sbtm));
-    border-left: 0;
-    grid-template-columns: 1fr;
-    column-gap: 0;
+    padding: 10px 18px calc(10px + var(--sbtm));
   }
-  .tally .big,
-  .tally .lbl {
-    display: none;
+  /* 48px rather than 44 — the stop where the panel covers least is the one where
+     the target should be easiest, and the extra 4px costs nothing that is not
+     already spent. */
+  .storiescta {
+    min-height: 48px;
   }
-  /* Held to one line on purpose. This band is what --dock is measured from, so
-     anything that can wrap here decides how much map the phone gets. It is also
-     the line that gives way, since the handle above is already showing the story
-     sentence — min-width:0 is what lets a grid item shrink under its own text at
-     all, and the ellipsis is then reachable. */
-  .tally .sub {
-    margin: 0;
-    font-size: 14px;
-    line-height: 20px;
-    min-width: 0;
-    overflow: hidden;
+  /* Held to one line on purpose. This block is what --dock is measured from, so
+     anything that can wrap here decides how much map the phone gets: the German
+     line needs ~230px, which fits every screen this supports. */
+  .tallyband .sub {
+    margin: 6px 0 0;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* The two actions share the second row, and neither truncates: they are the
-     only controls in the band. 44px of target each, which is what sets the row's
-     height and therefore the dock's. */
-  .tally .acts {
-    grid-column: auto;
-    margin-top: 2px;
-    min-height: 0;
-    white-space: nowrap;
-  }
-  .storiesgo {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
+  /* Back to the 18px inset every other band in the panel uses, and away from the
+     pills above: the reset's target is 44px tall and the last row of chips grows
+     6px down into whatever follows. */
+  .resetrow {
+    margin: 2px 18px 10px;
   }
   /* Laid out exactly as the sidebar lays them out — same type, same padding,
      same column gap — because there is no reason for the band to be a different

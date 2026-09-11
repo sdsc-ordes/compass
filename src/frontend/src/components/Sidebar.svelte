@@ -131,14 +131,28 @@
   </div>
 
   <div class="pane-filters">
-    <!-- One band for both counts and both actions. It leads the pane on every
-         width now that it is one element: it is also the band whose height is
-         measured into --dock, so on a phone it is what the dock stop shows. -->
-    <Tally {t} {resultCount} {storyCount} {anyFilters} {statusText} {onReset} bind:tallyEl />
+    <!-- The panel's one primary action and the line under it. Also the block
+         whose height is measured into --dock, so on a phone it is what the dock
+         stop shows. -->
+    <Tally {t} {resultCount} {storyCount} {statusText} bind:tallyEl />
     <!-- Below the tally on purpose: the counts on these pills add up to the
-         number above them, so they read as that number broken apart. Outside the
-         band the mobile dock measures, though — see lib/sheet.ts. -->
+         result count above them, so they read as that number broken apart.
+         Outside the block the mobile dock measures, though — see lib/sheet.ts. -->
     <TypePills bind:this={pills} {t} dim={typeDim} {sel} {facets} {juston} {onPickType} />
+    <!-- The reset sits with the filters rather than up in the results, because
+         clearing them is a filter action: it is reached from the same place the
+         work was done, and the block above is left with one errand. It heads the
+         stack rather than following it — the sections below can be long, and an
+         undo at the far end of a scroll is an undo nobody finds. -->
+    <div class="resetrow">
+      <button
+        class="reset"
+        class:off={!anyFilters}
+        type="button"
+        disabled={!anyFilters}
+        on:click={onReset}>{t.resetFiltersLong}</button
+      >
+    </div>
     <FilterAccordion
       bind:this={acc}
       {t}

@@ -16,6 +16,10 @@ export const i18n = {
        statusResults speaks. */
     tallyResults: '{n} results on the map',
     tallyResultsOne: '{n} result on the map',
+    /* On the face of the stories button. It carries the count, so the sentence
+       under the button is free to carry the result count alone. */
+    storiesCta: 'Read {n} stories',
+    storiesCtaOne: 'Read {n} story',
     resetFiltersLong: 'Reset filters',
     relatedStories: 'Related stories',
     relatedStoriesFrom: 'Related stories from {title}',
@@ -99,6 +103,8 @@ export const i18n = {
     tallyCaptionOne: 'Ergebnis in dieser Auswahl',
     tallyResults: '{n} Ergebnisse auf der Karte',
     tallyResultsOne: '{n} Ergebnis auf der Karte',
+    storiesCta: '{n} Storys lesen',
+    storiesCtaOne: '{n} Story lesen',
     resetFiltersLong: 'Filter zurücksetzen',
     relatedStories: 'Verwandte Storys',
     relatedStoriesFrom: 'Verwandte Storys zu {title}',
