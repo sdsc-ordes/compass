@@ -12,7 +12,13 @@
    sidebar has and one row did not, to show all five names at once.
 
    .frow .t i is the option's skos:definition, carried through the generated filter
-   schema. The concepts sheet ships those cells empty, so most rows have no <i>. */
+   schema. Every concept the workbook defines now has one, so most rows carry an
+   <i>; country/area is the exception — a country's name is its own description,
+   so those cells are deliberately empty — and the relatedProject rows point at
+   entities rather than concepts, which define nothing.
+   .ahbtn .dsc is the same thing one level up — the concept scheme's definition,
+   under the section title — and the schemes sheet fills those cells too, so every
+   section but relatedProject carries one. */
 
 /* A rule between sections and one above the first, so the stack reads as a list
    rather than five labels floating in the panel. --land-hi is decorative here and
@@ -79,6 +85,32 @@
 .acc .lb {
   min-width: 0;
   text-wrap: pretty;
+}
+/* The scheme's definition, in the label's column under the title. Every bit of
+   the header's type is undone here — the condensed uppercase 700 is what makes a
+   title read as one, and a sentence set that way reads as shouting. Its colour is
+   its own rather than currentColor, so it stays quiet through the header's hover
+   and open states: it is read once, on the way past, and the control is what
+   those states are for. */
+.acc .dsc {
+  display: block;
+  margin-top: 4px;
+  font-family: Cabin, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 12.5px;
+  line-height: 16.5px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tundora);
+  opacity: 0.82;
+  text-wrap: pretty;
+}
+/* A described header is two lines tall, so its icon, count and chevron stand on
+   the title's line instead of half-way down the block. Only those headers move:
+   a dimension with no scheme keeps the centring above, and the 16px icon against
+   a 16.8px line box lands on the title either way. */
+.ahbtn.sub {
+  align-items: start;
 }
 /* Centred in its column rather than flush left, so the icon's own centre lands
    on the checkbox's centre at both breakpoints, where the two columns are 16px
@@ -334,6 +366,10 @@
   .frow[aria-pressed='true'] .mk::after {
     left: 4px;
     top: 1px;
+  }
+  .acc .dsc {
+    font-size: 13px;
+    line-height: 17px;
   }
   .frow .t b {
     font-size: 16px;
