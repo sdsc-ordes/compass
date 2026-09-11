@@ -1,0 +1,98 @@
+/* The docked panel's own furniture: the drag handle, its grip and the backdrop.
+
+   These three exist ONLY below the breakpoint, which is why they are still here —
+   every other mobile rule is an override of a desktop one and now sits at the end
+   of the file that defines it, so a rule and its mobile form are read together.
+   Both elements are display:none until the max-width block applies.
+
+   Last in the cascade, as before: nothing overrides these, and the handle's
+   sticky offsets depend on --grabh, which base.css sets on .mapc. */
+.sheet-grab,
+.sheet-backdrop {
+  display: none;
+}
+.mapc.night .sheet-backdrop {
+  background: rgba(2, 10, 18, 0.52);
+}
+
+@media (max-width: 860px) {
+  /* One class for both the fade and the tap target. [hidden] cannot be used: the
+     display:block in this block would outrank the UA rule behind it. */
+  .sheet-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: rgba(8, 24, 39, 0.34);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .sheet-backdrop.on {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* The handle is the grip and the headline, so the tally answers itself docked. */
+  .sheet-grab {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 8px 18px 9px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  .sheet-grab:focus-visible {
+    outline: 3px solid var(--cerulean);
+    outline-offset: -3px;
+  }
+  .grabbar {
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: 0 auto 8px;
+    border-radius: 5px;
+    background: #c3d4e1;
+  }
+  .grabrow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 22px;
+  }
+  .grabtitle {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 15px;
+    color: var(--astronaut);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .grabcount {
+    flex: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cerulean);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  aside.filters,
+  .sheet-backdrop {
+    transition: none;
+  }
+}

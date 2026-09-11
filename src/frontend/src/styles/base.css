@@ -1,0 +1,138 @@
+/* Host, custom properties and the two-pane frame.
+
+   PORT: the design's :root is :host here, and its html/body rules rehome onto it —
+   a shadow root cannot style the document. Fonts go into document.head from
+   lib/fonts.ts, because @font-face is ignored inside a shadow root. */
+
+/* Only these few vars are shared with the JS palette in lib/palette.ts. */
+:host {
+  --astronaut: #2a4e71;
+  --cerulean: #0171b4;
+  --sienna: #ed6d52;
+  --tundora: #444444;
+  --land-hi: #d2dfe9;
+  --sea: #f4f8fb;
+  --iso: #7fa9c6;
+  /* Control boundaries. --land-hi is 1.36:1 on white, under the 3:1 WCAG 1.4.11 asks
+     of a control's edge; these measure 3.52:1 on white, 3.30 on --sea, 3.08 on the
+     row-hover tint, and 3.67:1 on #0F2233 at night. */
+  --chrome: #6e8ca6;
+  --chrome-night: #5a7c97;
+  /* Coral is 3.04:1 on white — fine as a 4px card edge, not as 11px bold text. */
+  --sienna-ink: #c9482c;
+  /* The stage's chrome follows the theme; the sidebar stays light throughout.
+     These are the day values and dark.css redefines them on .mapc.night, so ONLY
+     a rule that is stage-only may use them. Two things that look like they should
+     deliberately do not: .xclose is also the detail pane's close cross, and the
+     var(--chrome) borders in filters.css are the filter rows' — both sit inside
+     the light sidebar, and a token redefined on .mapc.night would reach them. */
+  --stage-surface: #fff;
+  --stage-ink: var(--astronaut);
+  --stage-dim: #5a6b7d;
+  --stage-edge: var(--chrome);
+  --stage-accent: var(--astronaut);
+  /* Recessed fill: the segmented tracks, and a control under the pointer. */
+  --stage-tint: var(--sea);
+  /* The coach vignette, as bare channels so one token serves every alpha stop.
+     Theme-matched rather than the conventional dark spotlight: --stage-ink is
+     dark in daylight, so dimming the map would cost the glyph the contrast the
+     scrim is there to buy it. Pale here, dark at night, ink correct in both. */
+  --stage-scrim: 247, 250, 252;
+  /* The desktop sidebar's width, and how much the stage gives up when it opens.
+     A token because Stage has to aim a fly-to past it in JS — see settledWidth
+     in CompassMap — and a second copy of 420 would drift. */
+  --rail: 420px;
+  --halo: rgba(255, 255, 255, 0.92);
+}
+/* Off-screen but still in the accessibility tree. Not display:none, which removes
+   it, and not opacity, which leaves it focusable. */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+* {
+  box-sizing: border-box;
+}
+/* Every icon, wherever it appears — the stage cluster and the off-site links.
+   Stroked, per lib/icons.ts: the geometry there carries no fill of its own, and
+   currentColor makes an icon follow whatever it sits inside. */
+.ico {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* PORT: html/body rehomed onto the host. min-height is the one addition:
+     height:100% against an auto-sized embedder collapses the stage to nothing. */
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  margin: 0;
+  padding: 0;
+  font-family: Cabin, system-ui, sans-serif;
+  color: var(--tundora);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* clip, not hidden: hidden leaves the box scrollable, and the mobile sheet makes
+     .mapc ~1495px tall — which scrolled the map away with no scrollbar to get back. */
+.mapc {
+  height: 100%;
+  min-height: 600px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  position: relative;
+  overflow: clip;
+  background: #fff;
+}
+
+/* ---------- mobile: The host and the two-pane frame become one column: the map is the page
+   and the panel docks below it.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  /* PORT: html/body -> :host. A shadow root cannot stop the embedding page from
+     scrolling; this only stops the widget adding scroll of its own. */
+  :host {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  /* dvh, not vh: iOS Safari's collapsing URL bar would clip the map by the height
+     of the bar it is about to hide. vh stays as the fallback. */
+  .mapc {
+    display: block;
+    position: relative;
+    grid-template-columns: none;
+    /* clip, not hidden: the sheet only makes this box taller than itself here. */
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: clip;
+    /* The handle plus the tally, which is the dock's floor. Replaced by the
+       measured value on mount — see Sheet.measure() — so this only has to be
+       close enough that the first paint is not visibly wrong. */
+    --dock: 120px;
+    --grabh: 58px;
+    --sbtm: env(safe-area-inset-bottom, 0px);
+  }
+}

@@ -1,0 +1,786 @@
+/* Controls over the stage: one bottom-right cluster — the settings button and
+   its panel, with the zoom stack under them.
+
+   Three .seg groups inside the panel, not the design's two: it has no language
+   control anywhere and `de` has to stay reachable. */
+
+/* Square, like everything here: the design system spends its one radius, 60px,
+   on the donate CTA. The track needs no shadow now it sits inside a panel
+   rather than floating over the map. */
+.seg {
+  position: relative;
+  display: flex;
+  background: var(--stage-tint);
+  border: 1px solid var(--stage-edge);
+  padding: 3px;
+}
+/* Equal columns make the thumb half the track, so it slides on CSS alone. */
+.seg .segthumb {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  bottom: 3px;
+  width: calc(50% - 3px);
+  background: var(--stage-accent);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+.seg[data-active='1'] .segthumb {
+  transform: translateX(100%);
+}
+.seg button {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 7px 8px;
+  font-family: Cabin, system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--stage-ink);
+  transition: color 0.22s ease;
+}
+.seg button[aria-pressed='true'] {
+  color: #fff;
+}
+.seg button:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .seg .segthumb,
+  .seg button {
+    transition: none;
+  }
+}
+.zoom {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  z-index: 3;
+}
+/* Selected by class, not by element: the settings panel's buttons are DOM
+   children of .zoom as well, and `.zoom button` reached them. */
+.zoom .zbtn,
+.setbtn {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--stage-edge);
+  background: var(--stage-surface);
+  color: var(--stage-ink);
+}
+.zoom .zbtn:hover,
+.setbtn:hover {
+  background: var(--stage-tint);
+}
+.zoom .zbtn:focus-visible,
+.setbtn:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+/* One step above the zoom buttons, so the corner reads as one set of controls. */
+.setwrap {
+  position: relative;
+  margin-bottom: 7px;
+}
+/* Filled while the panel is open — after :hover in the file, so an open button
+   that still has a stuck :hover from a tap stays lit rather than tinted. */
+.setbtn[aria-expanded='true'] {
+  background: var(--stage-accent);
+  border-color: var(--stage-accent);
+  color: #fff;
+}
+.setpanel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 4;
+  width: 236px;
+  max-width: calc(100vw - 24px);
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 14px;
+  background: var(--stage-surface);
+  border: 1px solid var(--stage-edge);
+  box-shadow: 0 10px 30px rgba(42, 78, 113, 0.16);
+  animation: setpop 0.16s cubic-bezier(0.32, 0.72, 0.3, 1) both;
+}
+/* A keyframe, not a transition: the panel is added and removed from the DOM, and
+   a transition has no start state to run from. */
+@keyframes setpop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .setpanel {
+    animation: none;
+  }
+}
+.setrow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.setlbl {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--stage-dim);
+}
+/* ---------- the first-load coach ----------
+
+   Replaces the permanent instruction block that used to sit top-left. It mimes
+   the three gestures in the middle of the map, twice, then fades; Stage owns
+   when it appears and what dismisses it.
+
+   Centred in .stage, which needs no per-breakpoint position: on mobile .stage
+   already stops at var(--dock), so its middle IS the middle of the visible map.
+
+   DELIBERATELY not in keepOut(). Feeding a transient node to placeLabels would
+   force a full measure-and-place pass (~200ms — see renderAll) on both show and
+   hide, so every country name would visibly jump twice for something that is
+   gone in ten seconds. A name briefly under a translucent glyph is the smaller
+   artifact. Do not "fix" this by adding it.
+
+   Every colour is a --stage-* token or --cerulean, so there is no dark.css rule:
+   the night map redefines the tokens, and the real canvas pin is #0171B4 in both
+   themes, which is why the stand-in can match it. */
+/* Covers the stage so the vignette has something to span; the mime itself stays
+   in the middle. Below the chrome's z-index 3, so the controls stay clear of it. */
+.coach {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  /* Decorative, and a pointer has to reach the map through it — which is itself
+     what dismisses it, so this is also why there is no close button. Inherited by
+     the scrim, so covering the stage costs the map no gestures. */
+  pointer-events: none;
+  text-align: center;
+  color: var(--stage-ink);
+  /* One cycle = the three beats. Two runs of it come to the same 9.6s the two-beat
+     version took in three, so coach-out's delay below still lands on the end of a
+     cycle — change one and the other has to follow. */
+  --coach-cycle: 4.8s;
+}
+.coach.show {
+  display: grid;
+  place-items: center;
+  /* Eased in, held, then out after two runs of the cycle below. Never pulsed
+     with the animation: a throbbing scrim distracts and is a vestibular risk. */
+  animation:
+    coach-in 0.45s ease both,
+    coach-out 0.7s ease 9.6s forwards;
+}
+@keyframes coach-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes coach-out {
+  to {
+    opacity: 0;
+  }
+}
+/* Sized in pixels rather than percentages: the scene it backs is a fixed 148px
+   box, so the vignette should not swell with the stage. */
+.coach-scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 400px 280px at 50% 50%,
+    rgba(var(--stage-scrim), 0.88) 0%,
+    rgba(var(--stage-scrim), 0.66) 44%,
+    rgba(var(--stage-scrim), 0) 74%
+  );
+}
+.coach-mid {
+  position: relative;
+}
+/* A fixed box, so every offset below is plain pixels in one coordinate space. */
+.coach-scene {
+  position: relative;
+  width: 148px;
+  height: 96px;
+  margin: 0 auto;
+}
+.coach-pin {
+  position: absolute;
+  left: 88px;
+  top: 2px;
+  color: var(--cerulean);
+}
+.coach-ripple {
+  position: absolute;
+  left: 105px;
+  top: 16px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--cerulean);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.3);
+  animation: coach-ripple var(--coach-cycle) ease-out 2;
+}
+@keyframes coach-ripple {
+  0%,
+  84% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  88% {
+    transform: translate(-50%, -50%) scale(0.65);
+    opacity: 0.85;
+  }
+  97%,
+  100% {
+    transform: translate(-50%, -50%) scale(1.9);
+    opacity: 0;
+  }
+}
+/* Grows behind the glyph on the drag beat, then goes with it. */
+.coach-trail {
+  position: absolute;
+  left: 24px;
+  top: 68px;
+  height: 2px;
+  width: 0;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0;
+  animation: coach-trail var(--coach-cycle) cubic-bezier(0.4, 0, 0.3, 1) 2;
+}
+@keyframes coach-trail {
+  0%,
+  4% {
+    width: 0;
+    opacity: 0;
+  }
+  9% {
+    width: 6px;
+    opacity: 0.32;
+  }
+  26% {
+    width: 52px;
+    opacity: 0.32;
+  }
+  31%,
+  100% {
+    width: 52px;
+    opacity: 0;
+  }
+}
+.coach-glyph {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: coach-glyph var(--coach-cycle) cubic-bezier(0.4, 0, 0.3, 1) 2;
+}
+/* Beat one drags left to right; beat two hands the stage to the magnifier and
+   the glyph steps out; beat three brings it back to the pin and presses. The
+   offsets put the cursor's TIP on the path — the arrow's tip is ~5px in from its
+   own box, hence the odd-looking numbers. */
+@keyframes coach-glyph {
+  0% {
+    transform: translate(19px, 59px);
+    opacity: 0;
+  }
+  4%,
+  26% {
+    opacity: 1;
+  }
+  4% {
+    transform: translate(19px, 59px);
+  }
+  26% {
+    transform: translate(71px, 59px);
+  }
+  /* Away while the zoom beat has the stage, and repositioned unseen. */
+  31%,
+  64% {
+    opacity: 0;
+  }
+  31% {
+    transform: translate(71px, 59px);
+  }
+  64% {
+    transform: translate(88px, 30px);
+  }
+  70% {
+    transform: translate(96px, 22px);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(100px, 15px);
+    opacity: 1;
+  }
+  86% {
+    transform: translate(100px, 20px);
+  }
+  91%,
+  96% {
+    transform: translate(100px, 15px);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(100px, 15px);
+    opacity: 0;
+  }
+}
+/* The zoom beat, mimed per modality. A wheel and a pinch are different
+   gestures, so each input modality gets the one it can actually perform;
+   .coach-fine / .coach-coarse pick, on (pointer: coarse) rather than the 860px
+   breakpoint. Both share the ring below, which is the zoom itself expanding.
+
+   The two live in the same 33-64% window the glyph vacates. */
+.coach-scroll,
+.coach-pinch {
+  position: absolute;
+  left: 61px;
+  top: 24px;
+  width: 26px;
+  height: 34px;
+  opacity: 0;
+  animation: coach-zbeat var(--coach-cycle) ease-in-out 2;
+}
+@keyframes coach-zbeat {
+  0%,
+  34% {
+    opacity: 0;
+  }
+  39%,
+  60% {
+    opacity: 1;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+/* ---- the mouse ---- */
+.sc-mouse {
+  position: absolute;
+  left: 0;
+  top: 8px;
+}
+/* The wheel, as a stub that turns: the body path leaves it out so it can move
+   on its own. Rounded because it is a drawing of an object, not a control. */
+.sc-wheel {
+  position: absolute;
+  left: 12px;
+  top: 14px;
+  width: 2px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: coach-wheel var(--coach-cycle) ease-in-out 2;
+}
+@keyframes coach-wheel {
+  0%,
+  39% {
+    transform: translateY(0);
+  }
+  48% {
+    transform: translateY(-3px);
+  }
+  54% {
+    transform: translateY(0);
+  }
+  60%,
+  100% {
+    transform: translateY(-3px);
+  }
+}
+/* Rises off the wheel and fades, twice, so the turn reads as repeated. */
+.sc-chev {
+  position: absolute;
+  left: 5px;
+  top: 0;
+  opacity: 0;
+  animation: coach-chev var(--coach-cycle) ease-out 2;
+}
+@keyframes coach-chev {
+  0%,
+  38% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  44% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+  51% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  56% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  62%,
+  100% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+/* ---- the pinch ---- */
+.pn-dot {
+  position: absolute;
+  left: 9px;
+  top: 14px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* Apart along one diagonal and back, which is the gesture. Two keyframe sets
+   rather than one on a wrapper: they travel in opposite directions. */
+.pn-a {
+  animation: coach-pinch-a var(--coach-cycle) ease-in-out 2;
+}
+.pn-b {
+  animation: coach-pinch-b var(--coach-cycle) ease-in-out 2;
+}
+@keyframes coach-pinch-a {
+  0%,
+  39% {
+    transform: translate(0, 0);
+  }
+  56%,
+  100% {
+    transform: translate(-9px, -9px);
+  }
+}
+@keyframes coach-pinch-b {
+  0%,
+  39% {
+    transform: translate(0, 0);
+  }
+  56%,
+  100% {
+    transform: translate(9px, 9px);
+  }
+}
+/* Expands as the gesture is made, so the beat reads as the map scaling rather
+   than as a hand moving for its own sake. Shared by both mimes. */
+.coach-zring {
+  position: absolute;
+  left: 70px;
+  top: 32px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--cerulean);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.4);
+  animation: coach-zring var(--coach-cycle) ease-out 2;
+}
+@keyframes coach-zring {
+  0%,
+  38% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 0;
+  }
+  44% {
+    opacity: 0.7;
+  }
+  60%,
+  100% {
+    transform: translate(-50%, -50%) scale(1.85);
+    opacity: 0;
+  }
+}
+/* The hand's pointing tip sits lower and further right inside its own box than
+   the arrow's does, so it borrows the same keyframes through an offset rather
+   than a second set of them. */
+.coach-coarse.coach-glyph {
+  margin: -5px 0 0 -10px;
+}
+.coach-caps {
+  position: relative;
+  margin: 2px 0 0;
+  height: 19px;
+  font-size: 13px;
+  font-weight: 700;
+  /* Full ink, not --stage-dim. At 13px this is not large text, so it needs 4.5:1,
+     and dim measured 2.94:1 where the scrim's outer stop crosses a deep ocean
+     band. Chosen over a heavier scrim: this keeps the map visible behind the
+     mime. The size gap against the glyph carries the hierarchy instead. */
+  color: var(--stage-ink);
+}
+.coach-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+}
+.cap-drag {
+  animation: coach-cap-a var(--coach-cycle) ease 2;
+}
+.cap-zoom {
+  animation: coach-cap-c var(--coach-cycle) ease 2;
+}
+.cap-act {
+  animation: coach-cap-b var(--coach-cycle) ease 2;
+}
+@keyframes coach-cap-a {
+  0%,
+  3% {
+    opacity: 0;
+  }
+  7%,
+  26% {
+    opacity: 1;
+  }
+  31%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes coach-cap-c {
+  0%,
+  35% {
+    opacity: 0;
+  }
+  40%,
+  59% {
+    opacity: 1;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes coach-cap-b {
+  0%,
+  68% {
+    opacity: 0;
+  }
+  73%,
+  93% {
+    opacity: 1;
+  }
+  98%,
+  100% {
+    opacity: 0;
+  }
+}
+/* Input modality, not window width: a narrow desktop window still has a mouse,
+   and a CSS switch stays correct if someone picks up a touchscreen mid-session. */
+.coach-coarse {
+  display: none;
+}
+@media (pointer: coarse) {
+  .coach-fine {
+    display: none;
+  }
+  .coach-coarse {
+    display: block;
+  }
+}
+.cap-static {
+  display: none;
+}
+/* Reduced motion means no motion, not faster motion — the same rule PinAnimator
+   and the pin fan follow. The mime becomes one still frame plus the full
+   sentence, so nothing is lost, and with the fade-out cancelled it stays until
+   the first interaction, exactly as the old instruction block did. */
+@media (prefers-reduced-motion: reduce) {
+  .coach-glyph,
+  .coach-trail,
+  .coach-ripple,
+  .coach-scroll,
+  .coach-pinch,
+  .coach-zring,
+  .cap-drag,
+  .cap-zoom,
+  .cap-act {
+    animation: none;
+  }
+  /* Not in the list above, deliberately. A plain opacity fade is not a vestibular
+     trigger — the guideline is about movement — and it is the only thing that
+     retires this: nothing in JS clears `coachOn` but deliberate input, so killing
+     the fade here left the static line, and now the scrim, on the map for good.
+     Held briefly rather than the full 9.6s, since there is no loop to watch. */
+  .coach.show {
+    animation:
+      coach-in 0.01s linear both,
+      coach-out 0.5s ease 5.5s forwards;
+  }
+  .coach-trail,
+  .coach-ripple,
+  .coach-scroll,
+  .coach-pinch,
+  .coach-zring,
+  .cap-drag,
+  .cap-zoom,
+  .cap-act {
+    display: none;
+  }
+  .coach-glyph {
+    transform: translate(100px, 15px);
+  }
+  .coach-caps {
+    height: auto;
+  }
+  .cap-static {
+    display: block;
+    position: static;
+    opacity: 1;
+  }
+}
+.opener {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  z-index: 5;
+  display: none;
+  align-items: center;
+  gap: 9px;
+  background: var(--stage-surface);
+  border: 1px solid var(--land-hi);
+  color: var(--stage-ink);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 9px 15px;
+}
+.opener:hover {
+  border-color: var(--cerulean);
+}
+.mapc.collapsed .opener {
+  display: flex;
+}
+.mapc.collapsed .attrib {
+  display: none;
+}
+/* A plate in both themes: over a coastline the bare text measured 3.25:1.
+
+   One shape, three messages — nothing matched (.empty), the engine is still
+   working (.plate-load) and it failed (.plate-error). Stage keeps all three in the
+   DOM so keepOut() can measure them, which is why the plate is display:none until
+   .show rather than wrapped in an {#if}. */
+.plate {
+  position: absolute;
+  inset: auto 0 50% 0;
+  text-align: center;
+  font-size: 20px;
+  color: var(--stage-ink);
+  display: none;
+  z-index: 2;
+}
+.plate.show {
+  display: block;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 10px 14px;
+}
+/* A failure is not an empty result, so it takes a warning edge. (It inherited
+   that affordance from the .hint block, which the coach animation replaced; this
+   is the only place left using it.) Left-aligned and capped: the engine's own
+   message is appended to it and can run long. */
+.plate-error.show {
+  border-left: 6px solid var(--sienna);
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: left;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+/* ---------- mobile: Stage chrome re-placed for a thumb, and the affordances a finger cannot use.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  .opener {
+    display: none !important;
+  }
+  /* Shown here, unlike the instruction block it replaces: a finger needs the
+     drag and the tap demonstrated more than a mouse does, not less. */
+  /* On .coach-mid, not .coach: .coach spans the stage now, and a max-width
+     against inset:0 would pull it off centre. */
+  .coach-mid {
+    max-width: calc(100vw - 32px);
+  }
+  /* Scaled to the stage. At the desktop size the gradient would still be at a
+     third of its alpha on a 390px-wide stage's edges — a flat scrim in all but
+     name, which is the thing a vignette is chosen over. */
+  .coach-scrim {
+    background: radial-gradient(
+      ellipse 210px 240px at 50% 50%,
+      rgba(var(--stage-scrim), 0.9) 0%,
+      rgba(var(--stage-scrim), 0.7) 44%,
+      rgba(var(--stage-scrim), 0) 74%
+    );
+  }
+  .coach-scene {
+    transform: scale(0.92);
+  }
+  .coach-caps {
+    font-size: 12.5px;
+  }
+  .seg button {
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+  /* A row, inside a stage that already stops above the panel, so it needs no offset
+     of its own. Pinch replaces the readout. */
+  .zoom {
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    left: auto;
+    bottom: 14px;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .zoom .zbtn,
+  .setbtn {
+    width: 44px;
+    height: 44px;
+    box-shadow: 0 2px 8px rgba(42, 78, 113, 0.14);
+  }
+  /* Static, so the panel resolves against .zoom rather than the button: in a row
+     the button is left-most, and anchoring there would push the panel off the
+     left edge. Against .zoom its right edge follows the cluster's. */
+  .setwrap {
+    position: static;
+    margin-bottom: 0;
+  }
+  .setpanel {
+    right: 0;
+    bottom: calc(100% + 10px);
+    max-height: 60vh;
+  }
+  .plate {
+    inset: auto 0 auto 0;
+    top: 32%;
+    font-size: 18px;
+    padding: 0 24px;
+  }
+}

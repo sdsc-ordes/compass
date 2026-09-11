@@ -2,7 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Without this a phone lays out against a ~980px default viewport, so the
+         860px breakpoint never matches and the widget stays in its desktop
+         layout: styles/mobile.css does not apply and lib/sheet.ts's
+         Sheet.matches() reports false. viewport-fit=cover is what makes
+         env(safe-area-inset-*) resolve to anything but 0px — styles/mobile.css
+         relies on it for the docked panel and the map chrome. Matches the
+         design reference (OceanCare-v4.html). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Compass dev</title>
+    <!-- dvh, so mobile Safari's collapsing URL bar does not leave the widget
+         taller than the visible viewport; vh first as the fallback. -->
     <style>
       html,
       body {
@@ -12,11 +22,14 @@
       compass-map {
         display: block;
         height: 100vh;
+        height: 100dvh;
       }
     </style>
   </head>
   <body>
-    <compass-map apiurl="http://localhost:8780" tileurl="" lang="en"></compass-map>
+    <!-- The widget reads its data from the API, so `npm run dev` needs one running.
+         8780 is the Compose stack (`just deploy`); 8000 is a bare `just api`. -->
+    <compass-map apiurl="http://localhost:8780" lang="en"></compass-map>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

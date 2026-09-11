@@ -8,14 +8,12 @@ root_dir := `git rev-parse --show-toplevel`
 default:
     just --list map
 
-# Rebuild the region boundary polygons from Natural Earth (needs network).
-regions:
-    cd "{{root_dir}}/src/frontend" && node scripts/build-regions.mjs
+# Rebuild the Natural Earth topology the stage draws its basemap from (needs network).
+atlas:
+    cd "{{root_dir}}/src/frontend" && node scripts/build-atlas.mjs
 
-# Rebuild the bundled land and border geometry the map draws itself from (needs network).
-basemap:
-    cd "{{root_dir}}/src/frontend" && node scripts/build-basemap.mjs
-
-# Pre-render GEBCO bathymetry tiles (needs network, ~53 MB). Keep maxzoom in sync with TILE_MAX_ZOOM in Map.svelte.
+# Pre-render GEBCO bathymetry tiles (needs network, ~53 MB). Kept for a later
+# trial: the SVG stage does not draw them yet, but the pipeline and the nginx
+# route that serves them are in place.
 tiles maxzoom="5":
     node "{{root_dir}}/src/frontend/scripts/build-tiles.mjs" {{maxzoom}}

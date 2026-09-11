@@ -1,0 +1,344 @@
+/* The filter dimensions: the accordion of five sections, and the option rows
+   inside them.
+
+   These were a tab strip until this file was rewritten, and the measurements that
+   killed it are worth keeping: five labels do not go into the 368px one row has
+   inside a 420px panel — against Cabin Condensed's advance, English needs
+   ~405-450px and German ~443-496px, and equal columns do not rescue it either,
+   since "ARBEITSBEREICH" is one unbreakable 14-char word wider than the ~64px
+   column five of them leave. So the strip scrolled sideways with its scrollbar
+   hidden to save vertical room, and two of the five dimensions sat off screen
+   with nothing saying they were there. Stacking spends vertical room, which the
+   sidebar has and one row did not, to show all five names at once.
+
+   .frow .t i is the option's skos:definition, carried through the generated filter
+   schema. The concepts sheet ships those cells empty, so most rows have no <i>. */
+
+/* A rule between sections and one above the first, so the stack reads as a list
+   rather than five labels floating in the panel. --land-hi is decorative here and
+   may be: the header itself carries no border, so no edge of it has to be
+   perceived for WCAG 1.4.11 — the label, the count and the chevron are what
+   identify the control. */
+.acc {
+  border-top: 1px solid var(--land-hi);
+}
+.asec {
+  border-bottom: 1px solid var(--land-hi);
+}
+/* The heading is in the markup for AT's heading list only; the button inside it
+   carries every bit of the type, so the UA's own 1.5em bold is reset away. */
+.acc h2 {
+  margin: 0;
+  font: inherit;
+}
+/* Three columns, label first: the label takes what is left after the count and
+   the chevron, which are both intrinsic, so a long German label wraps rather than
+   pushing either off the end. */
+.ahbtn {
+  display: grid;
+  /* The 16px and the 11px are .frow's below, repeated: the header's icon then
+     lands in the column its rows put their checkbox in, and its label runs down
+     the same line as their labels. Before the icon existed the label itself took
+     the checkbox's column — one alignment where there are now two, so move these
+     two numbers with .frow's, not on their own. */
+  grid-template-columns: 16px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  /* 8px matches .frow's own left padding below. */
+  padding: 13px 8px;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  color: #5f7285;
+  transition:
+    color 0.18s ease,
+    background 0.14s ease;
+}
+.ahbtn:hover {
+  background: var(--sea);
+  color: var(--cerulean);
+}
+.asec.open .ahbtn {
+  color: var(--astronaut);
+  /* The tab strip said "this one" with a 3px cerulean underline that travelled
+     between tabs. The same mark, one per section and standing still. Inset, so it
+     adds nothing to the header's box and cannot move the rows below it. */
+  box-shadow: inset 0 -3px 0 var(--cerulean);
+}
+.ahbtn:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: -3px;
+}
+.acc .lb {
+  min-width: 0;
+  text-wrap: pretty;
+}
+/* Centred in its column rather than flush left, so the icon's own centre lands
+   on the checkbox's centre at both breakpoints, where the two columns are 16px
+   and 20px but the icon stays 16. No colour of its own: .ico strokes in
+   currentColor, so it takes the header's grey, its cerulean hover and its
+   astronaut open state without repeating any of them here. */
+.acc .dico {
+  display: flex;
+  justify-self: center;
+}
+/* Carried across from the tab strip: a "0" held at opacity 0, so a count
+   appearing cannot change the control's width, and hidden from AT because every
+   header then announced a "0" — the number is in the header's accessible name
+   instead. */
+.acc .cnt {
+  font-family: Cabin, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 14px;
+  letter-spacing: 0;
+  color: var(--cerulean);
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.2s ease;
+}
+.acc .cnt.off {
+  opacity: 0;
+}
+.acc .chev {
+  display: flex;
+  color: #5f7285;
+  /* Points down while closed. lib/icons.ts holds one chevron, pointing up, and it
+     is documented as doubling as a generic chevron — so it is turned rather than
+     given a sibling that would have to be kept in step with it. */
+  transform: rotate(180deg);
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+.ahbtn:hover .chev {
+  color: var(--cerulean);
+}
+.asec.open .chev {
+  transform: none;
+  color: var(--cerulean);
+}
+
+/* Opening animates grid-template-rows from 0fr to 1fr rather than a measured
+   pixel height, and nothing being measured is the point: there is no number to be
+   wrong when Cabin lands after mount and re-wraps a definition onto two lines,
+   when a facet count widens the number column, or when the language changes under
+   it. It also moves no layout outside this panel — the sidebar's width is fixed
+   by --rail and the docked panel's height by 90dvh, so the stage never resizes
+   and proj() is never asked to re-fit the map.
+
+   Where a browser cannot interpolate the two <flex> values, the row snaps instead
+   of sliding: the section still opens and closes correctly, only without the
+   animation.
+
+   The inner wrapper is what clips. A grid row can be told to be 0fr, but its item
+   still needs min-height:0 and overflow:hidden before it will actually go. */
+.apanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+.asec.open .apanel {
+  grid-template-rows: 1fr;
+}
+.apanel > .ainner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apanel,
+  .acc .chev,
+  .ahbtn,
+  .acc .cnt {
+    transition: none;
+  }
+}
+
+/* The section's own subhead, so it takes the header's 8px inset rather than the
+   panel's edge — it used to sit above the one visible dimension's rows and could
+   line up with the panel. */
+.dimmeta {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px 3px;
+  min-height: 33px;
+}
+.dimmeta .c {
+  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6d6d6d;
+  font-variant-numeric: tabular-nums;
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 20px;
+}
+.frow {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 3.5ch;
+  align-items: start;
+  gap: 11px;
+  background: none;
+  border: 0;
+  padding: 9px 8px;
+  text-align: left;
+  color: var(--tundora);
+  transition:
+    background 0.14s,
+    color 0.14s;
+}
+.frow:hover {
+  background: var(--sea);
+}
+.frow .mk {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex: none;
+  border: 2px solid var(--chrome);
+  position: relative;
+}
+.frow[aria-pressed='true'] {
+  background: var(--sea);
+}
+.frow[aria-pressed='true'] .mk {
+  border-color: var(--cerulean);
+  background: var(--cerulean);
+}
+.frow[aria-pressed='true'] .mk::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(40deg);
+}
+.frow .t {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.frow .t b {
+  font-size: 15.5px;
+  line-height: 19px;
+  font-weight: 600;
+  color: var(--astronaut);
+}
+.frow[aria-pressed='true'] .t b {
+  color: var(--cerulean);
+}
+.frow .t i {
+  font-style: normal;
+  font-size: 13px;
+  line-height: 17.5px;
+  color: var(--tundora);
+  opacity: 0.82;
+  text-wrap: pretty;
+}
+.frow .n {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cerulean);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  margin-top: 3px;
+}
+.frow[aria-pressed='true'] .n {
+  color: var(--astronaut);
+}
+/* Colour, not opacity: at .4 the text fell to 2.02:1 on a row that is still
+   pressable. */
+.frow[data-empty='true'] .t b {
+  color: #5f7285;
+}
+.frow[data-empty='true'] .t i {
+  color: #6d6d6d;
+  opacity: 1;
+}
+.frow[data-empty='true'] .n {
+  color: #5f7285;
+}
+.frow[data-empty='true'] .mk {
+  border-color: #9fb4c6;
+}
+/* Inset, and it has to be: the section clips its rows, so an outline hung outside
+   the row's box would be cut off at the top and bottom of the panel. */
+.frow:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: -3px;
+}
+/* A tag tapped in the detail pane turns on a row in a section that was not
+   showing, so the row marks itself until the eye has found it. */
+.frow.juston {
+  box-shadow: inset 0 0 0 3px var(--cerulean);
+}
+
+/* ---------- mobile: The accordion goes full-bleed and every control clears 44px.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  /* ---------- the accordion: full-bleed headers ---------- */
+  /* The headers reach both edges and inset their own text by 18px, which is the
+     tally's inset and, with .frow's 12px + 6px below, the rows' as well — so the
+     labels of a section and of its rows sit on one line down the screen. */
+  .ahbtn {
+    min-height: 56px;
+    padding: 15px 18px;
+    font-size: 13.5px;
+    letter-spacing: 0.3px;
+    /* .frow's touch geometry, repeated the way the desktop grid repeats its
+       desktop one: the checkbox grows to 20px and the gap to 13px down there, so
+       the icon's column and the label's line have to follow both. */
+    grid-template-columns: 20px minmax(0, 1fr) auto auto;
+    gap: 13px;
+  }
+  /* ---------- touch sizing: nothing tappable under 44px ---------- */
+  /* Not tappable itself; inside a section now, so it is sized as the subhead it
+     is rather than as a row of its own. */
+  .dimmeta {
+    min-height: 36px;
+    padding: 8px 6px 3px;
+  }
+  .chips {
+    padding: 0 12px 18px;
+  }
+  .frow {
+    min-height: 56px;
+    padding: 12px 6px;
+    align-items: center;
+    gap: 13px;
+  }
+  .frow .mk {
+    width: 20px;
+    height: 20px;
+    margin-top: 0;
+  }
+  .frow[aria-pressed='true'] .mk::after {
+    left: 4px;
+    top: 1px;
+  }
+  .frow .t b {
+    font-size: 16px;
+  }
+  .frow .n {
+    margin-top: 0;
+  }
+}

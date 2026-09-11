@@ -1,0 +1,107 @@
+/* The two floating cards on the stage: hover preview and selected entry. */
+
+/* One card in two states. Only the 4px accent edge differs — cerulean as a
+   preview, coral as the selection — so anything added to one belongs in both. */
+.mapcard {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  width: 236px;
+  background: var(--stage-surface);
+  border: 1px solid var(--land-hi);
+  padding: 12px 14px 13px;
+  box-shadow: 0 10px 30px rgba(42, 78, 113, 0.22);
+  opacity: 0;
+}
+.mapcard .entity {
+  display: block;
+  margin-bottom: 5px;
+  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+/* The 28px reserve is the close cross's, and it is kept on both so a title wraps
+   the same before and after the click. */
+.mapcard b {
+  display: block;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 700;
+  padding-right: 28px;
+  color: var(--stage-ink);
+}
+.mapcard .where {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+
+.projcard {
+  z-index: 5;
+  border-left: 4px solid var(--sienna);
+  transform: translate(-50%, calc(-100% - 4px)) scale(0.96);
+  transform-origin: 50% 100%;
+  transition:
+    opacity 0.2s ease,
+    transform 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+.projcard.show {
+  opacity: 1;
+  transform: translate(-50%, calc(-100% - 4px)) scale(1);
+}
+.projcard.flip {
+  transform: translate(-50%, 12px) scale(0.96);
+  transform-origin: 50% 0;
+}
+.projcard.flip.show {
+  transform: translate(-50%, 12px) scale(1);
+}
+.projcard .pc-x {
+  pointer-events: auto;
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  font-size: 22px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .projcard {
+    transition: none;
+  }
+}
+
+.pinprev {
+  z-index: 4;
+  transform: translate(-50%, calc(-100% - 10px));
+  border-left: 4px solid var(--cerulean);
+  transition: opacity 0.14s ease;
+}
+.pinprev.show {
+  opacity: 1;
+}
+.pinprev.flip {
+  transform: translate(-50%, 14px);
+}
+
+/* ---------- mobile: The floating cards, with the detail pane taking over the entry.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  /* The detail is a panel here, so the floating card would answer the same tap twice. */
+  .projcard {
+    display: none !important;
+  }
+  .pinprev {
+    width: min(236px, 72vw);
+  }
+}

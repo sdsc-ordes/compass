@@ -1,0 +1,151 @@
+/* The map stage: SVG basemap, the pin canvas, and the HTML label overlay.
+
+   lib/labels.ts creates the label divs, so the Svelte compiler never sees these
+   selectors — which is why the stylesheet is injected as plain CSS. */
+
+/* touch-action:none — the browser must not claim the gestures we handle ourselves. */
+.stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+  touch-action: none;
+}
+.stage:focus {
+  outline: none;
+}
+.stage:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: -3px;
+}
+/* Cerulean is 2.19:1 on the night sea. */
+.mapc.night .stage:focus-visible {
+  outline-color: #8fc3e4;
+}
+/* Off-screen twins of the pins: what a keyboard tabs through and a screen reader reads. */
+.pinnav {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.pinnav button {
+  position: absolute;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+.mapc.night {
+  --halo: rgba(8, 24, 39, 0.92);
+}
+.mapc.night .stage {
+  background: #081827;
+}
+#basemap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+#basemap .bm-grat,
+#basemap .bm-borders,
+#basemap .bm-rim {
+  fill: none;
+}
+#cv {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 2;
+  background: transparent;
+}
+.ov {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+#basemap,
+#cv,
+.ov {
+  transition: opacity 0.18s ease;
+}
+.stage.swapping #basemap,
+.stage.swapping #cv,
+.stage.swapping .ov {
+  opacity: 0;
+  transition: opacity 0.13s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  #basemap,
+  #cv,
+  .ov {
+    transition: none;
+  }
+}
+
+/* The halo, not the ink, is what guarantees contrast: the ink is a per-theme
+   constant, and over a coastline it measured 2.52:1 against the 4.5:1 required. */
+.ov .lbl {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1.1;
+  font-family: Cabin, system-ui, sans-serif;
+  text-shadow:
+    0 0 2px var(--halo),
+    0 0 2px var(--halo),
+    0 0 4px var(--halo);
+}
+.ov .lbl-cty {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.attrib {
+  position: absolute;
+  left: 20px;
+  bottom: 16px;
+  font-size: 10px;
+  line-height: 1.5;
+  max-width: 280px;
+  color: var(--stage-dim);
+  z-index: 2;
+}
+
+/* ---------- mobile: The stage stops where the docked panel starts.
+
+   Folded here from mobile.css so this file holds every rule for what it
+   styles. Last in the file, so it outranks the rules above it — which is
+   the whole reason it may live earlier in the cascade than it used to. */
+@media (max-width: 860px) {
+  /* The stage stops where the docked panel starts, so nothing the map draws lands
+     behind it. Only --dock resizes the stage. */
+  .stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: var(--dock);
+    min-height: 0;
+    touch-action: none;
+  }
+  .attrib {
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+    max-width: 44vw;
+    font-size: 9.5px;
+  }
+}

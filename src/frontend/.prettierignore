@@ -1,6 +1,5 @@
 dist/
 node_modules/
 # Generated geometry: one line of megabytes, and nothing edits it by hand.
-src/map/basemap.json
-src/map/regions.json
+src/atlas.json
 THIRD-PARTY-NOTICES.md
