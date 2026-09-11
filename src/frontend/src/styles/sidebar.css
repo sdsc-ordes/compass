@@ -116,59 +116,94 @@ aside.filters::-webkit-scrollbar-track {
   border-color: var(--cerulean);
 }
 
-/* ---------- the stories call to action, and the line under it ----------
+/* ---------- what there is to read, and how much map it comes from ----------
 
-   The design system's utility button, restored: a filled slab, centred, full
-   width, uppercase Cabin Bold on --astronaut, turning --cerulean on hover. It
-   was a text link for a while, on the reasoning that the map is this panel's
-   primary action and the stories are an errand off it. The reverse is the point
-   of the widget — getting people to read is why it exists — and a link set in a
-   panel of links reads as one more line rather than as the thing to press.
+   A box with the count in it, and the way out under the count.
 
-   White on --astronaut is 8.59:1, and on --cerulean 4.61:1, so both states clear
-   WCAG 1.4.3 for the 16px text. The accent stays --cerulean: --burnt-sienna
-   means donate in the design system, and inside this widget it already means a
-   selected pin and an error besides.
+   This was the prototype's filled utility button for a moment — a solid
+   --astronaut slab, centred, uppercase. It carried the errand too hard: a filled
+   bar is the loudest thing a 420px panel can hold, and it made the panel shout
+   before the map had said anything. A large number is a quieter way to be the
+   first thing seen. It states a quantity, and the link under it does the asking.
 
-   The count is on the face of the button rather than beside it. That is what
-   lets the line underneath say one thing instead of two, and it is why there is
-   no 40px figure here any more: a number that large was competing with the one
-   thing this block is for. */
-.storiescta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-height: 44px;
+   The box is the design system's Textbox: --sea ground, square, no radius. The
+   number and its caption are --astronaut, 8.10:1 on --sea.
+
+   The rule under the link is --sienna. Every other text action in this panel
+   underlines in --cerulean — .reset, .storiesbtn in the detail pane — so orange
+   is what marks the single link that leaves the widget. It is also the design
+   system's donate colour and already means "selected pin" and "error" on the
+   stage, which makes this a third meaning for it; it is spent here because
+   leaving the widget is the one thing worth marking differently. At #ed6d52 it
+   is 3.04:1 on --sea, over the 3:1 WCAG 1.4.11 asks of a control's boundary. */
+.tallybox {
+  background: var(--sea);
   margin: 0;
-  padding: 10px 16px;
-  background: var(--astronaut);
-  color: #fff;
-  /* Cabin, not the condensed face. Every uppercase run in this panel — the
-     section headers, the type pills — is Cabin Condensed, so the button would
-     read as one more header set in it. The prototype's own button is Cabin, and
-     the wider advance is what separates a thing to press from a thing to read. */
+  padding: 20px 18px;
+  text-align: center;
+  color: var(--astronaut);
+}
+/* Tabular figures so the box does not reflow as the count changes width, and a
+   line-height under the size: at 46px the default leading would open a gap
+   between the number and its caption that reads as two blocks. */
+.tallybox .big {
+  margin: 0;
+  font-size: 46px;
+  line-height: 42px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tallybox .lbl {
+  margin: 6px 0 0;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 700;
+}
+/* No number above it, so the prompt is not a caption to anything. Body copy in
+   --tundora, which leaves the link the loudest thing in the box — right, because
+   with nothing counted the link is the only thing in it worth doing. */
+.tallybox .lbl.ask {
+  font-weight: 400;
+  color: var(--tundora);
+  text-wrap: pretty;
+}
+/* The way out. Sits under the count rather than beside it: a 46px figure and a
+   16px link on one line leaves the link looking like the number's unit. */
+.storiesgo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--astronaut);
   font-family: Cabin, system-ui, sans-serif;
   font-size: 16px;
+  line-height: 22px;
   font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
   text-decoration: none;
-  transition: background-color 0.16s ease;
+  transition: color 0.16s ease;
 }
-.storiescta:hover {
-  background: var(--cerulean);
+/* The rule goes on the words, not the box — the same reason .storiesbtn puts it
+   on .sb-lb: on touch the control grows to a 44px target and a rule at its
+   bottom edge would detach and float under the text. 2px as --cerulean has it
+   elsewhere, so only the hue changes and the vocabulary holds. */
+.storiesgo .sb-lb {
+  border-bottom: 2px solid var(--sienna);
+  padding-bottom: 2px;
 }
-.storiescta:focus-visible {
+/* --sienna-ink rather than --sienna: the fill is 3.04:1 on --sea, fine under a
+   rule and far under what 16px bold text needs. The ink is 5.31:1. */
+.storiesgo:hover {
+  color: var(--sienna-ink);
+}
+.storiesgo:focus-visible {
   outline: 3px solid var(--cerulean);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
-/* The line under the button: what the map is showing, and nothing else. Centred
-   on the button above it, --tundora at 9.7:1 on white, and deliberately quiet —
-   it is the caption to an action, not a headline. Tabular figures so it does not
-   reflow as the count changes width. */
+/* The line under the box: what the map is showing, and nothing else. Quiet in
+   size and colour both — it is the caption to the box, not a second headline.
+   --tundora is 9.7:1 on white. */
 .tallyband .sub {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   text-align: center;
   font-size: 14px;
   line-height: 20px;
@@ -376,7 +411,7 @@ aside.filters::-webkit-scrollbar-track {
 }
 @media (prefers-reduced-motion: reduce) {
   .storiesbtn,
-  .storiescta {
+  .storiesgo {
     transition: none;
   }
 }
@@ -466,31 +501,43 @@ aside.filters::-webkit-scrollbar-track {
     flex: none;
   }
   /* The block is the dock's floor, so its height is how much map a docked phone
-     loses. Both parts stay: the button is the whole point of the widget and
-     putting it a drag away at the stop where most people arrive would waste it,
-     and the line under it is the one thing the handle above does NOT say.
-     Together they are ~48 + 20px, a little taller than the single row the band
-     used to be, which is the price of the button being here at all.
+     loses. The 46px count and its caption go: the handle directly above is
+     already showing the story line, and a second copy of it would cost ~70px of
+     map to say the same thing twice. What is left is the link and the one line
+     the handle does NOT say — which is about the height the band was before any
+     of this, so the dock keeps its shape.
+
+     The box's ground goes with the number. A --sea panel around a single link
+     reads as a control that has lost its contents; without it the link sits in
+     the band like the actions in every other row here.
 
      The safe-area inset is here because at the dock stop this block's bottom
-     edge IS the bottom of the screen, and the button inside it would otherwise
-     sit under the home indicator. On everything without one --sbtm is 0. */
+     edge IS the bottom of the screen, and the link inside it would otherwise sit
+     under the home indicator. On everything without one --sbtm is 0. */
   .tallyband {
     order: -1;
     margin: 0;
-    padding: 10px 18px calc(10px + var(--sbtm));
+    padding: 4px 18px calc(6px + var(--sbtm));
   }
-  /* 48px rather than 44 — the stop where the panel covers least is the one where
-     the target should be easiest, and the extra 4px costs nothing that is not
-     already spent. */
-  .storiescta {
-    min-height: 48px;
+  .tallybox {
+    background: none;
+    padding: 0;
+  }
+  .tallybox .big,
+  .tallybox .lbl {
+    display: none;
+  }
+  /* 44px of target, which is what sets this block's height and therefore the
+     dock's. */
+  .storiesgo {
+    margin-top: 0;
+    min-height: 44px;
   }
   /* Held to one line on purpose. This block is what --dock is measured from, so
      anything that can wrap here decides how much map the phone gets: the German
      line needs ~230px, which fits every screen this supports. */
   .tallyband .sub {
-    margin: 6px 0 0;
+    margin: 2px 0 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
