@@ -33,6 +33,15 @@ function serveBathymetryTiles(): Plugin {
 }
 
 export default defineConfig({
+  server: {
+    // The API allows this origin and no other by default (COMPASS_CORS_ORIGINS
+    // in src/backend/app/core/settings.py). Vite's habit of stepping to the next
+    // free port when 5173 is taken therefore does not degrade gracefully: every
+    // request fails CORS, and the console blames the backend for what is really
+    // a stale dev server holding the port. Fail loudly instead.
+    port: 5173,
+    strictPort: true,
+  },
   plugins: [
     svelte({
       preprocess: [vitePreprocess()],

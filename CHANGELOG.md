@@ -21,6 +21,11 @@
 - Retire `share/index.html`; `tools/docker/index.html` is the one demo page.
 - Self-host Cabin and Cabin Condensed (`just map::fonts`) instead of loading
   them from Google Fonts, which was the widget's last third-party request.
+- Call the story count at `/api/v1/stories/count` with `tags`, matching the
+  router; it was calling `/api/stories/count` with `tag` and silently counting
+  nothing.
+- Pin the vite dev server to port 5173 with `strictPort`, so it cannot drift out
+  of the API's CORS allowlist.
 
 ### Filter options carry a definition
 

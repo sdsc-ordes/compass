@@ -1,7 +1,7 @@
 /**
  * The story count — the one thing on the panel that needs a backend.
  *
- * GET {apiurl}/api/stories/count?lang=&tag=<iri>&tag=… -> { count, url }.
+ * GET {apiurl}/api/v1/stories/count?lang=&tags=<iri>&tags=… -> { count, url }.
  * With no `apiurl` set there is no request and no story UI at all.
  */
 /**
@@ -63,8 +63,8 @@ export class Stories {
     const seq = this.seq;
     try {
       const params = new URLSearchParams({ lang });
-      iris.forEach((iri) => params.append('tag', iri));
-      const resp = await fetch(`${apiurl}/api/stories/count?${params.toString()}`);
+      iris.forEach((iri) => params.append('tags', iri));
+      const resp = await fetch(`${apiurl}/api/v1/stories/count?${params.toString()}`);
       if (seq !== this.seq) return;
       this.onCount(resp.ok ? await resp.json() : null);
     } catch (e) {

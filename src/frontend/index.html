@@ -11,6 +11,9 @@
          design reference (OceanCare-v4.html). -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Compass dev</title>
+    <!-- Empty icon: without it the dev page logs a 404 for /favicon.ico on
+         every load, which is noise in a console being read for real errors. -->
+    <link rel="icon" href="data:," />
     <!-- dvh, so mobile Safari's collapsing URL bar does not leave the widget
          taller than the visible viewport; vh first as the fallback. -->
     <style>
