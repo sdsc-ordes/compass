@@ -273,10 +273,12 @@ which the visitor reaches by clicking a link.
 The deliberate exception is the API origin passed in as the `apiurl` attribute,
 which serves the map's data and the story count.
 
-The check currently **fails**: `src/frontend/src/lib/fonts.ts` loads Cabin and
-Cabin Condensed from Google Fonts, which is a third-party request on every page
-load. Self-hosting the two families is the fix; until then the gate is red and
-the widget is not standalone.
+Cabin and Cabin Condensed are self-hosted for the same reason: a `<link>` to
+fonts.googleapis.com sends every visitor's IP to Google before a glyph is drawn.
+`just map::fonts` fetches the latin subset of each as a variable woff2 and
+writes `src/frontend/src/styles/fonts.css` with the files inlined as base64
+(41 KB of woff2, 55 KB encoded), which `lib/fonts.ts` injects into
+`document.head` — @font-face is ignored inside a shadow root.
 
 ### Accessibility
 

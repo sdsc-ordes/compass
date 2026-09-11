@@ -12,6 +12,10 @@ default:
 atlas:
     cd "{{root_dir}}/src/frontend" && node scripts/build-atlas.mjs
 
+# Rebuild the self-hosted Cabin faces the design uses (needs network).
+fonts:
+    cd "{{root_dir}}/src/frontend" && node scripts/build-fonts.mjs
+
 # Pre-render GEBCO bathymetry tiles (needs network, ~53 MB). Kept for a later
 # trial: the SVG stage does not draw them yet, but the pipeline and the nginx
 # route that serves them are in place.

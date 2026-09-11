@@ -19,6 +19,8 @@
   building it from a WordPress tag id per language.
 - Drop the `?state=` restore path, whose endpoint went in the backend refactor.
 - Retire `share/index.html`; `tools/docker/index.html` is the one demo page.
+- Self-host Cabin and Cabin Condensed (`just map::fonts`) instead of loading
+  them from Google Fonts, which was the widget's last third-party request.
 
 ### Filter options carry a definition
 
