@@ -5,7 +5,7 @@
  * names and pin twins are built imperatively, and Svelte prunes CSS it cannot see
  * used, so as plain CSS nothing is pruned and no selector needs :global().
  *
- * The order below is cascade order, not alphabetical. `swimmer` is early
+ * The order below is cascade order, not alphabetical. `spinner` is early
  * because both the sidebar and the stage chrome place the thing it styles, and
  * placement has to win over it.
  *
@@ -16,7 +16,7 @@
  * handle and backdrop, which exist nowhere else.
  */
 import base from '../styles/base.css?inline';
-import swimmer from '../styles/swimmer.css?inline';
+import spinner from '../styles/spinner.css?inline';
 import sidebar from '../styles/sidebar.css?inline';
 import filters from '../styles/filters.css?inline';
 import stage from '../styles/stage.css?inline';
@@ -28,7 +28,7 @@ import mobile from '../styles/mobile.css?inline';
 
 export const styles = [
   base,
-  swimmer,
+  spinner,
   sidebar,
   filters,
   stage,

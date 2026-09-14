@@ -702,14 +702,11 @@
    that affordance from the .hint block, which the coach animation replaced; this
    is the only place left using it.) Left-aligned and capped: the engine's own
    message is appended to it and can run long. */
-/* The wait's animal, over the words. Wider than the tally gives it because the
-   plate has the room and the pass reads better with it; the scene is shorter for
-   the same reason the tally's is tall — there is no number under this one to
-   hold a place for, only the line below. The 10px lifts the water off the text
-   without opening a gap the plate has to grow for. */
-.plate-load .swim {
-  --swim-w: 232px;
-  --swim-h: 58px;
+/* The wait's ring, over the words. Larger than the tally's: this plate sits on
+   the map at 20px type, where the sidebar's 26px ring would read as a detail
+   rather than as the thing to wait on. */
+.plate-load .spinner {
+  --spin-size: 34px;
   margin-bottom: 10px;
 }
 .plate-error.show {

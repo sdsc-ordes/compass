@@ -25,17 +25,16 @@
    * out to the stories provider, measured at 1.6-2.8s, with 300ms of debounce in
    * front of it. Two waits follow from that:
    *
-   * The page's animal crosses the box for both of them, so the wait is one
-   * gesture whatever the box happens to hold — which animal is lib/fauna.ts's
-   * choice, made once per load:
+   * A spinner stands in the box for both of them, so the wait is one gesture
+   * whatever the box happens to hold:
    *
    *   waiting   nothing on screen yet, so the box stands at the height the
-   *             number and caption would take and the animal crosses it empty.
+   *             number and caption would take and the spinner stands in it.
    *             The box arrives at roughly its final height and the filters
    *             below do not jump when the count lands
    *   settling  a count is already up and a new one is coming. It stays, because
    *             an answer one click old still reads better than a blank, and it
-   *             fades behind the animal so it is not read as current
+   *             fades behind the spinner so it is not read as current
    *
    * Three states, because the two counts do not arrive together:
    *
@@ -48,7 +47,7 @@
    *             stands on its own
    */
   import Icon from './Icon.svelte';
-  import Swimmer from './Swimmer.svelte';
+  import Spinner from './Spinner.svelte';
   import { fmt, plural, type Strings } from '../lib/i18n';
   import type { StoryCount } from '../lib/stories';
 
@@ -84,7 +83,7 @@
          lands. No link: there is no URL yet, and a dead control is worse than
          none. -->
     <div class="tallybox waiting" aria-hidden="true">
-      <Swimmer />
+      <Spinner />
     </div>
   {:else if storyCount}
     <div class="tallybox" class:lead={!!counted} class:settling={storiesPending}>
@@ -92,7 +91,7 @@
            out. The link underneath is deliberately not covered and not faded —
            it still goes somewhere useful. -->
       {#if storiesPending}
-        <Swimmer />
+        <Spinner />
       {/if}
       {#if counted}
         <p class="big" aria-hidden="true">{counted.count}</p>

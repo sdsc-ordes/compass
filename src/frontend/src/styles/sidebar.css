@@ -222,20 +222,20 @@ aside.filters::-webkit-scrollbar-track {
    measured at 1.6-2.8s, and there is 300ms of debounce in front of it. Up to
    three seconds of a number that looks entirely current and is not.
 
-   Both waits get the page's animal, which is styles/swimmer.css's business. What
-   is the tally's business is where it goes: laid over the count, spanning it and
-   the caption and stopping short of the link, which puts the waterline in the
-   14px gap between them rather than across a line of type. It is out of flow, so
-   in the first wait the box reserves that height itself — the no-jump property
-   the two skeleton bars here before were carrying. */
+   Both waits get the spinner, which is styles/spinner.css's business. What is
+   the tally's business is where it goes: centred over the count rather than
+   pushing it down, so the box does not change shape when the answer lands. It is
+   out of flow, so in the first wait the box reserves its height itself — 106px
+   is what the number, its caption and the gap between them occupy, which is the
+   no-jump property the skeleton bars here before were carrying. */
 .tallybox.waiting {
-  min-height: 114px;
+  min-height: 106px;
 }
-.tallybox .swim {
+.tallybox .spinner {
   position: absolute;
-  top: 20px;
+  top: 30px;
   left: 50%;
-  margin-left: calc(var(--swim-w, 176px) / -2);
+  margin-left: calc(var(--spin-size, 26px) / -2);
 }
 /* The second wait: a count is up and a new one is coming. It stays — an answer
    one click old reads better than a blank that refills on every click — but it
@@ -561,12 +561,12 @@ aside.filters::-webkit-scrollbar-track {
   .tallybox .lbl {
     display: none;
   }
-  /* The animal goes with the number, for the same reason and a sharper one:
-     this block is what --dock is measured from, so a scene standing here during
+  /* The spinner goes with the number, for the same reason and a sharper one:
+     this block is what --dock is measured from, so anything standing here during
      the wait would push the map down and let it spring back when the count
      lands. The reserved height goes with it — on a phone the box holds nothing
      but the link, so there is no number arriving for it to hold a place for. */
-  .tallybox .swim {
+  .tallybox .spinner {
     display: none;
   }
   .tallybox.waiting {
