@@ -32,10 +32,15 @@ const ALLOWED = new Map([
   ['openfontlicense.org', 'licence link for the self-hosted fonts'],
 ]);
 
+// Tests are not bundled, so a dummy origin in one is not a request the widget
+// makes. Only what ships is scanned.
+const isTest = (path) => /\.(test|spec)\.[^.]+$/.test(path);
+
 function walk(dir) {
   return readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) return walk(path);
+    if (isTest(path)) return [];
     return EXTENSIONS.some((e) => path.endsWith(e)) ? [path] : [];
   });
 }
