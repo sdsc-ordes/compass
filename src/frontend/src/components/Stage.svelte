@@ -30,6 +30,7 @@
   import { CardLayer } from '../lib/cards';
   import { entityLabel, isCluster, type PinBox, type PinTarget, type Proj } from '../lib/types';
   import Basemap from './Basemap.svelte';
+  import Swimmer from './Swimmer.svelte';
   import PinNav from './PinNav.svelte';
   import MapCard from './MapCard.svelte';
   import StageChrome from './StageChrome.svelte';
@@ -774,7 +775,15 @@
   >
   <Coach {t} show={coachOn} />
   <div class="plate empty" class:show={showEmpty} bind:this={emptyEl}>{t.noProjectsMatch}</div>
-  <div class="plate plate-load" class:show={showLoading} bind:this={loadEl}>{t.loadingMap}</div>
+  <!-- The longest wait in the widget: this plate is up for as long as the wasm
+       engine takes to boot. The animal goes above the words rather than beside
+       them — the plate is centred text and a thing swimming across it reads as a
+       heading to the line, not as an icon on it. keepOut() measures this node, so
+       the scene is inside it and the rect it returns already accounts for it. -->
+  <div class="plate plate-load" class:show={showLoading} bind:this={loadEl}>
+    <Swimmer />
+    {t.loadingMap}
+  </div>
   <!-- Spoken by the sidebar's one live region, not by a second one here. -->
   <div class="plate plate-error" class:show={!!error} bind:this={errEl}>{error ?? ''}</div>
   <div class="attrib" bind:this={attribEl}>{t.attribution}</div>

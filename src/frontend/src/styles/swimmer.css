@@ -1,0 +1,248 @@
+/* ---------- the animal that stands in for a wait ----------
+
+   Two places in the widget are slow enough to need something on screen. The
+   story count is the backend proxying a live call out to the provider, measured
+   at 1.6-2.8s with 300ms of debounce in front of it; the map plate is up for as
+   long as the wasm engine takes to boot. Both get the same treatment, and
+   lib/fauna.ts picks which animal it is once per page load.
+
+   A pulse was the earlier answer for the tally and it was the wrong one — a
+   number breathing under the pointer reads as a thing being edited, and it put
+   the motion on the one element in the box whose job is to be read. The animal
+   moves instead, and whatever it crosses holds still behind it.
+
+   The scene takes its size from the host so the tally and the plate can want
+   different widths; the pass is written against the 176px the tally gives it,
+   which is the narrowest of the two. */
+.swim {
+  position: relative;
+  width: var(--swim-w, 176px);
+  height: var(--swim-h, 74px);
+  margin: 0 auto;
+  /* Decoration, and in the tally it is laid over a live link. */
+  pointer-events: none;
+}
+/* The surface is a rule and nothing more. What puts an animal under it is the
+   crest, which ends where the rule is and clips — an opaque band of water is not
+   available to something laid over live type.
+
+   --land-hi for the animals and the rule both, rather than a grey: it is the
+   panel's own rule colour, so an empty box reads as unfilled rather than as
+   broken, and an animal meets the water in its own tone instead of crossing it
+   as a second one. */
+.swim .sea {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--land-hi);
+}
+.swim .crest {
+  position: absolute;
+  inset: 0 0 2px;
+  overflow: hidden;
+}
+/* Every animal is hung below the waterline by its own amount, which is what
+   decides how much of it is out of the water at rest: the shark shows a fin, the
+   whale a back, the bear a head. transform only from there — it composites
+   without laying anything out, which matters in the tally, where this sits
+   directly above a list that must not reflow. */
+.swim .beast {
+  position: absolute;
+  left: 0;
+  fill: var(--land-hi);
+}
+
+/* The dolphin leaps clear and turns a full circle on the way over: 444 degrees
+   across the pass, the 84 between its two entry attitudes plus a turn, so it is
+   inverted at the top. x crosses at a constant rate and y is the parabola under
+   it, which is what makes the arc read as a leap rather than a hop — slowest at
+   the top. */
+.swim-dolphin .beast {
+  bottom: -12px;
+  animation: swim-dolphin 2.6s linear infinite;
+}
+@keyframes swim-dolphin {
+  0% {
+    transform: translate(-1px, 30px) rotate(-42deg);
+  }
+  12.5% {
+    transform: translate(15.9px, 2px) rotate(13.5deg);
+  }
+  25% {
+    transform: translate(32.8px, -18px) rotate(69deg);
+  }
+  37.5% {
+    transform: translate(49.6px, -30px) rotate(124.5deg);
+  }
+  50% {
+    transform: translate(66.5px, -34px) rotate(180deg);
+  }
+  62.5% {
+    transform: translate(83.4px, -30px) rotate(235.5deg);
+  }
+  75% {
+    transform: translate(100.2px, -18px) rotate(291deg);
+  }
+  87.5% {
+    transform: translate(117.1px, 2px) rotate(346.5deg);
+  }
+  100% {
+    transform: translate(134px, 30px) rotate(402deg);
+  }
+}
+
+/* The whale surfaces, blows, and dives with its flukes last. Slower than the
+   rest by half again: it is the biggest silhouette here and the same pace read
+   as a barge. It never leaves the water — the back breaks the surface and the
+   rest of the pass is attitude, the nose dropping until the tail is all that is
+   left. */
+.swim-whale .beast {
+  bottom: -14px;
+  animation: swim-whale 4.2s linear infinite;
+}
+@keyframes swim-whale {
+  0% {
+    transform: translate(-10px, 26px) rotate(0deg);
+  }
+  15% {
+    transform: translate(11px, 6px) rotate(-4deg);
+  }
+  30% {
+    transform: translate(32px, -2px) rotate(-2deg);
+  }
+  55% {
+    transform: translate(67px, -3px) rotate(0deg);
+  }
+  75% {
+    transform: translate(95px, 2px) rotate(12deg);
+  }
+  88% {
+    transform: translate(115px, 14px) rotate(30deg);
+  }
+  100% {
+    transform: translate(130px, 30px) rotate(46deg);
+  }
+}
+/* The blow, on the body's own clock: up while the whale is up, gone before it
+   dives. Opacity alone — a scaled plume needs transform-box on an inner SVG node
+   and buys nothing at 4px wide. */
+.swim-whale .puff {
+  opacity: 0;
+  animation: swim-blow 4.2s linear infinite;
+}
+@keyframes swim-blow {
+  0%,
+  22% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  46% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The shark is the one that never comes out. Only the fin is drawn, so the
+   waterline does the rest of the animal: it cuts across in a lazy weave, the
+   rotation reading as the turn of a body the water hides. */
+.swim-shark .beast {
+  bottom: -6px;
+  animation: swim-shark 3.4s linear infinite;
+}
+@keyframes swim-shark {
+  0% {
+    transform: translate(-20px, 18px) rotate(-6deg);
+  }
+  12% {
+    transform: translate(0px, 0px) rotate(-4deg);
+  }
+  30% {
+    transform: translate(36px, 1.5px) rotate(4deg);
+  }
+  50% {
+    transform: translate(66px, 0px) rotate(-3deg);
+  }
+  70% {
+    transform: translate(96px, 1.5px) rotate(4deg);
+  }
+  88% {
+    transform: translate(126px, 0px) rotate(-2deg);
+  }
+  100% {
+    transform: translate(150px, 18px) rotate(6deg);
+  }
+}
+
+/* The bear paddles, ducks under once, and comes up further along. The duck is
+   the point of it: a head crossing at a constant height reads as a float, and
+   the dip is what makes it an animal swimming. Slowest of the four — it is the
+   only one here that does not belong in the water. */
+.swim-bear .beast {
+  bottom: -1px;
+  animation: swim-bear 4.6s linear infinite;
+}
+@keyframes swim-bear {
+  0% {
+    transform: translate(-14px, 36px) rotate(0deg);
+  }
+  10% {
+    transform: translate(0.4px, 0px) rotate(-2deg);
+  }
+  25% {
+    transform: translate(22px, 2px) rotate(2deg);
+  }
+  38% {
+    transform: translate(40.7px, 0px) rotate(-2deg);
+  }
+  48% {
+    transform: translate(55.1px, 12px) rotate(6deg);
+  }
+  56% {
+    transform: translate(66.6px, 38px) rotate(10deg);
+  }
+  66% {
+    transform: translate(81px, 8px) rotate(-4deg);
+  }
+  78% {
+    transform: translate(98.3px, 1px) rotate(2deg);
+  }
+  90% {
+    transform: translate(115.6px, 3px) rotate(0deg);
+  }
+  100% {
+    transform: translate(130px, 36px) rotate(0deg);
+  }
+}
+
+/* Motion is the wrong channel for anyone who has asked for less of it, and a
+   thing crossing the frame is exactly the kind that gets asked about. Each
+   animal holds at the surface, mid-scene, at the depth its own `bottom` gives
+   it — the scene keeps the height it reserves, and an animal sitting on the
+   water still says the box is not finished. */
+@media (prefers-reduced-motion: reduce) {
+  .swim .beast {
+    animation: none;
+    opacity: 0.55;
+  }
+  .swim-whale .puff {
+    animation: none;
+    opacity: 0.55;
+  }
+  .swim-dolphin .beast {
+    transform: translate(68px, -6px);
+  }
+  .swim-whale .beast {
+    transform: translate(60px, -3px);
+  }
+  .swim-shark .beast {
+    transform: translate(75px, 0);
+  }
+  .swim-bear .beast {
+    transform: translate(62px, 0);
+  }
+}

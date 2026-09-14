@@ -222,119 +222,30 @@ aside.filters::-webkit-scrollbar-track {
    measured at 1.6-2.8s, and there is 300ms of debounce in front of it. Up to
    three seconds of a number that looks entirely current and is not.
 
-   One gesture covers both waits: a dolphin crosses the box and flips once on the
-   way over, one pass every 2.6s, which is about one flip per request. Whatever
-   the box already holds fades and stays still behind it. A pulse was the earlier
-   answer and it was the wrong one — a number breathing under the pointer reads
-   as a thing being edited, and it put motion on the one element whose job is to
-   be read.
-
-   The scene spans the number and the caption and stops short of the link, which
-   puts the surface in the 14px gap between them rather than across a line of
-   type. It is out of flow, so in the first wait the box has to stand that height
-   on its own; that is the no-jump property the two bars here before were
-   carrying. 176px wide because the pass has to finish inside it: narrower and
-   the dolphin is still above water when it meets the frame's edge, which reads
-   as clipped rather than as gone. */
+   Both waits get the page's animal, which is styles/swimmer.css's business. What
+   is the tally's business is where it goes: laid over the count, spanning it and
+   the caption and stopping short of the link, which puts the waterline in the
+   14px gap between them rather than across a line of type. It is out of flow, so
+   in the first wait the box reserves that height itself — the no-jump property
+   the two skeleton bars here before were carrying. */
 .tallybox.waiting {
   min-height: 114px;
 }
-.leap {
+.tallybox .swim {
   position: absolute;
   top: 20px;
   left: 50%;
-  width: 176px;
-  height: 74px;
-  margin-left: -88px;
-  /* Decoration over a live link: it must never take the press. */
-  pointer-events: none;
-}
-/* The surface is a rule and nothing more. An earlier pass filled the water with
-   the box's own ground and stacked it over the animal, which submerged it
-   correctly and painted over the middle of the caption behind it — opaque is not
-   available to something laid over live type. What puts the dolphin under the
-   water instead is the crest: it ends where the surface is, and clips.
-
-   --land-hi for the animal and the rule both, rather than a grey: it is the
-   panel's own rule colour, so an empty box reads as unfilled rather than as
-   broken, and the dolphin meets the water in its own tone instead of crossing it
-   as a second one. */
-.leap .sea {
-  position: absolute;
-  inset: auto 0 0;
-  height: 2px;
-  background: var(--land-hi);
-}
-.leap .crest {
-  position: absolute;
-  inset: 0 0 2px;
-  overflow: hidden;
-}
-/* Hung 12px below the waterline, so at rest the animal is already part under it
-   and the arc starts and ends out of sight rather than at a visible edge. */
-.leap .dolphin {
-  position: absolute;
-  left: 0;
-  bottom: -12px;
-  fill: var(--land-hi);
-  animation: tally-leap 2.6s linear infinite;
-}
-/* x crosses at a constant rate and y is the parabola under it, so the animal is
-   slowest at the top and the arc reads as a leap rather than a hop. Rotation
-   runs the 84 degrees between the two entry attitudes plus a full turn on top,
-   which puts the dolphin inverted at the apex: 444 degrees over the pass, 55.5
-   per step. transform only, which composites without laying anything out —
-   directly above a list that must not reflow. */
-@keyframes tally-leap {
-  0% {
-    transform: translate(-1px, 30px) rotate(-42deg);
-  }
-  12.5% {
-    transform: translate(15.9px, 2px) rotate(13.5deg);
-  }
-  25% {
-    transform: translate(32.8px, -18px) rotate(69deg);
-  }
-  37.5% {
-    transform: translate(49.6px, -30px) rotate(124.5deg);
-  }
-  50% {
-    transform: translate(66.5px, -34px) rotate(180deg);
-  }
-  62.5% {
-    transform: translate(83.4px, -30px) rotate(235.5deg);
-  }
-  75% {
-    transform: translate(100.3px, -18px) rotate(291deg);
-  }
-  87.5% {
-    transform: translate(117.1px, 2px) rotate(346.5deg);
-  }
-  100% {
-    transform: translate(134px, 30px) rotate(402deg);
-  }
+  margin-left: calc(var(--swim-w, 176px) / -2);
 }
 /* The second wait: a count is up and a new one is coming. It stays — an answer
    one click old reads better than a blank that refills on every click — but it
    must not be read as current, so it holds still at a third of its weight and
-   lets the dolphin be the thing that moves. The link is left alone: it still
-   goes somewhere useful, and a control that fades under the pointer invites a
-   second click on the same thing. */
+   lets the animal be the thing that moves. The link is left alone: it still goes
+   somewhere useful, and a control that fades under the pointer invites a second
+   click on the same thing. */
 .tallybox.settling .big,
 .tallybox.settling .lbl {
   opacity: 0.32;
-}
-/* Motion is the wrong channel for anyone who has asked for less of it. The state
-   still has to read, so the dolphin holds at the top of its arc — the box keeps
-   the height it will keep, and an animal stopped above the water still says the
-   box is not finished. The faded count needs nothing here: it was never
-   animating. */
-@media (prefers-reduced-motion: reduce) {
-  .leap .dolphin {
-    animation: none;
-    transform: translate(66.5px, -34px);
-    opacity: 0.55;
-  }
 }
 
 /* The reset, now among the filters rather than up in the results.
@@ -650,12 +561,12 @@ aside.filters::-webkit-scrollbar-track {
   .tallybox .lbl {
     display: none;
   }
-  /* The dolphin goes with the number, for the same reason and a sharper one:
+  /* The animal goes with the number, for the same reason and a sharper one:
      this block is what --dock is measured from, so a scene standing here during
      the wait would push the map down and let it spring back when the count
      lands. The reserved height goes with it — on a phone the box holds nothing
      but the link, so there is no number arriving for it to hold a place for. */
-  .leap {
+  .tallybox .swim {
     display: none;
   }
   .tallybox.waiting {
