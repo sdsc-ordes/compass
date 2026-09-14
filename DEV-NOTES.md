@@ -9,10 +9,10 @@
 
 ## Docs
 
-- please read them, especially `configuration-backend.md`, `configuration-ontology.md`, and `design.md`.
+- please read them, especially `docs/configuration-backend.md`, `configuration-ontology.md`, and `docs/backend/design.md`.
 - please read over the root README. Notably the section `Generate/Update the Map Data` seems cluttered (can the explanations be shortened or moved into another section)
 - please read the backend and turtle-generator READMEs
-- please add docs for [configuring the frontend to a new use case](docs/compass/configuration-frontend.md)
+- please add docs for [configuring the frontend to a new use case](docs/configuration-frontend.md)
 
 ## Ontology/Semantics related
 

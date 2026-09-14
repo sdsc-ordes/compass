@@ -40,5 +40,5 @@ should be able to adapt the backend for a new use-case by editing
    uv run pytest tests/ -v
    ```
 
-See also the [Config](reference/config.md) and [Core](reference/core.md) API
+See also the [Config](backend/config.md) and [Core](backend/core.md) API
 reference.

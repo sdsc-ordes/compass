@@ -5,6 +5,7 @@ decorators, and the interactive UI at ``/docs`` when the API is running).
 """
 
 from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 
@@ -18,7 +19,7 @@ from app.schemas.admin import RootMessage
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Load the ontology into the process-wide store before serving requests.
 
     Args:

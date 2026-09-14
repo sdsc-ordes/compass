@@ -43,6 +43,6 @@ mod data 'tools/just/data.just'
 [group('modules')]
 mod map 'tools/just/map.just'
 
-# Build and serve the backend MkDocs site.
+# Build and serve the MkDocs site.
 [group('modules')]
 mod docs 'tools/just/docs.just'

@@ -81,7 +81,7 @@ src/turtle-generator/  – ODS → RDF generator and its tests
 tools/nix/             – the Nix flake providing the dev shell
 share/                 – standalone demo page; needs an apiurl to point at
 tools/docker/          – Dockerfiles, nginx config and the compose entry page
-docs/                  – contributor docs; docs/compass is the MkDocs site
+docs/                  – MkDocs site (Overview is this README; Backend + Turtle generator sections)
 ```
 
 ---
@@ -90,20 +90,20 @@ docs/                  – contributor docs; docs/compass is the MkDocs site
 
 ### Data & Ontology
 
-See [`docs/compass/configuration-ontology.md`](docs/compass/configuration-ontology.md)
+See [ontology configuration](https://sdsc-ordes.github.io/compass/configuration-ontology/)
 for the step-by-step checklist to set up a use-case folder, fill
 `source-data.ods`, and run `just data::generate`.
 
 ### Backend: settings
 
-See [`docs/compass/configuration-backend.md`](docs/compass/configuration-backend.md)
+See [backend configuration](https://sdsc-ordes.github.io/compass/configuration-backend/)
 for how to configure the backend and adapt it for a new Compass use-case. It
 covers API metadata, the stories provider, language support, and deployment
 settings such as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
 
 ### Frontend
 
-See [`docs/compass/configuration-frontend.md`](docs/compass/configuration-frontend.md).
+See [frontend configuration](https://sdsc-ordes.github.io/compass/configuration-frontend/).
 
 Pre-render bathymetry tiles (optional; the map falls back to the vector basemap
 if tiles are absent):
@@ -160,7 +160,7 @@ curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
 
 Set `COMPASS_RELOAD_TOKEN` on the API (empty disables the endpoint). A rejected
 reload leaves the previous ontology serving. See
-[`docs/compass/configuration-backend.md`](docs/compass/configuration-backend.md).
+[backend configuration](https://sdsc-ordes.github.io/compass/configuration-backend/).
 
 | File | Purpose |
 |---|---|
