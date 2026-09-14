@@ -230,30 +230,90 @@ aside.filters::-webkit-scrollbar-track {
   }
 }
 
-/* The first wait, with nothing to keep. Two bars at the number's and caption's
-   own heights, so the box lands at the height it will keep and the filter
-   sections below it do not jump when the count arrives. --land-hi rather than a
-   grey: it is the panel's own rule colour, so the box reads as unfilled rather
-   than as broken. */
+/* The first wait, with nothing to keep. A dolphin crosses the box and leaps
+   once on the way through, one pass every 2.6s — about one leap per request at
+   the 1.6-2.8s the count takes, so the wait reads as one gesture rather than as
+   a meter ticking. The scene is 66px tall, which is what the two bars that stood
+   here took (42 + 10 + 14), so the box still lands at the height it will keep
+   and the filter sections below it do not jump when the count arrives. It is
+   176px wide because the pass has to finish inside it: the dolphin must be under
+   the surface before it reaches the frame's edge, or it reads as clipped rather
+   than as gone.
+
+   --land-hi for the animal and the surface both, rather than a grey: it is the
+   panel's own rule colour, so the box reads as unfilled rather than as broken,
+   and the dolphin merges with the water on re-entry instead of crossing it as a
+   second tone. */
 .tallybox.waiting {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
-.tallybox .bar {
-  display: block;
-  background: var(--land-hi);
-  animation: tally-breathe 1.6s ease-in-out infinite;
+.leap {
+  position: relative;
+  width: 176px;
+  height: 66px;
+  margin: 0 auto;
+  overflow: hidden;
 }
-.tallybox .bar.n {
-  width: 4ch;
-  height: 42px;
+/* The surface, and what puts the animal under it. The fill is the box's own
+   ground, so only the 2px rule shows, and it sits above the dolphin in the
+   stacking order — which is how it submerges at both ends of the pass rather
+   than sliding in and out of frame as a whole shape. */
+.leap .sea {
+  position: absolute;
+  inset: auto 0 0;
+  height: 12px;
+  background: var(--sea);
+  border-top: 2px solid var(--land-hi);
+  z-index: 1;
 }
-.tallybox .bar.c {
-  width: 62%;
-  height: 14px;
+.leap .dolphin {
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  fill: var(--land-hi);
+  animation: tally-leap 2.6s linear infinite;
 }
+/* x crosses the scene at a constant rate and y is the parabola under it, which
+   is what makes the arc read as a leap rather than a hop: the animal is slowest
+   at the top. Rotation runs linearly between the two entry angles — the true
+   tangent is the arctangent of the slope, but under 45 degrees that correction
+   does not survive 39px. Both ends sit far enough down that the shape is fully
+   under the surface before the pass restarts, so the loop has no cut.
+
+   transform only, on the same reasoning as the breath: it composites without
+   laying anything out, in a block sitting directly above a list that must not
+   reflow. */
+@keyframes tally-leap {
+  0% {
+    transform: translate(-1px, 30px) rotate(-42deg);
+  }
+  12.5% {
+    transform: translate(15.9px, 6.4px) rotate(-31.5deg);
+  }
+  25% {
+    transform: translate(32.8px, -10.5px) rotate(-21deg);
+  }
+  37.5% {
+    transform: translate(49.6px, -20.6px) rotate(-10.5deg);
+  }
+  50% {
+    transform: translate(66.5px, -24px) rotate(0deg);
+  }
+  62.5% {
+    transform: translate(83.4px, -20.6px) rotate(10.5deg);
+  }
+  75% {
+    transform: translate(100.3px, -10.5px) rotate(21deg);
+  }
+  87.5% {
+    transform: translate(117.1px, 6.4px) rotate(31.5deg);
+  }
+  100% {
+    transform: translate(134px, 30px) rotate(42deg);
+  }
+}
+
 /* The second wait: a count is up and a new one is coming. It stays — an answer
    one click old reads better than a blank that refills on every click — but it
    must not be read as current, so the number and its caption dim and breathe.
@@ -268,11 +328,17 @@ aside.filters::-webkit-scrollbar-track {
    pulse is exactly the kind that gets asked about. The state still has to read,
    so it holds the dimmed end of the same fade instead of animating to it. */
 @media (prefers-reduced-motion: reduce) {
-  .tallybox .bar,
+  .leap .dolphin,
   .tallybox.settling .big,
   .tallybox.settling .lbl {
     animation: none;
     opacity: 0.55;
+  }
+  /* Held at the top of the arc rather than removed: the box still has to occupy
+     the height it will keep, and a dolphin stopped above the water still says
+     the box is not empty yet. */
+  .leap .dolphin {
+    transform: translate(66.5px, -24px);
   }
 }
 
@@ -587,6 +653,13 @@ aside.filters::-webkit-scrollbar-track {
   }
   .tallybox .big,
   .tallybox .lbl {
+    display: none;
+  }
+  /* The dolphin goes with the number, for the same reason and a sharper one:
+     this block is what --dock is measured from, so a 66px scene standing here
+     during the wait would push the map down and let it spring back when the
+     count lands. */
+  .leap {
     display: none;
   }
   /* 44px of target, which is what sets this block's height and therefore the

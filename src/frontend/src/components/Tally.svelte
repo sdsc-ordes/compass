@@ -25,9 +25,11 @@
    * out to the stories provider, measured at 1.6-2.8s, with 300ms of debounce in
    * front of it. Two waits follow from that:
    *
-   *   waiting   nothing on screen yet, so two bars stand where the number and
-   *             caption will be — the box arrives at roughly its final height
-   *             and the filters below do not jump when the count lands
+   *   waiting   nothing on screen yet, so a dolphin crosses the box and leaps
+   *             once on the way through. The scene is the height the number and
+   *             caption would take, so the box still arrives at roughly its
+   *             final height and the filters below do not jump when the count
+   *             lands
    *   settling  a count is already up and a new one is coming. It stays, because
    *             an answer one click old still reads better than a blank, but it
    *             dims and breathes so it is not read as current
@@ -72,13 +74,30 @@
 
 <div class="tallyband" bind:this={tallyEl}>
   {#if !storyCount && storiesPending}
-    <!-- The first wait, with nothing to keep on screen. Two bars where the
-         number and its caption will be, so the box arrives at roughly its final
-         height and the filters below it do not jump when the count lands. No
-         link: there is no URL yet, and a dead control is worse than none. -->
+    <!-- The first wait, with nothing to keep on screen. The scene is the height
+         the number and its caption would take, so the box arrives at roughly its
+         final height and the filters below it do not jump when the count lands.
+         No link: there is no URL yet, and a dead control is worse than none.
+
+         The dolphin is drawn here rather than in lib/icons.ts: that set is the
+         stage chrome's, 24x24 and stroked, and this is a filled silhouette on
+         its own grid that no control uses. -->
     <div class="tallybox waiting" aria-hidden="true">
-      <span class="bar n"></span>
-      <span class="bar c"></span>
+      <div class="leap">
+        <svg class="dolphin" viewBox="0 0 48 32" width="39" height="26">
+          <path
+            d="M47 13.8 C45.4 12.9 43.6 12.4 42 12.2 C41 10.2 40 8.8 38 8.2
+               C34.6 6.4 31 5.7 28 6 C26.4 4.8 24.8 3.6 23 2.8
+               C23.8 4.4 24.4 5.8 24.6 7.2 C18.8 8.4 12.6 10.6 7.4 13.6
+               C5.6 12 3.4 10.6 1.1 9.6 C2.6 12 3.8 14 4.4 16.2
+               C3.6 18.4 2.2 20.4 0.6 22.2 C3.4 21.4 6 20 8.6 18
+               C12 16.8 16 16.2 20 16 C19 18.4 18.6 21 18.8 23.4
+               C21 20.8 23.4 18.6 26.2 17 C31 16.2 36 15.4 41 14.9
+               C43 14.7 45.4 14.4 47 13.8 Z"
+          />
+        </svg>
+        <span class="sea"></span>
+      </div>
     </div>
   {:else if storyCount}
     <div class="tallybox" class:lead={!!counted} class:settling={storiesPending}>
