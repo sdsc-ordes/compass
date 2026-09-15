@@ -11,9 +11,6 @@
 .mapc.night .plate {
   background: rgba(10, 22, 34, 0.92);
 }
-.mapc.night .opener {
-  border-color: var(--chrome-night);
-}
 .mapc.night .mapcard {
   border-color: #2a4257;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);

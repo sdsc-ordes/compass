@@ -15,17 +15,6 @@ aside.filters {
   opacity: 0;
   pointer-events: none;
 }
-.mapc.collapsed aside.filters {
-  width: 0;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-100%);
-  pointer-events: none;
-  padding-left: 0;
-  padding-right: 0;
-  border-right: 0;
-  overflow: hidden;
-}
 @media (prefers-reduced-motion: reduce) {
   aside.filters {
     transition: none;
@@ -301,8 +290,7 @@ aside.filters::-webkit-scrollbar-track {
     bottom: 0;
     z-index: 20;
     width: auto;
-    height: 90vh;
-    height: 90dvh;
+    height: auto;
     max-height: 90dvh;
     padding: 0;
     border-right: 0;
@@ -314,8 +302,7 @@ aside.filters::-webkit-scrollbar-track {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-gutter: auto;
-    transform: translateY(calc(90vh - 120px));
-    transform: translateY(calc(90dvh - 120px));
+    transform: translateY(calc(100% - 120px));
     transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.3, 1);
     will-change: transform;
   }
@@ -324,14 +311,6 @@ aside.filters::-webkit-scrollbar-track {
   }
   aside.filters[data-sheet='dock'] {
     overflow: hidden;
-  }
-  .mapc.collapsed aside.filters {
-    width: auto;
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    padding: 0;
-    border-right: 0;
   }
   .sidehead {
     display: none;

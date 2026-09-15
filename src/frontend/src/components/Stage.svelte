@@ -39,8 +39,6 @@
   export let selected: Proj | null = null;
   export let onSelect: (p: Proj | null) => void;
   export let onTheme: (night: boolean) => void = () => {};
-  export let openerLabel = '';
-  export let onOpen: () => void = () => {};
   export let lift: () => number = () => 0;
   export let sheetEl: HTMLElement | null = null;
   export let isMobile: () => boolean = () => false;
@@ -120,7 +118,15 @@
     queue();
   });
 
-  const anim = new PinAnimator(() => paintPins());
+  const anim = new PinAnimator(
+    () => paintPins(),
+    () => {
+      if (interact || !stage || !atlas) return;
+      const W = stage.clientWidth,
+        H = stage.clientHeight;
+      if (W && H) runLabels(proj(S, W, H), W, H);
+    },
+  );
   const tween = new Tweener(
     S,
     (full?: boolean) => queue(full),
@@ -185,7 +191,6 @@
       anim,
       visible: projs,
       selected,
-      cardShowing: cardShowing(),
       touch: isMobile(),
       clusterLabel: (n) => ({ title: fmt(t.clusterTitle, { n }), where: t.clusterWhere }),
     });
@@ -258,6 +263,10 @@
       keepOut: keepOut(),
       measureCtx: ctx,
       cty: atlas.cty,
+      sea: atlas.sea,
+      land: atlas.land,
+      lang,
+      depth: depth && depthReady,
     });
   }
 
@@ -419,8 +428,6 @@
   const DETAIL_K = 3.4;
   const CARD_K = 2.2;
 
-  const cardShowing = () => !!selected && S.k >= CARD_K;
-
   function positionProjectCard(): void {
     if (!selected || S.k < CARD_K || !onFront(S, selected.c)) {
       cards.closeEntry();
@@ -543,7 +550,7 @@
     if (window.ResizeObserver) {
       ro = new ResizeObserver(() => {
         absorbResize();
-        queue(true);
+        refreshNow();
       });
       ro.observe(stage);
     }
@@ -569,6 +576,16 @@
 
   export function refresh(full = true): void {
     queue(full);
+  }
+
+  export function refreshNow(): void {
+    if (qid) {
+      clearTimeout(qid);
+      qid = null;
+    }
+    if (!S.ready) return;
+    syncFan();
+    renderAll();
   }
 
   $: previewEntity = hovered ? entityLabel(hovered) : '';
@@ -620,9 +637,6 @@
     where={hovered?.where ?? ''}
   />
 
-  <button class="opener" type="button" on:pointerdown|stopPropagation on:click={onOpen}
-    >{openerLabel}</button
-  >
   <Coach {t} show={coachOn} />
   <div class="plate empty" class:show={showEmpty} bind:this={emptyEl}>{t.noProjectsMatch}</div>
   <div class="plate plate-load" class:show={showLoading} bind:this={loadEl}>

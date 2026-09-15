@@ -69,7 +69,7 @@ export const P: Record<Theme, Pal> = {
     trench: 'rgba(200,225,245,.34)',
     ridge: 'rgba(200,225,245,.14)',
     lat: 'rgba(200,225,245,.18)',
-    pin: '#8FC3E4',
+    pin: '#FFFFFF',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.35)',
     pinHalo: 'rgba(127,182,218,.3)',

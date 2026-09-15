@@ -1,7 +1,6 @@
 export const i18n = {
   en: {
     srPageTitle: 'OceanCare projects worldwide',
-    collapseSidebar: 'Collapse sidebar',
     tallyCaption: 'results in this selection',
     tallyCaptionOne: 'result in this selection',
     tallyResults: '{n} results on the map',
@@ -74,7 +73,6 @@ export const i18n = {
   },
   de: {
     srPageTitle: 'OceanCare-Projekte weltweit',
-    collapseSidebar: 'Seitenleiste einklappen',
     tallyCaption: 'Ergebnisse in dieser Auswahl',
     tallyCaptionOne: 'Ergebnis in dieser Auswahl',
     tallyResults: '{n} Ergebnisse auf der Karte',

@@ -1,6 +1,6 @@
-import { geoPath, geoGraticule10, geoCentroid, geoArea } from 'd3-geo';
+import { geoPath, geoGraticule10 } from 'd3-geo';
 import type { GeoProjection, GeoPermissibleObjects } from 'd3-geo';
-import { feature, merge, mesh } from 'topojson-client';
+import { merge, mesh } from 'topojson-client';
 import type {
   GeometryCollection,
   MultiPolygon,
@@ -8,15 +8,17 @@ import type {
   Topology,
 } from 'topojson-specification';
 import atlasJson from '../atlas.json';
+import labelsJson from '../atlas-labels.json';
 import { P, type Theme } from './palette';
 import { proj, type ViewState } from './projection';
-import { CTY_MIN, type CountryLabel } from './labels';
+import type { MapLabel, SeaLabel } from './labels';
 
 export interface Atlas {
   land: GeoPermissibleObjects;
   borders: GeoPermissibleObjects;
   grat: GeoPermissibleObjects;
-  cty: CountryLabel[];
+  cty: MapLabel[];
+  sea: SeaLabel[];
 }
 
 export interface BasemapRefs {
@@ -41,7 +43,7 @@ export function loadAtlas(): Atlas {
     countries: GeometryCollection<{ name: string }>;
   }>;
   const countries = topo.objects.countries;
-  const min = new Map(CTY_MIN);
+  const table = labelsJson as { cty: MapLabel[]; sea: SeaLabel[] };
   cached = {
     land: merge(
       topo,
@@ -49,15 +51,8 @@ export function loadAtlas(): Atlas {
     ) as GeoPermissibleObjects,
     borders: mesh(topo, countries, (a, b) => a !== b) as GeoPermissibleObjects,
     grat: geoGraticule10() as GeoPermissibleObjects,
-    cty: feature(topo, countries)
-      .features.filter((f) => f.properties && min.has(f.properties.name))
-      .map((f) => ({
-        name: f.properties.name,
-        minK: min.get(f.properties.name) as number,
-        c: geoCentroid(f as GeoPermissibleObjects) as [number, number],
-        area: geoArea(f as GeoPermissibleObjects),
-      }))
-      .sort((a, b) => b.area - a.area),
+    cty: table.cty,
+    sea: table.sea,
   };
   return cached;
 }

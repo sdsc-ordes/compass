@@ -131,20 +131,41 @@ export function drawCluster(
   return R;
 }
 
-export function drawAnchor(ctx: CanvasRenderingContext2D, x: number, y: number, p: Pal): void {
+export function drawAnchor(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  p: Pal,
+  grow: number,
+  alpha?: number,
+): number {
+  const sc = 1 + 0.1 * grow;
+  const R = 7 * sc;
+  const out = R + 2 * sc;
   ctx.save();
+  if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
   ctx.beginPath();
-  ctx.arc(x, y, 7, 0, 6.2832);
+  ctx.arc(x, y, out, 0, 6.2832);
+  ctx.fillStyle = p.pinRing;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y, R, 0, 6.2832);
   ctx.fillStyle = '#fff';
   ctx.fill();
   ctx.strokeStyle = p.pinSel;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 2.5 * sc;
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(x, y, 2.6, 0, 6.2832);
+  ctx.arc(x, y, R + 1.45 * sc, 0, 6.2832);
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, 2.6 * sc, 0, 6.2832);
   ctx.fillStyle = p.pinSel;
   ctx.fill();
   ctx.restore();
+  return out;
 }
 
 export const onFront = (S: ViewState, c: [number, number]) =>
@@ -207,7 +228,10 @@ export class PinAnimator {
   fan = 0;
   private fanTo = 0;
 
-  constructor(private paint: () => void) {}
+  constructor(
+    private paint: () => void,
+    private settled: () => void = () => {},
+  ) {}
 
   private of(id: string): Anim {
     let a = this.anim.get(id);
@@ -230,6 +254,7 @@ export class PinAnimator {
     if (REDUCED.matches) {
       this.fan = this.fanTo;
       this.paint();
+      this.settled();
       return;
     }
     this.kick();
@@ -241,6 +266,7 @@ export class PinAnimator {
       const moving = this.step();
       this.paint();
       this.frame = moving ? requestAnimationFrame(loop) : null;
+      if (!moving) this.settled();
     };
     this.frame = requestAnimationFrame(loop);
   }
@@ -299,6 +325,7 @@ export class PinAnimator {
       });
       this.fan = this.fanTo;
       this.paint();
+      this.settled();
       return;
     }
     this.kick();
@@ -320,7 +347,6 @@ export interface DrawPinsArgs {
   anim: PinAnimator;
   visible: Proj[];
   selected: Proj | null;
-  cardShowing: boolean;
   touch: boolean;
   clusterLabel: (n: number) => { title: string; where: string };
 }
@@ -332,7 +358,6 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
   const HEAD = 21;
   const onStage = (xy: [number, number] | null) =>
     !!xy && !isNaN(xy[0]) && xy[0] > -30 && xy[0] < W + 30 && xy[1] > -30 && xy[1] < H + 30;
-  const card = a.cardShowing;
   const fanning = anim.fan > 0.002;
   const pts: { x: number; y: number; hx: number; hy: number; d: Proj }[] = [];
   anim.live
@@ -382,15 +407,25 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     if (g.items.length === 1) {
       const d = g.items[0].d;
       const on = !!selected && selected.id === d.id;
-      if (card && on) {
-        const q = g.items[0];
-        drawAnchor(ctx, q.x, q.y, p);
-        pinbox.push({ x: q.x, y: q.y, w: 18, h: 18, headR: 9, tipY: q.y + 9, p: d, r: 12 });
-        return;
-      }
       const grow = anim.growOf(d.id),
         fade = anim.fadeOf(d.id);
       const rise = (1 - fade) * 7;
+      if (on) {
+        const q = g.items[0];
+        const cy = q.y - rise;
+        const R = drawAnchor(ctx, q.x, cy, p, grow, fade);
+        pinbox.push({
+          x: q.x,
+          y: cy,
+          w: R * 2,
+          h: R * 2,
+          headR: R,
+          tipY: cy + R,
+          p: d,
+          r: R + 3,
+        });
+        return;
+      }
       const pin = drawGmapsPin(
         ctx,
         g.items[0].x,
@@ -425,11 +460,26 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
         const x = ax + Math.cos(th) * R,
           y = ay + Math.sin(th) * R;
         const on = !!selected && selected.id === d.id;
+        if (on) {
+          const cy = y - HEAD;
+          const ar = drawAnchor(ctx, x, cy, p, anim.growOf(d.id), anim.fadeOf(d.id));
+          pinbox.push({
+            x,
+            y: cy,
+            w: ar * 2,
+            h: ar * 2,
+            headR: ar,
+            tipY: cy + ar,
+            p: d,
+            r: ar + 3,
+          });
+          return;
+        }
         const pin = drawGmapsPin(
           ctx,
           x,
           y,
-          on ? p.pinSel : p.pin,
+          p.pin,
           p.pinRing,
           anim.growOf(d.id),
           anim.fadeOf(d.id),

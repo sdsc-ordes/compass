@@ -25,7 +25,6 @@
   export let onToggleOption: (dim: string, iri: string) => void;
   export let onPickType: (iri: string | null) => void;
   export let onReset: () => void;
-  export let onCollapse: () => void;
   export let onBack: () => void;
   export let onCloseDetail: () => void;
   export let onFilterByTag: (dim: string, iri: string) => void;
@@ -80,9 +79,6 @@
     <div class="logo">
       <img class="logomark" src={logoSrc} alt="OceanCare" width="232" height="103" />
     </div>
-    <button class="collapse" type="button" aria-label={t.collapseSidebar} on:click={onCollapse}
-      >&lsaquo;&lsaquo;</button
-    >
   </div>
 
   <div class="pane-filters">

@@ -225,6 +225,25 @@ export class Sheet {
       sh.removeEventListener('focusin', onFocusIn);
     });
 
+    let gt: ReturnType<typeof setTimeout> | null = null;
+    let lastH = 0;
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            if (!this.mobile || sh.classList.contains('dragging')) return;
+            const h = sh.offsetHeight;
+            if (Math.abs(h - lastH) < 1) return;
+            lastH = h;
+            if (gt) clearTimeout(gt);
+            gt = setTimeout(() => this.reseat(), 60);
+          });
+    ro?.observe(sh);
+    this.teardown.push(() => {
+      ro?.disconnect();
+      if (gt) clearTimeout(gt);
+    });
+
     let rt: ReturnType<typeof setTimeout> | null = null;
     const onResize = () => {
       if (rt) clearTimeout(rt);
@@ -244,6 +263,12 @@ export class Sheet {
       sh.style.transition = '';
     });
     this.teardown.push(onFontsReady(() => this.to(this.state)));
+  }
+
+  reseat(): void {
+    if (!this.mobile) return;
+    const offsets = this.measure();
+    this.h.sidebar.style.transform = 'translateY(' + offsets[this.state] + 'px)';
   }
 
   onSectionOpened(): void {

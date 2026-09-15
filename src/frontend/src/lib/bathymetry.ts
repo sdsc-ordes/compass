@@ -2,6 +2,8 @@ import { geoPath, type GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 
 const TILE = 512;
+const TILE_SH = 9;
+const TILE_MASK = TILE - 1;
 const MAX_Z = 5;
 
 const LAT_MAX = 85.0511287798;
@@ -22,6 +24,9 @@ const REF: [number, number][] = [
 ];
 
 const REF_TOL = 0.5;
+
+const BLUR_MAX = 1;
+const BLUR_TO = 3;
 
 interface Snapshot {
   canvas: HTMLCanvasElement;
@@ -102,16 +107,21 @@ export class Bathymetry {
     interact: boolean,
     dpr: number,
   ): void {
+    const soft = calm(pr, W);
+    if (soft > 0.05) ctx.filter = `blur(${soft.toFixed(2)}px)`;
+
     if (interact) {
       const keep = this.snap;
       const t = keep && keep.W === W && keep.H === H ? similarity(keep.ref, pr) : null;
       if (keep && t && covered(t, keep, pr, W, H)) {
         ctx.drawImage(keep.canvas, t.dx, t.dy, t.g * keep.W, t.g * keep.H);
+        ctx.filter = 'none';
         return;
       }
     }
     const raster = this.reproject(pr, W, H, globe, interact, dpr);
     if (raster) ctx.drawImage(raster, 0, 0, W, H);
+    ctx.filter = 'none';
   }
 
   private reproject(
@@ -208,9 +218,27 @@ export class Bathymetry {
     const img = ctx.createImageData(rw, rh);
     const dst = img.data;
 
+    const WORLD = n * TILE;
+    const WMASK = WORLD - 1;
+
     let lastIdx = -1;
     let lastPx: Uint8ClampedArray | null = null;
     let drew = false;
+
+    let base = 0;
+    let ar = 0,
+      ag = 0,
+      ab = 0;
+    const tap = (X: number, Y: number, w: number): void => {
+      const wx = X & WMASK;
+      const wy = Y < 0 ? 0 : Y > WMASK ? WMASK : Y;
+      const t = px[(wx >> TILE_SH) * n + (wy >> TILE_SH)];
+      const src = t ?? (lastPx as Uint8ClampedArray);
+      const o = t ? (((wy & TILE_MASK) << TILE_SH) + (wx & TILE_MASK)) << 2 : base;
+      ar += src[o] * w;
+      ag += src[o + 1] * w;
+      ab += src[o + 2] * w;
+    };
 
     for (let v = 0; v < rh; v++) {
       const jf = v / CELL;
@@ -233,27 +261,56 @@ export class Bathymetry {
         const mx = nx[a] * wa + nx[a + 1] * wb + nx[c] * wc + nx[c + 1] * wd;
         const my = ny[a] * wa + ny[a + 1] * wb + ny[c] * wc + ny[c + 1] * wd;
 
-        const gy = my * n;
-        const ty = Math.floor(gy);
-        if (ty < 0 || ty >= n) continue;
-        const gx = mx * n;
-        const fxi = Math.floor(gx);
-        const tx = ((fxi % n) + n) % n;
+        if (!(my >= 0) || my >= 1) continue;
+        const gX = mx * WORLD - 0.5;
+        const gY = my * WORLD - 0.5;
+        const X0 = Math.floor(gX),
+          Y0 = Math.floor(gY);
+        const tu = gX - X0,
+          tv = gY - Y0;
+        const ax = X0 & WMASK;
+        const ay = Y0 < 0 ? 0 : Y0 > WMASK ? WMASK : Y0;
 
-        const idx = tx * n + ty;
+        const idx = (ax >> TILE_SH) * n + (ay >> TILE_SH);
         if (idx !== lastIdx) {
           lastIdx = idx;
           lastPx = px[idx];
         }
         if (!lastPx) continue;
 
-        const sx = ((gx - fxi) * TILE) | 0;
-        const sy = ((gy - ty) * TILE) | 0;
-        const s = (sy * TILE + sx) * 4;
+        const cx = ax & TILE_MASK,
+          cy = ay & TILE_MASK;
+        base = ((cy << TILE_SH) + cx) << 2;
+        const w00 = (1 - tu) * (1 - tv),
+          w10 = tu * (1 - tv),
+          w01 = (1 - tu) * tv,
+          w11 = tu * tv;
         const d = (v * rw + u) * 4;
-        dst[d] = lastPx[s];
-        dst[d + 1] = lastPx[s + 1];
-        dst[d + 2] = lastPx[s + 2];
+        if (cx !== TILE_MASK && cy !== TILE_MASK) {
+          const e = base + 4;
+          const f = base + (TILE << 2);
+          const g = f + 4;
+          dst[d] = lastPx[base] * w00 + lastPx[e] * w10 + lastPx[f] * w01 + lastPx[g] * w11;
+          dst[d + 1] =
+            lastPx[base + 1] * w00 +
+            lastPx[e + 1] * w10 +
+            lastPx[f + 1] * w01 +
+            lastPx[g + 1] * w11;
+          dst[d + 2] =
+            lastPx[base + 2] * w00 +
+            lastPx[e + 2] * w10 +
+            lastPx[f + 2] * w01 +
+            lastPx[g + 2] * w11;
+        } else {
+          ar = ag = ab = 0;
+          tap(X0, Y0, w00);
+          tap(X0 + 1, Y0, w10);
+          tap(X0, Y0 + 1, w01);
+          tap(X0 + 1, Y0 + 1, w11);
+          dst[d] = ar;
+          dst[d + 1] = ag;
+          dst[d + 2] = ab;
+        }
         dst[d + 3] = 255;
         drew = true;
       }
@@ -345,6 +402,13 @@ export class Bathymetry {
     const byAge = [...this.tiles.entries()].sort((a, b) => a[1].used - b[1].used);
     for (const [key] of byAge.slice(0, this.tiles.size - CACHE_MAX)) this.tiles.delete(key);
   }
+}
+
+function calm(pr: GeoProjection, W: number): number {
+  const b = geoPath(pr).bounds({ type: 'Sphere' });
+  const dia = Math.max(1, b[1][0] - b[0][0]);
+  const t = Math.min(1, Math.max(0, (dia / W - 1) / (BLUR_TO - 1)));
+  return BLUR_MAX * (1 - t);
 }
 
 interface Move {

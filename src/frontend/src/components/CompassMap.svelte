@@ -4,7 +4,7 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import Sidebar from './Sidebar.svelte';
   import Stage from './Stage.svelte';
-  import { Sheet, isMobile, onMobileChange } from '../lib/sheet';
+  import { Sheet, isMobile } from '../lib/sheet';
   import { DIM_IDS, SECTION_IDS, TYPE_DIM, buildDims } from '../lib/schema';
   import { toProjs } from '../lib/features';
   import { Stories, type StoryCount } from '../lib/stories';
@@ -18,7 +18,7 @@
     syncUrl,
     type QueryFilters,
   } from '../lib/urlstate';
-  import { prefersDark, REDUCED } from '../lib/projection';
+  import { prefersDark } from '../lib/projection';
   import { fmt, i18n, type Lang } from '../lib/i18n';
   import { styles } from '../lib/styles';
 
@@ -42,7 +42,6 @@
   let error: string | null = null;
   let mounted = false;
   let selectedId: string | null = null;
-  let collapsed = false;
   let night = prefersDark();
   let juston: string | null = null;
 
@@ -174,14 +173,13 @@
   }
 
   async function openEntry(p: Proj): Promise<void> {
-    if (collapsed || railOut) await setCollapsed(false);
     selectedId = p.id;
   }
 
   function settledStageWidth(): number {
     if (!mapcEl || isMobile()) return 0;
     const total = mapcEl.clientWidth;
-    if (!total || collapsed) return 0;
+    if (!total) return 0;
     const rail = parseFloat(getComputedStyle(mapcEl).getPropertyValue('--rail')) || 0;
     return Math.max(0, total - rail);
   }
@@ -208,76 +206,6 @@
     if (sheet?.mobile) sheet.to('detail');
     await tick();
     titleEl?.focus({ preventScroll: true });
-  }
-
-  let railOut = false;
-  const RAIL_MS = 340;
-  let railTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function setRailInert(on: boolean): void {
-    if (sidebarEl) sidebarEl.inert = on;
-  }
-
-  function setCollapsed(on: boolean): Promise<void> {
-    if (on && isMobile()) return Promise.resolve();
-    if (railTimer) {
-      clearTimeout(railTimer);
-      railTimer = null;
-    }
-    if (on) {
-      closeRail();
-      return Promise.resolve();
-    }
-    return openRail();
-  }
-
-  async function openRail(): Promise<void> {
-    if (!collapsed && !railOut) return;
-    if (isMobile()) {
-      railOut = false;
-      collapsed = false;
-      await tick();
-      setRailInert(false);
-      return;
-    }
-    railOut = true;
-    collapsed = false;
-    await tick();
-    if (sidebarEl) {
-      sidebarEl.style.transition = 'none';
-      void sidebarEl.offsetWidth;
-      sidebarEl.style.transition = '';
-    }
-    setRailInert(false);
-    stageComp?.absorbResize();
-    stageComp?.refresh(true);
-    if (REDUCED.matches) {
-      railOut = false;
-      return;
-    }
-    requestAnimationFrame(() => {
-      railOut = false;
-    });
-  }
-
-  function closeRail(): void {
-    if (collapsed) return;
-    railOut = true;
-    setRailInert(true);
-    const settle = () => {
-      railTimer = null;
-      collapsed = true;
-      railOut = false;
-      tick().then(() => {
-        stageComp?.absorbResize();
-        stageComp?.refresh(true);
-      });
-    };
-    if (REDUCED.matches) {
-      settle();
-      return;
-    }
-    railTimer = setTimeout(settle, RAIL_MS);
   }
 
   onMount(async () => {
@@ -308,14 +236,8 @@
     });
     sheet.wire();
 
-    unlistenBreakpoint = onMobileChange((mobile) => {
-      if (mobile) setCollapsed(false);
-    });
-
     mounted = true;
   });
-
-  let unlistenBreakpoint: (() => void) | null = null;
 
   function applyFilters(f: Record<string, unknown>): void {
     const next = emptySel();
@@ -326,9 +248,7 @@
   }
 
   onDestroy(() => {
-    if (railTimer) clearTimeout(railTimer);
     sheet?.destroy();
-    unlistenBreakpoint?.();
     stories.cancel();
   });
 
@@ -341,14 +261,7 @@
 {@html `<style>${styles}</style>`}
 
 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<main
-  class="mapc"
-  class:collapsed
-  class:railout={railOut}
-  class:night
-  bind:this={mapcEl}
-  on:keydown={onRootKey}
->
+<main class="mapc" class:night bind:this={mapcEl} on:keydown={onRootKey}>
   <h1 class="sr">{t.srPageTitle}</h1>
   <div class="sheet-backdrop" bind:this={backdropEl} aria-hidden="true"></div>
 
@@ -370,7 +283,6 @@
     onToggleOption={toggleOption}
     onPickType={pickType}
     onReset={reset}
-    onCollapse={() => setCollapsed(true)}
     onBack={dismissEntry}
     onCloseDetail={dismissEntry}
     onFilterByTag={filterByTag}
@@ -391,8 +303,6 @@
     {error}
     onSelect={(p) => (p ? openEntry(p) : dismissEntry())}
     onTheme={(n) => (night = n)}
-    openerLabel={selected ? t.detailsPane : t.filtersPane}
-    onOpen={() => setCollapsed(false)}
     onLang={(l) => (lang = l)}
     lift={() => sheet?.lift() ?? 0}
     sheetEl={sidebarEl}

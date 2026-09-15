@@ -53,7 +53,10 @@ async def get_entities(
     response_model=FacetCounts,
     summary="Facet counts for the current selection",
     description=(
-        "Per-tag entity counts for the current selection (drill-down faceting). "
+        "Per-tag entity counts for the current selection: each count is how "
+        "many results remain if that tag is added to the selection. Tags within "
+        "a dimension combine with AND, so a count can only shrink as more are "
+        "picked; entityType is disjunctive and keeps drill-down counts. "
         "Returns {dimensionId: {tagIri: count}}. One SPARQL count query runs per "
         "tag dimension."
     ),

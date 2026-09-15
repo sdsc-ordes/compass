@@ -567,30 +567,6 @@
     opacity: 1;
   }
 }
-.opener {
-  position: absolute;
-  left: 18px;
-  top: 18px;
-  z-index: 5;
-  display: none;
-  align-items: center;
-  gap: 9px;
-  background: var(--stage-surface);
-  border: 1px solid var(--land-hi);
-  color: var(--stage-ink);
-  font-size: 15px;
-  font-weight: 700;
-  padding: 9px 15px;
-}
-.opener:hover {
-  border-color: var(--cerulean);
-}
-.mapc.collapsed .opener {
-  display: flex;
-}
-.mapc.collapsed .attrib {
-  display: none;
-}
 .plate {
   position: absolute;
   inset: auto 0 50% 0;
@@ -619,9 +595,6 @@
 }
 
 @media (max-width: 860px) {
-  .opener {
-    display: none !important;
-  }
   .coach-mid {
     max-width: calc(100vw - 32px);
   }
