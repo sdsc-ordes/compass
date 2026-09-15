@@ -156,9 +156,18 @@
 
   /* ---------- story count: the one thing here that needs a backend ---------- */
   let storyCount: StoryCount | null = null;
-  const stories = new Stories((c) => {
-    storyCount = c;
-  });
+  /* The stories request is the slow one — the backend proxies a live call out to
+     the provider — so the tally says it is working rather than leaving a stale
+     number looking current. */
+  let storiesPending = false;
+  const stories = new Stories(
+    (c) => {
+      storyCount = c;
+    },
+    (p) => {
+      storiesPending = p;
+    },
+  );
 
   /**
    * Every tag IRI currently active, entityType excluded.
@@ -509,6 +518,7 @@
     {facets}
     {resultCount}
     {storyCount}
+    {storiesPending}
     {statusText}
     {anyFilters}
     {selected}

@@ -1,0 +1,41 @@
+/* ---------- the loading indicator ----------
+
+   Two places in the widget are slow enough to need one. The story count is the
+   backend proxying a live call out to the provider, measured at 1.6-2.8s with
+   300ms of debounce in front of it; the map plate is up for as long as the wasm
+   engine takes to boot.
+
+   A ring, at the size the host asks for. It is the one circle in a component
+   whose every control is square: the design system's "kein Radius" is about
+   buttons and boxes, and a spinner that is not round is not a spinner.
+
+   --land-hi for the track, which is the panel's own rule colour, and --cerulean
+   for the head, which is what underlines a text action everywhere else here. The
+   pair reads as this widget's rather than as a borrowed default. */
+.spinner {
+  width: var(--spin-size, 26px);
+  height: var(--spin-size, 26px);
+  margin: 0 auto;
+  border: 3px solid var(--land-hi);
+  border-top-color: var(--cerulean);
+  border-radius: 50%;
+  /* transform only, which composites without laying anything out — in the tally
+     this sits directly above a list that must not reflow. */
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Motion is the wrong channel for anyone who has asked for less of it. The ring
+   still has to say the box is not finished, so it holds as a complete ring in
+   one tone rather than a turning gap, which would read as a thing stopped
+   mid-way. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-color: var(--land-hi);
+    opacity: 0.7;
+  }
+}

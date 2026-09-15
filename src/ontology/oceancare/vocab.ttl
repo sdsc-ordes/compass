@@ -36,6 +36,8 @@ compass:AdvocacyWork
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Advocacy Work"@en ;
     skos:prefLabel "Advocacy Arbeit"@de ;
+    skos:definition "Campaigning to change the laws, policies and international agreements that govern the sea."@en ;
+    skos:definition "Einsatz für Gesetze, politische Massnahmen und internationale Abkommen, die das Meer regeln."@de ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -43,6 +45,8 @@ compass:CommunityInvolvement
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Community Involvement"@en ;
     skos:prefLabel "Aktiv werden"@de ;
+    skos:definition "Working alongside coastal communities and volunteers on protection close to home."@en ;
+    skos:definition "Zusammenarbeit mit Küstengemeinden und Freiwilligen für den Schutz vor Ort."@de ;
     compass:wpTagId "451"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
@@ -51,6 +55,8 @@ compass:Events
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Events"@en ;
     skos:prefLabel "Veranstaltungen"@de ;
+    skos:definition "Talks, exhibitions and public gatherings that carry ocean issues to a wider audience."@en ;
+    skos:definition "Vorträge, Ausstellungen und öffentliche Anlässe, die Meeresthemen einem breiteren Publikum näherbringen."@de ;
     compass:wpTagId "425"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
@@ -59,6 +65,8 @@ compass:Petitions
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Petitions"@en ;
     skos:prefLabel "Petitionen"@de ;
+    skos:definition "Collecting signatures to press decision-makers on one specific demand."@en ;
+    skos:definition "Sammeln von Unterschriften, um Entscheidungsträgerinnen und Entscheidungsträger zu einer konkreten Forderung zu bewegen."@de ;
     compass:wpTagId "443"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
@@ -67,6 +75,8 @@ compass:RescueActivities
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Rescue Activities"@en ;
     skos:prefLabel "Tierrettung"@de ;
+    skos:definition "Rescuing, treating and releasing marine animals in distress."@en ;
+    skos:definition "Rettung, Behandlung und Auswilderung von Meerestieren in Not."@de ;
     compass:wpTagId "440"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
@@ -75,6 +85,8 @@ compass:ResearchExpeditions
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Research Expeditions"@en ;
     skos:prefLabel "Mitforschen"@de ;
+    skos:definition "Voyages that gather data at sea, often aboard research vessels."@en ;
+    skos:definition "Fahrten, die Daten auf See sammeln, oft an Bord von Forschungsschiffen."@de ;
     compass:wpTagId "158"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
@@ -83,6 +95,8 @@ compass:ScientificResearch
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Scientific Research"@en ;
     skos:prefLabel "Wissenschaftliche Forschung"@de ;
+    skos:definition "Studies and analyses that supply the evidence behind conservation decisions."@en ;
+    skos:definition "Studien und Analysen, welche die Grundlage für Schutzentscheide liefern."@de ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -105,6 +119,8 @@ compass:AnimalConservation
     a skos:Concept, compass:Conservation ;
     skos:prefLabel "Animal Conservation"@en ;
     skos:prefLabel "Tierschutz"@de ;
+    skos:definition "Protecting individual marine animals from harm, capture and disturbance."@en ;
+    skos:definition "Schutz einzelner Meerestiere vor Schädigung, Fang und Störung."@de ;
     skos:inScheme compass:ConservationScheme ;
     skos:topConceptOf compass:ConservationScheme .
 
@@ -112,6 +128,8 @@ compass:OceanConservation
     a skos:Concept, compass:Conservation ;
     skos:prefLabel "Ocean Conservation"@en ;
     skos:prefLabel "Meeresschutz"@de ;
+    skos:definition "Protecting marine habitats and the health of the ocean as a whole."@en ;
+    skos:definition "Schutz mariner Lebensräume und der Gesundheit des Ozeans als Ganzes."@de ;
     skos:inScheme compass:ConservationScheme ;
     skos:topConceptOf compass:ConservationScheme .
 
@@ -119,6 +137,8 @@ compass:SpeciesConservation
     a skos:Concept, compass:Conservation ;
     skos:prefLabel "Species Conservation"@en ;
     skos:prefLabel "Artenschutz"@de ;
+    skos:definition "Safeguarding entire species and populations against decline and extinction."@en ;
+    skos:definition "Bewahrung ganzer Arten und Populationen vor Rückgang und Aussterben."@de ;
     compass:wpTagId "455"^^xsd:integer ;
     skos:inScheme compass:ConservationScheme ;
     skos:topConceptOf compass:ConservationScheme .
@@ -149,6 +169,8 @@ compass:AquaticWildMeat
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Aquatic Wild Meat"@en ;
     skos:prefLabel "Aquatic Wild Meat"@de ;
+    skos:definition "The hunting of aquatic mammals, reptiles and birds for their meat."@en ;
+    skos:definition "Die Jagd auf Wassersäugetiere, -reptilien und -vögel zur Fleischgewinnung."@de ;
     compass:wpTagId "445"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -157,6 +179,8 @@ compass:ClimateProtection
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Climate Protection"@en ;
     skos:prefLabel "Klimaschutz"@de ;
+    skos:definition "Limiting climate change and its effects on the ocean's temperature, chemistry and ice."@en ;
+    skos:definition "Begrenzung des Klimawandels und seiner Folgen für Temperatur, Chemie und Eis der Meere."@de ;
     compass:wpTagId "447"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -165,6 +189,8 @@ compass:Collisions
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Collisions"@en ;
     skos:prefLabel "Kollisionen"@de ;
+    skos:definition "Ships striking whales and other large marine animals."@en ;
+    skos:definition "Zusammenstösse von Schiffen mit Walen und anderen grossen Meerestieren."@de ;
     compass:wpTagId "492"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -173,6 +199,8 @@ compass:DeepSeaMining
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Deep-Sea Mining"@en ;
     skos:prefLabel "Tiefseebergbau"@de ;
+    skos:definition "Extracting minerals from the sea floor, and the habitats that destroys."@en ;
+    skos:definition "Abbau von Mineralien am Meeresboden und die dabei zerstörten Lebensräume."@de ;
     compass:wpTagId "145"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -181,6 +209,8 @@ compass:Fisheries
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Fisheries"@en ;
     skos:prefLabel "Fischerei"@de ;
+    skos:definition "Commercial and small-scale fishing, including bycatch and overfishing."@en ;
+    skos:definition "Kommerzielle und kleingewerbliche Fischerei, einschliesslich Beifang und Überfischung."@de ;
     compass:wpTagId "892"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -189,6 +219,8 @@ compass:FossilFuels
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Fossil Fuels"@en ;
     skos:prefLabel "Fossile Brennstoffe"@de ;
+    skos:definition "The search for oil and gas at sea, and its extraction and transport."@en ;
+    skos:definition "Die Suche nach Öl und Gas auf See sowie deren Förderung und Transport."@de ;
     compass:wpTagId "906"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -197,6 +229,8 @@ compass:Geoengineering
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Geoengineering"@en ;
     skos:prefLabel "Geoengineering"@de ;
+    skos:definition "Large-scale technical intervention in the ocean intended to counter climate change."@en ;
+    skos:definition "Grosstechnische Eingriffe in den Ozean, die dem Klimawandel entgegenwirken sollen."@de ;
     compass:wpTagId "889"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -205,6 +239,8 @@ compass:Hunting
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Hunting"@en ;
     skos:prefLabel "Bejagung"@de ;
+    skos:definition "The killing of marine mammals, commercial and so-called scientific whaling included."@en ;
+    skos:definition "Die Tötung von Meeressäugern, einschliesslich des kommerziellen und des sogenannten wissenschaftlichen Walfangs."@de ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -212,6 +248,8 @@ compass:OutOfHabitat
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Out of Habitat"@en ;
     skos:prefLabel "Out of Habitat"@de ;
+    skos:definition "Marine animals held in captivity or stranded far outside their natural range."@en ;
+    skos:definition "Meerestiere in Gefangenschaft oder weit ausserhalb ihres natürlichen Verbreitungsgebiets."@de ;
     compass:wpTagId "907"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -220,6 +258,8 @@ compass:Shipping
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Shipping"@en ;
     skos:prefLabel "Schifffahrt"@de ;
+    skos:definition "Merchant traffic at sea, and the noise, strikes and emissions that come with it."@en ;
+    skos:definition "Handelsschifffahrt und der damit verbundene Lärm, die Kollisionen und die Emissionen."@de ;
     compass:wpTagId "870"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
@@ -243,6 +283,8 @@ compass:ChemicalPollution
     a skos:Concept, compass:Pollution ;
     skos:prefLabel "Chemical Pollution"@en ;
     skos:prefLabel "Chemische Verschmutzung"@de ;
+    skos:definition "Toxic substances reaching the sea from industry, agriculture and shipping."@en ;
+    skos:definition "Giftstoffe, die aus Industrie, Landwirtschaft und Schifffahrt ins Meer gelangen."@de ;
     compass:wpTagId "845"^^xsd:integer ;
     skos:inScheme compass:PollutionScheme ;
     skos:topConceptOf compass:PollutionScheme .
@@ -251,6 +293,8 @@ compass:OceanNoisePollution
     a skos:Concept, compass:Pollution ;
     skos:prefLabel "Ocean Noise Pollution"@en ;
     skos:prefLabel "Unterwasserlärmverschmutzung"@de ;
+    skos:definition "Human-made underwater noise that masks the sounds marine animals depend on."@en ;
+    skos:definition "Vom Menschen erzeugter Unterwasserlärm, der die Laute überdeckt, auf die Meerestiere angewiesen sind."@de ;
     compass:wpTagId "142"^^xsd:integer ;
     skos:inScheme compass:PollutionScheme ;
     skos:topConceptOf compass:PollutionScheme .
@@ -259,6 +303,8 @@ compass:PlasticPollution
     a skos:Concept, compass:Pollution ;
     skos:prefLabel "Plastic Pollution"@en ;
     skos:prefLabel "Plastikverschmutzung"@de ;
+    skos:definition "Plastic waste that reaches the sea and breaks down into lasting fragments."@en ;
+    skos:definition "Plastikabfall, der ins Meer gelangt und zu langlebigen Partikeln zerfällt."@de ;
     compass:wpTagId "143"^^xsd:integer ;
     skos:inScheme compass:PollutionScheme ;
     skos:topConceptOf compass:PollutionScheme .
@@ -290,6 +336,8 @@ compass:Corals
     a skos:Concept, compass:Species ;
     skos:prefLabel "Corals"@en ;
     skos:prefLabel "Korallen"@de ;
+    skos:definition "Reef-building animals whose colonies shelter a quarter of all marine life."@en ;
+    skos:definition "Riffbildende Tiere, deren Kolonien einem Viertel aller Meereslebewesen Lebensraum bieten."@de ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -297,6 +345,8 @@ compass:Dolphins
     a skos:Concept, compass:Species ;
     skos:prefLabel "Dolphins"@en ;
     skos:prefLabel "Delfine"@de ;
+    skos:definition "Small, highly social toothed whales, at home in the oceans and in some rivers."@en ;
+    skos:definition "Kleine, hochsoziale Zahnwale, zu Hause in den Ozeanen und in einigen Flüssen."@de ;
     compass:wpTagId "148"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -305,6 +355,8 @@ compass:Fish
     a skos:Concept, compass:Species ;
     skos:prefLabel "Fish"@en ;
     skos:prefLabel "Fische"@de ;
+    skos:definition "Gill-breathing vertebrates, from coastal shoals to species of the deep sea."@en ;
+    skos:definition "Kiemenatmende Wirbeltiere, von Küstenschwärmen bis zu Arten der Tiefsee."@de ;
     compass:wpTagId "918"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -313,6 +365,8 @@ compass:Manatees
     a skos:Concept, compass:Species ;
     skos:prefLabel "Manatee"@en ;
     skos:prefLabel "Manatis"@de ;
+    skos:definition "Slow-moving, plant-eating coastal mammals, also known as sea cows."@en ;
+    skos:definition "Langsame, pflanzenfressende Küstensäuger, auch Seekühe genannt."@de ;
     compass:wpTagId "436"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -321,6 +375,8 @@ compass:Orcas
     a skos:Concept, compass:Species ;
     skos:prefLabel "Orcas"@en ;
     skos:prefLabel "Orcas"@de ;
+    skos:definition "The largest of the dolphins, living in stable family groups with dialects of their own."@en ;
+    skos:definition "Die grössten Delfine, die in stabilen Familienverbänden mit eigenen Dialekten leben."@de ;
     compass:wpTagId "897"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -329,6 +385,8 @@ compass:PolarBears
     a skos:Concept, compass:Species ;
     skos:prefLabel "Polar Bears"@en ;
     skos:prefLabel "Eisbären"@de ;
+    skos:definition "Arctic predators that hunt from the sea ice and depend on how far it reaches."@en ;
+    skos:definition "Arktische Raubtiere, die vom Meereis aus jagen und auf dessen Ausdehnung angewiesen sind."@de ;
     compass:wpTagId "429"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -337,6 +395,8 @@ compass:SeaTurtles
     a skos:Concept, compass:Species ;
     skos:prefLabel "Sea Turtles"@en ;
     skos:prefLabel "Meeresschildkröten"@de ;
+    skos:definition "Long-lived marine reptiles that return to the beaches of their birth to lay eggs."@en ;
+    skos:definition "Langlebige Meeresreptilien, die zur Eiablage an ihre Geburtsstrände zurückkehren."@de ;
     compass:wpTagId "437"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -345,6 +405,8 @@ compass:Seals
     a skos:Concept, compass:Species ;
     skos:prefLabel "Seals"@en ;
     skos:prefLabel "Robben"@de ;
+    skos:definition "Marine mammals that feed at sea and rest on shores and ice."@en ;
+    skos:definition "Meeressäuger, die im Meer fressen und an Küsten und auf Eis ruhen."@de ;
     compass:wpTagId "149"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -353,6 +415,8 @@ compass:Sharks
     a skos:Concept, compass:Species ;
     skos:prefLabel "Sharks"@en ;
     skos:prefLabel "Haie"@de ;
+    skos:definition "Cartilaginous fish, many of them slow to reproduce and heavily fished."@en ;
+    skos:definition "Knorpelfische, von denen sich viele langsam fortpflanzen und stark befischt werden."@de ;
     compass:wpTagId "433"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
@@ -361,6 +425,8 @@ compass:SmallCetaceans
     a skos:Concept, compass:Species ;
     skos:prefLabel "Small Cetaceans"@en ;
     skos:prefLabel "Kleinwale"@de ;
+    skos:definition "Dolphins, porpoises and lesser whales, barely covered by the whaling treaties."@en ;
+    skos:definition "Delfine, Schweinswale und Kleinwale, die von den Walfangabkommen kaum erfasst werden."@de ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
@@ -368,6 +434,8 @@ compass:Whales
     a skos:Concept, compass:Species ;
     skos:prefLabel "Whales"@en ;
     skos:prefLabel "Wale"@de ;
+    skos:definition "The largest of the marine mammals, migrating across entire ocean basins."@en ;
+    skos:definition "Die grössten Meeressäuger, die ganze Ozeanbecken durchwandern."@de ;
     compass:wpTagId "147"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
