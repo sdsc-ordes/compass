@@ -104,6 +104,18 @@ export const ICONS = {
   folder: [
     'M3.5 18.4V6.6A1.6 1.6 0 0 1 5.1 5h3.8a1.6 1.6 0 0 1 1.28 0.64l1.22 1.66h7.5a1.6 1.6 0 0 1 1.6 1.6v9.5a1.6 1.6 0 0 1-1.6 1.6H5.1a1.6 1.6 0 0 1-1.6-1.6Z',
   ],
+  /** Conservation: a shield. The dimension is what is being protected (animals,
+      species, the ocean itself), and a shield is the one glyph that says
+      "protected" without naming any of the three. */
+  shield: [
+    'M12 3.2 19.3 5.9v6.2c0 4.3-3 7.7-7.3 9-4.3-1.3-7.3-4.7-7.3-9V5.9Z',
+  ],
+  /** Pollution: a droplet. It has to cover chemical, plastic and noise
+      pollution at once, so it stands for the contaminant rather than for any
+      one of them — noise included, which no literal glyph would share. */
+  droplet: [
+    'M12 3.3c3.5 4.1 5.5 7 5.5 9.6a5.5 5.5 0 0 1-11 0c0-2.6 2-5.5 5.5-9.6Z',
+  ],
   /** A stand-in pin for the coach to tap. Not the canvas pin — that one is drawn
       by lib/pins.ts and lives in a different coordinate space entirely. */
   pinMini: [
