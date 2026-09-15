@@ -702,6 +702,13 @@
    that affordance from the .hint block, which the coach animation replaced; this
    is the only place left using it.) Left-aligned and capped: the engine's own
    message is appended to it and can run long. */
+/* The wait's ring, over the words. Larger than the tally's: this plate sits on
+   the map at 20px type, where the sidebar's 26px ring would read as a detail
+   rather than as the thing to wait on. */
+.plate-load .spinner {
+  --spin-size: 34px;
+  margin-bottom: 10px;
+}
 .plate-error.show {
   border-left: 6px solid var(--sienna);
   max-width: 420px;

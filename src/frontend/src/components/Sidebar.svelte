@@ -1,8 +1,8 @@
 <script lang="ts">
   /**
    * The 420px filter sidebar: the head, the tally, the type pills, the accordion
-   * of the four remaining dimensions — and, while an entry is selected, the
-   * detail pane that takes the same panel over.
+   * of the remaining dimensions — and, while an entry is selected, the detail
+   * pane that takes the same panel over.
    *
    * The type does not stack with the others. It is drawn in the results block as
    * counted pills, because it is the one dimension whose counts describe the
@@ -12,7 +12,6 @@
   import Tally from './Tally.svelte';
   import TypePills from './TypePills.svelte';
   import FilterAccordion from './FilterAccordion.svelte';
-  import StoriesBlock from './StoriesBlock.svelte';
   import { plural, storyLine, type Strings } from '../lib/i18n';
   /* Inlined as a data URI by assetsInlineLimit — see vite.config.ts. */
   import logoSrc from '../assets/oceancare.png';
@@ -30,6 +29,8 @@
   export let resultCount = 0;
   /** Story total for the current selection — null whenever no backend answered. */
   export let storyCount: { count: number; url: string } | null = null;
+  /** True while a story count is debouncing or in flight. */
+  export let storiesPending = false;
   export let statusText = '';
   export let anyFilters = false;
   export let selected: Proj | null = null;
@@ -132,19 +133,28 @@
   </div>
 
   <div class="pane-filters">
-    <!-- Stories lead the pane: going to read is the errand we want to invite, and
-         the result count describes what the map is already showing. On a phone
-         the order is turned back over in CSS — see .pane-filters there: the dock
-         stop shows whatever is first, and the tally is the band whose height is
-         measured into --dock. -->
-    {#if storyCount}
-      <StoriesBlock {t} {storyCount} />
-    {/if}
-    <Tally {t} {resultCount} {anyFilters} {statusText} {onReset} bind:tallyEl />
+    <!-- The panel's one primary action and the line under it. Also the block
+         whose height is measured into --dock, so on a phone it is what the dock
+         stop shows. -->
+    <Tally {t} {resultCount} {storyCount} {storiesPending} {statusText} bind:tallyEl />
     <!-- Below the tally on purpose: the counts on these pills add up to the
-         number above them, so they read as that number broken apart. Outside the
-         band the mobile dock measures, though — see lib/sheet.ts. -->
+         result count above them, so they read as that number broken apart.
+         Outside the block the mobile dock measures, though — see lib/sheet.ts. -->
     <TypePills bind:this={pills} {t} dim={typeDim} {sel} {facets} {juston} {onPickType} />
+    <!-- The reset sits with the filters rather than up in the results, because
+         clearing them is a filter action: it is reached from the same place the
+         work was done, and the block above is left with one errand. It heads the
+         stack rather than following it — the sections below can be long, and an
+         undo at the far end of a scroll is an undo nobody finds. -->
+    <div class="resetrow">
+      <button
+        class="reset"
+        class:off={!anyFilters}
+        type="button"
+        disabled={!anyFilters}
+        on:click={onReset}>{t.resetFiltersLong}</button
+      >
+    </div>
     <FilterAccordion
       bind:this={acc}
       {t}
