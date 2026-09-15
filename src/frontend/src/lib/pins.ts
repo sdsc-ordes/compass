@@ -13,6 +13,18 @@ import type { Pal } from './palette';
 import { frontCentre, K_MAX, REDUCED, type ViewState } from './projection';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
+/**
+ * The pin's outer edge — Astronaut, and the same in both themes.
+ *
+ * Not a palette entry, because what it has to separate the pin from is the
+ * depth raster, and GEBCO's colours do not change when the theme does. It pairs
+ * with the white edge inside it: over the raster, Deep Cerulean alone measured
+ * 1.8:1 against the ocean with three quarters of it under 3:1, where whichever
+ * of these two is contributing measures 4.9:1 with 2.4% under. One light edge
+ * and one dark one is the same trick the place names use — see --halo.
+ */
+const PIN_EDGE = '#2A4E71';
+
 /* Google Maps–style teardrop pin; (x,y) is the ground anchor at the tip. */
 const pinMetrics = (sc: number) => ({
   sc,
@@ -63,11 +75,18 @@ export function drawGmapsPin(
   ctx.fillStyle = edge;
   ctx.fill();
   gmapsPinPath(ctx, x, y, m);
+  /* Both edges are stroked before the fill, widest first, and the fill then
+     takes back everything inside the outline: what is left is a thin dark edge
+     outside a thicker white one, without either eating into the pin's colour. */
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 4 * m.sc;
+  ctx.stroke();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.4 * m.sc;
+  ctx.stroke();
   ctx.fillStyle = fill;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.12)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
   ctx.beginPath();
   ctx.arc(x, headCy, 4.2 * m.sc, 0, 6.2832);
   ctx.fillStyle = '#fff';
@@ -97,6 +116,14 @@ export function drawCluster(
   ctx.fill();
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 2;
+  ctx.stroke();
+  /* The disc already had white against the sea and a soft dark disc behind it.
+     Over the raster that dark was too faint to count, so it gets the crisp
+     outer edge the teardrop now carries, for the same reason. */
+  ctx.beginPath();
+  ctx.arc(x, y, R + 1.6, 0, 6.2832);
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 1;
   ctx.stroke();
   ctx.fillStyle = '#fff';
   ctx.font = '700 ' + (n > 9 ? 12 : 13) + 'px Cabin, system-ui, sans-serif';
