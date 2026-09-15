@@ -224,18 +224,25 @@ def _special_selects() -> str:
     return "           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n"
 
 
-def _union_or_single(parts: list[str]) -> str:
-    """Join alternative graph patterns with UNION, or return the sole pattern.
+def _distinct(values: list[str]) -> list[str]:
+    """Drop empties and repeats from a dimension's selected values, in order.
+
+    A repeated value would compile to a second identical required pattern,
+    which constrains nothing and only makes the query longer.
 
     Args:
-        parts: Individual pattern strings.
+        values: Raw query-parameter values for one dimension.
 
     Returns:
-        A single pattern or a braced UNION of several.
+        The non-empty values, first occurrence order preserved.
     """
-    if len(parts) > 1:
-        return "{ " + " } UNION { ".join(parts) + " }"
-    return parts[0]
+    seen: set[str] = set()
+    out: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            out.append(value)
+    return out
 
 
 def _build_where_clauses(
@@ -249,8 +256,17 @@ def _build_where_clauses(
 ) -> list[str]:
     """Translate HTTP query params into SPARQL WHERE fragments.
 
-    ``exclude_key`` drops that dimension's own constraints, so facet counts for a
-    dimension are not shrunk by the selection within it (drill-down faceting).
+    Values picked within one tag dimension are conjunctive: each becomes its own
+    required triple pattern, so picking a second value narrows the selection.
+    Dimensions are conjunctive with each other for the same reason -- every
+    clause lands in the same group. ``entityType`` is the exception and stays
+    disjunctive: an entity has exactly one class, so requiring two would return
+    nothing (see the ``FILTER(... IN ...)`` branch below).
+
+    ``exclude_key`` drops that dimension's own constraints. It is the drill-down
+    device for a disjunctive dimension, whose unpicked values would otherwise all
+    count zero; a conjunctive dimension wants its own selection kept, so
+    ``build_facet_query`` passes this only for ``entityType``.
 
     Args:
         query_params: Starlette/FastAPI query parameter multi-dict.
@@ -258,7 +274,7 @@ def _build_where_clauses(
         range_filters: Slider property id → (predicate, datatype).
         date_filters: Datepicker property id → prefixed predicate.
         subject: Variable naming for pin vs region-pin copies.
-        exclude_key: Dimension id to ignore (faceting).
+        exclude_key: Dimension id to ignore (disjunctive-dimension faceting).
 
     Returns:
         List of SPARQL pattern / FILTER lines.
@@ -274,16 +290,21 @@ def _build_where_clauses(
 
         if key in filter_map:
             prop = filter_map[key]
-            parts = []
-            for v in values:
+            # Every picked value is its own required pattern, so a second pick
+            # narrows the selection instead of widening it: "dolphins AND
+            # whales" means the entities that carry both tags. The literal
+            # branch needs a fresh variable per value -- one variable cannot
+            # equal two different literals at once, and reusing it would match
+            # nothing.
+            for index, v in enumerate(_distinct(values)):
                 if _is_iri_value(v):
-                    parts.append(f"{subj} {prop} {iri_term(v)} .")
+                    where_clauses.append(f"{subj} {prop} {iri_term(v)} .")
                 else:
-                    parts.append(
-                        f"{subj} {prop} {var} . FILTER(str({var}) = {string_literal(v)})"
+                    val_var = f"{var}{index}"
+                    where_clauses.append(
+                        f"{subj} {prop} {val_var} . "
+                        f"FILTER(str({val_var}) = {string_literal(v)})"
                     )
-            if parts:
-                where_clauses.append(_union_or_single(parts))
 
         elif key in date_filters:
             try:
@@ -299,6 +320,11 @@ def _build_where_clauses(
         elif key == ENTITY_TYPE_ID:
             iri_list = ", ".join(iri_term(v) for v in values if _is_iri_value(v))
             if iri_list:
+                # Disjunctive on purpose, unlike the tag dimensions above: an
+                # entity has exactly one rdf:type, so requiring two picked
+                # classes at once would empty the map. Picking Project and
+                # Network means "either".
+                #
                 # A region has no type of its own to filter, so the legend
                 # reaches it through the pins: hide every Project and a region
                 # holding only projects stops being shaded.
@@ -358,6 +384,17 @@ def build_facet_query(
 ) -> str:
     """Count entities per value of one tag dimension.
 
+    A count reads "how many results if I also pick this". For a conjunctive tag
+    dimension that means the dimension's own selection stays in the query: a
+    second pick genuinely does shrink what is left reachable beside it, and the
+    count for an already-picked value is simply the current result total. Values
+    that would empty the map drop out of the results entirely, which is what the
+    panel dims.
+
+    ``entityType`` is the one disjunctive dimension, so it keeps the old
+    drill-down: its own picks are excluded, or every class the user has not
+    picked would count zero and look unpickable.
+
     Regions are background context rather than results (see the map's result
     badge, which counts point features only), so only the pin branch is counted.
 
@@ -372,8 +409,9 @@ def build_facet_query(
     """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
 
+    exclude_key = target_id if target_id == ENTITY_TYPE_ID else None
     where_clauses = _build_where_clauses(
-        query_params, filter_map, range_filters, date_filters, exclude_key=target_id
+        query_params, filter_map, range_filters, date_filters, exclude_key=exclude_key
     )
 
     sparql_where = _pin_branch(where_clauses)
