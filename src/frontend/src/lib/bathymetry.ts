@@ -63,6 +63,33 @@ const CACHE_MAX = 32;
 /** Tiles one pass may ask for; over this the source zoom steps down instead. */
 const MAX_TILES = 24;
 
+/**
+ * Three lon/lat the re-use test measures a view against — see `similarity`.
+ * Any three that are not collinear will do; these are all on the near side of
+ * the flat map, so a pan never puts them behind the globe by accident.
+ */
+const REF: [number, number][] = [
+  [0, 0],
+  [60, 0],
+  [0, 45],
+];
+
+/** How far, in pixels, a reference point may miss before a view counts as
+    reshaped rather than merely panned or zoomed. */
+const REF_TOL = 0.5;
+
+/**
+ * A finished full-quality pass, kept so that a pan or a zoom can re-use it.
+ * `ref` is where REF landed when it was drawn, which is all the re-use test
+ * needs: it never has to know which projection made it.
+ */
+interface Snapshot {
+  canvas: HTMLCanvasElement;
+  W: number;
+  H: number;
+  ref: [number, number][];
+}
+
 interface Tile {
   /** RGBA of a decoded tile, or null while it is loading or after it failed. */
   px: Uint8ClampedArray | null;
@@ -72,7 +99,11 @@ interface Tile {
 export class Bathymetry {
   private tiles = new Map<string, Tile>();
   private clock = 0;
+  /** Two buffers, not one: the settled pass has to survive being read back
+      while a drag renders into its own. */
   private buf: HTMLCanvasElement | null = null;
+  private dragBuf: HTMLCanvasElement | null = null;
+  private snap: Snapshot | null = null;
   private decoder: CanvasRenderingContext2D | null = null;
 
   /** True once a tile has decoded: the attribution and the switch wait for it. */
@@ -121,15 +152,12 @@ export class Bathymetry {
     ctx.fill();
 
     if (depth && !this.absent) {
-      const raster = this.reproject(pr, W, H, globe, interact, dpr);
       /* The sphere is still the current path, so it clips the raster to the
          map's own outline — the globe's rim included, exactly. */
-      if (raster) {
-        ctx.clip();
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(raster, 0, 0, W, H);
-      }
+      ctx.clip();
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      this.overlay(ctx, pr, W, H, globe, interact, dpr);
     }
     ctx.restore();
   }
@@ -137,8 +165,48 @@ export class Bathymetry {
   /** Drops every decoded tile. The stage calls this on destroy. */
   clear(): void {
     this.tiles.clear();
+    this.snap = null;
+    this.dragBuf = null;
     this.buf = null;
     this.decoder = null;
+  }
+
+  /* ---------- drawing ---------- */
+
+  /**
+   * Draws the depth raster into the already-clipped context.
+   *
+   * A hand on the map gets the settled pass back, moved, wherever that is
+   * possible. Re-projecting into the smaller buffer a drag can afford means
+   * sampling a coarser level of the pyramid, and at world scale the coarse
+   * levels are genuinely crude — one 512px tile for the whole Earth at z0. No
+   * budget fixes that, because the budget is what causes it.
+   *
+   * Moving the settled pass instead costs one drawImage and keeps its
+   * sharpness. It works because a pan or a zoom of the flat map is a similarity
+   * in screen space: d3 projections apply `scale` and `translate` last, so
+   * changing S.k, S.tx or S.ty moves every pixel the same way. Rotating the
+   * globe is not, and `similarity` says so rather than assuming.
+   */
+  private overlay(
+    ctx: CanvasRenderingContext2D,
+    pr: GeoProjection,
+    W: number,
+    H: number,
+    globe: boolean,
+    interact: boolean,
+    dpr: number,
+  ): void {
+    if (interact) {
+      const keep = this.snap;
+      const t = keep && keep.W === W && keep.H === H ? similarity(keep.ref, pr) : null;
+      if (keep && t && covered(t, keep, pr, W, H)) {
+        ctx.drawImage(keep.canvas, t.dx, t.dy, t.g * keep.W, t.g * keep.H);
+        return;
+      }
+    }
+    const raster = this.reproject(pr, W, H, globe, interact, dpr);
+    if (raster) ctx.drawImage(raster, 0, 0, W, H);
   }
 
   /* ---------- the reprojection ---------- */
@@ -153,6 +221,12 @@ export class Bathymetry {
   ): HTMLCanvasElement | null {
     const invert = pr.invert;
     if (!invert) return null;
+
+    /* Dropped up front and only restored on success. The snapshot describes
+       whatever is in the settled buffer right now, and this pass is about to
+       resize or overwrite it — a pass that then bails would otherwise leave a
+       description of pixels that are no longer there. */
+    if (!interact) this.snap = null;
 
     const dw = W * dpr,
       dh = H * dpr;
@@ -254,7 +328,7 @@ export class Bathymetry {
       }
     }
 
-    const out = this.buffer(rw, rh);
+    const out = this.buffer(rw, rh, interact);
     if (!out) return null;
     const ctx = out.getContext('2d', { willReadFrequently: true });
     if (!ctx) return null;
@@ -313,18 +387,40 @@ export class Bathymetry {
     }
     if (!drew) return null;
     ctx.putImageData(img, 0, 0);
+
+    /* Only a settled pass is worth keeping: re-using a drag's own reduced buffer
+       would hand the next frame something already softened. */
+    if (!interact) {
+      const ref: [number, number][] = [];
+      for (const ll of REF) {
+        const xy = pr(ll);
+        if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) {
+          ref.length = 0;
+          break;
+        }
+        ref.push([xy[0], xy[1]]);
+      }
+      this.snap = ref.length === REF.length ? { canvas: out, W, H, ref } : null;
+    }
     return out;
   }
 
-  /** The offscreen the raster is built in, re-sized only when it has to be. */
-  private buffer(w: number, h: number): HTMLCanvasElement | null {
+  /** The offscreen the raster is built in, re-sized only when it has to be.
+      A drag gets its own, so a fresh interactive pass cannot scribble over the
+      settled one it may be asked to re-use a frame later. */
+  private buffer(w: number, h: number, drag: boolean): HTMLCanvasElement | null {
     if (typeof document === 'undefined') return null;
-    if (!this.buf) this.buf = document.createElement('canvas');
-    if (this.buf.width !== w || this.buf.height !== h) {
-      this.buf.width = w;
-      this.buf.height = h;
+    let cv = drag ? this.dragBuf : this.buf;
+    if (!cv) {
+      cv = document.createElement('canvas');
+      if (drag) this.dragBuf = cv;
+      else this.buf = cv;
     }
-    return this.buf;
+    if (cv.width !== w || cv.height !== h) {
+      cv.width = w;
+      cv.height = h;
+    }
+    return cv;
   }
 
   /* ---------- tiles ---------- */
@@ -394,6 +490,71 @@ export class Bathymetry {
     const byAge = [...this.tiles.entries()].sort((a, b) => a[1].used - b[1].used);
     for (const [key] of byAge.slice(0, this.tiles.size - CACHE_MAX)) this.tiles.delete(key);
   }
+}
+
+/** A uniform scale and a shift: what a pan or a zoom does to every pixel. */
+interface Move {
+  g: number;
+  dx: number;
+  dy: number;
+}
+
+/**
+ * The move that carries a snapshot's view onto the current one, or null if no
+ * single move does.
+ *
+ * Derived from where the reference points are now rather than from the two
+ * projections' internals, so it needs to know nothing about fitExtent's margins
+ * or which projection is in play — and it stays right if either ever changes.
+ * Two points fix the scale and the shift; the third is the check that the view
+ * really was only panned or zoomed. A rotated globe fails it, as does a
+ * reshaped stage, and both then fall through to a fresh pass.
+ */
+function similarity(was: [number, number][], pr: GeoProjection): Move | null {
+  const now: [number, number][] = [];
+  for (const ll of REF) {
+    const xy = pr(ll);
+    if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) return null;
+    now.push([xy[0], xy[1]]);
+  }
+  const span = Math.hypot(was[1][0] - was[0][0], was[1][1] - was[0][1]);
+  if (span < 1) return null;
+  const g = Math.hypot(now[1][0] - now[0][0], now[1][1] - now[0][1]) / span;
+  if (!(g > 0) || !isFinite(g)) return null;
+  const dx = now[0][0] - g * was[0][0];
+  const dy = now[0][1] - g * was[0][1];
+  /* Every point, not just the spare one: an equal distance can also be reached
+     by a rotation or a mirror, which would smear the raster rather than move it. */
+  for (let i = 1; i < REF.length; i++) {
+    const ex = g * was[i][0] + dx - now[i][0];
+    const ey = g * was[i][1] + dy - now[i][1];
+    if (Math.hypot(ex, ey) > REF_TOL) return null;
+  }
+  return { g, dx, dy };
+}
+
+/**
+ * Whether the moved snapshot still reaches everything the map is about to draw.
+ *
+ * Only the sphere matters, not the whole stage: outside it the raster is
+ * clipped away. Zoomed out that is what makes a pan free — the sphere travels
+ * with the snapshot, so nothing new is ever exposed. Zoomed in far enough that
+ * the sphere overflows the stage, a pan does expose new ground, this returns
+ * false, and the pass is re-projected as before.
+ */
+function covered(t: Move, s: Snapshot, pr: GeoProjection, W: number, H: number): boolean {
+  const b = geoPath(pr).bounds({ type: 'Sphere' });
+  const nx0 = Math.max(0, b[0][0]),
+    ny0 = Math.max(0, b[0][1]),
+    nx1 = Math.min(W, b[1][0]),
+    ny1 = Math.min(H, b[1][1]);
+  if (nx1 <= nx0 || ny1 <= ny0) return true;
+  return (
+    t.dx <= nx0 + REF_TOL &&
+    t.dy <= ny0 + REF_TOL &&
+    t.g * s.W + t.dx >= nx1 - REF_TOL &&
+    t.g * s.H + t.dy >= ny1 - REF_TOL
+  );
 }
 
 /** Tiles a lattice's extent covers at 2^z per side. */
