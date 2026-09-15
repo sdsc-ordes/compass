@@ -51,7 +51,9 @@ export const P: Record<Theme, Pal> = {
     trench: 'rgba(255,255,255,.5)',
     ridge: 'rgba(255,255,255,.28)',
     lat: 'rgba(42,78,113,.22)',
-    pin: '#0171B4',
+    /* Astronaut, not Deep Cerulean: over the depth raster Cerulean measured
+       1.81:1 against the ocean, Astronaut 2.87:1. */
+    pin: '#2A4E71',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.18)',
     pinHalo: 'rgba(255,255,255,.45)',
@@ -75,7 +77,9 @@ export const P: Record<Theme, Pal> = {
     trench: 'rgba(200,225,245,.34)',
     ridge: 'rgba(200,225,245,.14)',
     lat: 'rgba(200,225,245,.18)',
-    pin: '#0171B4',
+    /* Light, because the night map's land is near-black: Cerulean sat on it at
+       3.44:1, this at 9.48:1. */
+    pin: '#8FC3E4',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.35)',
     pinHalo: 'rgba(127,182,218,.3)',

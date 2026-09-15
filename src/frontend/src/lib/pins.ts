@@ -25,6 +25,39 @@ import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from 
  */
 const PIN_EDGE = '#2A4E71';
 
+/** What is drawn ON a pin: the head's dot and a cluster's count. */
+const PIN_INK_LIGHT = '#FFFFFF';
+const PIN_INK_DARK = '#081827';
+
+const inkCache = new Map<string, string>();
+
+/**
+ * The ink that reads on a given pin colour.
+ *
+ * Derived rather than themed, because the pin colours no longer agree on
+ * lightness: light mode fills Astronaut and dark mode a pale blue, so a fixed
+ * white dot would have sat on the night pin at 1.89:1. It also lifts the
+ * selected pin, where white on Burnt Sienna measured 3.04:1 -- under the 4.5:1
+ * a cluster's 13px count needs.
+ */
+function inkOn(fill: string): string {
+  const held = inkCache.get(fill);
+  if (held) return held;
+  const m = /^#([0-9a-f]{6})$/i.exec(fill);
+  let ink = PIN_INK_LIGHT;
+  if (m) {
+    const n = parseInt(m[1], 16);
+    const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    const lum = 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+    ink = lum > 0.179 ? PIN_INK_DARK : PIN_INK_LIGHT;
+  }
+  inkCache.set(fill, ink);
+  return ink;
+}
+
 /* Google Maps–style teardrop pin; (x,y) is the ground anchor at the tip. */
 const pinMetrics = (sc: number) => ({
   sc,
@@ -89,7 +122,7 @@ export function drawGmapsPin(
   ctx.fill();
   ctx.beginPath();
   ctx.arc(x, headCy, 4.2 * m.sc, 0, 6.2832);
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = inkOn(fill);
   ctx.fill();
   ctx.restore();
   return { headCy, m, tipY: y };
@@ -125,7 +158,7 @@ export function drawCluster(
   ctx.strokeStyle = PIN_EDGE;
   ctx.lineWidth = 1;
   ctx.stroke();
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = inkOn(fill);
   ctx.font = '700 ' + (n > 9 ? 12 : 13) + 'px Cabin, system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
