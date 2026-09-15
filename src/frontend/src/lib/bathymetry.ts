@@ -39,9 +39,18 @@ const CELL = 8;
  * a smooth gradient, it is covered by the land and the pins, and a budget keeps
  * the cost of a pass the same on a laptop and on a 5K display. The lower figure
  * is for a hand still on the map, where 36ms is the whole frame.
+ *
+ * DEVICE pixels, which is what the canvas is sized in. Counting the stage's CSS
+ * pixels instead quietly multiplied the upscale by the pixel ratio, so the same
+ * budget that looked soft on a 1x laptop looked blocky on a retina display.
+ *
+ * The idle figure also holds the tile count down: a raster of this area needs
+ * about sixteen tiles, inside MAX_TILES with room to spare. Raise it much and
+ * the pass trips that cap instead, which steps the source zoom back down and
+ * gives back exactly the sharpness the bigger buffer was for.
  */
-const BUDGET_IDLE = 900_000;
-const BUDGET_DRAG = 160_000;
+const BUDGET_IDLE = 1_200_000;
+const BUDGET_DRAG = 500_000;
 
 /**
  * Decoded tiles held, at 1 MB each — this is the layer's whole memory budget,
@@ -99,6 +108,7 @@ export class Bathymetry {
     globe: boolean,
     interact: boolean,
     depth: boolean,
+    dpr: number,
   ): void {
     ctx.save();
     ctx.fillStyle = p.page;
@@ -111,7 +121,7 @@ export class Bathymetry {
     ctx.fill();
 
     if (depth && !this.absent) {
-      const raster = this.reproject(pr, W, H, globe, interact);
+      const raster = this.reproject(pr, W, H, globe, interact, dpr);
       /* The sphere is still the current path, so it clips the raster to the
          map's own outline — the globe's rim included, exactly. */
       if (raster) {
@@ -139,14 +149,20 @@ export class Bathymetry {
     H: number,
     globe: boolean,
     interact: boolean,
+    dpr: number,
   ): HTMLCanvasElement | null {
     const invert = pr.invert;
     if (!invert) return null;
 
+    const dw = W * dpr,
+      dh = H * dpr;
     const budget = interact ? BUDGET_DRAG : BUDGET_IDLE;
-    const scale = Math.min(1, Math.sqrt(budget / Math.max(1, W * H)));
-    const rw = Math.max(2, Math.round(W * scale));
-    const rh = Math.max(2, Math.round(H * scale));
+    const scale = Math.min(1, Math.sqrt(budget / Math.max(1, dw * dh)));
+    const rw = Math.max(2, Math.round(dw * scale));
+    const rh = Math.max(2, Math.round(dh * scale));
+    /* Raster pixels per CSS pixel: what turns a stage coordinate into a lattice
+       one, and what the source zoom below has to match. */
+    const perCss = rw / W;
 
     const cols = Math.ceil(rw / CELL);
     const rows = Math.ceil(rh / CELL);
@@ -168,7 +184,7 @@ export class Bathymetry {
          interpolation below assumes the nodes are CELL apart, and a short last
          cell would shift its pixels by up to half a cell. The inverse is just as
          defined a few pixels past the edge, and the sphere clips it anyway. */
-      const y = (j * CELL) / scale;
+      const y = (j * CELL) / perCss;
       /* Each row is unwrapped to be continuous across the antimeridian, then
          aligned to the row above it, so a cell never blends a longitude near
          +180 with one near -180 and smears the whole Pacific into one column.
@@ -176,7 +192,7 @@ export class Bathymetry {
       let prev = NaN;
       let first = NaN;
       for (let i = 0; i <= cols; i++) {
-        const x = (i * CELL) / scale;
+        const x = (i * CELL) / perCss;
         const k = j * (cols + 1) + i;
         const ll = invert([x, y]);
         if (!ll || !isFinite(ll[0]) || !isFinite(ll[1]) || Math.abs(ll[1]) > LAT_MAX) {
@@ -202,13 +218,18 @@ export class Bathymetry {
     }
     if (!isFinite(lo)) return null;
 
-    /* Source zoom: match the tiles' resolution to the map's. The flat map's
-       sphere bounds are a full turn of longitude; the globe shows a hemisphere
-       across its diameter, which is half a turn, so a whole turn is pi times the
-       radius on each side. */
+    /* Source zoom: match the tiles' resolution to the RASTER's, not the stage's.
+       The two differ by `perCss`, and picking for the stage while sampling into a
+       smaller buffer means point-sampling a source finer than the destination —
+       which aliases, and the upscale afterwards magnifies exactly that into the
+       blockiness a drag used to show.
+
+       The flat map's sphere bounds are a full turn of longitude; the globe shows
+       a hemisphere across its diameter, which is half a turn, so a whole turn is
+       pi times the radius on each side. */
     const b = geoPath(pr).bounds({ type: 'Sphere' });
     const dia = Math.max(1, b[1][0] - b[0][0]);
-    const worldPx = globe ? Math.PI * dia : dia;
+    const worldPx = (globe ? Math.PI * dia : dia) * perCss;
     let z = Math.max(0, Math.min(MAX_Z, Math.round(Math.log2(worldPx / TILE))));
 
     /* A wide view at a fine zoom would ask for hundreds of tiles; one step

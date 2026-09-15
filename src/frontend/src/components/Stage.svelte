@@ -305,7 +305,7 @@
     const ctx = water.getContext('2d');
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    bathy.paint(ctx, pr, W, H, P[S.theme], S.view === 'globe', interact, depth);
+    bathy.paint(ctx, pr, W, H, P[S.theme], S.view === 'globe', interact, depth, dpr);
     depthReady = bathy.ready;
   }
 
