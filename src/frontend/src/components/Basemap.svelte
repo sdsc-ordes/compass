@@ -2,13 +2,14 @@
   /**
    * The basemap's nodes, as markup rather than d3-selection appends: lib/basemap.ts
    * only ever sets attributes on them.
+   *
+   * Ink only — the ground and the sea are painted by the water canvas below this
+   * SVG, because the depth raster has to come between them and the land.
    */
   import type { BasemapRefs } from '../lib/basemap';
 
   let svg: SVGSVGElement;
   let world: SVGGElement;
-  let page: SVGRectElement;
-  let sea: SVGPathElement;
   let grat: SVGPathElement;
   let land: SVGPathElement;
   let borders: SVGPathElement;
@@ -24,8 +25,6 @@
     return {
       svg,
       world,
-      page,
-      sea,
       grat,
       land,
       borders,
@@ -40,9 +39,7 @@
 </script>
 
 <svg id="basemap" bind:this={svg} aria-hidden="true">
-  <rect class="bm-page" bind:this={page} />
   <g id="bworld" bind:this={world}>
-    <path class="bm-sea" bind:this={sea} />
     <path class="bm-grat" bind:this={grat} />
     <path class="bm-land" bind:this={land} />
     <path class="bm-borders" bind:this={borders} />

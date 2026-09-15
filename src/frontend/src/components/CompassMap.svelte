@@ -31,6 +31,12 @@
   /** Where the API lives. The map's data comes from it, as does the story count;
       empty means this page's own origin, which is how the nginx image serves it. */
   export let apiurl = '';
+  /** Where the pre-rendered GEBCO depth tiles are served from. Empty means this
+      page's own origin, which is where both nginx and the dev server put them;
+      an embed served from another origin has to name the one that has /tiles/.
+      Kept apart from `apiurl` because they are not always the same host — the
+      dev stack runs uvicorn on one port and the tiles on another. */
+  export let tileurl = '';
   export let lang: Lang = 'en';
 
   /** The selection, per dimension. A set, so a row toggles without a scan. */
@@ -541,6 +547,7 @@
     bind:this={stageComp}
     {t}
     {lang}
+    {tileurl}
     {projs}
     {selected}
     {loading}

@@ -16,8 +16,8 @@ atlas:
 fonts:
     cd "{{root_dir}}/src/frontend" && node scripts/build-fonts.mjs
 
-# Pre-render GEBCO bathymetry tiles (needs network, ~53 MB). Kept for a later
-# trial: the SVG stage does not draw them yet, but the pipeline and the nginx
-# route that serves them are in place.
+# Pre-render GEBCO bathymetry tiles (needs network; ~13 MB to z4, ~53 MB to z5).
+# The stage reprojects these onto the map -- see src/frontend/src/lib/bathymetry.ts.
+# Without them the map falls back to a flat sea and hides the switch.
 tiles maxzoom="5":
     node "{{root_dir}}/src/frontend/scripts/build-tiles.mjs" {{maxzoom}}

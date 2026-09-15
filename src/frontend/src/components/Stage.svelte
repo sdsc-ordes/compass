@@ -24,6 +24,7 @@
     type ViewState,
   } from '../lib/projection';
   import { loadAtlas, renderBasemap, type Atlas } from '../lib/basemap';
+  import { Bathymetry } from '../lib/bathymetry';
   import { atMaxZoom, drawPins, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
   import { onFontsReady } from '../lib/fonts';
   import { placeLabels } from '../lib/labels';
@@ -68,6 +69,10 @@
   /** A query or engine failure, already worded and localized by CompassMap. The
       stage shows it, because a blank basemap otherwise reads as "nothing matched". */
   export let error: string | null = null;
+  /** Where the pre-rendered depth tiles are served from; '' is this page's own
+      origin, which is what both nginx and the dev server do. A cross-origin
+      embed has to name the origin, or the layer stays flat. */
+  export let tileurl = '';
   /** The language segmented control the design does not have — see the markup. */
   export let lang: 'en' | 'de' = 'en';
   export let onLang: (l: 'en' | 'de') => void = () => {};
@@ -172,6 +177,7 @@
 
   /* ---------- element refs ---------- */
   let stage: HTMLDivElement;
+  let water: HTMLCanvasElement;
   let cv: HTMLCanvasElement;
   let ov: HTMLDivElement;
   let basemap: Basemap;
@@ -188,6 +194,18 @@
   /* The two cards' visibility, which is all sequencing — see CardLayer. Getters,
      because Svelte assigns bind:this after this line runs and nulls it on destroy. */
   const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
+
+  /* ---------- the depth raster ----------
+     A tile landing is the one thing outside the view that changes the water, so
+     it asks for the same debounced repaint everything else does. `depthReady`
+     mirrors bathy.available for the switch and the attribution, which are Svelte's
+     to draw and so cannot read a plain field. */
+  let depth = true;
+  let depthReady = false;
+  const bathy = new Bathymetry(tileurl, () => {
+    depthReady = bathy.ready;
+    queue();
+  });
 
   /* ---------- painting ---------- */
   const anim = new PinAnimator(() => paintPins());
@@ -227,6 +245,7 @@
     renderBasemap(basemap.refs(), S, W, H, atlas);
     const pr = paintCanvas(W, H);
     if (!pr) return;
+    paintWater(pr, W, H);
     /* Skipped while a hand is on the map, rebuilt once it lets go. */
     if (!interact) runLabels(pr, W, H);
     else ov.textContent = '';
@@ -271,6 +290,23 @@
     syncPinPreview();
     positionProjectCard();
     return pr;
+  }
+
+  /** The ground, the sea and the depth raster, under the basemap's ink.
+      Deliberately not part of paintPins(): a pin easing open must not drag a
+      reprojection along with it. */
+  function paintWater(pr: GeoProjection, W: number, H: number): void {
+    if (!water) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (water.width !== W * dpr || water.height !== H * dpr) {
+      water.width = W * dpr;
+      water.height = H * dpr;
+    }
+    const ctx = water.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    bathy.paint(ctx, pr, W, H, P[S.theme], S.view === 'globe', interact, depth);
+    depthReady = bathy.ready;
   }
 
   /** Re-reads the roster and eases every pin toward its new emphasis and fade. */
@@ -354,6 +390,12 @@
     if (S.view === 'flat')
       tween.to({ k, tx: mx - g * (mx - S.tx), ty: my - g * (my - S.ty) }, 280);
     else tween.to({ k }, 280);
+  }
+
+  function setDepth(on: boolean): void {
+    if (on === depth) return;
+    depth = on;
+    queue(true);
   }
 
   function resetView(): void {
@@ -705,6 +747,7 @@
     if (retry) clearTimeout(retry);
     if (fade) clearTimeout(fade);
     if (coachTimer) clearTimeout(coachTimer);
+    bathy.clear();
   });
 
   /** Repaints from outside — the sidebar collapsing changes the stage's width. */
@@ -728,12 +771,15 @@
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
   class="stage"
+  class:depth={depth && depthReady}
   bind:this={stage}
   tabindex="0"
   role="application"
   aria-label={t.stageAria}
   aria-busy={loading}
 >
+  <!-- Under the basemap: the ground, the sea and the depth raster. -->
+  <canvas id="water" bind:this={water} aria-hidden="true"></canvas>
   <Basemap bind:this={basemap} />
 
   <!-- Hidden from AT: PinNav is the pins' accessible equivalent, and the place
@@ -786,17 +832,22 @@
   </div>
   <!-- Spoken by the sidebar's one live region, not by a second one here. -->
   <div class="plate plate-error" class:show={!!error} bind:this={errEl}>{error ?? ''}</div>
-  <div class="attrib" bind:this={attribEl}>{t.attribution}</div>
+  <div class="attrib" bind:this={attribEl}>
+    {depth && depthReady ? t.attributionDepth : t.attribution}
+  </div>
 
   <StageChrome
     {t}
     {viewMode}
     {night}
     {lang}
+    {depth}
+    {depthReady}
     bind:zoomEl
     bind:panelEl
     onMode={setMode}
     onTheme={setTheme}
+    onDepth={setDepth}
     {onLang}
     onZoom={zoomStep}
     onChromeChange={() => {

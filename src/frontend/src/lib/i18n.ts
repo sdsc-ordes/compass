@@ -48,6 +48,12 @@ export const i18n = {
     storiesRead: 'Read them here',
     storiesReadOne: 'Read it here',
     attribution: 'Natural Earth 1:50 m',
+    /* Shown in place of the line above while the depth raster is up: GEBCO's
+       grid is free to use, and asks to be named where it is. */
+    attributionDepth: 'Natural Earth 1:50 m · GEBCO',
+    seafloor: 'Seafloor',
+    seafloorOn: 'On',
+    seafloorOff: 'Off',
     projection: 'Projection',
     flatMap: 'Map',
     globeMap: 'Globe',
@@ -136,6 +142,10 @@ export const i18n = {
     storiesRead: 'Hier lesen',
     storiesReadOne: 'Hier lesen',
     attribution: 'Natural Earth 1:50 m',
+    attributionDepth: 'Natural Earth 1:50 m · GEBCO',
+    seafloor: 'Meeresboden',
+    seafloorOn: 'Ein',
+    seafloorOff: 'Aus',
     projection: 'Projektion',
     flatMap: 'Karte',
     globeMap: 'Globus',

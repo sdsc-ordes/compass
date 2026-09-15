@@ -17,6 +17,9 @@
     // nginx proxies /api to the backend, so the API lives on this same origin —
     // which is only known at runtime, not at build time.
     document.querySelector('compass-map').setAttribute('apiurl', location.origin);
+    // nginx serves /tiles/ from this same origin, so the default would do; set
+    // explicitly to say where the depth raster comes from.
+    document.querySelector('compass-map').setAttribute('tileurl', location.origin);
   </script>
 </body>
 </html>

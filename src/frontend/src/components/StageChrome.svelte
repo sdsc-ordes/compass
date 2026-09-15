@@ -18,9 +18,15 @@
   export let viewMode: 'flat' | 'globe' = 'flat';
   export let night = false;
   export let lang: 'en' | 'de' = 'en';
+  /** The depth raster's switch. Absent from the panel until a tile has actually
+      arrived: a deployment with no tiles mounted must not offer a control that
+      cannot do anything. */
+  export let depth = true;
+  export let depthReady = false;
 
   export let onMode: (m: 'flat' | 'globe') => void;
   export let onTheme: (dark: boolean) => void;
+  export let onDepth: (on: boolean) => void;
   export let onLang: (l: 'en' | 'de') => void;
   export let onZoom: (factor: number) => void;
   export let onReset: () => void;
@@ -162,6 +168,26 @@
             >
           </div>
         </div>
+
+        {#if depthReady}
+          <div class="setrow">
+            <span class="setlbl" id="set-depth">{t.seafloor}</span>
+            <div
+              class="seg"
+              data-active={depth ? '0' : '1'}
+              role="group"
+              aria-labelledby="set-depth"
+            >
+              <span class="segthumb"></span>
+              <button type="button" aria-pressed={depth} on:click={() => onDepth(true)}
+                >{t.seafloorOn}</button
+              >
+              <button type="button" aria-pressed={!depth} on:click={() => onDepth(false)}
+                >{t.seafloorOff}</button
+              >
+            </div>
+          </div>
+        {/if}
 
         <!-- Not in the design, but `de` has to stay reachable, so it joins the
              other either/or switches rather than becoming a new kind of control.

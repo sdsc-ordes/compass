@@ -27,12 +27,12 @@ export interface Atlas {
   cty: CountryLabel[];
 }
 
-/** The SVG nodes renderBasemap writes into — created as markup by Stage.svelte. */
+/** The SVG nodes renderBasemap writes into — created as markup by Stage.svelte.
+    The page ground and the sea are not among them: they belong to the water
+    canvas underneath, which is the only layer the depth raster can go into. */
 export interface BasemapRefs {
   svg: SVGSVGElement;
   world: SVGGElement;
-  page: SVGRectElement;
-  sea: SVGPathElement;
   grat: SVGPathElement;
   land: SVGPathElement;
   borders: SVGPathElement;
@@ -93,8 +93,6 @@ export function renderBasemap(
   const path = geoPath(pr);
   const landD = path(atlas.land);
 
-  set(bm.page, { width: W, height: H, fill: p.page });
-  set(bm.sea, { d: path({ type: 'Sphere' }) ?? '', fill: p.sea });
   set(bm.grat, {
     d: path(atlas.grat) ?? '',
     stroke: p.grat,

@@ -35,7 +35,11 @@
          COMPASS_HTTP_PORT on localhost) and is filled in by vite.config.ts, so
          the port is settled in one place for Compose, the backend and this page
          alike. -->
-    <compass-map apiurl="%COMPASS_API_URL%" lang="en"></compass-map>
+    <!-- tileurl empty: the depth tiles `just map::tiles` writes are served by
+         vite on this very origin (serveBathymetryTiles in vite.config.ts),
+         which is not where the API is. Skip that command and the map simply
+         draws a flat sea. -->
+    <compass-map apiurl="%COMPASS_API_URL%" tileurl="" lang="en"></compass-map>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

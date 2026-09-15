@@ -261,9 +261,11 @@ canvas at runtime for the same reason.
 
 The bathymetry is pre-rendered by `just map::tiles` into `src/frontend/tiles/`
 (1365 JPEG tiles, ~53 MB, gitignored) and served by nginx from a read-only
-mount. The SVG stage does not draw it yet: the pipeline, the dev-server route
-and the nginx mount are kept for a later trial, and a deployment that skips
-`just map::tiles` is the normal case.
+mount. The stage reprojects those Web Mercator tiles onto its own Natural Earth
+or orthographic projection per pixel — `src/frontend/src/lib/bathymetry.ts` — so
+the raster follows the map into the globe and under the land. A deployment that
+skips `just map::tiles` still works: the first missing tile turns the layer off
+and the map draws the flat sea it always did.
 
 `just check::frontend-standalone` fails if any new host appears in the widget source. The allowlist
 in `src/frontend/scripts/check-offline.mjs` holds only inert entries: RDF
