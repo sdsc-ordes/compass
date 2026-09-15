@@ -1,15 +1,4 @@
 <script lang="ts">
-  /**
-   * The stage's controls, all in one bottom-right cluster: a settings button
-   * holding projection, theme and language, and the zoom stack below it.
-   *
-   * A pointer reaching the stage with no pin under it means "put the entry away"
-   * (Stage.clickAt), so pointerdown stops at the cluster. That is the whole
-   * guard: bindInput arms the window-level pointerup only from a pointerdown that
-   * reached the stage. The settings panel is a DOM child of .zoom — it only looks
-   * detached, because it is absolutely positioned — so it is covered by the same
-   * one guard.
-   */
   import { onDestroy, tick } from 'svelte';
   import Icon from './Icon.svelte';
   import type { Strings } from '../lib/i18n';
@@ -18,9 +7,6 @@
   export let viewMode: 'flat' | 'globe' = 'flat';
   export let night = false;
   export let lang: 'en' | 'de' = 'en';
-  /** The depth raster's switch. Absent from the panel until a tile has actually
-      arrived: a deployment with no tiles mounted must not offer a control that
-      cannot do anything. */
   export let depth = true;
   export let depthReady = false;
 
@@ -30,10 +16,8 @@
   export let onLang: (l: 'en' | 'de') => void;
   export let onZoom: (factor: number) => void;
   export let onReset: () => void;
-  /** Opening the panel covers map, so Stage re-places the place names. */
   export let onChromeChange: () => void = () => {};
 
-  /** Stage measures the cluster, and the panel only while it exists. */
   export let zoomEl: HTMLDivElement | null = null;
   export let panelEl: HTMLDivElement | null = null;
 
@@ -41,15 +25,8 @@
   let wrapEl: HTMLDivElement | null = null;
   let btnEl: HTMLButtonElement | null = null;
 
-  /**
-   * `restoreFocus` is false when the panel was closed by a pointer somewhere
-   * else: pulling focus back to the button would be the one thing the visitor
-   * did not ask for. On Escape it is true, because the keyboard has nowhere
-   * else to land.
-   */
   async function setOpen(on: boolean, restoreFocus = true): Promise<void> {
     if (open === on) return;
-    /* Read before the panel goes: `held` cannot be measured once it is gone. */
     const root = wrapEl?.getRootNode() as ShadowRoot | null;
     const active = root?.activeElement as Node | null;
     const held = !!(active && panelEl?.contains(active));
@@ -57,24 +34,16 @@
     await tick();
     if (on) panelEl?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
     else if (restoreFocus && held) btnEl?.focus({ preventScroll: true });
-    /* keepOut() measures panelEl, which has only just appeared or gone. */
     onChromeChange();
   }
 
-  /** Bound to the button and to the panel — the two places focus can be while
-      the panel is open. The wrapper between them is layout and takes no role. */
   function onWrapKey(e: KeyboardEvent): void {
     if (e.key !== 'Escape' || !open) return;
-    /* CompassMap's root handler reads Escape as "put the entry away"; an open
-       panel has to swallow it rather than close and dismiss the entry too. */
     e.stopPropagation();
     e.preventDefault();
     setOpen(false);
   }
 
-  /* A pointer outside the cluster closes the panel. Deliberately passive — it
-     only closes. Putting a selected entry away is Stage.clickAt's gesture and
-     must not be fired from here. */
   let unwire: (() => void) | null = null;
 
   function armOutside(on: boolean): void {
@@ -88,8 +57,6 @@
       setOpen(false, false);
     };
     root.addEventListener('pointerdown', close);
-    /* A pointer on the embedding page retargets to the host element, which is
-       not inside wrapEl, so the same handler answers for outside the widget. */
     document.addEventListener('pointerdown', close);
     unwire = () => {
       root.removeEventListener('pointerdown', close);
@@ -97,8 +64,6 @@
     };
   }
 
-  /* Reads `open` only; the listener handle it assigns is never read here, so this
-     statement cannot re-dirty its own guard. */
   $: armOutside(open);
 
   onDestroy(() => unwire?.());
@@ -118,8 +83,6 @@
     >
 
     {#if open}
-      <!-- Escape is caught on the container rather than on each control, the same
-           way CompassMap catches it on .mapc. -->
       <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
       <div
         class="setpanel"
@@ -189,10 +152,6 @@
           </div>
         {/if}
 
-        <!-- Not in the design, but `de` has to stay reachable, so it joins the
-             other either/or switches rather than becoming a new kind of control.
-             EN and DE carry no icon: a two-letter code is already the clearest
-             mark a language has, and a flag would name a country, not a language. -->
         <div class="setrow">
           <span class="setlbl" id="set-lang">{t.language}</span>
           <div

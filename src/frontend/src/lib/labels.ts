@@ -1,27 +1,9 @@
-/**
- * Country names — HTML over the canvas, in the theme's own label ink.
- *
- * Appended imperatively to the `.ov` overlay, so the Svelte compiler never sees
- * their selectors; styles/stage.css is plain CSS for that reason.
- *
- * The prototype also placed sea names from a `data/ocean.json` that has no home
- * in this repo. That path is in git history if the file ever arrives.
- */
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 import { frontCentre, type ViewState } from './projection';
 import type { PinBox } from './types';
 
-/**
- * Country names fade in biggest first; the number is the zoom they arrive at.
- *
- * ENGLISH ONLY, in both locales. These are Natural Earth's `properties.name`, and
- * they are the key loadAtlas() matches the topology against — so `lang=de` draws
- * a German UI over English place names. Fixing it means carrying `name_de`
- * through scripts/build-atlas.mjs into atlas.json and keying off that; it cannot
- * be done here, because the names in this list are the join.
- */
 export const CTY_MIN: [string, number][] = [
   ['Russia', 0],
   ['Canada', 0],
@@ -112,19 +94,13 @@ export interface LabelPass {
   H: number;
   p: Pal;
   S: ViewState;
-  /** The overlay the labels are appended to. */
   ov: HTMLElement;
-  /** The pin hit boxes labels must dodge. */
   pinbox: PinBox[];
-  /** Stage chrome the labels must dodge, already in stage coordinates. */
   keepOut: { x: number; y: number; w: number; h: number }[];
-  /** A canvas 2D context, used only for measureText. */
   measureCtx: CanvasRenderingContext2D;
   cty: CountryLabel[];
 }
 
-/* Tracking is not in measureText, so the font carries its own per-character
-   allowance. Must match .ov .lbl-cty in styles/stage.css. */
 const CTY_FONT = '600 11.5px Cabin, system-ui, sans-serif';
 const CTY_TRACKING = 0.23;
 
@@ -146,7 +122,6 @@ export function placeLabels(a: LabelPass): void {
     return w;
   };
 
-  /* The halo is what guarantees contrast, not the ink — see styles/stage.css. */
   const place = (c: [number, number], name: string) => {
     const w = measure(name);
     if (globe && geoDistance(c, ctr) > 1.24) return;

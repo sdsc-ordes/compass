@@ -1,39 +1,12 @@
-// Builds src/styles/fonts.css — the two families the design needs, as
-// @font-face rules with the woff2 inlined as base64.
-//
-//   just map::fonts   (needs network)
-//
-// The widget may make no third-party request at runtime (scripts/check-offline.mjs),
-// and a <link> to fonts.googleapis.com is exactly that: it sends every visitor's
-// IP and User-Agent to Google before a single glyph is drawn. Fetching the files
-// here instead means the only cost is paid once, at build time, by us.
-//
-// Latin only. Google splits each family by unicode-range, and the latin subset
-// covers U+0000-00FF, which is every character English and German need — the
-// umlauts and the eszett included. The other subsets would roughly triple the
-// weight for glyphs the ontology never contains.
-//
-// Cabin and Cabin Condensed are SIL Open Font License 1.1, which permits
-// redistribution as long as the licence travels with the files: the header
-// written into the generated CSS is what carries it.
-
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-// Both families are variable fonts, so one file covers a weight range: asking
-// for `400..700` returns a single face declaring `font-weight: 400 700`, where
-// naming the four weights separately returns the same file four times over --
-// same URL, same 28 KB -- and inlining it four times is 83 KB of base64 for
-// nothing. Cabin Condensed is only ever bold, in the tally and the type pills,
-// so it asks for the one weight.
 const FAMILIES = [
   { name: 'Cabin', axis: 'wght@400..700' },
   { name: 'Cabin Condensed', axis: 'wght@700' },
 ];
 
-// Google serves woff2 only to a UA it believes supports it; with no UA at all
-// it falls back to truetype, which is roughly twice the size.
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -49,7 +22,6 @@ const LICENCE = `/*
  */
 `;
 
-/** The CSS2 stylesheet for one family, as the browser would request it. */
 async function fetchCss(family) {
   const spec = `${family.name.replace(/ /g, '+')}:${family.axis}`;
   const url = `https://fonts.googleapis.com/css2?family=${spec}&display=swap`;
@@ -58,7 +30,6 @@ async function fetchCss(family) {
   return res.text();
 }
 
-/** Split a stylesheet into its @font-face blocks. */
 function faceBlocks(css) {
   return [...css.matchAll(/\/\*\s*([\w-]+)\s*\*\/\s*(@font-face\s*\{[^}]*\})/g)].map(
     ([, subset, block]) => ({ subset, block }),
@@ -89,8 +60,6 @@ async function inlineFace(block) {
       `  font-family: ${family};`,
       `  font-style: ${style};`,
       `  font-weight: ${weight};`,
-      // swap, so text is readable in the fallback while the face decodes. It is
-      // a data: URI, so the swap window is one frame rather than a round trip.
       '  font-display: swap;',
       `  src: url(data:font/woff2;base64,${bytes.toString('base64')}) format('woff2');`,
       `  unicode-range: ${range};`,

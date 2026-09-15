@@ -1,15 +1,3 @@
-// Builds src/atlas.json — the Natural Earth 1:50m country topology the
-// d3 stage draws its basemap from (land outline, country border mesh and the
-// centroids behind the country labels).
-//
-//   node scripts/build-atlas.mjs   (needs network)
-//
-// The prototype fetched this from a CDN at runtime. The widget ships as one
-// self-contained file with no network calls, so it is committed instead. The
-// topology is ~750 KB of JSON next to a bundle that already inlines the oxigraph
-// wasm, which is proportionally cheap; stage/basemap.ts turns it into geometry
-// at boot.
-
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';

@@ -1,10 +1,3 @@
-/**
- * The SVG basemap: land, country borders, graticule, the globe's rim and shading.
- *
- * The prototype fetched Natural Earth from a CDN; the widget is one self-contained
- * file, so the topology is committed (scripts/build-atlas.mjs, `just atlas`) and
- * imported. The prototype's optional sea-label file has no home here.
- */
 import { geoPath, geoGraticule10, geoCentroid, geoArea } from 'd3-geo';
 import type { GeoProjection, GeoPermissibleObjects } from 'd3-geo';
 import { feature, merge, mesh } from 'topojson-client';
@@ -19,7 +12,6 @@ import { P, type Theme } from './palette';
 import { proj, type ViewState } from './projection';
 import { CTY_MIN, type CountryLabel } from './labels';
 
-/** Every geometry the renderer draws, built once at boot. */
 export interface Atlas {
   land: GeoPermissibleObjects;
   borders: GeoPermissibleObjects;
@@ -27,9 +19,6 @@ export interface Atlas {
   cty: CountryLabel[];
 }
 
-/** The SVG nodes renderBasemap writes into — created as markup by Stage.svelte.
-    The page ground and the sea are not among them: they belong to the water
-    canvas underneath, which is the only layer the depth raster can go into. */
 export interface BasemapRefs {
   svg: SVGSVGElement;
   world: SVGGElement;
@@ -46,7 +35,6 @@ export interface BasemapRefs {
 
 let cached: Atlas | null = null;
 
-/** Builds the atlas geometry. Synchronous — the topology is already in the bundle. */
 export function loadAtlas(): Atlas {
   if (cached) return cached;
   const topo = atlasJson as unknown as Topology<{
@@ -55,8 +43,6 @@ export function loadAtlas(): Atlas {
   const countries = topo.objects.countries;
   const min = new Map(CTY_MIN);
   cached = {
-    /* The members, not the collection: merge() calls .forEach on what it is given,
-       so the collection its types also advertise would throw. */
     land: merge(
       topo,
       countries.geometries as Array<Polygon | MultiPolygon>,
@@ -76,8 +62,6 @@ export function loadAtlas(): Atlas {
   return cached;
 }
 
-/** Repaints the basemap for the current view, with setAttribute rather than
-    d3-selection — not worth a second library for four calls. */
 export function renderBasemap(
   bm: BasemapRefs,
   S: ViewState,

@@ -1,88 +1,28 @@
-/**
- * The water layer: the page ground, the sea, and — where we have them — GEBCO
- * depth tiles reprojected onto whichever projection the stage is showing.
- *
- * The page rect and the sea disc used to be two nodes in the basemap SVG. They
- * moved here because the raster has to sit between them and the land, and one
- * SVG cannot be interleaved with a canvas. So this canvas owns the water and the
- * SVG above it owns the ink. With no tiles the result is pixel-for-pixel what
- * the two nodes drew, which is what makes an empty /tiles/ a valid deployment
- * rather than a broken one.
- *
- * The tiles are Web Mercator and the stage is Natural Earth or orthographic, so
- * the raster cannot simply be drawn: every destination pixel has to be sampled
- * from the source through the projection's inverse. Inverting per pixel is far
- * too slow to drag with, so the inverse is evaluated on a coarse lattice and
- * interpolated across each cell — over an 8px cell the error stays well under a
- * pixel, and the whole pass costs a few thousand inversions instead of a
- * million.
- *
- * Tiles are fetched from our own origin: nginx serves /tiles/ in the image and
- * vite does the same in dev. Nothing here contacts a tile service.
- */
 import { geoPath, type GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 
-/** Matches scripts/build-tiles.mjs: 512px JPEG, `just map::tiles` writes z0-5. */
 const TILE = 512;
 const MAX_Z = 5;
 
-/** Web Mercator stops here; the sliver of Arctic beyond it stays flat sea. */
 const LAT_MAX = 85.0511287798;
 
-/** Lattice spacing for the inverse, in raster pixels. */
 const CELL = 8;
 
-/**
- * Destination pixels per pass. The raster is drawn into an offscreen buffer of
- * this many pixels and scaled up, rather than at the stage's own size: depth is
- * a smooth gradient, it is covered by the land and the pins, and a budget keeps
- * the cost of a pass the same on a laptop and on a 5K display. The lower figure
- * is for a hand still on the map, where 36ms is the whole frame.
- *
- * DEVICE pixels, which is what the canvas is sized in. Counting the stage's CSS
- * pixels instead quietly multiplied the upscale by the pixel ratio, so the same
- * budget that looked soft on a 1x laptop looked blocky on a retina display.
- *
- * The idle figure also holds the tile count down: a raster of this area needs
- * about sixteen tiles, inside MAX_TILES with room to spare. Raise it much and
- * the pass trips that cap instead, which steps the source zoom back down and
- * gives back exactly the sharpness the bigger buffer was for.
- */
 const BUDGET_IDLE = 1_200_000;
 const BUDGET_DRAG = 500_000;
 
-/**
- * Decoded tiles held, at 1 MB each — this is the layer's whole memory budget,
- * and the widget is embedded on someone else's page, so it stays modest. A view
- * at a matched zoom needs about nine, so there is room to pan before anything is
- * evicted and re-fetched.
- */
 const CACHE_MAX = 32;
 
-/** Tiles one pass may ask for; over this the source zoom steps down instead. */
 const MAX_TILES = 24;
 
-/**
- * Three lon/lat the re-use test measures a view against — see `similarity`.
- * Any three that are not collinear will do; these are all on the near side of
- * the flat map, so a pan never puts them behind the globe by accident.
- */
 const REF: [number, number][] = [
   [0, 0],
   [60, 0],
   [0, 45],
 ];
 
-/** How far, in pixels, a reference point may miss before a view counts as
-    reshaped rather than merely panned or zoomed. */
 const REF_TOL = 0.5;
 
-/**
- * A finished full-quality pass, kept so that a pan or a zoom can re-use it.
- * `ref` is where REF landed when it was drawn, which is all the re-use test
- * needs: it never has to know which projection made it.
- */
 interface Snapshot {
   canvas: HTMLCanvasElement;
   W: number;
@@ -91,7 +31,6 @@ interface Snapshot {
 }
 
 interface Tile {
-  /** RGBA of a decoded tile, or null while it is loading or after it failed. */
   px: Uint8ClampedArray | null;
   used: number;
 }
@@ -99,37 +38,23 @@ interface Tile {
 export class Bathymetry {
   private tiles = new Map<string, Tile>();
   private clock = 0;
-  /** Two buffers, not one: the settled pass has to survive being read back
-      while a drag renders into its own. */
   private buf: HTMLCanvasElement | null = null;
   private dragBuf: HTMLCanvasElement | null = null;
   private snap: Snapshot | null = null;
   private decoder: CanvasRenderingContext2D | null = null;
 
-  /** True once a tile has decoded: the attribution and the switch wait for it. */
   available = false;
-  /** Set when the first request fails before anything has ever loaded — the
-      deployment has no tiles mounted, so stop asking and stay flat. */
   private absent = false;
 
-  /**
-   * @param base   origin serving /tiles/, '' for this page's own.
-   * @param onTile called when a tile lands and the stage should repaint.
-   */
   constructor(
     private base: string,
     private onTile: () => void,
   ) {}
 
-  /** Whether a pass would draw anything. */
   get ready(): boolean {
     return this.available && !this.absent;
   }
 
-  /**
-   * Paints ground, sea and — if `depth` and we have tiles — the reprojected
-   * raster. `ctx` is expected to be scaled for the device pixel ratio already.
-   */
   paint(
     ctx: CanvasRenderingContext2D,
     pr: GeoProjection,
@@ -152,8 +77,6 @@ export class Bathymetry {
     ctx.fill();
 
     if (depth && !this.absent) {
-      /* The sphere is still the current path, so it clips the raster to the
-         map's own outline — the globe's rim included, exactly. */
       ctx.clip();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
@@ -162,7 +85,6 @@ export class Bathymetry {
     ctx.restore();
   }
 
-  /** Drops every decoded tile. The stage calls this on destroy. */
   clear(): void {
     this.tiles.clear();
     this.snap = null;
@@ -171,23 +93,6 @@ export class Bathymetry {
     this.decoder = null;
   }
 
-  /* ---------- drawing ---------- */
-
-  /**
-   * Draws the depth raster into the already-clipped context.
-   *
-   * A hand on the map gets the settled pass back, moved, wherever that is
-   * possible. Re-projecting into the smaller buffer a drag can afford means
-   * sampling a coarser level of the pyramid, and at world scale the coarse
-   * levels are genuinely crude — one 512px tile for the whole Earth at z0. No
-   * budget fixes that, because the budget is what causes it.
-   *
-   * Moving the settled pass instead costs one drawImage and keeps its
-   * sharpness. It works because a pan or a zoom of the flat map is a similarity
-   * in screen space: d3 projections apply `scale` and `translate` last, so
-   * changing S.k, S.tx or S.ty moves every pixel the same way. Rotating the
-   * globe is not, and `similarity` says so rather than assuming.
-   */
   private overlay(
     ctx: CanvasRenderingContext2D,
     pr: GeoProjection,
@@ -209,8 +114,6 @@ export class Bathymetry {
     if (raster) ctx.drawImage(raster, 0, 0, W, H);
   }
 
-  /* ---------- the reprojection ---------- */
-
   private reproject(
     pr: GeoProjection,
     W: number,
@@ -222,10 +125,6 @@ export class Bathymetry {
     const invert = pr.invert;
     if (!invert) return null;
 
-    /* Dropped up front and only restored on success. The snapshot describes
-       whatever is in the settled buffer right now, and this pass is about to
-       resize or overwrite it — a pass that then bails would otherwise leave a
-       description of pixels that are no longer there. */
     if (!interact) this.snap = null;
 
     const dw = W * dpr,
@@ -234,8 +133,6 @@ export class Bathymetry {
     const scale = Math.min(1, Math.sqrt(budget / Math.max(1, dw * dh)));
     const rw = Math.max(2, Math.round(dw * scale));
     const rh = Math.max(2, Math.round(dh * scale));
-    /* Raster pixels per CSS pixel: what turns a stage coordinate into a lattice
-       one, and what the source zoom below has to match. */
     const perCss = rw / W;
 
     const cols = Math.ceil(rw / CELL);
@@ -245,24 +142,13 @@ export class Bathymetry {
     const ny = new Float64Array(nodes);
     const ok = new Uint8Array(nodes);
 
-    /* The lattice, in Mercator's unit square rather than in degrees: it is what
-       the sampling loop wants, and interpolating it avoids a second conversion
-       per pixel. */
     let lo = Infinity,
       hi = -Infinity,
       top = Infinity,
       bot = -Infinity;
     let rowStart = 0;
     for (let j = 0; j <= rows; j++) {
-      /* i*CELL rather than a position clamped to the raster's edge: the
-         interpolation below assumes the nodes are CELL apart, and a short last
-         cell would shift its pixels by up to half a cell. The inverse is just as
-         defined a few pixels past the edge, and the sphere clips it anyway. */
       const y = (j * CELL) / perCss;
-      /* Each row is unwrapped to be continuous across the antimeridian, then
-         aligned to the row above it, so a cell never blends a longitude near
-         +180 with one near -180 and smears the whole Pacific into one column.
-         Sampling takes nx modulo 1, so the integer part is free to run. */
       let prev = NaN;
       let first = NaN;
       for (let i = 0; i <= cols; i++) {
@@ -292,30 +178,17 @@ export class Bathymetry {
     }
     if (!isFinite(lo)) return null;
 
-    /* Source zoom: match the tiles' resolution to the RASTER's, not the stage's.
-       The two differ by `perCss`, and picking for the stage while sampling into a
-       smaller buffer means point-sampling a source finer than the destination —
-       which aliases, and the upscale afterwards magnifies exactly that into the
-       blockiness a drag used to show.
-
-       The flat map's sphere bounds are a full turn of longitude; the globe shows
-       a hemisphere across its diameter, which is half a turn, so a whole turn is
-       pi times the radius on each side. */
     const b = geoPath(pr).bounds({ type: 'Sphere' });
     const dia = Math.max(1, b[1][0] - b[0][0]);
     const worldPx = (globe ? Math.PI * dia : dia) * perCss;
     let z = Math.max(0, Math.min(MAX_Z, Math.round(Math.log2(worldPx / TILE))));
 
-    /* A wide view at a fine zoom would ask for hundreds of tiles; one step
-       coarser quarters that, and on a map this size it is not visible. */
     let n = 1 << z;
     while (z > 0 && tileCount(lo, hi, top, bot, n) > MAX_TILES) {
       z--;
       n = 1 << z;
     }
 
-    /* Indexed by tile rather than looked up by key: the sampling loop runs
-       millions of times and a string per pixel would dominate it. */
     const px: (Uint8ClampedArray | null)[] = new Array(n * n).fill(null);
     const x0 = Math.floor(lo * n),
       x1 = Math.floor(hi * n);
@@ -388,8 +261,6 @@ export class Bathymetry {
     if (!drew) return null;
     ctx.putImageData(img, 0, 0);
 
-    /* Only a settled pass is worth keeping: re-using a drag's own reduced buffer
-       would hand the next frame something already softened. */
     if (!interact) {
       const ref: [number, number][] = [];
       for (const ll of REF) {
@@ -405,9 +276,6 @@ export class Bathymetry {
     return out;
   }
 
-  /** The offscreen the raster is built in, re-sized only when it has to be.
-      A drag gets its own, so a fresh interactive pass cannot scribble over the
-      settled one it may be asked to re-use a frame later. */
   private buffer(w: number, h: number, drag: boolean): HTMLCanvasElement | null {
     if (typeof document === 'undefined') return null;
     let cv = drag ? this.dragBuf : this.buf;
@@ -423,9 +291,6 @@ export class Bathymetry {
     return cv;
   }
 
-  /* ---------- tiles ---------- */
-
-  /** The decoded tile if we have it, and a request for it if we do not. */
   private want(z: number, x: number, y: number): Uint8ClampedArray | null {
     const key = `${z}/${x}/${y}`;
     const held = this.tiles.get(key);
@@ -438,10 +303,6 @@ export class Bathymetry {
     this.tiles.set(key, entry);
 
     const img = new Image();
-    /* Same-origin in both deployments, so this changes nothing there. It makes
-       a cross-origin /tiles/ fail its load rather than taint the canvas the
-       sampling loop has to read back — a clean fall back to flat sea instead of
-       a SecurityError on the first pass. */
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
     img.onload = () => {
@@ -453,11 +314,6 @@ export class Bathymetry {
       }
     };
     img.onerror = () => {
-      /* The entry stays, holding no pixels. Deleting it would let the next pass
-         ask again, and a pyramid built to a lower zoom than MAX_Z would then
-         re-request the same 404s on every pan for as long as the map is open.
-         Eviction eventually clears it, which is the retry. */
-      /* Nothing has ever loaded: there are no tiles mounted at all. Stop asking. */
       if (!this.available) this.absent = true;
     };
     img.src = `${this.base}/tiles/${key}.jpg`;
@@ -479,7 +335,6 @@ export class Bathymetry {
       ctx.drawImage(img, 0, 0, TILE, TILE);
       return ctx.getImageData(0, 0, TILE, TILE).data;
     } catch {
-      /* A tainted canvas: the tiles are cross-origin without CORS. */
       this.absent = true;
       return null;
     }
@@ -492,24 +347,12 @@ export class Bathymetry {
   }
 }
 
-/** A uniform scale and a shift: what a pan or a zoom does to every pixel. */
 interface Move {
   g: number;
   dx: number;
   dy: number;
 }
 
-/**
- * The move that carries a snapshot's view onto the current one, or null if no
- * single move does.
- *
- * Derived from where the reference points are now rather than from the two
- * projections' internals, so it needs to know nothing about fitExtent's margins
- * or which projection is in play — and it stays right if either ever changes.
- * Two points fix the scale and the shift; the third is the check that the view
- * really was only panned or zoomed. A rotated globe fails it, as does a
- * reshaped stage, and both then fall through to a fresh pass.
- */
 function similarity(was: [number, number][], pr: GeoProjection): Move | null {
   const now: [number, number][] = [];
   for (const ll of REF) {
@@ -523,8 +366,6 @@ function similarity(was: [number, number][], pr: GeoProjection): Move | null {
   if (!(g > 0) || !isFinite(g)) return null;
   const dx = now[0][0] - g * was[0][0];
   const dy = now[0][1] - g * was[0][1];
-  /* Every point, not just the spare one: an equal distance can also be reached
-     by a rotation or a mirror, which would smear the raster rather than move it. */
   for (let i = 1; i < REF.length; i++) {
     const ex = g * was[i][0] + dx - now[i][0];
     const ey = g * was[i][1] + dy - now[i][1];
@@ -533,15 +374,6 @@ function similarity(was: [number, number][], pr: GeoProjection): Move | null {
   return { g, dx, dy };
 }
 
-/**
- * Whether the moved snapshot still reaches everything the map is about to draw.
- *
- * Only the sphere matters, not the whole stage: outside it the raster is
- * clipped away. Zoomed out that is what makes a pan free — the sphere travels
- * with the snapshot, so nothing new is ever exposed. Zoomed in far enough that
- * the sphere overflows the stage, a pan does expose new ground, this returns
- * false, and the pass is re-projected as before.
- */
 function covered(t: Move, s: Snapshot, pr: GeoProjection, W: number, H: number): boolean {
   const b = geoPath(pr).bounds({ type: 'Sphere' });
   const nx0 = Math.max(0, b[0][0]),
@@ -557,7 +389,6 @@ function covered(t: Move, s: Snapshot, pr: GeoProjection, W: number, H: number):
   );
 }
 
-/** Tiles a lattice's extent covers at 2^z per side. */
 function tileCount(lo: number, hi: number, top: number, bot: number, n: number): number {
   const across = Math.floor(hi * n) - Math.floor(lo * n) + 1;
   const down = Math.min(n - 1, Math.floor(bot * n)) - Math.max(0, Math.floor(top * n)) + 1;

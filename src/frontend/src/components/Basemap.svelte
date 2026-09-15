@@ -1,11 +1,4 @@
 <script lang="ts">
-  /**
-   * The basemap's nodes, as markup rather than d3-selection appends: lib/basemap.ts
-   * only ever sets attributes on them.
-   *
-   * Ink only — the ground and the sea are painted by the water canvas below this
-   * SVG, because the depth raster has to come between them and the land.
-   */
   import type { BasemapRefs } from '../lib/basemap';
 
   let svg: SVGSVGElement;
@@ -20,7 +13,6 @@
   let sh1: SVGStopElement;
   let sh2: SVGStopElement;
 
-  /** Called by Stage after mount; every field is bound by the markup below. */
   export function refs(): BasemapRefs {
     return {
       svg,

@@ -1,8 +1,4 @@
 <script lang="ts">
-  /**
-   * The stage: SVG basemap, canvas pins, HTML place names, the two map cards and
-   * the control chrome.
-   */
   import { onMount, onDestroy } from 'svelte';
   import { geoDistance } from 'd3-geo';
   import type { GeoProjection } from 'd3-geo';
@@ -39,45 +35,22 @@
   import { fmt, type Strings } from '../lib/i18n';
 
   export let t: Strings;
-  /** Everything the filters leave standing. Regions never reach here — see CompassMap. */
   export let projs: Proj[] = [];
   export let selected: Proj | null = null;
-  /** The stage never owns the selection; it asks for one and reacts to the answer. */
   export let onSelect: (p: Proj | null) => void;
-  /** Mirrors the theme up so .mapc can carry .night for the sidebar's chrome. */
   export let onTheme: (night: boolean) => void = () => {};
-  /** The collapsed-sidebar opener lives on the stage; its words come from outside. */
   export let openerLabel = '';
   export let onOpen: () => void = () => {};
-  /** How far a selected entry has to rise to clear the mobile detail panel. */
   export let lift: () => number = () => 0;
-  /** The mobile panel, so place names can dodge it. */
   export let sheetEl: HTMLElement | null = null;
   export let isMobile: () => boolean = () => false;
-  /**
-   * The width the stage will have once the sidebar's transition finishes, or 0
-   * for "same as now".
-   *
-   * Clicking a pin while the sidebar is collapsed re-opens it, and the stage is
-   * still full-width for the whole 520ms that takes. Aiming at the live width
-   * parked the entry half a panel off centre, so the flight aims at the geometry
-   * it is going to land in and the two motions run as one.
-   */
   export let settledWidth: () => number = () => 0;
-  /** Set while the engine is querying, so the empty plate does not flash. */
   export let loading = false;
-  /** A query or engine failure, already worded and localized by CompassMap. The
-      stage shows it, because a blank basemap otherwise reads as "nothing matched". */
   export let error: string | null = null;
-  /** Where the pre-rendered depth tiles are served from; '' is this page's own
-      origin, which is what both nginx and the dev server do. A cross-origin
-      embed has to name the origin, or the layer stays flat. */
   export let tileurl = '';
-  /** The language segmented control the design does not have — see the markup. */
   export let lang: 'en' | 'de' = 'en';
   export let onLang: (l: 'en' | 'de') => void = () => {};
 
-  /* ---------- view state ---------- */
   const S: ViewState = initialView();
   let atlas: Atlas | null = null;
   let interact = false;
@@ -86,18 +59,6 @@
   let hovered: PinTarget | null = null;
   let pinbox: PinBox[] = [];
 
-  /* ---------- the fan ----------
-     At max zoom the map has nothing left to separate with, so any disc still
-     holding two or more members spreads them instead of advising a zoom that
-     cannot happen. That is the whole rule; there is no state to hold beyond the
-     openness `anim` eases, and no interaction — the fan is a function of the
-     zoom level.
-
-     It replaced a coordinate-purity test, which was the bug: a group of
-     coincident pins that had merged with any neighbour within CLUSTER_R + 8
-     stopped counting as coincident and silently never fanned. `fanned` here only
-     remembers what we last told `anim`, so crossing the threshold is asked for
-     once rather than on every repaint. */
   let fanned = false;
 
   function syncFan(): void {
@@ -107,38 +68,20 @@
     anim.setFan(want);
   }
 
-  /* ---------- the first-load coach ----------
-     Shown once per page load, a beat after the first query answers, and only if
-     the visitor has not already started using the map. There is no idle re-show
-     and no second chance: one demonstration, then the map is theirs.
-
-     `coachDone` and `coachTimer` are plain variables that NO reactive statement
-     reads. That is the point: a `$:` block which both reads and assigns its own
-     guard re-dirties itself and spins forever inside one flush — which is exactly
-     how the story-count debounce broke once (see Stories.schedule). So the arming
-     happens in armCoach() below, and the only `$:` involved reads props it never
-     writes. */
   const COACH_DELAY = 3000;
   let coachOn = false;
   let coachDone = false;
   let coachTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /** Arms the coach the first time a query answers cleanly. Idempotent. */
   function armCoach(ready: boolean): void {
     if (coachDone || !ready) return;
     coachDone = true;
     coachTimer = setTimeout(() => {
       coachTimer = null;
-      /* Re-tested at fire time, not just at arm time. Three seconds is long
-         enough for a filter to have emptied the map or an entry to have been
-         opened, and the coach must not land on top of the empty plate — both of
-         them sit in the middle of the stage. */
       if (!selected && !error && projs.length > 0) coachOn = true;
     }, COACH_DELAY);
   }
 
-  /** Any deliberate move on the map, or an entry opening, and it has done its
-      job. Also stops it arming at all if the visitor got in first. */
   function cancelCoach(): void {
     coachDone = true;
     if (coachTimer) {
@@ -148,34 +91,12 @@
     if (coachOn) coachOn = false;
   }
 
-  /* Reads `loading`, `error` and `projs`, assigns none of them — armCoach keeps
-     its own guard. The trigger is the first query ANSWERING, not first paint: the
-     loading plate is up for as long as the wasm engine takes to boot, and the
-     coach would otherwise be drawn straight on top of it. */
   $: armCoach(!loading && !error && projs.length > 0);
 
-  /* Chrome that Svelte renders rather than the canvas.
-
-     viewMode and night mirror S.view and S.theme on purpose, and the two are
-     DELIBERATELY allowed to disagree: S is a plain object Svelte does not track,
-     so the switches need a reactive copy — and setMode/setTheme
-     assign the copy at once but only assign S under the fade, 120-140ms later.
-     That is what makes a pressed switch answer instantly while the map it
-     describes crossfades. Collapsing them into one value re-introduces the lag. */
   let viewMode: 'flat' | 'globe' = 'flat';
-  /* Opens on the system's scheme — same source as initialView()'s S.theme, so the
-     switch and the map agree from the first frame. */
   let night = prefersDark();
-  /**
-   * Set the moment the switch is used, and never cleared.
-   *
-   * After that the system is no longer consulted: a visitor who asked for light
-   * on a dark desktop must not be flipped back the next time the system changes,
-   * which would read as the switch having failed.
-   */
   let themePinned = false;
 
-  /* ---------- element refs ---------- */
   let stage: HTMLDivElement;
   let water: HTMLCanvasElement;
   let cv: HTMLCanvasElement;
@@ -188,18 +109,10 @@
   let loadEl: HTMLDivElement;
   let errEl: HTMLDivElement;
   let zoomEl: HTMLDivElement;
-  /** The settings panel, only while it is open — see keepOut(). */
   let panelEl: HTMLDivElement | null = null;
 
-  /* The two cards' visibility, which is all sequencing — see CardLayer. Getters,
-     because Svelte assigns bind:this after this line runs and nulls it on destroy. */
   const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
 
-  /* ---------- the depth raster ----------
-     A tile landing is the one thing outside the view that changes the water, so
-     it asks for the same debounced repaint everything else does. `depthReady`
-     mirrors bathy.available for the switch and the attribution, which are Svelte's
-     to draw and so cannot read a plain field. */
   let depth = true;
   let depthReady = false;
   const bathy = new Bathymetry(tileurl, () => {
@@ -207,7 +120,6 @@
     queue();
   });
 
-  /* ---------- painting ---------- */
   const anim = new PinAnimator(() => paintPins());
   const tween = new Tweener(
     S,
@@ -223,21 +135,16 @@
     const ms = interact && !full ? 36 : 0;
     qid = setTimeout(() => {
       qid = null;
-      /* Every zoom — wheel, buttons, tween, reset, a cluster click — ends up
-         here, so this is the one place the fan has to be asked about. */
       syncFan();
       renderAll();
     }, ms);
   }
 
-  /** Everything: basemap, place names and pins. Debounced — the names cost a
-      measure-and-place pass of ~200ms. */
   function renderAll(): void {
     if (!atlas || !stage) return;
     const W = stage.clientWidth,
       H = stage.clientHeight;
     if (!W || !H) {
-      /* Laid out at zero: nothing can be measured yet, so come back for it. */
       if (retry) clearTimeout(retry);
       retry = setTimeout(() => queue(true), 80);
       return;
@@ -246,12 +153,10 @@
     const pr = paintCanvas(W, H);
     if (!pr) return;
     paintWater(pr, W, H);
-    /* Skipped while a hand is on the map, rebuilt once it lets go. */
     if (!interact) runLabels(pr, W, H);
     else ov.textContent = '';
   }
 
-  /** The canvas layer alone — pins and the two cards that follow them. */
   function paintPins(): void {
     if (!stage || !cv) return;
     const W = stage.clientWidth,
@@ -259,10 +164,7 @@
     if (W && H) paintCanvas(W, H);
   }
 
-  /** Redraws the pins and re-places the cards. Returns the projection it drew
-      with, so a caller does not build a second one. Null before the atlas lands. */
   function paintCanvas(W: number, H: number): GeoProjection | null {
-    /* Capped at 2, and re-sized only on change: assigning width clears the canvas. */
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     if (cv.width !== W * dpr || cv.height !== H * dpr) {
       cv.width = W * dpr;
@@ -292,9 +194,6 @@
     return pr;
   }
 
-  /** The ground, the sea and the depth raster, under the basemap's ink.
-      Deliberately not part of paintPins(): a pin easing open must not drag a
-      reprojection along with it. */
   function paintWater(pr: GeoProjection, W: number, H: number): void {
     if (!water) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -309,13 +208,11 @@
     depthReady = bathy.ready;
   }
 
-  /** Re-reads the roster and eases every pin toward its new emphasis and fade. */
   function pumpPins(list: Proj[] = projs): void {
     if (!S.ready) return;
     anim.pump(list, selected?.id ?? null, hovered?.id ?? null);
   }
 
-  /** The stage chrome place names may not be put on top of. */
   function keepOut(): { x: number; y: number; w: number; h: number }[] {
     const sr = stage.getBoundingClientRect();
     const boxes: { x: number; y: number; w: number; h: number }[] = [];
@@ -331,12 +228,8 @@
         h: r.height + padH,
       });
     };
-    /* The coach animation is deliberately absent — see .coach in chrome.css. */
     [attribEl, emptyEl, loadEl, errEl].forEach((el) => add(el, 40, 16));
-    /* One cluster now, so its rect already covers the settings button; the panel
-       is absolutely positioned and outside that rect, so it is measured apart. */
     [zoomEl, panelEl].forEach((el) => add(el, 30, 20));
-    /* On mobile the panel covers map, so it is one more place a name may not go. */
     if (isMobile() && sheetEl) {
       const sb = sheetEl.getBoundingClientRect();
       if (sb.width) {
@@ -368,7 +261,6 @@
     });
   }
 
-  /* ---------- zoom ---------- */
   function zoomTo(k: number, mx: number, my: number): void {
     k = Math.max(K_MIN, Math.min(K_MAX, k));
     if (S.view === 'flat') {
@@ -380,7 +272,6 @@
     queue();
   }
 
-  /** A button press eases; the wheel stays direct, the hand supplies the motion. */
   function zoomStep(f: number): void {
     const k = Math.max(K_MIN, Math.min(K_MAX, S.k * f));
     if (k === S.k) return;
@@ -402,11 +293,6 @@
     tween.to({ k: 1, tx: 0, ty: 0, rot: [-18, -8] }, 420);
   }
 
-  /* ---------- mode and theme ---------- */
-  /**
-   * Projection and theme swaps cannot be tweened — a sphere does not ease into a
-   * flat map — so both are covered by a short fade instead.
-   */
   let fade: ReturnType<typeof setTimeout> | null = null;
 
   function underFade(ms: number, apply: () => void): void {
@@ -415,8 +301,6 @@
       return;
     }
     stage.classList.add('swapping');
-    /* Cleared on destroy: Svelte nulls bind:this, so a widget removed mid-fade
-     would land here with no stage to un-fade. */
     if (fade) clearTimeout(fade);
     fade = setTimeout(() => {
       fade = null;
@@ -425,7 +309,6 @@
     }, ms);
   }
 
-  /** The swap keeps whatever was under the middle of the stage under it. */
   function setMode(m: 'flat' | 'globe'): void {
     if (m === S.view) return;
     tween.stop();
@@ -444,7 +327,6 @@
     });
   }
 
-  /** `pin` is what the switch does and a system change does not — see themePinned. */
   function setTheme(dark: boolean, pin = true): void {
     if (pin) themePinned = true;
     if (dark === night) return;
@@ -457,21 +339,16 @@
     });
   }
 
-  /* ---------- hover preview ---------- */
   function positionPinPreview(): void {
     cards.preview(hovered ? boxFor(pinbox, hovered.id) : undefined, stage.clientWidth);
   }
 
-  /** Re-checks the hover after a repaint, which can have moved or dropped it. */
   function syncPinPreview(): void {
     if (!hovered) return;
-    /* Gone from the results — a filter excluded it — so the hover goes with it. */
     if (!isCluster(hovered) && !projs.some((d) => d.id === hovered!.id)) {
       setHover(null);
       return;
     }
-    /* Not drawn. While the view is moving the pin may still be flying in — a twin's
-       focus flies to its pin — so keep the hover and wait for the next frame. */
     if (!boxFor(pinbox, hovered.id)) {
       if (!interact) setHover(null);
       else positionPinPreview();
@@ -493,13 +370,11 @@
       return;
     }
     stage.style.cursor = 'pointer';
-    /* Unhidden now, placed next frame, so the fade has a start state. */
     cards.openPreview();
     requestAnimationFrame(positionPinPreview);
     pumpPins();
   }
 
-  /** The pin under a pointer, in client coordinates. */
   function pinAt(e: PointerEvent): PinTarget | null {
     const r = stage.getBoundingClientRect();
     return hitPin(pinbox, e.clientX - r.left, e.clientY - r.top);
@@ -511,14 +386,10 @@
 
   function clickAt(e: PointerEvent): void {
     const hit = pinAt(e);
-    /* Bare map is the gesture for putting an entry away — which is why the chrome
-       stops its own events reaching here. */
     if (!hit) {
       onSelect(null);
       return;
     }
-    /* Every disc left on screen is one zoom can still break apart: at max zoom
-       there are no discs, only fans. So a cluster click is always a zoom. */
     if (isCluster(hit)) {
       zoomIntoCluster(hit.id, hit.c);
       return;
@@ -526,8 +397,6 @@
     onSelect(hit);
   }
 
-  /** A twin flies its pin into view. At max zoom that pin is already fanned out
-      on its own, so the keyboard lands on the entity rather than on a disc. */
   function onTwinFocus(d: Proj): void {
     flyTo(d);
     setHover(d);
@@ -547,14 +416,11 @@
     tween.to({ k, tx: mx - g * (mx - S.tx), ty: my - g * (my - S.ty) }, 520);
   }
 
-  /* ---------- the close-range card ---------- */
   const DETAIL_K = 3.4;
-  /** Below this the card would crowd its neighbours, so the pin comes back instead. */
   const CARD_K = 2.2;
 
   const cardShowing = () => !!selected && S.k >= CARD_K;
 
-  /** At close range the selected entry stops being a marker and states what it is. */
   function positionProjectCard(): void {
     if (!selected || S.k < CARD_K || !onFront(S, selected.c)) {
       cards.closeEntry();
@@ -565,36 +431,14 @@
     cards.entry(proj(S, W, H)(selected.c), W);
   }
 
-  /** Travels to an entry and settles where its surroundings read. Never zooms out. */
-  /* ---------- keeping the map still when the stage changes size ---------- */
   let lastW = 0;
   let lastH = 0;
 
-  /**
-   * Divides out the projection's dependence on the stage's size.
-   *
-   * proj() re-fits the map to the stage on every paint, so the basis scale moves
-   * with the width: opening the 420px sidebar on a 1400px frame drops it 30%, and
-   * the map appears to zoom out on its own. This multiplies S.k by exactly the
-   * reciprocal and re-centres, so a resize reframes the map without zooming it.
-   *
-   * Exported because the order matters. CompassMap calls it after un-collapsing
-   * and before setting the selection, so the flight starts from a compensated
-   * view rather than being handed a 30% rescale halfway through.
-   *
-   * Two guards, both load-bearing:
-   *  - Skipped while a tween runs. A flight has already aimed at the settled
-   *    geometry, so compensating under it would fight its targets.
-   *  - Skipped if the compensated k would leave [K_MIN, K_MAX]. Clamping instead
-   *    would silently trip atMaxZoom() and fan every pileup on the stage just
-   *    because a panel opened.
-   */
   export function absorbResize(): void {
     if (!stage || !S.ready) return;
     const W = stage.clientWidth,
       H = stage.clientHeight;
     if (!W || !H) return;
-    /* First sighting: record, do not compensate — there is no "before". */
     if (!lastW || !lastH) {
       lastW = W;
       lastH = H;
@@ -613,9 +457,6 @@
     lastH = H;
   }
 
-  /* Matches the sidebar's width transition in styles/sidebar.css to the
-     millisecond, and Tweener's ease matches its curve. The two have to move
-     together or opening a collapsed panel reads as two separate animations. */
   const ENTRY_MS = 520;
 
   function zoomToProject(p: Proj): void {
@@ -624,16 +465,11 @@
       tween.to({ k, rot: [-p.c[0], -p.c[1]] }, ENTRY_MS);
       return;
     }
-    /* The width it will settle at, not the one it has: the sidebar may be on its
-       way in underneath this very flight. */
     const W = settledWidth() || stage.clientWidth;
     const o = flatOffsetFor(S, W, stage.clientHeight, p.c, k);
-    /* The middle of the stage is behind the mobile panel, so park the entry in the
-       strip of map the panel leaves standing. */
     tween.to({ k, tx: o.tx, ty: o.ty - lift() }, ENTRY_MS);
   }
 
-  /** Brings an entry into view only when it is not already on screen. */
   function flyTo(p: Proj): void {
     const W = stage.clientWidth,
       H = stage.clientHeight;
@@ -656,7 +492,6 @@
     tween.to({ tx: o.tx, ty: o.ty }, 620);
   }
 
-  /* A filter change can orphan a selection just as a click can make one. */
   let lastSelectedId: string | null = null;
   $: if (S.ready && (selected?.id ?? null) !== lastSelectedId) {
     lastSelectedId = selected?.id ?? null;
@@ -666,19 +501,10 @@
   function onSelectionChanged(p: Proj | null): void {
     setHover(null);
     if (p) {
-      /* Opening an entry is the map being used, coach or no coach. */
       cancelCoach();
       zoomToProject(p);
     } else {
       cards.closeEntry();
-      /* Putting an entry away leaves the map exactly where it is. It used to
-         travel back to a view snapshotted when the entry opened, which read as
-         the map wandering off on its own — the visitor had usually panned or
-         zoomed while reading, and that work was silently undone.
-
-         The stop matters: zoomToProject runs for 680ms, so dismissing an entry
-         while it is still flying would otherwise keep the map gliding towards
-         the entry that was just dismissed. */
       tween.stop();
       queue();
     }
@@ -686,11 +512,8 @@
     pumpPins();
   }
 
-  /* Passed as an argument, not left to the default: a statement depends only on
-     what its own body reads. */
   $: pumpPins(projs);
 
-  /* ---------- boot ---------- */
   let unbind: (() => void) | null = null;
   let unfonts: (() => void) | null = null;
   let unscheme: (() => void) | null = null;
@@ -717,9 +540,6 @@
     });
     renderAll();
     pumpPins();
-    /* The observer alone: it catches a window resize as well, and unlike a window
-       listener it also catches the sidebar collapsing, which the map has to
-       re-fit for. */
     if (window.ResizeObserver) {
       ro = new ResizeObserver(() => {
         absorbResize();
@@ -727,10 +547,7 @@
       });
       ro.observe(stage);
     }
-    /* Web fonts land after first paint and change every measured label width. */
     unfonts = onFontsReady(() => queue(true));
-    /* Follows the system until the switch is used, and not after — pin: false is
-       what keeps a system change from overriding a deliberate choice. */
     unscheme = onSchemeChange((dark) => {
       if (!themePinned) setTheme(dark, false);
     });
@@ -750,24 +567,16 @@
     bathy.clear();
   });
 
-  /** Repaints from outside — the sidebar collapsing changes the stage's width. */
   export function refresh(full = true): void {
     queue(full);
   }
 
   $: previewEntity = hovered ? entityLabel(hovered) : '';
   $: cardEntity = selected ? entityLabel(selected) : '';
-  /* Not `{#if}`: keepOut() measures these nodes, and a plate is display:none
-     without .show anyway. All three are exclusive — a failure is not an empty
-     result, and neither is a query still running. */
   $: showEmpty = !loading && !error && projs.length === 0;
-  /* Only while the map has nothing on it yet. A filter change also sets
-     `loading`, and a plate flashing over a map already drawn reads as a fault. */
   $: showLoading = loading && !error && projs.length === 0;
 </script>
 
-<!-- role=application plus tabindex 0 is what makes the arrow keys, +/- and 0
-     reachable without a pointer. svelte-check does not count it as interactive. -->
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
   class="stage"
@@ -778,12 +587,9 @@
   aria-label={t.stageAria}
   aria-busy={loading}
 >
-  <!-- Under the basemap: the ground, the sea and the depth raster. -->
   <canvas id="water" bind:this={water} aria-hidden="true"></canvas>
   <Basemap bind:this={basemap} />
 
-  <!-- Hidden from AT: PinNav is the pins' accessible equivalent, and the place
-       names are decoration. -->
   <canvas id="cv" bind:this={cv} aria-hidden="true"></canvas>
   <div class="ov" bind:this={ov} aria-hidden="true"></div>
 
@@ -814,23 +620,15 @@
     where={hovered?.where ?? ''}
   />
 
-  <!-- Guarded like StageChrome: asking for the panel back is not the "put the
-       entry away" gesture, and the two would otherwise fight. -->
   <button class="opener" type="button" on:pointerdown|stopPropagation on:click={onOpen}
     >{openerLabel}</button
   >
   <Coach {t} show={coachOn} />
   <div class="plate empty" class:show={showEmpty} bind:this={emptyEl}>{t.noProjectsMatch}</div>
-  <!-- The longest wait in the widget: this plate is up for as long as the wasm
-       engine takes to boot, and until now it was a line of text with nothing
-       moving on it. The ring goes above the words rather than beside them, since
-       the plate is centred text. keepOut() measures this node, so the ring is
-       inside it and the rect it returns already accounts for it. -->
   <div class="plate plate-load" class:show={showLoading} bind:this={loadEl}>
     <Spinner />
     {t.loadingMap}
   </div>
-  <!-- Spoken by the sidebar's one live region, not by a second one here. -->
   <div class="plate plate-error" class:show={!!error} bind:this={errEl}>{error ?? ''}</div>
   <div class="attrib" bind:this={attribEl}>
     {depth && depthReady ? t.attributionDepth : t.attribution}
