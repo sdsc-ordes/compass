@@ -204,23 +204,23 @@ export function bindInput(h: InputHooks): () => void {
     m: [number, number];
     tx: number;
     ty: number;
-    r: DOMRect;
   } | null = null;
 
-  const pair = () => [...PT.values()];
+  const pair = () => [...PT.values()].slice(0, 2);
   const spread = () => {
     const a = pair();
-    return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+    return Math.max(1, Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y));
   };
+  // Midpoint in stage coordinates: the rect is read live so a page scroll
+  // partway through the gesture cannot smear the anchor.
   const midpoint = (): [number, number] => {
-    const a = pair();
-    return [(a[0].x + a[1].x) / 2, (a[0].y + a[1].y) / 2];
+    const a = pair(),
+      r = stage.getBoundingClientRect();
+    return [(a[0].x + a[1].x) / 2 - r.left, (a[0].y + a[1].y) / 2 - r.top];
   };
 
   const startPinch = () => {
-    const r = stage.getBoundingClientRect(),
-      m = midpoint();
-    pinch = { d: spread(), k: S.k, m, tx: S.tx, ty: S.ty, r };
+    pinch = { d: spread(), k: S.k, m: midpoint(), tx: S.tx, ty: S.ty };
     p0 = null;
     dragging = false;
     moved = 99;
@@ -230,14 +230,20 @@ export function bindInput(h: InputHooks): () => void {
   const mv = (e: PointerEvent) => {
     if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && PT.size >= 2) {
-      const m = midpoint(),
-        d = spread();
+      // Solve pan and zoom together against the state the pinch started in:
+      // the point under the first midpoint stays under the current one. Doing
+      // it per-frame instead mixes an absolute pan with an incremental zoom
+      // anchor and the map slides out from under the fingers.
+      const m = midpoint();
+      const k = Math.max(K_MIN, Math.min(K_MAX, pinch.k * (spread() / pinch.d)));
+      const g = k / pinch.k;
       h.setInteract(true);
       if (S.view === 'flat') {
-        S.tx = pinch.tx + (m[0] - pinch.m[0]);
-        S.ty = pinch.ty + (m[1] - pinch.m[1]);
+        S.tx = m[0] - g * (pinch.m[0] - pinch.tx);
+        S.ty = m[1] - g * (pinch.m[1] - pinch.ty);
       }
-      h.zoomTo(pinch.k * (d / pinch.d), m[0] - pinch.r.left, m[1] - pinch.r.top);
+      S.k = k;
+      h.queue();
       return;
     }
     if (!p0 || !base) return;
@@ -263,7 +269,13 @@ export function bindInput(h: InputHooks): () => void {
 
   const up = (e: PointerEvent) => {
     PT.delete(e.pointerId);
-    if (pinch && PT.size < 2) {
+    // Lifting one of three fingers changes which pair drives the gesture, so
+    // rebase on the pair that is left rather than jumping.
+    if (pinch && PT.size >= 2) {
+      startPinch();
+      return;
+    }
+    if (pinch) {
       pinch = null;
       const rest = pair()[0];
       if (rest) {
