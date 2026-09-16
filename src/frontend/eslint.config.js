@@ -1,7 +1,3 @@
-// Flat config. Type-aware rules are deliberately left off: svelte-check
-// already type-checks the same files against tsconfig.json, and running the
-// TypeScript program twice roughly triples `just check::lint` for no extra findings.
-
 import js from '@eslint/js';
 import ts from 'typescript-eslint';
 import svelte from 'eslint-plugin-svelte';
@@ -19,8 +15,6 @@ export default ts.config(
       globals: { ...globals.browser, ...globals.es2021 },
     },
     rules: {
-      // The widget logs failures it recovers from; a bare console.log is the
-      // one worth catching, since it ships to a visitor's console.
       'no-console': ['error', { allow: ['warn', 'error'] }],
       '@typescript-eslint/no-unused-vars': [
         'error',

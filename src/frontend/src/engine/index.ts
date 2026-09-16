@@ -1,20 +1,11 @@
-/**
- * Everything the UI needs from the ontology, fetched from the API.
- *
- * The API owns the data and the query layer, so an editorial update reaches
- * the widget on the next request without anything being rebuilt.
- */
 import type { Filters, FilterWidget } from './namespaces';
 
-/** The properties the API puts on every feature, whatever the shapes add. */
 export type EntityProperties = {
   id: string;
   label: string;
   type: string;
   typeIri: string;
-  /** Filtered stories index for this entity, or '' when it has no term id. */
   storiesUrl: string;
-  /** Set on Country/Area features, which arrive without geometry. */
   is_region?: boolean;
   regionKey?: string;
 } & Record<string, unknown>;
@@ -29,14 +20,11 @@ export type Feature = {
 
 export type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] };
 
-/** Drill-down counts per tag: { dimensionId: { tagIri: count } }. */
 export type FacetCounts = Record<string, Record<string, number>>;
 
-/** Filter widgets per language, fetched once by init(). */
 const widgetsByLang: Record<string, FilterWidget[]> = {};
 let apiBase = '';
 
-/** Turn the UI's filter object into query parameters, one entry per value. */
 function toParams(lang: string, filters: Filters): URLSearchParams {
   const params = new URLSearchParams({ lang });
   for (const [key, value] of Object.entries(filters ?? {})) {
@@ -59,14 +47,6 @@ async function getJson<T>(path: string, params?: URLSearchParams): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-/**
- * Point the engine at an API and load filter widgets for both languages.
- *
- * Widgets are prefetched rather than requested per render so that
- * getFilterWidgets stays synchronous for the components that read them during
- * reactive updates. They list every tag value, so they have to come from the API:
- * adding a concept changes them.
- */
 export async function init(url: string): Promise<void> {
   apiBase = (url ?? '').replace(/\/$/, '');
   const [en, de] = await Promise.all([
@@ -85,7 +65,6 @@ export async function getFacets(lang: string, filters: Filters): Promise<FacetCo
   return getJson<FacetCounts>('/api/v1/entities/facets', toParams(lang, filters));
 }
 
-/** Filter UI widgets for a language, from init()'s prefetch (English fallback). */
 export function getFilterWidgets(lang: string): FilterWidget[] {
   return widgetsByLang[lang] ?? widgetsByLang.en ?? [];
 }

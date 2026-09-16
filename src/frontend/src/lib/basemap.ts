@@ -1,13 +1,6 @@
-/**
- * The SVG basemap: land, country borders, graticule, the globe's rim and shading.
- *
- * The prototype fetched Natural Earth from a CDN; the widget is one self-contained
- * file, so the topology is committed (scripts/build-atlas.mjs, `just atlas`) and
- * imported. The prototype's optional sea-label file has no home here.
- */
-import { geoPath, geoGraticule10, geoCentroid, geoArea } from 'd3-geo';
+import { geoPath, geoGraticule10 } from 'd3-geo';
 import type { GeoProjection, GeoPermissibleObjects } from 'd3-geo';
-import { feature, merge, mesh } from 'topojson-client';
+import { merge, mesh } from 'topojson-client';
 import type {
   GeometryCollection,
   MultiPolygon,
@@ -15,24 +8,22 @@ import type {
   Topology,
 } from 'topojson-specification';
 import atlasJson from '../atlas.json';
+import labelsJson from '../atlas-labels.json';
 import { P, type Theme } from './palette';
 import { proj, type ViewState } from './projection';
-import { CTY_MIN, type CountryLabel } from './labels';
+import type { MapLabel, SeaLabel } from './labels';
 
-/** Every geometry the renderer draws, built once at boot. */
 export interface Atlas {
   land: GeoPermissibleObjects;
   borders: GeoPermissibleObjects;
   grat: GeoPermissibleObjects;
-  cty: CountryLabel[];
+  cty: MapLabel[];
+  sea: SeaLabel[];
 }
 
-/** The SVG nodes renderBasemap writes into — created as markup by Stage.svelte. */
 export interface BasemapRefs {
   svg: SVGSVGElement;
   world: SVGGElement;
-  page: SVGRectElement;
-  sea: SVGPathElement;
   grat: SVGPathElement;
   land: SVGPathElement;
   borders: SVGPathElement;
@@ -46,38 +37,26 @@ export interface BasemapRefs {
 
 let cached: Atlas | null = null;
 
-/** Builds the atlas geometry. Synchronous — the topology is already in the bundle. */
 export function loadAtlas(): Atlas {
   if (cached) return cached;
   const topo = atlasJson as unknown as Topology<{
     countries: GeometryCollection<{ name: string }>;
   }>;
   const countries = topo.objects.countries;
-  const min = new Map(CTY_MIN);
+  const table = labelsJson as { cty: MapLabel[]; sea: SeaLabel[] };
   cached = {
-    /* The members, not the collection: merge() calls .forEach on what it is given,
-       so the collection its types also advertise would throw. */
     land: merge(
       topo,
       countries.geometries as Array<Polygon | MultiPolygon>,
     ) as GeoPermissibleObjects,
     borders: mesh(topo, countries, (a, b) => a !== b) as GeoPermissibleObjects,
     grat: geoGraticule10() as GeoPermissibleObjects,
-    cty: feature(topo, countries)
-      .features.filter((f) => f.properties && min.has(f.properties.name))
-      .map((f) => ({
-        name: f.properties.name,
-        minK: min.get(f.properties.name) as number,
-        c: geoCentroid(f as GeoPermissibleObjects) as [number, number],
-        area: geoArea(f as GeoPermissibleObjects),
-      }))
-      .sort((a, b) => b.area - a.area),
+    cty: table.cty,
+    sea: table.sea,
   };
   return cached;
 }
 
-/** Repaints the basemap for the current view, with setAttribute rather than
-    d3-selection — not worth a second library for four calls. */
 export function renderBasemap(
   bm: BasemapRefs,
   S: ViewState,
@@ -93,8 +72,6 @@ export function renderBasemap(
   const path = geoPath(pr);
   const landD = path(atlas.land);
 
-  set(bm.page, { width: W, height: H, fill: p.page });
-  set(bm.sea, { d: path({ type: 'Sphere' }) ?? '', fill: p.sea });
   set(bm.grat, {
     d: path(atlas.grat) ?? '',
     stroke: p.grat,

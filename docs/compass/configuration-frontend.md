@@ -15,12 +15,19 @@ element's attributes, the API it is pointed at, and a rebuild.
 | Attribute | Default | Meaning |
 | --- | --- | --- |
 | `apiurl` | `''` (this page's origin) | Where the API lives. Every query, facet count and story count goes here. |
+| `tileurl` | `''` (this page's origin) | Where `/tiles/` serves the pre-rendered GEBCO depth raster. Not always the same host as `apiurl` — the dev stack runs the API on its own port and the tiles on vite's. |
 | `lang` | `en` | `en` or `de`. A `?lang=` query parameter overrides it. |
 
-Served behind the project's nginx image, `apiurl` can stay empty: nginx proxies
-`/api` on the same origin, which is also why the deployed widget needs no CORS.
-`tools/docker/index.html` sets it to `location.origin` explicitly, because the
-origin is only known at runtime.
+Served behind the project's nginx image, `apiurl` and `tileurl` can both stay
+empty: nginx proxies `/api` and serves `/tiles/` on the same origin, which is
+also why the deployed widget needs no CORS. `tools/docker/index.html` sets both
+to `location.origin` explicitly, because the origin is only known at runtime.
+
+Embedded on another origin, `tileurl` has to name the host that has `/tiles/`,
+and that host has to answer with `Access-Control-Allow-Origin` — the widget
+reads the tiles back off a canvas to reproject them, and a tainted canvas cannot
+be read. The project's nginx config sends that header. Point `tileurl` at a host
+that does not, and the layer quietly stays off rather than failing.
 
 ## From the API: everything about the ontology
 

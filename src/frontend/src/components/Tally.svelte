@@ -1,45 +1,52 @@
 <script lang="ts">
-  /**
-   * What the filters leave standing, and the reset.
-   *
-   * It used to carry the story count too — a 40px result number with a 15px
-   * story line beneath it, both ending "in this selection" — which read as one
-   * quantity and its breakdown. The stories have their own block above this one
-   * now (components/StoriesBlock.svelte), and the emphasis went with them: this
-   * is one small line, because the map beside it already shows the result, and
-   * going to read is the errand worth inviting.
-   */
-  import { plural, type Strings } from '../lib/i18n';
+  import Icon from './Icon.svelte';
+  import Spinner from './Spinner.svelte';
+  import { fmt, plural, type Strings } from '../lib/i18n';
+  import type { StoryCount } from '../lib/stories';
 
   export let t: Strings;
   export let resultCount = 0;
-  export let anyFilters = false;
+  export let storyCount: StoryCount | null = null;
+  export let storiesPending = false;
   export let statusText = '';
-  export let onReset: () => void;
-  /** Bound out for the mobile dock: this block plus the handle is how tall the
-      panel's shortest stop is, so lib/sheet.ts measures it. Nothing else reaches
-      in here. */
   export let tallyEl: HTMLElement | null = null;
+
+  $: counted = storyCount && storyCount.count > 0 && storyCount.url ? storyCount : null;
+  $: resultLine = fmt(plural(resultCount, t.tallyResultsOne, t.tallyResults), {
+    n: resultCount,
+  });
 </script>
 
-<!-- The one live region: a filter change rewrites the tally, the empty plate,
-     four section counts, the type pills and every row count at once, so it says
-     all of it in one
-     sentence. The visual numbers are aria-hidden because this repeats them. -->
 <p class="sr" role="status" aria-live="polite">{statusText}</p>
 
-<div class="tally" bind:this={tallyEl}>
-  <p class="rescount" aria-hidden="true">
-    <b>{resultCount}</b>
-    {plural(resultCount, t.tallyCaptionOne, t.tallyCaption)}
-  </p>
-  <div class="resetwrap">
-    <button
-      class="reset"
-      class:off={!anyFilters}
-      type="button"
-      disabled={!anyFilters}
-      on:click={onReset}>{t.resetFiltersLong}</button
-    >
-  </div>
+<div class="tallyband" bind:this={tallyEl}>
+  {#if !storyCount && storiesPending}
+    <div class="tallybox waiting" aria-hidden="true">
+      <Spinner />
+    </div>
+  {:else if storyCount}
+    <div class="tallybox" class:lead={!!counted} class:settling={storiesPending}>
+      {#if storiesPending}
+        <Spinner />
+      {/if}
+      {#if counted}
+        <p class="big" aria-hidden="true">{counted.count}</p>
+        <p class="lbl" aria-hidden="true">
+          {plural(counted.count, t.storiesCaptionOne, t.storiesCaption)}
+        </p>
+      {:else}
+        <p class="lbl ask" aria-hidden="true">{t.storiesPrompt}</p>
+      {/if}
+      <a class="storiesgo" href={storyCount.url} target="_blank" rel="noopener noreferrer">
+        <span class="sb-lb"
+          >{counted
+            ? plural(counted.count, t.storiesReadOne, t.storiesRead)
+            : t.allStories}</span
+        >
+        <Icon name="extLink" />
+        <span class="sr"> {t.newTab}</span>
+      </a>
+    </div>
+  {/if}
+  <p class="sub" aria-hidden="true">{resultLine}</p>
 </div>

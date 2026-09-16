@@ -1,21 +1,9 @@
-/**
- * The map's pure geometry and graph logic, kept out of the component so it can
- * be tested without a MapLibre instance or a DOM.
- */
 import type { EntityProperties, Feature, Geometry } from '../engine';
 
-/** Anything that accumulates a bounding box; MapLibre's LngLatBounds fits. */
 export type BoundsLike = { extend(coordinate: [number, number]): unknown };
 
-/** A feature whose geometry is known to be a Point. */
 export type PointFeature = Feature & { geometry: { type: 'Point'; coordinates: number[] } };
 
-/**
- * MapLibre flattens feature properties to scalars, so a tag array read back off
- * the rendered map arrives as a JSON string. Parse those back, and leave every
- * other value alone: only a string that both looks like an array and parses as
- * one is converted, so a label is never mangled into data.
- */
 export function parseFeatureProps(props: Record<string, unknown>): EntityProperties {
   const parsed: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(props)) {
@@ -34,7 +22,6 @@ function maybeArray(value: string): unknown {
   }
 }
 
-/** Meridians and parallels every *step* degrees, so open ocean is not featureless. */
 export function graticule(step = 20) {
   const lines = [];
   for (let lon = -180; lon <= 180; lon += step) {
@@ -56,7 +43,6 @@ const lineString = (coordinates: number[][]) => ({
   geometry: { type: 'LineString' as const, coordinates },
 });
 
-/** Extend *bounds* by every coordinate in a geometry, at any nesting depth. */
 export function extendBounds(bounds: BoundsLike, geometry: Geometry | null): void {
   if (!geometry?.coordinates) return;
   const walk = (part: unknown) => {
@@ -68,21 +54,11 @@ export function extendBounds(bounds: BoundsLike, geometry: Geometry | null): voi
 }
 
 export type SplitFeatures = {
-  /** Pins, which cluster. */
   points: PointFeature[];
-  /** Country/Area features with their boundary polygon joined on. */
   regions: Feature[];
-  /** regionKeys the bundled boundary file has no polygon for. */
   unmatchedRegions: string[];
 };
 
-/**
- * Separate pins from regions, joining each region's boundary polygon by key.
- *
- * Regions arrive without geometry -- a Country/Area concept has no coordinates
- * of its own -- so their shape comes from the bundled Natural Earth extract.
- * The two also cannot share a source: a clustered source drops polygons.
- */
 export function splitFeatures(
   entities: Feature[],
   regionGeometry: Record<string, Geometry>,
@@ -108,12 +84,6 @@ export function splitFeatures(
   return { points, regions, unmatchedRegions };
 }
 
-/**
- * The IRIs a link property points at.
- *
- * The property is [{iri, label}] on a feature straight from the API and a JSON
- * string on one read back off the rendered map, so both are accepted.
- */
 export function linkedIrisOf(raw: unknown): string[] {
   const list = typeof raw === 'string' ? maybeArray(raw) : raw;
   if (!Array.isArray(list)) return [];
@@ -124,11 +94,9 @@ export function linkedIrisOf(raw: unknown): string[] {
 
 export type ConnectionIndex = {
   coordByIri: Map<string, [number, number]>;
-  /** Symmetric, so a link declared on either side draws from both ends. */
   neighboursByIri: Map<string, Set<string>>;
 };
 
-/** Index the org/project links between pins. Both ends need coordinates. */
 export function buildConnectionIndex(entities: Feature[]): ConnectionIndex {
   const coordByIri = new Map<string, [number, number]>();
   const neighboursByIri = new Map<string, Set<string>>();
@@ -146,7 +114,6 @@ export function buildConnectionIndex(entities: Feature[]): ConnectionIndex {
     neighboursByIri.set(from, neighbours);
   };
 
-  // Regions carry links but no geometry, so they drop out here.
   for (const feature of entities) {
     const iri = feature.properties?.id;
     if (!iri || !coordByIri.has(iri)) continue;
@@ -163,7 +130,6 @@ export function buildConnectionIndex(entities: Feature[]): ConnectionIndex {
   return { coordByIri, neighboursByIri };
 }
 
-/** One dashed LineString from *iri* to each of its neighbours. */
 export function connectionLines(iri: string, index: ConnectionIndex) {
   const origin = index.coordByIri.get(iri);
   if (!origin) return { features: [], endpointIris: [] as string[] };
@@ -177,7 +143,6 @@ export function connectionLines(iri: string, index: ConnectionIndex) {
   };
 }
 
-/** A MapLibre `match` expression mapping each type IRI to its pin colour. */
 export function typeColorExpression(colors: Record<string, string>, fallback: string) {
   const expression: unknown[] = ['match', ['get', 'typeIri']];
   for (const [iri, color] of Object.entries(colors)) expression.push(iri, color);

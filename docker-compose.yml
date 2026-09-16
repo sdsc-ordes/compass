@@ -34,8 +34,9 @@ services:
       context: .
       dockerfile: tools/docker/frontend.Dockerfile
     volumes:
-      # Built by `just map::tiles`, kept out of the image and out of git: ~53 MB of
-      # regenerable raster. Absent is fine -- the map falls back to vector.
+      # Built by `just map::tiles`, kept out of the image and out of git: tens of
+      # MB of regenerable raster. Absent is fine -- the first 404 turns the depth
+      # layer off and the map falls back to a flat sea.
       - ./src/frontend/tiles:/data/tiles:ro
     # Host → container port map. nginx listens on 80 inside the frontend
     # container; the backend stays on 8000 on the Compose network only (not
