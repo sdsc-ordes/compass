@@ -5,7 +5,7 @@ from starlette.datastructures import QueryParams
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import sparql_for_instances
 from app.sparql_to_geojson_translator import (
-    _parse_special_properties,
+    _derived_properties,
     extract_property,
     instances_to_geojson,
 )
@@ -23,19 +23,21 @@ def _ep(**kwargs) -> EntityShape:
     return EntityShape(**defaults)
 
 
-class TestParseSpecialProperties:
+class TestDerivedProperties:
+    """storiesUrl is derived from the decoded wpEntityTagId property."""
+
     def test_builds_the_english_stories_url(self):
-        props = _parse_special_properties({"wpEntityTagId": "921"}, "en")
+        props = _derived_properties({"wpEntityTagId": "921"}, "en")
         assert props["storiesUrl"].endswith("?tag=921")
         assert "/en/" in props["storiesUrl"]
 
     def test_builds_the_german_stories_url(self):
-        props = _parse_special_properties({"wpEntityTagId": "921"}, "de")
+        props = _derived_properties({"wpEntityTagId": "921"}, "de")
         assert props["storiesUrl"].endswith("?tag=921")
         assert "/de/" in props["storiesUrl"]
 
     def test_no_tag_id_means_no_url(self):
-        assert _parse_special_properties({}, "en")["storiesUrl"] == ""
+        assert _derived_properties({}, "en")["storiesUrl"] == ""
 
 
 class TestExtractProperty:

@@ -26,6 +26,18 @@ dev-up:
     just frontend &
     wait
 
+# Rewrite every source file in the project's style.
+format *args:
+    just check::format "$@"
+
+# Report style and correctness problems without changing anything.
+lint *args:
+    just check::lint "$@"
+
+# Run the backend, generator and widget test suites.
+test *args:
+    just check::tests "$@"
+
 # Bring up the stack with docker compose.
 [confirm("Bring up docker compose? [y/n]")]
 deploy:
