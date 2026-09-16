@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
   import DetailPane from './DetailPane.svelte';
   import Tally from './Tally.svelte';
   import TypePills from './TypePills.svelte';
@@ -48,29 +47,6 @@
     pills?.focusPill(iri);
   }
 
-  // Closing the detail pane used to swap the panes on display, which reads as a
-  // jump. Animate the filters back in rather than the detail out: dismissing an
-  // entry puts focus back in the filters, and focus cannot land in a subtree
-  // still held at display:none for an outgoing animation.
-  let back = false;
-  let backTimer: ReturnType<typeof setTimeout> | null = null;
-  let wasDetail = false;
-  $: {
-    const isDetail = !!selected;
-    if (wasDetail && !isDetail) {
-      back = true;
-      if (backTimer) clearTimeout(backTimer);
-      backTimer = setTimeout(() => {
-        back = false;
-        backTimer = null;
-      }, 240);
-    }
-    wasDetail = isDetail;
-  }
-  onDestroy(() => {
-    if (backTimer) clearTimeout(backTimer);
-  });
-
   $: typeDim = dims.find((d) => d.id === TYPE_DIM) ?? null;
   $: sectionDims = dims.filter((d) => d.id !== TYPE_DIM);
 
@@ -82,7 +58,7 @@
       : `${resultCount} ${plural(resultCount, t.tallyCaptionOne, t.tallyCaption)}`;
 </script>
 
-<aside class="filters" class:detail={!!selected} class:back bind:this={sidebarEl}>
+<aside class="filters" class:detail={!!selected} bind:this={sidebarEl}>
   <div
     class="sheet-grab"
     bind:this={grabEl}

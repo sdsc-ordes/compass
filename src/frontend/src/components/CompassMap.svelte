@@ -197,16 +197,29 @@
 
   let lastSelectedId: string | null = null;
   $: if (selectedId !== lastSelectedId) {
+    const had = lastSelectedId;
     lastSelectedId = selectedId;
     if (selectedId) onEntryOpened();
+    else if (had) onEntryClosed();
+  }
+
+  // Both panes scroll one shared container, so each arrival starts at the top.
+  // After the swap, never before it: a reactive block runs while the outgoing
+  // pane is still the one on screen, so resetting there scrolls *it*, and that
+  // lurch is what reads as the pane jumping. tick() lands after the DOM has
+  // changed and before the browser paints, so the new pane is simply at the top.
+  async function toTop(): Promise<void> {
+    await tick();
+    if (sidebarEl) sidebarEl.scrollTop = 0;
   }
 
   async function onEntryOpened(): Promise<void> {
-    if (sidebarEl) sidebarEl.scrollTop = 0;
     if (sheet?.mobile) sheet.to('detail');
-    await tick();
+    await toTop();
     titleEl?.focus({ preventScroll: true });
   }
+
+  const onEntryClosed = (): Promise<void> => toTop();
 
   onMount(async () => {
     injectFonts();
