@@ -1,12 +1,3 @@
-/* The docked panel's own furniture: the drag handle, its grip and the backdrop.
-
-   These three exist ONLY below the breakpoint, which is why they are still here —
-   every other mobile rule is an override of a desktop one and now sits at the end
-   of the file that defines it, so a rule and its mobile form are read together.
-   Both elements are display:none until the max-width block applies.
-
-   Last in the cascade, as before: nothing overrides these, and the handle's
-   sticky offsets depend on --grabh, which base.css sets on .mapc. */
 .sheet-grab,
 .sheet-backdrop {
   display: none;
@@ -16,8 +7,6 @@
 }
 
 @media (max-width: 860px) {
-  /* One class for both the fade and the tap target. [hidden] cannot be used: the
-     display:block in this block would outrank the UA rule behind it. */
   .sheet-backdrop {
     display: block;
     position: absolute;
@@ -33,7 +22,6 @@
     pointer-events: auto;
   }
 
-  /* The handle is the grip and the headline, so the tally answers itself docked. */
   .sheet-grab {
     display: block;
     position: sticky;

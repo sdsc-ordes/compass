@@ -222,7 +222,6 @@ describe('extendBounds', () => {
 describe('graticule', () => {
   it('spans the globe at the requested step', () => {
     const grid = graticule(20);
-    // 19 meridians (-180..180) plus 9 parallels (-80..80).
     expect(grid.features).toHaveLength(28);
   });
 

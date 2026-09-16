@@ -1,19 +1,34 @@
-/**
- * Pins: the roster the filters leave standing, clustering, drawing and hit-testing.
- *
- * The animation lives in its own frame loop, because pins are cheap and the map
- * is not: a full stage render costs ~200 ms, nearly all of it in placeLabels()
- * measuring and placing, while drawPins costs a tenth of a millisecond and the
- * basemap is SVG that no pin touches. Emphasis and fades repaint the canvas
- * alone and leave the rest of the map alone.
- */
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 import { frontCentre, K_MAX, REDUCED, type ViewState } from './projection';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
-/* Google Maps–style teardrop pin; (x,y) is the ground anchor at the tip. */
+const PIN_EDGE = '#2A4E71';
+
+const PIN_INK_LIGHT = '#FFFFFF';
+const PIN_INK_DARK = '#081827';
+
+const inkCache = new Map<string, string>();
+
+function inkOn(fill: string): string {
+  const held = inkCache.get(fill);
+  if (held) return held;
+  const m = /^#([0-9a-f]{6})$/i.exec(fill);
+  let ink = PIN_INK_LIGHT;
+  if (m) {
+    const n = parseInt(m[1], 16);
+    const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    const lum = 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+    ink = lum > 0.179 ? PIN_INK_DARK : PIN_INK_LIGHT;
+  }
+  inkCache.set(fill, ink);
+  return ink;
+}
+
 const pinMetrics = (sc: number) => ({
   sc,
   headR: 10.5 * sc,
@@ -63,20 +78,23 @@ export function drawGmapsPin(
   ctx.fillStyle = edge;
   ctx.fill();
   gmapsPinPath(ctx, x, y, m);
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 4 * m.sc;
+  ctx.stroke();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.4 * m.sc;
+  ctx.stroke();
   ctx.fillStyle = fill;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.12)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
   ctx.beginPath();
   ctx.arc(x, headCy, 4.2 * m.sc, 0, 6.2832);
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = inkOn(fill);
   ctx.fill();
   ctx.restore();
   return { headCy, m, tipY: y };
 }
 
-/** One disc standing in for several pins, carrying the count. */
 export function drawCluster(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -98,7 +116,12 @@ export function drawCluster(
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 2;
   ctx.stroke();
-  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(x, y, R + 1.6, 0, 6.2832);
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = inkOn(fill);
   ctx.font = '700 ' + (n > 9 ? 12 : 13) + 'px Cabin, system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -108,89 +131,60 @@ export function drawCluster(
   return R;
 }
 
-/** Once the card has taken over, the spot only needs marking. Coral, because
-    that is what the selection is marked in everywhere else on the map. */
-export function drawAnchor(ctx: CanvasRenderingContext2D, x: number, y: number, p: Pal): void {
+export function drawAnchor(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  p: Pal,
+  grow: number,
+  alpha?: number,
+): number {
+  const sc = 1 + 0.1 * grow;
+  const R = 7 * sc;
+  const out = R + 2 * sc;
   ctx.save();
+  if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
   ctx.beginPath();
-  ctx.arc(x, y, 7, 0, 6.2832);
+  ctx.arc(x, y, out, 0, 6.2832);
+  ctx.fillStyle = p.pinRing;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y, R, 0, 6.2832);
   ctx.fillStyle = '#fff';
   ctx.fill();
   ctx.strokeStyle = p.pinSel;
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 2.5 * sc;
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(x, y, 2.6, 0, 6.2832);
+  ctx.arc(x, y, R + 1.45 * sc, 0, 6.2832);
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, 2.6 * sc, 0, 6.2832);
   ctx.fillStyle = p.pinSel;
   ctx.fill();
   ctx.restore();
+  return out;
 }
 
 export const onFront = (S: ViewState, c: [number, number]) =>
   S.view === 'flat' || geoDistance(c, frontCentre(S)) < 1.52;
 
-/** Pins closer together than this on screen would overlap illegibly, so they merge. */
 const CLUSTER_R = 26;
 
 const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
 
-/**
- * How far a fanned member's tip sits from the ring's centre.
- *
- * Kept as tight as the geometry allows, because nothing draws the shared point
- * any more: at max zoom the radius maps to real ground distance, so every pixel
- * of ring is a pixel of lie about where these entities are. On a 1000px stage
- * 24px is already ~110 km, and on a 390px one ~260 km.
- *
- * One constraint sets it. Adjacent heads sit 2R·sin(π/n) apart — heads and tips
- * share the same separation, since a head is a fixed 21px above its own tip — and
- * that has to clear two hit circles, which are `headR + 5` = 15.5px each. So
- * 31px for a cursor. A finger wants a 44px target instead. Solving for R gives
- * the ring the smallest radius that keeps every member separately clickable.
- */
 const fanGap = (touch: boolean) => (touch ? 44 : 31);
 const fanRadius = (n: number, touch: boolean) =>
   fanGap(touch) / (2 * Math.sin(Math.PI / Math.max(2, n))) + 2;
 
-/**
- * Where the ring starts.
- *
- * Three or more begin straight up and go clockwise, a cardinal layout that reads
- * as deliberate and at n=4 puts one member on each side. A pair goes side by
- * side rather than stacked: two teardrops one above the other read as one tall
- * smear, and four of the six real coincident groups are pairs, so this is the
- * case that has to look right.
- */
 const fanFrom = (n: number) => (n === 2 ? 0 : -Math.PI / 2);
 
-/** Opens quickly and settles, rather than arriving at speed. */
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
-/**
- * True once the map has nothing left to zoom.
- *
- * The whole trigger for fanning. At max zoom no further zoom is available, so
- * any group still holding two or more members is unresolvable by definition and
- * spreads instead — which is why there is no coordinate test anywhere here any
- * more. Testing purity was the old bug: a group of coincident pins that had
- * merged with any neighbour within CLUSTER_R + 8 stopped counting as one and
- * silently never fanned, which on a phone-sized stage killed three of the six
- * real groups outright.
- *
- * Compared with slack, because `k` arrives from a tween and from `S.k * f`
- * products that need not land exactly on the ceiling.
- */
 export const atMaxZoom = (S: ViewState) => S.k >= K_MAX - 1e-6;
 
-/**
- * Rotates the ring to whichever offset keeps the most heads on stage.
- *
- * A group hard against an edge cannot be fixed by rotation alone — a ring
- * reaches R in every direction — but this stops one from throwing half its
- * members off a corner. Ties keep the base angle, so nothing rotates without
- * cause. Much less pressing than it was: the radius is now less than half what
- * it used to be, so far fewer rings reach an edge at all.
- */
 function fanAngle(ax: number, ay: number, R: number, n: number, W: number, H: number): number {
   const M = 14;
   const from = fanFrom(n);
@@ -203,7 +197,6 @@ function fanAngle(ax: number, ay: number, R: number, n: number, W: number, H: nu
       const th = off + (j * 2 * Math.PI) / n;
       const x = ax + Math.cos(th) * R,
         y = ay + Math.sin(th) * R;
-      /* The head, not the tip: the head is the part that has to stay readable. */
       if (x > M && x < W - M && y - 21 > M && y < H - M) on++;
     }
     if (on > bestOn) {
@@ -221,36 +214,24 @@ interface Anim {
   fadeTo: number;
 }
 
-/** Full for the selected pin and the hovered one, none for the rest. */
 const emphasis = (id: string, selectedId: string | null, hoveredId: string | null) =>
   id === selectedId || id === hoveredId ? 1 : 0;
 
-/** Eases emphasis and fades, and knows which pins are on their way out. */
 export class PinAnimator {
   private anim = new Map<string, Anim>();
   private frame: number | null = null;
-  /** Everything the filters allow. */
   live: Proj[] = [];
-  /** Still fading out after the filters excluded them. */
   leaving: Proj[] = [];
-  /** Everything drawn at least once, so a pin the filters just excluded can still
-      be faded out — the roster alone no longer contains it. */
   private known = new Map<string, Proj>();
-  /** Held as state, not captured by the frame loop, which outlives any one of them. */
   private selectedId: string | null = null;
   private hoveredId: string | null = null;
-  /**
-   * How far open the fans are, 0 to 1.
-   *
-   * One value for every fan on the stage, because they all key off a single
-   * condition — the map sitting at max zoom — and so open and close together.
-   * It lives here rather than in Stage because this class already owns the frame
-   * loop pins ease on, and because drawPins has to read it.
-   */
   fan = 0;
   private fanTo = 0;
 
-  constructor(private paint: () => void) {}
+  constructor(
+    private paint: () => void,
+    private settled: () => void = () => {},
+  ) {}
 
   private of(id: string): Anim {
     let a = this.anim.get(id);
@@ -268,38 +249,28 @@ export class PinAnimator {
     return this.anim.get(id)?.fade ?? 1;
   }
 
-  /**
-   * Opens or closes every fan.
-   *
-   * The only writer of `fan` and `fanTo`, and deliberately so. The previous pass
-   * had a second one that zeroed the value without the target, and a loop still
-   * in flight then eased the fan straight back open. Keeping one writer that
-   * always sets both makes that class of bug unreachable rather than guarded.
-   */
   setFan(open: boolean): void {
     this.fanTo = open ? 1 : 0;
     if (REDUCED.matches) {
-      /* Reduced motion means no motion, not quicker motion. */
       this.fan = this.fanTo;
       this.paint();
+      this.settled();
       return;
     }
     this.kick();
   }
 
-  /** Starts the frame loop unless one is already in flight — a loop already
-      running picks new targets up on its next frame. */
   private kick(): void {
     if (this.frame !== null) return;
     const loop = () => {
       const moving = this.step();
       this.paint();
       this.frame = moving ? requestAnimationFrame(loop) : null;
+      if (!moving) this.settled();
     };
     this.frame = requestAnimationFrame(loop);
   }
 
-  /** Who should be drawn: everything the filters allow, plus whatever is still fading out. */
   roster(visible: Proj[]): void {
     const liveIds = new Set(visible.map((d) => d.id));
     visible.forEach((d) => {
@@ -315,13 +286,11 @@ export class PinAnimator {
       const a = this.anim.get(d.id);
       return !liveIds.has(d.id) && !!a && a.fade > 0.01;
     });
-    /* Nothing left animating and nothing selecting it: stop remembering it. */
     this.known.forEach((_d, id) => {
       if (!liveIds.has(id) && !this.anim.has(id)) this.known.delete(id);
     });
   }
 
-  /** Eases every value toward its target and reports whether anything is still moving. */
   private step(): boolean {
     let moving = false;
     this.anim.forEach((a, id) => {
@@ -336,8 +305,6 @@ export class PinAnimator {
       });
       if (a.fade === 0 && a.fadeTo === 0 && a.grow === 0) this.anim.delete(id);
     });
-    /* Eased on the same loop and counted in `moving`, so a fan opening over
-       pins that are already at rest still gets its frames. */
     if (Math.abs(this.fanTo - this.fan) < 0.006) this.fan = this.fanTo;
     else {
       this.fan += (this.fanTo - this.fan) * 0.22;
@@ -346,13 +313,11 @@ export class PinAnimator {
     return moving;
   }
 
-  /** Sets every fade target, then runs the loop until nothing is moving. */
   pump(visible: Proj[], selectedId: string | null, hoveredId: string | null): void {
     this.selectedId = selectedId;
     this.hoveredId = hoveredId;
     this.roster(visible);
     if (REDUCED.matches) {
-      /* Reduced motion means no motion, not quicker motion: straight to target. */
       this.anim.forEach((a, id) => {
         a.growTo = emphasis(id, selectedId, hoveredId);
         a.grow = a.growTo;
@@ -360,6 +325,7 @@ export class PinAnimator {
       });
       this.fan = this.fanTo;
       this.paint();
+      this.settled();
       return;
     }
     this.kick();
@@ -379,35 +345,19 @@ export interface DrawPinsArgs {
   p: Pal;
   S: ViewState;
   anim: PinAnimator;
-  /** Everything the filters leave standing, for the roster pass below. */
   visible: Proj[];
   selected: Proj | null;
-  /** True while the close-range project card has taken over from the pin. */
-  cardShowing: boolean;
-  /** Fans wider for a finger than for a cursor. */
   touch: boolean;
-  /** i18n for a counted disc's two lines — the prototype hard-coded English here. */
   clusterLabel: (n: number) => { title: string; where: string };
 }
 
-/** Teardrop pins, tip on the coordinate. Anything that would collide at this
-    scale is drawn once as a counted disc — until the map runs out of zoom, where
-    a disc would be advising the impossible and its members spread instead. */
 export function drawPins(a: DrawPinsArgs): PinBox[] {
   const { ctx, pr, W, H, p, S, anim, selected } = a;
-  /* Re-rostered every draw, not only on filter changes: stepAnim drops a pin's
-     record the moment it finishes fading, and a stale roster then kept drawing
-     excluded pins at full opacity, unclustered and unclickable. */
   anim.roster(a.visible);
   const pinbox: PinBox[] = [];
-  /* Grouped in head space: a pin's head sits a whole pin above its anchor, so
-     anchors that look far apart can still collide. */
   const HEAD = 21;
   const onStage = (xy: [number, number] | null) =>
     !!xy && !isNaN(xy[0]) && xy[0] > -30 && xy[0] < W + 30 && xy[1] > -30 && xy[1] < H + 30;
-  const card = a.cardShowing;
-  /* Any fan at all, open or still easing shut. Read once: every fan on the stage
-     shares one openness, so this governs all of them. */
   const fanning = anim.fan > 0.002;
   const pts: { x: number; y: number; hx: number; hy: number; d: Proj }[] = [];
   anim.live
@@ -416,11 +366,6 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       const xy = pr(d.c);
       if (!onStage(xy)) return;
       const q = xy as [number, number];
-      /* Everything is grouped, the selected project included. It used to be pulled
-       out here so the card could replace its pin, but a selected member of a fan
-       has to stay in the ring — losing it the instant one is picked is exactly
-       when the visitor wants the others still in reach. So the card's bare anchor
-       is decided after grouping instead, where "did it end up in a fan" is known. */
       pts.push({ x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d });
     });
 
@@ -441,7 +386,6 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       recentre(g);
     } else groups.push({ x: pt.hx, y: pt.hy, items: [pt] });
   });
-  /* One pass leaves centroids that drifted back within touching distance. */
   for (let guard = 0; guard < 8; guard++) {
     let merged = false;
     outer: for (let i = 0; i < groups.length; i++) {
@@ -463,21 +407,25 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     if (g.items.length === 1) {
       const d = g.items[0].d;
       const on = !!selected && selected.id === d.id;
-      /* Alone and holding the card, so the card states it and the spot only needs
-         marking. Decided here rather than before grouping: while fanning, the
-         selected pin has to stay in the ring, and whether it ended up in one is
-         not known until the groups are built. */
-      if (card && on) {
-        const q = g.items[0];
-        drawAnchor(ctx, q.x, q.y, p);
-        pinbox.push({ x: q.x, y: q.y, w: 18, h: 18, headR: 9, tipY: q.y + 9, p: d, r: 12 });
-        return;
-      }
       const grow = anim.growOf(d.id),
         fade = anim.fadeOf(d.id);
-      /* A pin arriving drops the last few pixels into place as it fades up. */
       const rise = (1 - fade) * 7;
-      /* Selection outranks type, so coral keeps meaning "this one". */
+      if (on) {
+        const q = g.items[0];
+        const cy = q.y - rise;
+        const R = drawAnchor(ctx, q.x, cy, p, grow, fade);
+        pinbox.push({
+          x: q.x,
+          y: cy,
+          w: R * 2,
+          h: R * 2,
+          headR: R,
+          tipY: cy + R,
+          p: d,
+          r: R + 3,
+        });
+        return;
+      }
       const pin = drawGmapsPin(
         ctx,
         g.items[0].x,
@@ -502,15 +450,7 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     const items = g.items.map((i) => i.d);
     const holds = !!selected && items.some((d) => d.id === selected.id);
 
-    /* Out of zoom, so this group is as separated as the map can make it: spread
-       its members instead of drawing a disc that invites a zoom there is none of.
-
-       Nothing marks the point they came from. That is deliberate — the user did
-       not want an indication they share a spot — and it is why fanRadius is kept
-       at the bare minimum that keeps the heads clickable, since with no origin to
-       refer back to, every pixel of ring reads as real distance. */
     if (fanning) {
-      /* The group's centroid in head space, put back into tip space. */
       const ax = g.x,
         ay = g.y + HEAD;
       const R = fanRadius(items.length, a.touch) * easeOut(anim.fan);
@@ -520,11 +460,26 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
         const x = ax + Math.cos(th) * R,
           y = ay + Math.sin(th) * R;
         const on = !!selected && selected.id === d.id;
+        if (on) {
+          const cy = y - HEAD;
+          const ar = drawAnchor(ctx, x, cy, p, anim.growOf(d.id), anim.fadeOf(d.id));
+          pinbox.push({
+            x,
+            y: cy,
+            w: ar * 2,
+            h: ar * 2,
+            headR: ar,
+            tipY: cy + ar,
+            p: d,
+            r: ar + 3,
+          });
+          return;
+        }
         const pin = drawGmapsPin(
           ctx,
           x,
           y,
-          on ? p.pinSel : p.pin,
+          p.pin,
           p.pinRing,
           anim.growOf(d.id),
           anim.fadeOf(d.id),
@@ -550,7 +505,6 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       ...a.clusterLabel(items.length),
       txt: items.map((d) => d.title).join(' · '),
     };
-    /* A cluster stays neutral even when its members share a type. */
     const R = drawCluster(
       ctx,
       g.x,
@@ -572,8 +526,6 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     });
   });
 
-  /* Excluded pins linger a few frames on the way out. Drawn, but never entered
-     into the hit boxes, so nothing can be clicked on its way out. */
   anim.leaving
     .filter((d) => onFront(S, d.c))
     .forEach((d) => {
@@ -607,8 +559,6 @@ export function hitPin(pinbox: PinBox[], x: number, y: number): PinTarget | null
   return hit;
 }
 
-/** A keyboard-reached entry may be inside a cluster rather than on a pin of its
-    own, so fall back to the disc standing in for it. */
 export const boxFor = (pinbox: PinBox[], id: string): PinBox | undefined =>
   pinbox.find((b) => b.p.id === id) ??
   pinbox.find((b) => isCluster(b.p) && b.p.cluster.some((d) => d.id === id));

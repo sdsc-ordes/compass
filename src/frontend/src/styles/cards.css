@@ -1,7 +1,3 @@
-/* The two floating cards on the stage: hover preview and selected entry. */
-
-/* One card in two states. Only the 4px accent edge differs — cerulean as a
-   preview, coral as the selection — so anything added to one belongs in both. */
 .mapcard {
   position: absolute;
   left: 0;
@@ -24,8 +20,6 @@
   font-weight: 700;
   color: var(--astronaut);
 }
-/* The 28px reserve is the close cross's, and it is kept on both so a title wraps
-   the same before and after the click. */
 .mapcard b {
   display: block;
   font-size: 16px;
@@ -91,13 +85,7 @@
   transform: translate(-50%, 14px);
 }
 
-/* ---------- mobile: The floating cards, with the detail pane taking over the entry.
-
-   Folded here from mobile.css so this file holds every rule for what it
-   styles. Last in the file, so it outranks the rules above it — which is
-   the whole reason it may live earlier in the cascade than it used to. */
 @media (max-width: 860px) {
-  /* The detail is a panel here, so the floating card would answer the same tap twice. */
   .projcard {
     display: none !important;
   }

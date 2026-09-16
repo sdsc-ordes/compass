@@ -1,9 +1,3 @@
-/**
- * Stage palette — the whole map is painted from here, light and dark.
- *
- * Ported verbatim from the design prototype's `P`. The sidebar chrome keeps its
- * own light palette in styles/ throughout; only a handful of vars are shared.
- */
 export interface Pal {
   page: string;
   card: string;
@@ -51,7 +45,7 @@ export const P: Record<Theme, Pal> = {
     trench: 'rgba(255,255,255,.5)',
     ridge: 'rgba(255,255,255,.28)',
     lat: 'rgba(42,78,113,.22)',
-    pin: '#0171B4',
+    pin: '#2A4E71',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.18)',
     pinHalo: 'rgba(255,255,255,.45)',
@@ -75,7 +69,7 @@ export const P: Record<Theme, Pal> = {
     trench: 'rgba(200,225,245,.34)',
     ridge: 'rgba(200,225,245,.14)',
     lat: 'rgba(200,225,245,.18)',
-    pin: '#0171B4',
+    pin: '#FFFFFF',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.35)',
     pinHalo: 'rgba(127,182,218,.3)',

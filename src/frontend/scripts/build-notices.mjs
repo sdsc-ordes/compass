@@ -1,13 +1,3 @@
-// Collects the licence text of every dependency that ends up in the widget
-// bundle into THIRD-PARTY-NOTICES.md.
-//
-//   node scripts/build-notices.mjs
-//
-// MIT, ISC and BSD-3-Clause all require their copyright notice to accompany
-// the distribution. The widget is a single minified file, so the notices need
-// somewhere to live; esbuild's legalComments keeps whatever banners the
-// packages carry inside the bundle, and this file is the readable companion.
-
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -22,9 +12,6 @@ const LICENCE_FILES = [
   'LICENSE-MIT',
 ];
 
-// Compilers whose *runtime* is emitted into the bundle even though the package
-// itself is a devDependency. Svelte is the case that matters: components
-// compile to code that carries its internals.
 const RUNTIME_FROM_DEV = ['svelte'];
 
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
@@ -39,7 +26,6 @@ function licenceText(name) {
     const path = join(dir, candidate);
     if (existsSync(path)) return readFileSync(path, 'utf8').trim();
   }
-  // Some packages inline the licence in the readme or only declare an SPDX id.
   const found = readdirSync(dir).find((f) => /^licen[cs]e/i.test(f));
   return found ? readFileSync(join(dir, found), 'utf8').trim() : null;
 }

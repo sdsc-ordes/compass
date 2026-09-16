@@ -1,14 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Stories, type StoryCount } from './stories';
 
-/**
- * The pending flag exists because this one request is slow enough to lie about:
- * a count that stays on screen through a 3s refetch looks entirely current. Its
- * edges are all ordering, which is what these cover.
- */
 const answer = (count: number): StoryCount => ({ count, url: 'https://example.org/s' });
 
-/** A fetch that resolves when the test says so, not when the event loop drains. */
 function deferredFetch() {
   const pendingResolvers: Array<(c: StoryCount) => void> = [];
   const stub = vi.fn(
@@ -47,8 +41,6 @@ describe('Stories', () => {
     const { stub } = deferredFetch();
     const s = make(stub as unknown as typeof fetch);
     s.schedule(true, 'http://api', 'en', []);
-    // Still inside the debounce: nothing has been requested, and the flag is
-    // already up. A flag raised at request time would leave the window blind.
     expect(stub).not.toHaveBeenCalled();
     expect(pending).toEqual([true]);
   });
@@ -71,8 +63,6 @@ describe('Stories', () => {
     s.schedule(true, 'http://api', 'en', ['b']);
     await vi.advanceTimersByTimeAsync(10);
 
-    // The first request answers last. It must not count, and it must not report
-    // the second one finished: that would clear the state while it is in flight.
     settle(0, answer(99));
     await vi.advanceTimersByTimeAsync(0);
     expect(counts).toEqual([]);
@@ -93,8 +83,6 @@ describe('Stories', () => {
   });
 
   it('lowers pending when the request fails', async () => {
-    // The class logs the failure on purpose; the test asserts the state, not the
-    // console, and a stack trace in a green run reads as a broken one.
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const s = make(
       vi.fn(async () => {

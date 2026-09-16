@@ -1,9 +1,3 @@
-/**
- * Projection, tweening and pointer/keyboard input for the stage.
- *
- * The view state S is one plain object the whole stage reads: which projection,
- * which theme, the globe's rotation, the scale and the flat map's offsets.
- */
 import { geoNaturalEarth1, geoOrthographic, type GeoProjection } from 'd3-geo';
 import type { Theme } from './palette';
 
@@ -17,9 +11,6 @@ export interface ViewState {
   ready: boolean;
 }
 
-/* ---------- the system's colour scheme ----------
-   Guarded like REDUCED below: matchMedia is a browser API and this module is
-   imported by code that runs before any of it exists. */
 const DARK_SCHEME =
   typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-color-scheme: dark)')
@@ -29,17 +20,14 @@ const DARK_SCHEME =
         removeEventListener() {},
       } as unknown as MediaQueryList);
 
-/** Whether the visitor's system asks for a dark UI right now. */
 export const prefersDark = (): boolean => DARK_SCHEME.matches;
 
-/** Subscribes to system light/dark changes; the return value unsubscribes. */
 export function onSchemeChange(cb: (dark: boolean) => void): () => void {
   const handler = () => cb(DARK_SCHEME.matches);
   DARK_SCHEME.addEventListener('change', handler);
   return () => DARK_SCHEME.removeEventListener('change', handler);
 }
 
-/** Opens in whichever scheme the system is set to; the switch overrides it. */
 export const initialView = (): ViewState => ({
   view: 'flat',
   theme: prefersDark() ? 'dark' : 'light',
@@ -77,14 +65,6 @@ export function proj(S: ViewState, w: number, h: number): GeoProjection {
   return p.scale(p.scale() * S.k).translate([S.tx + t0[0] * S.k, S.ty + t0[1] * S.k]);
 }
 
-/**
- * The scale fitExtent hands the flat map in a W×H stage, before S.k multiplies it.
- *
- * proj() re-fits on every paint, so this number moves with the stage's size: open
- * the 420px sidebar on a 1400px frame and it drops 30%, which reads as the map
- * zooming out on its own. Stage.absorbResize() divides it out. Must stay in step
- * with proj()'s extent above.
- */
 export function fitScale(w: number, h: number): number {
   return geoNaturalEarth1()
     .fitExtent(
@@ -99,14 +79,12 @@ export function fitScale(w: number, h: number): number {
 
 export const frontCentre = (S: ViewState): [number, number] => [-S.rot[0], -S.rot[1]];
 
-/** The lon/lat currently under the middle of the stage — the anchor a mode swap keeps still. */
 export function centreLonLat(S: ViewState, W: number, H: number): [number, number] {
   if (S.view === 'globe') return frontCentre(S);
   const ll = proj(S, W, H).invert?.([W / 2, H / 2]);
   return ll && isFinite(ll[0]) ? [ll[0], ll[1]] : [0, 0];
 }
 
-/** Offsets that park a given lon/lat in the middle of the flat map at the current scale. */
 export function flatOffsetFor(
   S: ViewState,
   W: number,
@@ -127,7 +105,6 @@ export function flatOffsetFor(
   return xy && isFinite(xy[0]) ? { tx: W / 2 - xy[0], ty: H / 2 - xy[1] } : { tx: 0, ty: 0 };
 }
 
-/* ---------- tweening: view changes move rather than jump ---------- */
 export const REDUCED =
   typeof window !== 'undefined'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -135,7 +112,6 @@ export const REDUCED =
 
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-/** Longitude takes the short way round, so a spin never crosses the whole globe to arrive. */
 const shortWay = (a: number, b: number) => a + ((((b - a) % 360) + 540) % 360) - 180;
 
 export interface TweenTo {
@@ -145,8 +121,6 @@ export interface TweenTo {
   rot?: [number, number];
 }
 
-/** Holds the one frame a view tween runs on. `queue` is the stage's repaint
-    request; `setInteract` tells it whether a hand is still on the map. */
 export class Tweener {
   private frame: number | null = null;
 
@@ -156,12 +130,10 @@ export class Tweener {
     private setInteract: (on: boolean) => void,
   ) {}
 
-  /** True while a tween owns the view — see Stage.absorbResize(). */
   get running(): boolean {
     return this.frame !== null;
   }
 
-  /** Cancels whatever was in flight; a hand on the map always wins. */
   stop(): void {
     if (this.frame !== null) {
       cancelAnimationFrame(this.frame);
@@ -203,7 +175,6 @@ export class Tweener {
   }
 }
 
-/* ---------- input ---------- */
 export interface InputHooks {
   S: ViewState;
   stage: HTMLElement;
@@ -216,20 +187,9 @@ export interface InputHooks {
   zoomTo: (k: number, mx: number, my: number) => void;
   zoomStep: (f: number) => void;
   resetView: () => void;
-  /**
-   * Deliberate input on the stage — a press, the wheel, a key. NOT hover: the
-   * stage's pointermove fires continuously while a cursor merely rests over the
-   * map, and treating that as intent would kill the first-load coach before it
-   * had said anything. The one caller is Stage, to dismiss that coach.
-   */
   onActivity?: () => void;
 }
 
-/**
- * Drag pans the flat map and spins the globe; the wheel zooms about the pointer.
- * Two fingers pinch, since a wheel event never arrives from a touchscreen. A drag
- * under four pixels is a click.
- */
 export function bindInput(h: InputHooks): () => void {
   const { stage, S } = h;
   stage.style.cursor = 'crosshair';
@@ -257,7 +217,6 @@ export function bindInput(h: InputHooks): () => void {
     return [(a[0].x + a[1].x) / 2, (a[0].y + a[1].y) / 2];
   };
 
-  /* A second finger ends the one-finger drag and starts a pinch from the current scale. */
   const startPinch = () => {
     const r = stage.getBoundingClientRect(),
       m = midpoint();
@@ -274,7 +233,6 @@ export function bindInput(h: InputHooks): () => void {
       const m = midpoint(),
         d = spread();
       h.setInteract(true);
-      /* The flat map also slides with the midpoint; the globe only scales. */
       if (S.view === 'flat') {
         S.tx = pinch.tx + (m[0] - pinch.m[0]);
         S.ty = pinch.ty + (m[1] - pinch.m[1]);
@@ -287,7 +245,6 @@ export function bindInput(h: InputHooks): () => void {
       dy = e.clientY - p0[1];
     moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
     if (moved < 4) return;
-    /* The first frame of a drag dismisses the hover; later ones have nothing to. */
     if (!dragging) {
       dragging = true;
       h.clearHover();
@@ -308,7 +265,6 @@ export function bindInput(h: InputHooks): () => void {
     PT.delete(e.pointerId);
     if (pinch && PT.size < 2) {
       pinch = null;
-      /* One finger left after a pinch: re-base the drag on it rather than jumping. */
       const rest = pair()[0];
       if (rest) {
         p0 = [rest.x, rest.y];
@@ -373,14 +329,12 @@ export function bindInput(h: InputHooks): () => void {
     }, 200);
   };
 
-  /* Keyboard: the map is a focus stop, so it has to be drivable without a pointer. */
   const onKey = (e: KeyboardEvent) => {
     if (e.target !== stage) return;
     h.onActivity?.();
     const big = e.shiftKey;
     const pan = big ? 160 : 60,
       turn = big ? 20 : 8;
-    /* Signed direction, so the keys match what the same drag would do. */
     const step = (sx: number, sy: number) => {
       if (S.view === 'globe') {
         h.tween.to(
