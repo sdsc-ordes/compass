@@ -104,19 +104,33 @@ settings such as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
 
 See [`docs/compass/configuration-frontend.md`](docs/compass/configuration-frontend.md).
 
-Bake the bathymetry rasters (optional; the map falls back to the vector basemap
-if they are absent). Only needed to refresh them — the baked output is committed:
+### Bathymetry
+
+Nothing here is needed to run the map: `bathy/flat.webp` and `bathy/equirect.webp`
+are committed, so a fresh clone already draws the seafloor.
+
+Two reasons to run it. To ship deep-zoom detail, build `bathy/d/` — it is
+gitignored, so it exists only where someone built it, and `just deploy` says so
+if it is missing:
 
 ```bash
-just map::tiles              # fetch the GEBCO pyramid (~53 MB, gitignored, build input only)
-just map::bathymetry         # rebake the committed pair (~6 MB)
-just map::bathymetry-detail  # the pair plus the gitignored d/ level (~20 MB)
+just map::tiles              # once: fetch the GEBCO pyramid (~53 MB, network, gitignored)
+just map::bathymetry-detail  # then: the pair plus d/ (~20 MB), before `just deploy`
 ```
 
-`bathy/{flat,equirect}.webp` are committed, so neither is needed for a working
-map. `d/` is not committed — run `bathymetry-detail` before `just deploy` if you
-want deep-zoom detail in the image. The scripts live at
-`src/frontend/scripts/build-tiles.mjs` and `build-bathymetry.mjs`.
+To refresh the imagery itself — a new GEBCO release, a different palette — rebake
+the committed pair and commit the result:
+
+```bash
+just map::tiles         # once, as above
+just map::bathymetry    # ~12 s, rewrites the two committed files
+```
+
+Both bakes read `src/frontend/tiles/`, so `just map::tiles` has to have run at
+least once; they need no network of their own. The scripts are
+`src/frontend/scripts/build-tiles.mjs` and `build-bathymetry.mjs`, and what the
+rasters are for is described under
+[No third-party requests at runtime](#no-third-party-requests-at-runtime).
 
 ---
 
