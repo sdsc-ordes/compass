@@ -4,15 +4,19 @@
 aside.filters.detail .pane-filters {
   display: none;
 }
-/* Forward goes in from the right, back from the left. Only one pane is ever
-   displayed, so neither can fade from nothing: the frame before the incoming
-   pane has any opacity shows bare sidebar, and that blink is what made the
-   switch feel broken rather than quick. Both start mostly opaque and settle. */
+/* Forward goes in from the right, back from the left. Both animations hang off
+   the pane itself rather than a class someone toggles: a CSS animation restarts
+   by itself when an element goes from display:none to block, so the swap is the
+   whole trigger. A class added for the motion and dropped after it has to be
+   dropped at some arbitrary later moment, and that recalc tears down the layer
+   the pane was composited onto -- a flash once everything has already settled.
+   Only one pane is ever displayed, so neither can fade up from nothing either:
+   there is nothing behind it but bare sidebar. Both start mostly opaque. */
 aside.filters.detail .pane-detail {
   display: block;
   animation: panein 0.19s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-aside.filters.back .pane-filters {
+.pane-filters {
   animation: paneback 0.19s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 @keyframes panein {
@@ -37,7 +41,7 @@ aside.filters.back .pane-filters {
 }
 @media (prefers-reduced-motion: reduce) {
   aside.filters.detail .pane-detail,
-  aside.filters.back .pane-filters {
+  .pane-filters {
     animation: none;
   }
 }
