@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import DetailPane from './DetailPane.svelte';
   import Tally from './Tally.svelte';
   import TypePills from './TypePills.svelte';
@@ -47,6 +48,29 @@
     pills?.focusPill(iri);
   }
 
+  // Closing the detail pane used to swap the panes on display, which reads as a
+  // jump. Animate the filters back in rather than the detail out: dismissing an
+  // entry puts focus back in the filters, and focus cannot land in a subtree
+  // still held at display:none for an outgoing animation.
+  let back = false;
+  let backTimer: ReturnType<typeof setTimeout> | null = null;
+  let wasDetail = false;
+  $: {
+    const isDetail = !!selected;
+    if (wasDetail && !isDetail) {
+      back = true;
+      if (backTimer) clearTimeout(backTimer);
+      backTimer = setTimeout(() => {
+        back = false;
+        backTimer = null;
+      }, 240);
+    }
+    wasDetail = isDetail;
+  }
+  onDestroy(() => {
+    if (backTimer) clearTimeout(backTimer);
+  });
+
   $: typeDim = dims.find((d) => d.id === TYPE_DIM) ?? null;
   $: sectionDims = dims.filter((d) => d.id !== TYPE_DIM);
 
@@ -58,7 +82,7 @@
       : `${resultCount} ${plural(resultCount, t.tallyCaptionOne, t.tallyCaption)}`;
 </script>
 
-<aside class="filters" class:detail={!!selected} bind:this={sidebarEl}>
+<aside class="filters" class:detail={!!selected} class:back bind:this={sidebarEl}>
   <div
     class="sheet-grab"
     bind:this={grabEl}
@@ -77,7 +101,15 @@
 
   <div class="sidehead">
     <div class="logo">
-      <img class="logomark" src={logoSrc} alt="OceanCare" width="232" height="103" />
+      <a
+        class="logolink"
+        href={t.oceancareHome}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${t.oceancareHomeOf} ${t.newTab}`}
+      >
+        <img class="logomark" src={logoSrc} alt="OceanCare" width="232" height="103" />
+      </a>
     </div>
   </div>
 
@@ -115,4 +147,14 @@
     {onFilterByTag}
     bind:titleEl
   />
+
+  <footer class="sidefoot">
+    {t.creditBefore}<span class="heart" aria-hidden="true">&#9829;</span><span class="sr"
+      >{t.creditLove}</span
+    >
+    {t.creditAfter}
+    <a href="https://www.datascience.ch" target="_blank" rel="noopener noreferrer"
+      >Swiss Data Science Center</a
+    >
+  </footer>
 </aside>

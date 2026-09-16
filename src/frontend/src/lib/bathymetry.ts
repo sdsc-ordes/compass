@@ -1,21 +1,34 @@
-import { geoPath, type GeoProjection } from 'd3-geo';
+import { geoNaturalEarth1, geoPath, type GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 
-const TILE = 512;
-const TILE_SH = 9;
-const TILE_MASK = TILE - 1;
-const MAX_Z = 5;
+// Rasters baked by scripts/build-bathymetry.mjs.
+//
+// Flat: geoNaturalEarth1 only ever varies by scale and translate, so every pan
+// and zoom is an exact similarity transform of one fixed image -- a single
+// drawImage, no per-pixel work. Past about k=4 it upscales the base, so a 2x
+// level is tiled over it, only where the viewport looks.
+//
+// Globe: rotation is the one transform that is not affine, so it resamples per
+// frame from the equirectangular raster.
+const FLAT = 'bathy/flat.webp';
+const EQUI = 'bathy/equirect.webp';
+const DETAIL = 'bathy/d';
 
-const LAT_MAX = 85.0511287798;
+// 2x the base, cut into tiles because WebP caps a side at 16383.
+const DETAIL_SCALE = 2;
+const DETAIL_TILE = 2048;
+
+// Never decoded, only drawImage'd, so each is a GPU texture rather than 16 MB of
+// ImageData. A viewport spans about 2x2 of them; this is room to pan.
+const DETAIL_KEEP = 12;
 
 const CELL = 8;
 
-const BUDGET_IDLE = 1_200_000;
+// Enough that a settled globe rasterises about 1:1 against the sphere's own
+// bounds. A drag gets far less: rotation cannot reuse a previous frame, so this
+// is paid per frame while it moves.
+const BUDGET_IDLE = 2_800_000;
 const BUDGET_DRAG = 500_000;
-
-const CACHE_MAX = 32;
-
-const MAX_TILES = 24;
 
 const REF: [number, number][] = [
   [0, 0],
@@ -25,39 +38,66 @@ const REF: [number, number][] = [
 
 const REF_TOL = 0.5;
 
-const BLUR_MAX = 1;
-const BLUR_TO = 3;
+// Below this fraction of the source width, downscale once into a mip rather than
+// making the compositor rescale all 35M source pixels on every frame.
+const MIP_AT = 0.5;
 
 interface Snapshot {
   canvas: HTMLCanvasElement;
   W: number;
   H: number;
+  box: Box;
   ref: [number, number][];
 }
 
-interface Tile {
-  px: Uint8ClampedArray | null;
-  used: number;
+// The screen rect a raster covers. The globe is a disc in a wider canvas, so
+// rasterising the whole canvas spends up to half the budget on pixels that are
+// not the sphere; confining it to these bounds buys ~1:1 for the same cost.
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface Grid {
+  px: Uint8ClampedArray;
+  w: number;
+  h: number;
+  mask: number;
 }
 
 export class Bathymetry {
-  private tiles = new Map<string, Tile>();
-  private clock = 0;
+  private flatImg: HTMLImageElement | null = null;
+  private flatRef: [number, number][] | null = null;
+  private mip: HTMLCanvasElement | null = null;
+  private mipW = 0;
+
+  private equi: Grid | null = null;
+  private asked = { flat: false, equi: false };
+
+  // Insertion order is the LRU. A null value means asked for and not here yet --
+  // or never coming, for a tile the bake left out as entirely off the sphere.
+  private det = new Map<string, HTMLImageElement | null>();
+
   private buf: HTMLCanvasElement | null = null;
   private dragBuf: HTMLCanvasElement | null = null;
   private snap: Snapshot | null = null;
-  private decoder: CanvasRenderingContext2D | null = null;
+  private img: ImageData | null = null;
 
   available = false;
   private absent = false;
 
   constructor(
     private base: string,
-    private onTile: () => void,
+    private onReady: () => void,
   ) {}
 
+  // Whether the depth layer is worth offering. Optimistic on purpose: the map
+  // starts without it, so nothing has been fetched yet and "not loaded" must not
+  // read as "not available" -- that would hide the switch that does the loading.
   get ready(): boolean {
-    return this.available && !this.absent;
+    return !this.absent;
   }
 
   paint(
@@ -91,11 +131,13 @@ export class Bathymetry {
   }
 
   clear(): void {
-    this.tiles.clear();
     this.snap = null;
     this.dragBuf = null;
     this.buf = null;
-    this.decoder = null;
+    this.img = null;
+    this.mip = null;
+    this.mipW = 0;
+    this.det.clear();
   }
 
   private overlay(
@@ -107,43 +149,156 @@ export class Bathymetry {
     interact: boolean,
     dpr: number,
   ): void {
-    const soft = calm(pr, W);
-    if (soft > 0.05) ctx.filter = `blur(${soft.toFixed(2)}px)`;
+    if (!globe) {
+      this.blit(ctx, pr, W, H);
+      return;
+    }
 
     if (interact) {
       const keep = this.snap;
       const t = keep && keep.W === W && keep.H === H ? similarity(keep.ref, pr) : null;
       if (keep && t && covered(t, keep, pr, W, H)) {
-        ctx.drawImage(keep.canvas, t.dx, t.dy, t.g * keep.W, t.g * keep.H);
-        ctx.filter = 'none';
+        const b = keep.box;
+        ctx.drawImage(keep.canvas, t.g * b.x + t.dx, t.g * b.y + t.dy, t.g * b.w, t.g * b.h);
         return;
       }
     }
-    const raster = this.reproject(pr, W, H, globe, interact, dpr);
-    if (raster) ctx.drawImage(raster, 0, 0, W, H);
-    ctx.filter = 'none';
+    const out = this.reproject(pr, W, H, interact, dpr);
+    if (out) ctx.drawImage(out.canvas, out.box.x, out.box.y, out.box.w, out.box.h);
+  }
+
+  // Flat view: one drawImage of the pre-projected raster.
+  private blit(ctx: CanvasRenderingContext2D, pr: GeoProjection, W: number, H: number): void {
+    const img = this.flat();
+    const ref = this.flatRef;
+    if (!img || !ref) return;
+
+    const t = similarity(ref, pr);
+    if (!t) return;
+
+    const dw = t.g * img.width;
+    const dh = t.g * img.height;
+    ctx.drawImage(this.level(img, dw), t.dx, t.dy, dw, dh);
+    // Always underneath: a tile still in flight, or one the bake skipped, just
+    // leaves the base showing rather than a hole.
+    if (dw > img.width) this.detail(ctx, t, img.width, img.height, W, H);
+  }
+
+  // Same similarity, half the gain: the base maps basePx -> g*basePx + d, so the
+  // 2x level maps detailPx -> (g/2)*detailPx + d.
+  private detail(
+    ctx: CanvasRenderingContext2D,
+    t: Move,
+    baseW: number,
+    baseH: number,
+    W: number,
+    H: number,
+  ): void {
+    const g = t.g / DETAIL_SCALE;
+    const span = g * DETAIL_TILE;
+    const cols = Math.ceil((baseW * DETAIL_SCALE) / DETAIL_TILE);
+    const rows = Math.ceil((baseH * DETAIL_SCALE) / DETAIL_TILE);
+
+    const c0 = Math.max(0, Math.floor(-t.dx / span));
+    const c1 = Math.min(cols - 1, Math.floor((W - t.dx) / span));
+    const r0 = Math.max(0, Math.floor(-t.dy / span));
+    const r1 = Math.min(rows - 1, Math.floor((H - t.dy) / span));
+
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const img = this.tile(`${c}_${r}`);
+        if (!img) continue;
+        ctx.drawImage(img, t.dx + c * span, t.dy + r * span, g * img.width, g * img.height);
+      }
+    }
+  }
+
+  private tile(key: string): HTMLImageElement | null {
+    const held = this.det.get(key);
+    if (held !== undefined) {
+      if (held) {
+        this.det.delete(key); // re-insert: youngest again
+        this.det.set(key, held);
+      }
+      return held;
+    }
+    if (typeof document === 'undefined') return null;
+
+    this.det.set(key, null);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+    img.onload = () => {
+      this.det.set(key, img);
+      this.evict();
+      this.onReady();
+    };
+    // 404 is the normal answer for a tile wholly outside the sphere, so the null
+    // stands and nothing asks again.
+    img.onerror = () => {};
+    img.src = `${this.base}/${DETAIL}/${key}.webp`;
+    return null;
+  }
+
+  // Nulls are cheap and must survive, or a missing tile would be re-requested
+  // every frame; only decoded images are worth evicting.
+  private evict(): void {
+    let live = 0;
+    for (const img of this.det.values()) if (img) live++;
+    for (const [k, img] of this.det) {
+      if (live <= DETAIL_KEEP) return;
+      if (!img) continue;
+      this.det.delete(k);
+      live--;
+    }
+  }
+
+  // The baked raster is far wider than the stage at normal zoom. Rescaling all of
+  // it every frame is the one way this path could cost more than it saves, so
+  // hold a downscaled copy and rebuild it only when the zoom bucket changes.
+  private level(img: HTMLImageElement, drawW: number): CanvasImageSource {
+    if (drawW >= img.width * MIP_AT) return img;
+    const want = 1 << Math.ceil(Math.log2(Math.max(64, drawW)));
+    if (this.mip && this.mipW === want) return this.mip;
+
+    const cv = this.mip ?? document.createElement('canvas');
+    cv.width = want; // also clears it
+    cv.height = Math.max(1, Math.round((want * img.height) / img.width));
+    const c = cv.getContext('2d');
+    if (!c) return img;
+    c.imageSmoothingEnabled = true;
+    c.imageSmoothingQuality = 'high';
+    c.drawImage(img, 0, 0, cv.width, cv.height);
+    this.mip = cv;
+    this.mipW = want;
+    return cv;
   }
 
   private reproject(
     pr: GeoProjection,
     W: number,
     H: number,
-    globe: boolean,
     interact: boolean,
     dpr: number,
-  ): HTMLCanvasElement | null {
+  ): { canvas: HTMLCanvasElement; box: Box } | null {
     const invert = pr.invert;
     if (!invert) return null;
 
+    const src = this.equirect();
+    if (!src) return null;
+
     if (!interact) this.snap = null;
 
-    const dw = W * dpr,
-      dh = H * dpr;
+    const box = sphereBox(pr, W, H);
+    if (!box) return null;
+
+    const dw = box.w * dpr,
+      dh = box.h * dpr;
     const budget = interact ? BUDGET_DRAG : BUDGET_IDLE;
     const scale = Math.min(1, Math.sqrt(budget / Math.max(1, dw * dh)));
     const rw = Math.max(2, Math.round(dw * scale));
     const rh = Math.max(2, Math.round(dh * scale));
-    const perCss = rw / W;
+    const perCss = rw / box.w;
 
     const cols = Math.ceil(rw / CELL);
     const rows = Math.ceil(rh / CELL);
@@ -152,93 +307,46 @@ export class Bathymetry {
     const ny = new Float64Array(nodes);
     const ok = new Uint8Array(nodes);
 
-    let lo = Infinity,
-      hi = -Infinity,
-      top = Infinity,
-      bot = -Infinity;
+    let any = false;
     let rowStart = 0;
     for (let j = 0; j <= rows; j++) {
-      const y = (j * CELL) / perCss;
+      const y = box.y + (j * CELL) / perCss;
       let prev = NaN;
       let first = NaN;
       for (let i = 0; i <= cols; i++) {
-        const x = (i * CELL) / perCss;
+        const x = box.x + (i * CELL) / perCss;
         const k = j * (cols + 1) + i;
         const ll = invert([x, y]);
-        if (!ll || !isFinite(ll[0]) || !isFinite(ll[1]) || Math.abs(ll[1]) > LAT_MAX) {
+        if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) {
           ok[k] = 0;
           continue;
         }
         let u = (ll[0] + 180) / 360;
-        const phi = (ll[1] * Math.PI) / 180;
-        const v = 0.5 - Math.log(Math.tan(Math.PI / 4 + phi / 2)) / (2 * Math.PI);
         if (isFinite(prev)) u -= Math.round(u - prev);
         else if (isFinite(rowStart)) u -= Math.round(u - rowStart);
         if (!isFinite(first)) first = u;
         prev = u;
         nx[k] = u;
-        ny[k] = v;
+        ny[k] = (90 - ll[1]) / 180;
         ok[k] = 1;
-        if (u < lo) lo = u;
-        if (u > hi) hi = u;
-        if (v < top) top = v;
-        if (v > bot) bot = v;
+        any = true;
       }
       if (isFinite(first)) rowStart = first;
     }
-    if (!isFinite(lo)) return null;
-
-    const b = geoPath(pr).bounds({ type: 'Sphere' });
-    const dia = Math.max(1, b[1][0] - b[0][0]);
-    const worldPx = (globe ? Math.PI * dia : dia) * perCss;
-    let z = Math.max(0, Math.min(MAX_Z, Math.round(Math.log2(worldPx / TILE))));
-
-    let n = 1 << z;
-    while (z > 0 && tileCount(lo, hi, top, bot, n) > MAX_TILES) {
-      z--;
-      n = 1 << z;
-    }
-
-    const px: (Uint8ClampedArray | null)[] = new Array(n * n).fill(null);
-    const x0 = Math.floor(lo * n),
-      x1 = Math.floor(hi * n);
-    const y0 = Math.max(0, Math.floor(top * n)),
-      y1 = Math.min(n - 1, Math.floor(bot * n));
-    for (let tx = x0; tx <= x1; tx++) {
-      const wrapped = ((tx % n) + n) % n;
-      for (let ty = y0; ty <= y1; ty++) {
-        px[wrapped * n + ty] = this.want(z, wrapped, ty);
-      }
-    }
+    if (!any) return null;
 
     const out = this.buffer(rw, rh, interact);
     if (!out) return null;
-    const ctx = out.getContext('2d', { willReadFrequently: true });
+    const ctx = out.getContext('2d');
     if (!ctx) return null;
-    const img = ctx.createImageData(rw, rh);
+    const img = this.scratch(ctx, rw, rh);
     const dst = img.data;
 
-    const WORLD = n * TILE;
-    const WMASK = WORLD - 1;
-
-    let lastIdx = -1;
-    let lastPx: Uint8ClampedArray | null = null;
+    const px = src.px;
+    const SW = src.w,
+      SH = src.h,
+      SMASK = src.mask;
     let drew = false;
-
-    let base = 0;
-    let ar = 0,
-      ag = 0,
-      ab = 0;
-    const tap = (X: number, Y: number, w: number): void => {
-      const wx = X & WMASK;
-      const wy = Y < 0 ? 0 : Y > WMASK ? WMASK : Y;
-      const t = px[(wx >> TILE_SH) * n + (wy >> TILE_SH)];
-      const src = t ?? (lastPx as Uint8ClampedArray);
-      const o = t ? (((wy & TILE_MASK) << TILE_SH) + (wx & TILE_MASK)) << 2 : base;
-      ar += src[o] * w;
-      ag += src[o + 1] * w;
-      ab += src[o + 2] * w;
-    };
 
     for (let v = 0; v < rh; v++) {
       const jf = v / CELL;
@@ -260,57 +368,39 @@ export class Bathymetry {
           wd = fx * fy;
         const mx = nx[a] * wa + nx[a + 1] * wb + nx[c] * wc + nx[c + 1] * wd;
         const my = ny[a] * wa + ny[a + 1] * wb + ny[c] * wc + ny[c + 1] * wd;
-
         if (!(my >= 0) || my >= 1) continue;
-        const gX = mx * WORLD - 0.5;
-        const gY = my * WORLD - 0.5;
+
+        const gX = mx * SW - 0.5;
+        const gY = my * SH - 0.5;
         const X0 = Math.floor(gX),
           Y0 = Math.floor(gY);
         const tu = gX - X0,
           tv = gY - Y0;
-        const ax = X0 & WMASK;
-        const ay = Y0 < 0 ? 0 : Y0 > WMASK ? WMASK : Y0;
 
-        const idx = (ax >> TILE_SH) * n + (ay >> TILE_SH);
-        if (idx !== lastIdx) {
-          lastIdx = idx;
-          lastPx = px[idx];
-        }
-        if (!lastPx) continue;
+        const xa = X0 & SMASK, // longitude wraps
+          xb = (X0 + 1) & SMASK;
+        const ya = Y0 < 0 ? 0 : Y0 > SH - 1 ? SH - 1 : Y0;
+        const yb = Y0 + 1 > SH - 1 ? SH - 1 : Y0 + 1;
+        const ra = ya * SW,
+          rb = yb * SW;
 
-        const cx = ax & TILE_MASK,
-          cy = ay & TILE_MASK;
-        base = ((cy << TILE_SH) + cx) << 2;
+        const o00 = (ra + xa) << 2,
+          o10 = (ra + xb) << 2,
+          o01 = (rb + xa) << 2,
+          o11 = (rb + xb) << 2;
         const w00 = (1 - tu) * (1 - tv),
           w10 = tu * (1 - tv),
           w01 = (1 - tu) * tv,
           w11 = tu * tv;
+
         const d = (v * rw + u) * 4;
-        if (cx !== TILE_MASK && cy !== TILE_MASK) {
-          const e = base + 4;
-          const f = base + (TILE << 2);
-          const g = f + 4;
-          dst[d] = lastPx[base] * w00 + lastPx[e] * w10 + lastPx[f] * w01 + lastPx[g] * w11;
-          dst[d + 1] =
-            lastPx[base + 1] * w00 +
-            lastPx[e + 1] * w10 +
-            lastPx[f + 1] * w01 +
-            lastPx[g + 1] * w11;
-          dst[d + 2] =
-            lastPx[base + 2] * w00 +
-            lastPx[e + 2] * w10 +
-            lastPx[f + 2] * w01 +
-            lastPx[g + 2] * w11;
-        } else {
-          ar = ag = ab = 0;
-          tap(X0, Y0, w00);
-          tap(X0 + 1, Y0, w10);
-          tap(X0, Y0 + 1, w01);
-          tap(X0 + 1, Y0 + 1, w11);
-          dst[d] = ar;
-          dst[d + 1] = ag;
-          dst[d + 2] = ab;
-        }
+        dst[d] = px[o00] * w00 + px[o10] * w10 + px[o01] * w01 + px[o11] * w11;
+        dst[d + 1] =
+          px[o00 + 1] * w00 + px[o10 + 1] * w10 + px[o01 + 1] * w01 + px[o11 + 1] * w11;
+        dst[d + 2] =
+          px[o00 + 2] * w00 + px[o10 + 2] * w10 + px[o01 + 2] * w01 + px[o11 + 2] * w11;
+        // The bake carries the raster to both poles, so every sample is opaque and
+        // interpolating alpha would be four multiplies to arrive back at 255.
         dst[d + 3] = 255;
         drew = true;
       }
@@ -328,9 +418,9 @@ export class Bathymetry {
         }
         ref.push([xy[0], xy[1]]);
       }
-      this.snap = ref.length === REF.length ? { canvas: out, W, H, ref } : null;
+      this.snap = ref.length === REF.length ? { canvas: out, W, H, box, ref } : null;
     }
-    return out;
+    return { canvas: out, box };
   }
 
   private buffer(w: number, h: number, drag: boolean): HTMLCanvasElement | null {
@@ -348,67 +438,86 @@ export class Bathymetry {
     return cv;
   }
 
-  private want(z: number, x: number, y: number): Uint8ClampedArray | null {
-    const key = `${z}/${x}/${y}`;
-    const held = this.tiles.get(key);
-    if (held) {
-      held.used = ++this.clock;
-      return held.px;
+  private scratch(ctx: CanvasRenderingContext2D, w: number, h: number): ImageData {
+    const held = this.img;
+    if (held && held.width === w && held.height === h) {
+      // Carried over from the last frame, so wipe the pixels the loop leaves alone.
+      held.data.fill(0);
+      return held;
     }
+    const img = ctx.createImageData(w, h);
+    this.img = img;
+    return img;
+  }
 
-    const entry: Tile = { px: null, used: ++this.clock };
-    this.tiles.set(key, entry);
+  private load(
+    path: string,
+    seen: 'flat' | 'equi',
+    done: (img: HTMLImageElement) => void,
+  ): void {
+    if (this.asked[seen] || typeof document === 'undefined') return;
+    this.asked[seen] = true;
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
     img.onload = () => {
-      entry.px = this.decode(img);
-      if (entry.px) {
-        this.available = true;
-        this.evict();
-        this.onTile();
-      }
+      done(img);
+      this.available = true;
+      this.onReady();
     };
     img.onerror = () => {
+      // Nothing baked, or nothing served. Say so, so the switch offering a layer
+      // that cannot arrive takes itself away rather than doing nothing.
       if (!this.available) this.absent = true;
+      this.onReady();
     };
-    img.src = `${this.base}/tiles/${key}.jpg`;
-    return null;
+    img.src = `${this.base}/${path}`;
   }
 
-  private decode(img: HTMLImageElement): Uint8ClampedArray | null {
-    if (!this.decoder) {
-      if (typeof document === 'undefined') return null;
+  private flat(): HTMLImageElement | null {
+    this.load(FLAT, 'flat', (img) => {
+      this.flatImg = img;
+      this.flatRef = flatRefs(img.width);
+    });
+    return this.flatImg;
+  }
+
+  // Decoded once into a 4096x2048 RGBA buffer (~33 MB) because the globe samples
+  // it per pixel. Only paid for if the globe is actually used.
+  private equirect(): Grid | null {
+    this.load(EQUI, 'equi', (img) => {
       const cv = document.createElement('canvas');
-      cv.width = TILE;
-      cv.height = TILE;
-      this.decoder = cv.getContext('2d', { willReadFrequently: true });
-    }
-    const ctx = this.decoder;
-    if (!ctx) return null;
-    try {
-      ctx.clearRect(0, 0, TILE, TILE);
-      ctx.drawImage(img, 0, 0, TILE, TILE);
-      return ctx.getImageData(0, 0, TILE, TILE).data;
-    } catch {
-      this.absent = true;
-      return null;
-    }
-  }
-
-  private evict(): void {
-    if (this.tiles.size <= CACHE_MAX) return;
-    const byAge = [...this.tiles.entries()].sort((a, b) => a[1].used - b[1].used);
-    for (const [key] of byAge.slice(0, this.tiles.size - CACHE_MAX)) this.tiles.delete(key);
+      cv.width = img.width;
+      cv.height = img.height;
+      const c = cv.getContext('2d', { willReadFrequently: true });
+      if (!c) return;
+      try {
+        c.drawImage(img, 0, 0);
+        this.equi = {
+          px: c.getImageData(0, 0, img.width, img.height).data,
+          w: img.width,
+          h: img.height,
+          mask: img.width - 1,
+        };
+      } catch {
+        this.absent = true;
+      }
+    });
+    return this.equi;
   }
 }
 
-function calm(pr: GeoProjection, W: number): number {
-  const b = geoPath(pr).bounds({ type: 'Sphere' });
-  const dia = Math.max(1, b[1][0] - b[0][0]);
-  const t = Math.min(1, Math.max(0, (dia / W - 1) / (BLUR_TO - 1)));
-  return BLUR_MAX * (1 - t);
+// Where the reference points land in the baked raster, which covers the sphere's
+// Natural Earth bounding box exactly and is fitted to width.
+function flatRefs(width: number): [number, number][] {
+  const base = geoNaturalEarth1().scale(1).translate([0, 0]);
+  const [[x0, y0], [x1]] = geoPath(base).bounds({ type: 'Sphere' });
+  const s = width / (x1 - x0);
+  return REF.map((ll) => {
+    const q = base(ll) as [number, number];
+    return [(q[0] - x0) * s, (q[1] - y0) * s];
+  });
 }
 
 interface Move {
@@ -439,22 +548,24 @@ function similarity(was: [number, number][], pr: GeoProjection): Move | null {
 }
 
 function covered(t: Move, s: Snapshot, pr: GeoProjection, W: number, H: number): boolean {
-  const b = geoPath(pr).bounds({ type: 'Sphere' });
-  const nx0 = Math.max(0, b[0][0]),
-    ny0 = Math.max(0, b[0][1]),
-    nx1 = Math.min(W, b[1][0]),
-    ny1 = Math.min(H, b[1][1]);
-  if (nx1 <= nx0 || ny1 <= ny0) return true;
+  const now = sphereBox(pr, W, H);
+  if (!now) return true;
+  const b = s.box;
   return (
-    t.dx <= nx0 + REF_TOL &&
-    t.dy <= ny0 + REF_TOL &&
-    t.g * s.W + t.dx >= nx1 - REF_TOL &&
-    t.g * s.H + t.dy >= ny1 - REF_TOL
+    t.g * b.x + t.dx <= now.x + REF_TOL &&
+    t.g * b.y + t.dy <= now.y + REF_TOL &&
+    t.g * (b.x + b.w) + t.dx >= now.x + now.w - REF_TOL &&
+    t.g * (b.y + b.h) + t.dy >= now.y + now.h - REF_TOL
   );
 }
 
-function tileCount(lo: number, hi: number, top: number, bot: number, n: number): number {
-  const across = Math.floor(hi * n) - Math.floor(lo * n) + 1;
-  const down = Math.min(n - 1, Math.floor(bot * n)) - Math.max(0, Math.floor(top * n)) + 1;
-  return Math.max(1, across) * Math.max(1, down);
+// The sphere's on-screen bounds, clipped to the canvas. Null when it is off
+// screen entirely, which leaves the sea colour already painted underneath.
+function sphereBox(pr: GeoProjection, W: number, H: number): Box | null {
+  const b = geoPath(pr).bounds({ type: 'Sphere' });
+  const x = Math.max(0, Math.floor(b[0][0]));
+  const y = Math.max(0, Math.floor(b[0][1]));
+  const w = Math.min(W, Math.ceil(b[1][0])) - x;
+  const h = Math.min(H, Math.ceil(b[1][1])) - y;
+  return w > 0 && h > 0 ? { x, y, w, h } : null;
 }

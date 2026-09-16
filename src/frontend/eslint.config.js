@@ -33,5 +33,5 @@ export default ts.config(
     languageOptions: { globals: globals.node },
     rules: { 'no-console': 'off' },
   },
-  { ignores: ['dist/', 'src/map/basemap.json', 'src/map/regions.json'] },
+  { ignores: ['dist/'] },
 );
