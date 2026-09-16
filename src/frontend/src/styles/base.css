@@ -5,7 +5,6 @@
   --tundora: #444444;
   --land-hi: #d2dfe9;
   --sea: #f4f8fb;
-  --iso: #7fa9c6;
   --chrome: #6e8ca6;
   --chrome-night: #5a7c97;
   --sienna-ink: #c9482c;
@@ -16,6 +15,17 @@
   --stage-accent: var(--astronaut);
   --stage-tint: var(--sea);
   --stage-scrim: 247, 250, 252;
+  /* The map cards run against the theme: a dark card over the light map, a light
+     card over the dark one, so a card always reads as sitting above the map
+     rather than as a hole in it. Card-scoped on purpose -- the control cluster
+     shares --stage-surface and stays with the theme. */
+  --card-surface: var(--astronaut);
+  --card-ink: #fff;
+  --card-label: #c8d6e3;
+  --card-edge: #3d6389;
+  --card-shadow: 0 10px 30px rgba(8, 24, 39, 0.34);
+  /* Cerulean is 1.7:1 on astronaut; the lighter blue keeps the preview's edge. */
+  --card-prev-edge: #8fc3e4;
   --rail: 420px;
   --halo: rgba(255, 255, 255, 0.92);
 }

@@ -14,6 +14,7 @@ const ALLOWED = new Map([
   ['www.gebco.net', 'attribution link for the bathymetry we host ourselves'],
   ['www.naturalearthdata.com', 'attribution link for the bundled basemap geometry'],
   ['openfontlicense.org', 'licence link for the self-hosted fonts'],
+  ['www.datascience.ch', 'credit link in the sidebar footer'],
 ]);
 
 const isTest = (path) => /\.(test|spec)\.[^.]+$/.test(path);

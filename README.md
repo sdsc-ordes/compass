@@ -104,15 +104,33 @@ settings such as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
 
 See [`docs/compass/configuration-frontend.md`](docs/compass/configuration-frontend.md).
 
-Pre-render bathymetry tiles (optional; the map falls back to the vector basemap
-if tiles are absent):
+### Bathymetry
+
+Nothing here is needed to run the map: `bathy/flat.webp` and `bathy/equirect.webp`
+are committed, so a fresh clone already draws the seafloor.
+
+Two reasons to run it. To ship deep-zoom detail, build `bathy/d/` — it is
+gitignored, so it exists only where someone built it, and `just deploy` says so
+if it is missing:
 
 ```bash
-just map::tiles
+just map::tiles              # once: fetch the GEBCO pyramid (~53 MB, network, gitignored)
+just map::bathymetry-detail  # then: the pair plus d/ (~20 MB), before `just deploy`
 ```
 
-The output is gitignored and belongs on the server. The script lives at
-`src/frontend/scripts/build-tiles.mjs`.
+To refresh the imagery itself — a new GEBCO release, a different palette — rebake
+the committed pair and commit the result:
+
+```bash
+just map::tiles         # once, as above
+just map::bathymetry    # ~12 s, rewrites the two committed files
+```
+
+Both bakes read `src/frontend/tiles/`, so `just map::tiles` has to have run at
+least once; they need no network of their own. The scripts are
+`src/frontend/scripts/build-tiles.mjs` and `build-bathymetry.mjs`, and what the
+rasters are for is described under
+[No third-party requests at runtime](#no-third-party-requests-at-runtime).
 
 ---
 
@@ -241,8 +259,8 @@ just dev-up
 
 Open <http://localhost:5173>; `index.html` already passes
 `apiurl="http://localhost:8780"` and serves bathymetry from the Vite origin
-(`tileurl=""`). Run `just map::tiles` once so `src/frontend/tiles/` exists;
-without it the map falls back to the vector basemap.
+(`tileurl=""`). The baked pair is committed, so this works on a fresh clone. The
+`d/` detail level is not; without it deep zoom is simply softer.
 
 ---
 
@@ -259,12 +277,30 @@ from a tile service, and its place names are drawn from that same file rather
 than from a glyph server. Cluster tallies and the OceanCare star are drawn on a
 canvas at runtime for the same reason.
 
-The bathymetry is pre-rendered by `just map::tiles` into `src/frontend/tiles/`
-(1365 JPEG tiles, ~53 MB, gitignored) and served by nginx from a read-only
-mount. The stage reprojects those Web Mercator tiles onto its own Natural Earth
-or orthographic projection per pixel — `src/frontend/src/lib/bathymetry.ts` — so
-the raster follows the map into the globe and under the land. A deployment that
-skips `just map::tiles` still works: the first missing tile turns the layer off
+The bathymetry ships as baked rasters in `src/frontend/bathy/`, baked from the
+GEBCO pyramid — `src/frontend/src/lib/bathymetry.ts`. A visitor downloads a
+fraction of what the folder holds.
+
+`flat.webp` (4.7 MB) is the world already drawn in Natural Earth 1. Because that
+projection only ever varies by scale and translate, every pan and zoom is an
+exact similarity transform of that one image, so the flat view is a single
+`drawImage` with no per-pixel work. `equirect.webp` (1.5 MB) is only fetched if
+the visitor opens the globe, where rotation is genuinely not affine and the
+raster still has to be resampled per frame.
+
+Those two are committed, so a fresh clone has a working map.
+
+`d/` holds a 2x Natural Earth level (16384 px wide, the native resolution of the
+GEBCO pyramid) cut into 38 tiles of 2048 px. It is fetched only once the flat
+view is upscaling `flat.webp` past 1:1, from around zoom 4, and only for the
+tiles the viewport covers — four to six of them, so about 2–3 MB, and nothing at
+all for a visitor who never zooms in. They are drawn over the base, never
+instead of it, so a tile that is slow or absent costs sharpness and nothing else.
+
+That is why `d/` is gitignored rather than committed: ~20 MB of binary git
+cannot delta-compress, serving a case the base already covers. Build it with
+`just map::bathymetry-detail` before deploying, or skip it and ship the base.
+A deployment with none of these files still works: the 404 turns the layer off
 and the map draws the flat sea it always did.
 
 `just check::frontend-standalone` fails if any new host appears in the widget source. The allowlist

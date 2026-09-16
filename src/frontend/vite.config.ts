@@ -5,31 +5,36 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const tilesDir = path.join(root, 'tiles');
+const bathyDir = path.join(root, 'bathy');
 
 const repoRoot = path.resolve(root, '..', '..');
 
+// Substitutes __VAR__ in the dev-only index.html. Deliberately not Vite's own
+// %VAR% syntax: envPrefix below makes Vite's built-in env hook claim those, and
+// it runs ahead of this one, warning about a variable we resolve ourselves.
 function devPageConfig(values: Record<string, string>): Plugin {
   return {
     name: 'compass-dev-page-config',
     transformIndexHtml: (html) =>
       Object.entries(values).reduce(
-        (out, [key, value]) => out.replaceAll(`%${key}%`, value),
+        (out, [key, value]) => out.replaceAll(`__${key}__`, value),
         html,
       ),
   };
 }
 
-function serveBathymetryTiles(): Plugin {
+// The baked rasters live outside the bundle (they are megabytes), so the dev
+// server hands them over the same way nginx does in production.
+function serveBathymetry(): Plugin {
   return {
-    name: 'serve-bathymetry-tiles',
+    name: 'serve-bathymetry',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (!req.url?.startsWith('/tiles/')) return next();
-        const rel = decodeURIComponent(req.url.slice('/tiles/'.length).split('?')[0] ?? '');
-        const file = path.resolve(tilesDir, rel);
+        if (!req.url?.startsWith('/bathy/')) return next();
+        const rel = decodeURIComponent(req.url.slice('/bathy/'.length).split('?')[0] ?? '');
+        const file = path.resolve(bathyDir, rel);
         if (
-          !file.startsWith(tilesDir + path.sep) ||
+          !file.startsWith(bathyDir + path.sep) ||
           !fs.existsSync(file) ||
           !fs.statSync(file).isFile()
         ) {
@@ -37,7 +42,7 @@ function serveBathymetryTiles(): Plugin {
           res.end();
           return;
         }
-        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Content-Type', 'image/webp');
         fs.createReadStream(file).pipe(res);
       });
     },
@@ -64,7 +69,7 @@ export default defineConfig(({ mode }) => {
           customElement: true,
         },
       }),
-      serveBathymetryTiles(),
+      serveBathymetry(),
     ],
     esbuild: { legalComments: 'eof' },
     build: {
