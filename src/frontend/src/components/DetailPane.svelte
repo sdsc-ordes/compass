@@ -4,10 +4,11 @@
   import { loadAtlas } from '../lib/basemap';
   import { fmt, type Strings } from '../lib/i18n';
   import type { Proj, Tag } from '../lib/types';
+  import type { Dim } from '../lib/schema';
 
   export let t: Strings;
   export let entry: Proj | null = null;
-  export let dimIds: string[] = [];
+  export let dims: Dim[] = [];
   export let onBack: () => void;
   export let onClose: () => void;
   export let onFilterByTag: (dim: string, iri: string) => void;
@@ -40,9 +41,18 @@
     };
   }
 
-  $: tags = entry
-    ? dimIds.flatMap((id) => (entry?.tags[id] ?? []).map((tag: Tag) => ({ dim: id, tag })))
-    : [];
+  $: groups = entry ? tagGroups(entry, dims) : [];
+
+  // the groups read in the sidebar's section order, so the panel and the filter
+  // list name the schemes in the same sequence; a dim the sidebar does not list
+  // still gets a group, last, rather than being dropped from the panel
+  function tagGroups(p: Proj, ds: Dim[]): { dim: string; label: string; tags: Tag[] }[] {
+    const known = ds.map((d) => d.id);
+    const rest = Object.keys(p.tags).filter((id) => !known.includes(id));
+    return [...ds, ...rest.map((id) => ({ id, label: id }))]
+      .map((d) => ({ dim: d.id, label: d.label, tags: p.tags[d.id] ?? [] }))
+      .filter((g) => g.tags.length > 0);
+  }
 
   $: storiesHref = entry?.storiesUrl ?? '';
 </script>
@@ -81,13 +91,20 @@
   <p class="txt">{entry?.txt ?? ''}</p>
 
   <div class="ptags">
-    {#each tags as { dim, tag } (dim + tag.iri)}
-      <button
-        class="ptag"
-        type="button"
-        aria-label={fmt(t.filterByTag, { label: tag.label })}
-        on:click={() => onFilterByTag(dim, tag.iri)}>{tag.label}</button
-      >
+    {#each groups as { dim, label, tags } (dim)}
+      <div class="ptaggroup">
+        <h3 class="ptaglabel">{label}</h3>
+        <div class="ptagrow">
+          {#each tags as tag (tag.iri)}
+            <button
+              class="ptag"
+              type="button"
+              aria-label={fmt(t.filterByTag, { label: tag.label })}
+              on:click={() => onFilterByTag(dim, tag.iri)}>{tag.label}</button
+            >
+          {/each}
+        </div>
+      </div>
     {/each}
   </div>
 
