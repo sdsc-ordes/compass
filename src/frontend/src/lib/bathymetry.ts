@@ -51,7 +51,18 @@ interface Snapshot {
   canvas: HTMLCanvasElement;
   W: number;
   H: number;
+  box: Box;
   ref: [number, number][];
+}
+
+// The screen rect a raster covers. The globe is a disc in a wider canvas, so
+// rasterising the whole canvas spends up to half the budget on pixels that are
+// not the sphere; confining it to these bounds buys ~1:1 for the same cost.
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 interface Grid {
@@ -149,12 +160,13 @@ export class Bathymetry {
       const keep = this.snap;
       const t = keep && keep.W === W && keep.H === H ? similarity(keep.ref, pr) : null;
       if (keep && t && covered(t, keep, pr, W, H)) {
-        ctx.drawImage(keep.canvas, t.dx, t.dy, t.g * keep.W, t.g * keep.H);
+        const b = keep.box;
+        ctx.drawImage(keep.canvas, t.g * b.x + t.dx, t.g * b.y + t.dy, t.g * b.w, t.g * b.h);
         return;
       }
     }
-    const raster = this.reproject(pr, W, H, interact, dpr);
-    if (raster) ctx.drawImage(raster, 0, 0, W, H);
+    const out = this.reproject(pr, W, H, interact, dpr);
+    if (out) ctx.drawImage(out.canvas, out.box.x, out.box.y, out.box.w, out.box.h);
   }
 
   // Flat view: one drawImage of the pre-projected raster.
@@ -272,7 +284,7 @@ export class Bathymetry {
     H: number,
     interact: boolean,
     dpr: number,
-  ): HTMLCanvasElement | null {
+  ): { canvas: HTMLCanvasElement; box: Box } | null {
     const invert = pr.invert;
     if (!invert) return null;
 
@@ -281,13 +293,16 @@ export class Bathymetry {
 
     if (!interact) this.snap = null;
 
-    const dw = W * dpr,
-      dh = H * dpr;
+    const box = sphereBox(pr, W, H);
+    if (!box) return null;
+
+    const dw = box.w * dpr,
+      dh = box.h * dpr;
     const budget = interact ? BUDGET_DRAG : BUDGET_IDLE;
     const scale = Math.min(1, Math.sqrt(budget / Math.max(1, dw * dh)));
     const rw = Math.max(2, Math.round(dw * scale));
     const rh = Math.max(2, Math.round(dh * scale));
-    const perCss = rw / W;
+    const perCss = rw / box.w;
 
     const cols = Math.ceil(rw / CELL);
     const rows = Math.ceil(rh / CELL);
@@ -299,11 +314,11 @@ export class Bathymetry {
     let any = false;
     let rowStart = 0;
     for (let j = 0; j <= rows; j++) {
-      const y = (j * CELL) / perCss;
+      const y = box.y + (j * CELL) / perCss;
       let prev = NaN;
       let first = NaN;
       for (let i = 0; i <= cols; i++) {
-        const x = (i * CELL) / perCss;
+        const x = box.x + (i * CELL) / perCss;
         const k = j * (cols + 1) + i;
         const ll = invert([x, y]);
         if (!ll || !isFinite(ll[0]) || !isFinite(ll[1]) || Math.abs(ll[1]) > LAT_MAX) {
@@ -388,8 +403,9 @@ export class Bathymetry {
           px[o00 + 1] * w00 + px[o10 + 1] * w10 + px[o01 + 1] * w01 + px[o11 + 1] * w11;
         dst[d + 2] =
           px[o00 + 2] * w00 + px[o10 + 2] * w10 + px[o01 + 2] * w01 + px[o11 + 2] * w11;
-        dst[d + 3] =
-          px[o00 + 3] * w00 + px[o10 + 3] * w10 + px[o01 + 3] * w01 + px[o11 + 3] * w11;
+        // The bake carries the raster to both poles, so every sample is opaque and
+        // interpolating alpha would be four multiplies to arrive back at 255.
+        dst[d + 3] = 255;
         drew = true;
       }
     }
@@ -406,9 +422,9 @@ export class Bathymetry {
         }
         ref.push([xy[0], xy[1]]);
       }
-      this.snap = ref.length === REF.length ? { canvas: out, W, H, ref } : null;
+      this.snap = ref.length === REF.length ? { canvas: out, W, H, box, ref } : null;
     }
-    return out;
+    return { canvas: out, box };
   }
 
   private buffer(w: number, h: number, drag: boolean): HTMLCanvasElement | null {
@@ -533,16 +549,24 @@ function similarity(was: [number, number][], pr: GeoProjection): Move | null {
 }
 
 function covered(t: Move, s: Snapshot, pr: GeoProjection, W: number, H: number): boolean {
-  const b = geoPath(pr).bounds({ type: 'Sphere' });
-  const nx0 = Math.max(0, b[0][0]),
-    ny0 = Math.max(0, b[0][1]),
-    nx1 = Math.min(W, b[1][0]),
-    ny1 = Math.min(H, b[1][1]);
-  if (nx1 <= nx0 || ny1 <= ny0) return true;
+  const now = sphereBox(pr, W, H);
+  if (!now) return true;
+  const b = s.box;
   return (
-    t.dx <= nx0 + REF_TOL &&
-    t.dy <= ny0 + REF_TOL &&
-    t.g * s.W + t.dx >= nx1 - REF_TOL &&
-    t.g * s.H + t.dy >= ny1 - REF_TOL
+    t.g * b.x + t.dx <= now.x + REF_TOL &&
+    t.g * b.y + t.dy <= now.y + REF_TOL &&
+    t.g * (b.x + b.w) + t.dx >= now.x + now.w - REF_TOL &&
+    t.g * (b.y + b.h) + t.dy >= now.y + now.h - REF_TOL
   );
+}
+
+// The sphere's on-screen bounds, clipped to the canvas. Null when it is off
+// screen entirely, which leaves the sea colour already painted underneath.
+function sphereBox(pr: GeoProjection, W: number, H: number): Box | null {
+  const b = geoPath(pr).bounds({ type: 'Sphere' });
+  const x = Math.max(0, Math.floor(b[0][0]));
+  const y = Math.max(0, Math.floor(b[0][1]));
+  const w = Math.min(W, Math.ceil(b[1][0])) - x;
+  const h = Math.min(H, Math.ceil(b[1][1])) - y;
+  return w > 0 && h > 0 ? { x, y, w, h } : null;
 }
