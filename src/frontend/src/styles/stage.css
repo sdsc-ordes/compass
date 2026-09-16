@@ -60,6 +60,12 @@
 #basemap .bm-rim {
   fill: none;
 }
+/* A gesture scales the world group rather than re-projecting it, and a scaled
+   coastline should not come with a scaled coastline stroke. No-op at rest:
+   the group carries no transform once the paths are rebuilt. */
+#bworld path {
+  vector-effect: non-scaling-stroke;
+}
 #cv {
   position: absolute;
   inset: 0;

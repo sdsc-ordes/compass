@@ -19,7 +19,7 @@
     K_MAX,
     type ViewState,
   } from '../lib/projection';
-  import { loadAtlas, renderBasemap, type Atlas } from '../lib/basemap';
+  import { loadAtlas, nudgeBasemap, renderBasemap, type Atlas } from '../lib/basemap';
   import { Bathymetry } from '../lib/bathymetry';
   import { atMaxZoom, drawPins, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
   import { onFontsReady } from '../lib/fonts';
@@ -54,6 +54,7 @@
   let interact = false;
   let qid: number | null = null;
   let painted = 0;
+  let cost = 0;
   let retry: ReturnType<typeof setTimeout> | null = null;
   let hovered: PinTarget | null = null;
   let pinbox: PinBox[] = [];
@@ -144,9 +145,12 @@
   function queue(full?: boolean): void {
     if (!S.ready) return;
     if (qid) return;
-    // rAF rather than a bare timer so paints land in phase with the compositor;
-    // the gap keeps the mid-gesture work budget the old 36ms throttle bought us.
-    const gap = interact && !full ? 36 : 0;
+    // rAF rather than a bare timer so paints land in phase with the compositor.
+    // The gap used to be a flat 36ms, which held a gesture to ~20fps however
+    // little the frame actually cost; budgeting it from what the last paint
+    // measured lets a cheap frame -- a nudged basemap -- run every vsync and
+    // only backs off after one that genuinely overran.
+    const gap = interact && !full ? Math.min(32, cost) : 0;
     const step = (now: number): void => {
       if (gap && now - painted < gap) {
         qid = requestAnimationFrame(step);
@@ -155,7 +159,9 @@
       qid = null;
       painted = now;
       syncFan();
+      const t0 = performance.now();
       renderAll();
+      if (interact) cost = cost * 0.6 + (performance.now() - t0) * 0.4;
     };
     qid = requestAnimationFrame(step);
   }
@@ -169,7 +175,8 @@
       retry = setTimeout(() => queue(true), 80);
       return;
     }
-    renderBasemap(basemap.refs(), S, W, H, atlas);
+    if (!interact || !nudgeBasemap(basemap.refs(), S, W, H))
+      renderBasemap(basemap.refs(), S, W, H, atlas);
     const pr = paintCanvas(W, H);
     if (!pr) return;
     paintWater(pr, W, H);
