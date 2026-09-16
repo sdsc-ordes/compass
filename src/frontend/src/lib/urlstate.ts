@@ -41,24 +41,3 @@ export function pickDimensions(
   }
   return picked;
 }
-
-export interface SharedState {
-  filters?: Record<string, unknown>;
-  lang?: string;
-  view?: unknown;
-}
-
-export async function fetchSharedState(
-  apiurl: string,
-  id: string,
-): Promise<SharedState | null> {
-  if (!apiurl || !id) return null;
-  try {
-    const resp = await fetch(`${apiurl}/api/states/${id}`);
-    if (!resp.ok) return null;
-    return (await resp.json()) as SharedState;
-  } catch (e) {
-    console.error('[Compass] Failed to restore state:', e);
-    return null;
-  }
-}
