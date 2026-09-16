@@ -149,7 +149,10 @@
   />
 
   <footer class="sidefoot">
-    {t.creditBuiltBy}
+    {t.creditBefore}<span class="heart" aria-hidden="true">&#9829;</span><span class="sr"
+      >{t.creditLove}</span
+    >
+    {t.creditAfter}
     <a href="https://www.datascience.ch" target="_blank" rel="noopener noreferrer"
       >Swiss Data Science Center</a
     >
