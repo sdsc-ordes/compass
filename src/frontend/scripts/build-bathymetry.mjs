@@ -25,11 +25,11 @@ const OUT = join(HERE, '..', 'bathy');
 const SRC_Z = 5;
 const TILE = 512;
 
-// Intermediate Web Mercator mosaic. Matches the 8192px Natural Earth width, so
-// the reprojection below resamples at roughly 1:1 and neither axis is starved.
-const MERC = Number(process.env.BATHY_MERC ?? 8192);
-
 const FLAT_W = Number(process.env.BATHY_FLAT_W ?? 8192);
+// The intermediate Web Mercator mosaic matches the Natural Earth width it feeds,
+// so the reprojection resamples at roughly 1:1 and neither axis is starved.
+const MERC = FLAT_W;
+
 const EQUI_W = 4096;
 const EQUI_H = 2048;
 
@@ -37,7 +37,6 @@ const EQUI_H = 2048;
 // it adds real data rather than inventing it. Tiled because WebP caps a side at
 // 16383, and its mosaic runs 1:1 for the same reason the base one does.
 const DETAIL_W = 16384;
-const DETAIL_MERC = DETAIL_W;
 const DETAIL_TILE = 2048;
 
 const QUALITY = Number(process.env.BATHY_Q ?? 70);
@@ -217,7 +216,7 @@ async function flat(merc) {
 // runtime reads their 404 as empty and leaves the base showing.
 async function detail(merc) {
   const ne = neGeom(DETAIL_W);
-  const sample = sampler(merc, DETAIL_MERC);
+  const sample = sampler(merc, DETAIL_W);
   const cols = DETAIL_W / DETAIL_TILE;
   const rows = Math.ceil(ne.H / DETAIL_TILE);
   mkdirSync(join(OUT, 'd'), { recursive: true });
@@ -290,8 +289,8 @@ async function main() {
   if (process.env.BATHY_NO_DETAIL) return;
 
   merc = null; // the detail mosaic is ~800 MB; do not hold both
-  console.log(`detail level via a ${DETAIL_MERC}x${DETAIL_MERC} mosaic`);
-  const d = await detail(await mosaic(DETAIL_MERC));
+  console.log(`detail level via a ${DETAIL_W}x${DETAIL_W} mosaic`);
+  const d = await detail(await mosaic(DETAIL_W));
   console.log(
     `  ${join(OUT, 'd')}  ${d.wrote}/${d.cols * d.rows} tiles  ${DETAIL_W}x${d.height}`,
   );
