@@ -11,6 +11,10 @@ export const i18n = {
     website: 'Website',
     websiteOf: 'Website: {title}',
     newTab: '(opens in a new tab)',
+    oceancareHome: 'https://www.oceancare.org/en/',
+    oceancareHomeOf: 'OceanCare home page',
+    creditBuiltBy: 'Built by the',
+
     filterDimensions: 'Filter dimensions',
     dimOptionsCount: '{n} options · {m} selected',
     dimOptionCount: '{n} option · {m} selected',
@@ -83,6 +87,10 @@ export const i18n = {
     website: 'Website',
     websiteOf: 'Website: {title}',
     newTab: '(öffnet in neuem Tab)',
+    oceancareHome: 'https://www.oceancare.org/de/',
+    oceancareHomeOf: 'OceanCare Startseite',
+    creditBuiltBy: 'Umgesetzt vom',
+
     filterDimensions: 'Filterdimensionen',
     dimOptionsCount: '{n} Optionen · {m} ausgewählt',
     dimOptionCount: '{n} Option · {m} ausgewählt',

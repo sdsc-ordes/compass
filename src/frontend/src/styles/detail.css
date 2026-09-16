@@ -18,8 +18,24 @@ aside.filters.detail .pane-detail {
     transform: none;
   }
 }
+/* The mirror of panein: leaving the detail pane, the filters come back the way
+   the detail arrived rather than simply reappearing. */
+aside.filters.back .pane-filters {
+  animation: paneback 0.24s ease;
+}
+@keyframes paneback {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  aside.filters.detail .pane-detail {
+  aside.filters.detail .pane-detail,
+  aside.filters.back .pane-filters {
     animation: none;
   }
 }

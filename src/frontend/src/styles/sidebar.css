@@ -39,11 +39,42 @@ aside.filters::-webkit-scrollbar-track {
   flex-direction: column;
   gap: 2px;
 }
+.logolink {
+  display: block;
+  border-radius: 2px;
+}
+.logolink:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 3px;
+}
 .logomark {
   display: block;
   height: 38px;
   width: auto;
   margin-left: -1px;
+}
+
+/* Outside both panes, so the credit stays put when the detail view takes over. */
+.sidefoot {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--land-hi);
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--tundora);
+}
+.sidefoot a {
+  color: var(--astronaut);
+  font-weight: 700;
+  text-decoration: none;
+}
+.sidefoot a:hover {
+  color: var(--cerulean);
+  text-decoration: underline;
+}
+.sidefoot a:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
 }
 
 .tallybox {
@@ -289,6 +320,11 @@ aside.filters::-webkit-scrollbar-track {
     padding: 0 0 calc(26px + var(--sbtm));
     display: flex;
     flex-direction: column;
+  }
+  /* The sheet moves padding onto the panes, so the footer has to carry its own. */
+  .sidefoot {
+    margin: 0 18px;
+    padding: 12px 0 calc(20px + var(--sbtm));
   }
   .pane-filters > * {
     flex: none;
