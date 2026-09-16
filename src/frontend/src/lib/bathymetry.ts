@@ -93,8 +93,11 @@ export class Bathymetry {
     private onReady: () => void,
   ) {}
 
+  // Whether the depth layer is worth offering. Optimistic on purpose: the map
+  // starts without it, so nothing has been fetched yet and "not loaded" must not
+  // read as "not available" -- that would hide the switch that does the loading.
   get ready(): boolean {
-    return this.available && !this.absent;
+    return !this.absent;
   }
 
   paint(
@@ -464,7 +467,10 @@ export class Bathymetry {
       this.onReady();
     };
     img.onerror = () => {
+      // Nothing baked, or nothing served. Say so, so the switch offering a layer
+      // that cannot arrive takes itself away rather than doing nothing.
       if (!this.available) this.absent = true;
+      this.onReady();
     };
     img.src = `${this.base}/${path}`;
   }

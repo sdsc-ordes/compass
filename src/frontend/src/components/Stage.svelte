@@ -112,10 +112,15 @@
 
   const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
 
-  let depth = true;
-  let depthReady = false;
+  // Off by default: the brand sea is the map's own colour, and the raster is
+  // megabytes a visitor who never asks for it should not pay for. Turning the
+  // switch on is what fetches it.
+  let depth = false;
+  let depthReady = true;
+  let depthOn = false;
   const bathy = new Bathymetry(tileurl, () => {
     depthReady = bathy.ready;
+    depthOn = bathy.available;
     queue();
   });
 
@@ -220,6 +225,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     bathy.paint(ctx, pr, W, H, P[S.theme], S.view === 'globe', interact, depth, dpr);
     depthReady = bathy.ready;
+    depthOn = bathy.available;
   }
 
   function pumpPins(list: Proj[] = projs): void {
@@ -275,7 +281,7 @@
       sea: atlas.sea,
       land: atlas.land,
       lang,
-      depth: depth && depthReady,
+      depth: depth && depthOn,
     });
   }
 
@@ -606,7 +612,7 @@
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
   class="stage"
-  class:depth={depth && depthReady}
+  class:depth={depth && depthOn}
   bind:this={stage}
   tabindex="0"
   role="application"
@@ -654,7 +660,7 @@
   </div>
   <div class="plate plate-error" class:show={!!error} bind:this={errEl}>{error ?? ''}</div>
   <div class="attrib" bind:this={attribEl}>
-    {depth && depthReady ? t.attributionDepth : t.attribution}
+    {depth && depthOn ? t.attributionDepth : t.attribution}
   </div>
 
   <StageChrome
