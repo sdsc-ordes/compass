@@ -268,17 +268,12 @@ aside.filters.detail .pane-detail {
     font-size: 30px;
     opacity: 0.9;
   }
+  /* The sheet now opens to full height, so the panel reads in the same order
+     the desktop rail does -- globe first, straight under the header -- instead
+     of the reflow that pushed the globe to the bottom to buy space. Only the
+     type scale and the touch targets still differ. */
   aside.filters.detail .pane-detail {
-    display: flex;
-    flex-direction: column;
     animation: none;
-  }
-  .pane-detail > .detailhead {
-    order: 1;
-  }
-  .pane-detail > .etag {
-    order: 2;
-    margin: 0;
   }
   .pane-detail > button.etag {
     display: inline-flex;
@@ -286,42 +281,24 @@ aside.filters.detail .pane-detail {
     min-height: 44px;
     padding: 8px 14px;
   }
-  .pane-detail > .etag + h2 {
-    order: 3;
-    margin: 4px 0 0;
+  .pane-detail .etag + h2 {
     font-size: 22px;
     line-height: 28px;
   }
-  .pane-detail > .where {
-    order: 4;
-    margin: 6px 0 0;
+  .pane-detail .where {
     font-size: 14px;
     line-height: 20px;
   }
-  .pane-detail > .ptags {
-    order: 6;
-    margin: 14px 0 0;
-  }
-  .pane-detail > p.txt {
-    order: 7;
-    margin: 16px 0 0;
+  .pane-detail p.txt {
     font-size: 16px;
     line-height: 25px;
   }
-  .pane-detail > .thumb {
-    order: 8;
-    width: 80px;
-    height: 80px;
-    margin: 18px auto 0;
-  }
   .pane-detail > .storiesbtn {
-    order: 9;
     align-items: center;
     margin: 10px 0 0;
     min-height: 44px;
   }
   .pane-detail > .storiesbtn.ghost {
-    order: 10;
     margin: 0;
   }
   .ptag {

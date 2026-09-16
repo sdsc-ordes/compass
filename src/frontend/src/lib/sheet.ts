@@ -23,7 +23,12 @@ export function onMobileChange(cb: (mobile: boolean) => void): () => void {
 }
 
 const SHEET_HALF = 0.58;
-const SHEET_DETAIL = 0.68;
+// Mirrors max-height on the sheet in sidebar.css: how much of the map an open
+// project covers. Taken from the stylesheet rather than measured, because the
+// stage asks where to put the pin while the pane is still being swapped in.
+const SHEET_MAX = 0.9;
+// ...and the floor under the strip that leaves, so the pin has somewhere to sit.
+const DETAIL_STRIP = 90;
 
 export interface SheetHost {
   mapc: HTMLElement;
@@ -51,15 +56,17 @@ export class Sheet {
     return isMobile();
   }
 
+  // A project fills the sheet, so 'detail' is the only stop it has: there is
+  // nowhere further to open to, and pulling down dismisses it.
   private stops(): SheetState[] {
-    return this.h.isDetail() ? ['detail', 'full'] : ['dock', 'half', 'full'];
+    return this.h.isDetail() ? ['detail'] : ['dock', 'half', 'full'];
   }
 
   lift(): number {
     if (!this.mobile) return 0;
     const H = this.h.stage.clientHeight;
     const box = this.h.mapc.clientHeight || window.innerHeight;
-    const strip = Math.max(90, Math.min(H, box - Math.round(box * SHEET_DETAIL)));
+    const strip = Math.max(DETAIL_STRIP, Math.min(H, box - Math.round(box * SHEET_MAX)));
     return H / 2 - strip / 2;
   }
 
@@ -75,7 +82,8 @@ export class Sheet {
     mapc.style.setProperty('--grabh', grabH + 'px');
     this.offsets = {
       full: 0,
-      detail: Math.max(0, sheetH - Math.round(H * SHEET_DETAIL)),
+      // all the way up, the same panel the desktop rail shows
+      detail: 0,
       half: Math.max(0, sheetH - Math.round(H * SHEET_HALF)),
       dock: Math.max(0, sheetH - dock),
     };
@@ -110,7 +118,7 @@ export class Sheet {
 
   toggle(): void {
     if (this.h.isDetail()) {
-      this.to(this.state === 'detail' ? 'full' : 'detail');
+      this.h.dismiss();
       return;
     }
     this.to(this.state === 'full' ? 'dock' : 'full');
@@ -142,7 +150,7 @@ export class Sheet {
     const onMove = (e: PointerEvent) => {
       if (pid === null || e.pointerId !== pid || !this.offsets) return;
       dy = e.clientY - y0;
-      const floor = this.h.isDetail() ? this.offsets.detail + 150 : this.offsets.dock + 40;
+      const floor = this.h.isDetail() ? 150 : this.offsets.dock + 40;
       sh.style.transform = 'translateY(' + Math.max(-28, Math.min(floor, off0 + dy)) + 'px)';
     };
     const end = (e?: PointerEvent) => {
@@ -185,7 +193,8 @@ export class Sheet {
         this.to('full');
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        this.to(this.h.isDetail() ? 'detail' : this.state === 'full' ? 'half' : 'dock');
+        if (this.h.isDetail()) this.h.dismiss();
+        else this.to(this.state === 'full' ? 'half' : 'dock');
       } else if (e.key === 'Escape') {
         e.preventDefault();
         this.h.dismiss();
