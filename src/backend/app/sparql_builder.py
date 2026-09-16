@@ -204,26 +204,6 @@ def _shared_optionals(lang: str) -> str:
 """
 
 
-def _special_optionals() -> str:
-    """Return OPTIONAL patterns for properties not declared on entity NodeShapes.
-
-    Returns:
-        SPARQL fragment fetching ``compass:wpEntityTagId``.
-    """
-    return """
-        OPTIONAL { ?s compass:wpEntityTagId ?wpEntityTagId . }
-"""
-
-
-def _special_selects() -> str:
-    """Return SELECT projections for special (non-SHACL) properties.
-
-    Returns:
-        SPARQL SELECT fragment for ``wpEntityTagId``.
-    """
-    return "           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n"
-
-
 def _distinct(values: list[str]) -> list[str]:
     """Drop empties and repeats from a dimension's selected values, in order.
 
@@ -467,7 +447,7 @@ def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any)
         + "        }\n"
     )
     sparql_where += _shared_optionals(lang)
-    sparql_where += "        " + auto_optionals + "\n" + _special_optionals()
+    sparql_where += "        " + auto_optionals + "\n"
 
     return (
         SPARQL_PREFIXES
@@ -476,7 +456,6 @@ def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any)
         + "           "
         + auto_selects
         + "\n"
-        + _special_selects()
         + "    WHERE {\n"
         + sparql_where
         + "    }\n"

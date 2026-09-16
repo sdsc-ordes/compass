@@ -4,6 +4,7 @@
 @prefix sh:   <http://www.w3.org/ns/shacl#> .
 @prefix geo:  <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
 @prefix compass: <http://example.org/ocean-org/ontology#> .
 @prefix schema: <https://schema.org/> .
 
@@ -15,25 +16,34 @@
 # Entity Classes (4 types appearing on the map)
 # ============================================================
 
+compass:MapEntity a rdfs:Class ;
+    rdfs:label "Map Entity"@en ;
+    rdfs:label "Karteneintrag"@de ;
+    rdfs:comment "A class whose instances are drawn on the map. Only NodeShapes targeting a subclass of this are projected into filter widgets and the SPARQL entity query; every other shape in this file is validation-only."@en .
+
 compass:InternationalForum a rdfs:Class ;
+    rdfs:subClassOf compass:MapEntity ;
     rdfs:label "International Forum"@en ;
     rdfs:label "Internationales Forum"@de ;
     rdfs:comment "An international policy, governance, or coordination forum for ocean affairs."@en ;
     rdfs:comment "Ein internationales Policy-, Governance- oder Koordinierungsforum für Meeresangelegenheiten."@de .
 
 compass:Network a rdfs:Class ;
+    rdfs:subClassOf compass:MapEntity ;
     rdfs:label "Network"@en ;
     rdfs:label "Netzwerk"@de ;
     rdfs:comment "A collaborative ocean research or monitoring network spanning multiple organizations."@en ;
     rdfs:comment "Ein kollaboratives Netzwerk für Meeresforschung oder -überwachung über mehrere Organisationen hinweg."@de .
 
 compass:PartnerOrganization a rdfs:Class ;
+    rdfs:subClassOf compass:MapEntity ;
     rdfs:label "Partner Organization"@en ;
     rdfs:label "Partnerorganisation"@de ;
     rdfs:comment "An OceanCare partner organization active in marine conservation or research."@en ;
     rdfs:comment "Eine OceanCare-Partnerorganisation, die im Meeresschutz oder in der Meeresforschung tätig ist."@de .
 
 compass:Project a rdfs:Class ;
+    rdfs:subClassOf compass:MapEntity ;
     rdfs:label "Project"@en ;
     rdfs:label "Projekt"@de ;
     rdfs:comment "A time-limited project or programme addressing ocean issues."@en ;
@@ -44,31 +54,37 @@ compass:Project a rdfs:Class ;
 # ============================================================
 
 compass:WorkArea a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Work Area"@en ;
     rdfs:label "Arbeitsbereich"@de ;
     rdfs:comment "A type of work OceanCare performs."@en .
 
 compass:Conservation a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Conservation"@en ;
     rdfs:label "Schutz"@de ;
     rdfs:comment "A conservation focus area."@en .
 
 compass:Topic a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Topic"@en ;
     rdfs:label "Thema"@de ;
     rdfs:comment "A thematic topic addressed by OceanCare."@en .
 
 compass:Pollution a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Pollution"@en ;
     rdfs:label "Verschmutzung"@de ;
     rdfs:comment "A type of ocean pollution."@en .
 
 compass:Species a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Species"@en ;
     rdfs:label "Arten"@de ;
     rdfs:comment "A marine or aquatic species relevant to OceanCare's work."@en .
 
 compass:CountryArea a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
     rdfs:label "Country / Area"@en ;
     rdfs:label "Land / Gebiet"@de ;
     rdfs:comment "A country or geographic area relevant to OceanCare's work."@en .
@@ -167,6 +183,10 @@ compass:isoCode a rdf:Property ;
     rdfs:range xsd:string .
 
 # -- External properties (stub declarations) --
+
+rdfs:label a rdf:Property ;
+    rdfs:label "label"@en ;
+    rdfs:comment "Human-readable name of a resource, used where a tag value is rendered from its IRI."@en .
 
 geo:lat a rdf:Property ;
     rdfs:label "latitude"@en ;
@@ -275,6 +295,14 @@ compass:DescriptionShape a sh:Shape ;
     sh:datatype rdf:langString ;
     sh:uniqueLang true .
 
+compass:WpEntityTagIdShape a sh:Shape ;
+    sh:path compass:wpEntityTagId ;
+    sh:name "WordPress entity tag ID"@en ;
+    sh:name "WordPress-Eintrags-Tag-ID"@de ;
+    sh:description "Term ID the entity's stories are listed under on the OceanCare site."@en ;
+    sh:datatype xsd:integer ;
+    sh:maxCount 1 .
+
 compass:ManagedByOceanCareShape a sh:Shape ;
     sh:path compass:managedByOceanCare ;
     sh:name "Managed by OceanCare"@en ;
@@ -356,10 +384,15 @@ compass:RelatedOrganizationPropertyShape a sh:Shape ;
 
 compass:InternationalForumShape a sh:NodeShape ;
     sh:targetClass compass:InternationalForum ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
     rdfs:label "International Forum Shape"@en ;
     rdfs:label "Internationales Forum-Form"@de ;
     rdfs:comment "Validates the expected structure of an international ocean governance forum."@en ;
     sh:property compass:NameShape ;
+    sh:property [ sh:path rdfs:label ; sh:datatype rdf:langString ;
+                  sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "en" "de" ) ] ;
+    sh:property compass:WpEntityTagIdShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
     sh:property compass:LocationShape ;
@@ -379,10 +412,15 @@ compass:InternationalForumShape a sh:NodeShape ;
 
 compass:NetworkShape a sh:NodeShape ;
     sh:targetClass compass:Network ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
     rdfs:label "Network Shape"@en ;
     rdfs:label "Netzwerk-Form"@de ;
     rdfs:comment "Validates the expected structure of a collaborative ocean network."@en ;
     sh:property compass:NameShape ;
+    sh:property [ sh:path rdfs:label ; sh:datatype rdf:langString ;
+                  sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "en" "de" ) ] ;
+    sh:property compass:WpEntityTagIdShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
     sh:property compass:LocationShape ;
@@ -403,10 +441,15 @@ compass:NetworkShape a sh:NodeShape ;
 
 compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:targetClass compass:PartnerOrganization ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
     rdfs:label "Partner Organization Shape"@en ;
     rdfs:label "Partnerorganisation-Form"@de ;
     rdfs:comment "Validates the expected structure of an OceanCare partner organization."@en ;
     sh:property compass:NameShape ;
+    sh:property [ sh:path rdfs:label ; sh:datatype rdf:langString ;
+                  sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "en" "de" ) ] ;
+    sh:property compass:WpEntityTagIdShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
     sh:property compass:LocationShape ;
@@ -427,10 +470,15 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
 
 compass:ProjectShape a sh:NodeShape ;
     sh:targetClass compass:Project ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
     rdfs:label "Project Shape"@en ;
     rdfs:label "Projekt-Form"@de ;
     rdfs:comment "Validates the expected structure of a project or programme."@en ;
     sh:property compass:NameShape ;
+    sh:property [ sh:path rdfs:label ; sh:datatype rdf:langString ;
+                  sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "en" "de" ) ] ;
+    sh:property compass:WpEntityTagIdShape ;
     sh:property compass:LatShape ;
     sh:property compass:LongShape ;
     sh:property compass:LocationShape ;
@@ -447,3 +495,113 @@ compass:ProjectShape a sh:NodeShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
     sh:property compass:RelatedOrganizationPropertyShape .
+
+# ============================================================
+# SKOS Vocabulary
+# ============================================================
+
+skos:Concept a rdfs:Class ;
+    rdfs:label "Concept"@en ;
+    rdfs:label "Konzept"@de ;
+    rdfs:comment "A SKOS concept: one selectable tag value within a dimension vocabulary."@en .
+
+skos:ConceptScheme a rdfs:Class ;
+    rdfs:label "Concept Scheme"@en ;
+    rdfs:label "Konzeptschema"@de ;
+    rdfs:comment "A SKOS concept scheme: the vocabulary backing one filter dimension."@en .
+
+skos:definition a rdf:Property ;
+    rdfs:label "definition"@en ;
+    rdfs:comment "A complete explanation of the intended meaning of a concept or scheme."@en .
+
+skos:inScheme a rdf:Property ;
+    rdfs:label "in scheme"@en ;
+    rdfs:comment "The concept scheme a concept belongs to."@en .
+
+skos:topConceptOf a rdf:Property ;
+    rdfs:label "top concept of"@en ;
+    rdfs:comment "The concept scheme this concept is a top-level entry of."@en .
+
+skos:hasTopConcept a rdf:Property ;
+    rdfs:label "has top concept"@en ;
+    rdfs:comment "A top-level concept of this concept scheme."@en .
+
+dct:isPartOf a rdf:Property ;
+    rdfs:label "is part of"@en ;
+    rdfs:comment "A larger resource this one is a component of."@en .
+
+compass:ConceptShape a sh:NodeShape ;
+    sh:targetClass skos:Concept ;
+    rdfs:label "Concept Shape"@en ;
+    rdfs:label "Konzept-Form"@de ;
+    rdfs:comment "Validates one tag value in vocab.ttl. Validation only: it targets no compass:MapEntity subclass, so nothing here reaches the map."@en ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:datatype rdf:langString ;
+        sh:minCount 2 ;
+        sh:uniqueLang true ;
+        sh:languageIn ( "en" "de" ) ;
+    ] ;
+    sh:property [
+        sh:path skos:definition ;
+        sh:datatype rdf:langString ;
+        sh:maxCount 2 ;
+        sh:uniqueLang true ;
+        sh:languageIn ( "en" "de" ) ;
+    ] ;
+    sh:property [
+        sh:path skos:inScheme ;
+        sh:class skos:ConceptScheme ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path skos:topConceptOf ;
+        sh:class skos:ConceptScheme ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path compass:wpTagId ;
+        sh:datatype xsd:integer ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path compass:isoCode ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:pattern "^[A-Z]{3}( [A-Z]{3})*$" ;
+    ] .
+
+compass:ConceptSchemeShape a sh:NodeShape ;
+    sh:targetClass skos:ConceptScheme ;
+    rdfs:label "Concept Scheme Shape"@en ;
+    rdfs:label "Konzeptschema-Form"@de ;
+    rdfs:comment "Validates one dimension vocabulary in vocab.ttl. Validation only: it targets no compass:MapEntity subclass, so nothing here reaches the map."@en ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [
+        sh:path skos:prefLabel ;
+        sh:datatype rdf:langString ;
+        sh:minCount 2 ;
+        sh:uniqueLang true ;
+        sh:languageIn ( "en" "de" ) ;
+    ] ;
+    sh:property [
+        sh:path skos:definition ;
+        sh:datatype rdf:langString ;
+        sh:maxCount 2 ;
+        sh:uniqueLang true ;
+        sh:languageIn ( "en" "de" ) ;
+    ] ;
+    sh:property [
+        sh:path skos:hasTopConcept ;
+        sh:class skos:Concept ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path dct:isPartOf ;
+        sh:nodeKind sh:IRI ;
+        sh:maxCount 1 ;
+    ] .

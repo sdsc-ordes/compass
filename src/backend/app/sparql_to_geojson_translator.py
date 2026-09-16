@@ -71,17 +71,17 @@ def extract_property(shape: EntityShape, instance: dict) -> Any:
     return instance.get(f"{sid}Result", "")
 
 
-def _parse_special_properties(instance: dict, lang: str) -> dict:
-    """Decode fields queried outside the SHACL-driven EntityShape list.
+def _derived_properties(properties: dict[str, Any], lang: str) -> dict:
+    """Build GeoJSON properties computed from already-decoded ones.
 
     Args:
-        instance: SPARQL result row.
+        properties: Properties decoded from the EntityShape list.
         lang: UI language for the stories URL.
 
     Returns:
         Extra GeoJSON properties (currently ``storiesUrl``).
     """
-    wp_entity_tag_id = instance.get("wpEntityTagId", "")
+    wp_entity_tag_id = properties.get("wpEntityTagId", "")
     return {
         "storiesUrl": (
             entity_stories_url(wp_entity_tag_id, lang) if wp_entity_tag_id else ""
@@ -148,7 +148,7 @@ def instances_to_geojson(
         }
         for shape in shapes:
             properties[shape.id] = extract_property(shape, instance)
-        properties.update(_parse_special_properties(instance, lang))
+        properties.update(_derived_properties(properties, lang))
 
         geometry = _parse_coordinates(instance)
         if geometry is None:

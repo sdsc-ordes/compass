@@ -11,7 +11,7 @@ from collections.abc import Iterator
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from rdflib import RDF, SH, Graph, URIRef
+from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib import Literal as RDFLiteral
 from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
@@ -36,6 +36,7 @@ DISPLAY_ONLY = {
     COMPASS.location,
     SKOS.altLabel,
     COMPASS.relatedOrganization,
+    COMPASS.wpEntityTagId,
 }
 
 _FILTER_BY_CATEGORY: dict[str, FilterType] = {
@@ -73,8 +74,29 @@ class EntityShape(BaseModel):
     )
 
 
+def targets_map_entity(g: Graph, node_shape: Node) -> bool:
+    """Report whether *node_shape* constrains a class drawn on the map.
+
+    The ontology declares that boundary: map entity classes are subclasses of
+    ``compass:MapEntity``. Shapes targeting anything else -- the SKOS tag
+    vocabularies, for instance -- validate generated Turtle only and must not
+    reach the filter panel or the SPARQL projection.
+
+    Args:
+        g: Merged ontology graph (shapes + data + vocab).
+        node_shape: Shape to classify.
+
+    Returns:
+        ``True`` when any ``sh:targetClass`` is a ``compass:MapEntity`` subclass.
+    """
+    return any(
+        (target, RDFS.subClassOf, COMPASS.MapEntity) in g
+        for target in g.objects(node_shape, SH.targetClass)
+    )
+
+
 def get_shacl_property(g: Graph) -> Iterator[URIRef]:
-    """Yield every sh:property IRI of every NodeShape that has a sh:targetClass.
+    """Yield every sh:property IRI of every NodeShape targeting a map entity class.
 
     Args:
         g: Merged ontology graph (shapes + data + vocab).
@@ -84,6 +106,8 @@ def get_shacl_property(g: Graph) -> Iterator[URIRef]:
     """
     seen: set = set()
     for node_shape in g.subjects(SH.targetClass, None):
+        if not targets_map_entity(g, node_shape):
+            continue
         for p in g.objects(node_shape, SH.property):
             if isinstance(p, URIRef) and p not in seen:
                 seen.add(p)

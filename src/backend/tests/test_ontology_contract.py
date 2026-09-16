@@ -17,7 +17,8 @@ from rdflib.namespace import SKOS
 
 from app.core.settings import settings
 from app.namespaces import COMPASS, GEO
-from app.shacl_to_filters import _entity_type_dimension
+from app.shacl_to_entities import get_shacl_property, targets_map_entity
+from app.shacl_to_filters import _entity_type_dimension, get_filters_from_shacl
 
 _ONTOLOGY_DIR = str(settings.ontology_dir)
 _USECASE_DIR = str(settings.use_case_dir)
@@ -64,7 +65,7 @@ class TestTopLevelEntityClasses:
 
 
 class TestRequiredPredicates:
-    """Predicates that _sparql_preamble() and _special_optionals() reference directly."""
+    """Predicates that _sparql_preamble() references directly."""
 
     def test_geometry_predicates_in_data(self, read_graph):
         lat_triples = list(read_graph.triples((None, GEO.lat, None)))
@@ -114,11 +115,79 @@ class TestNamedPropertyShapes:
         )
 
 
+# -- Validation-only shapes stay out of the map projection --
+
+
+class TestValidationOnlyShapes:
+    """shapes.ttl holds two kinds of NodeShape and only one reaches the map.
+
+    Shapes targeting a compass:MapEntity subclass drive the filter panel and the
+    SPARQL projection. compass:ConceptShape and compass:ConceptSchemeShape check
+    the Turtle the ODS generator emits and must contribute nothing to either --
+    a leaked one puts a bookkeeping predicate like skos:inScheme in the filter
+    panel and adds a dead OPTIONAL to every entity query.
+    """
+
+    VOCABULARY_PATHS: ClassVar[list] = [
+        SKOS.inScheme,
+        SKOS.topConceptOf,
+        SKOS.hasTopConcept,
+        SKOS.definition,
+        COMPASS.isoCode,
+        COMPASS.wpTagId,
+    ]
+
+    EXPECTED_WIDGET_IDS: ClassVar[set] = {
+        "conservation",
+        "countryArea",
+        "entityType",
+        "forum",
+        "managedByOceanCare",
+        "pollution",
+        "relatedProject",
+        "species",
+        "topic",
+        "workArea",
+    }
+
+    def test_entity_shapes_are_closed(self, read_graph):
+        """Every entity NodeShape is sh:closed, so a typo'd predicate in
+        compass.ttl fails validation instead of silently vanishing from the map."""
+        unclosed = [
+            str(shape)
+            for shape in read_graph.subjects(SH.targetClass, None)
+            if targets_map_entity(read_graph, shape)
+            and read_graph.value(shape, SH.closed) is None
+        ]
+        assert not unclosed, f"Entity NodeShapes missing sh:closed: {unclosed}"
+
+    def test_vocabulary_predicates_are_not_projected(self, read_graph):
+        projected = {read_graph.value(p, SH.path) for p in get_shacl_property(read_graph)}
+        leaked = [str(path) for path in self.VOCABULARY_PATHS if path in projected]
+        assert not leaked, (
+            f"Vocabulary predicates reached the map projection: {leaked}. "
+            f"Only NodeShapes targeting a compass:MapEntity subclass may carry "
+            f"sh:property shapes that shacl_to_entities projects."
+        )
+
+    def test_filter_widgets_are_pinned(self, read_graph):
+        ids = {widget.id for widget in get_filters_from_shacl(read_graph, "en")}
+        assert ids == self.EXPECTED_WIDGET_IDS, (
+            f"Filter panel changed: added {sorted(ids - self.EXPECTED_WIDGET_IDS)}, "
+            f"removed {sorted(self.EXPECTED_WIDGET_IDS - ids)}. Update this test "
+            f"only if the change is intended."
+        )
+
+
 # -- Tag dimension vocabularies exist and have labels --
 
 
 class TestTagVocabularies:
-    """All 6 SKOS-based tag dimension classes must have instances with prefLabels."""
+    """All 6 SKOS-based tag dimension classes must have instances.
+
+    Label and metadata correctness is enforced by compass:ConceptShape in
+    shapes.ttl; SHACL cannot express "this class has at least one instance".
+    """
 
     TAG_CLASSES: ClassVar[list] = [
         COMPASS.WorkArea,
@@ -129,6 +198,21 @@ class TestTagVocabularies:
         COMPASS.CountryArea,
     ]
 
+    def test_concepts_have_exactly_one_dimension_class(self, read_graph):
+        """Every concept carries its dimension class alongside skos:Concept.
+
+        shacl_to_filters._multiselect_options() finds a filter's options with
+        subjects(RDF.type, dimension_class): none and the concept is missing from
+        the panel, two and it shows up under both.
+        """
+        tag_classes = set(self.TAG_CLASSES)
+        wrong = {
+            str(concept): sorted(str(c) for c in tag_classes & types)
+            for concept in read_graph.subjects(RDF.type, SKOS.Concept)
+            if len(tag_classes & (types := set(read_graph.objects(concept, RDF.type)))) != 1
+        }
+        assert not wrong, f"Concepts without exactly one dimension class: {wrong}"
+
     def test_tag_classes_have_instances(self, read_graph):
         for cls in self.TAG_CLASSES:
             subjects = list(read_graph.subjects(RDF.type, cls))
@@ -136,26 +220,6 @@ class TestTagVocabularies:
                 f"No instances of {cls} found. "
                 f"The corresponding filter will have no options."
             )
-
-    def test_tag_instances_have_en_prefLabel(self, read_graph):
-        for cls in self.TAG_CLASSES:
-            for s in read_graph.subjects(RDF.type, cls):
-                labels = [
-                    label
-                    for label in read_graph.objects(s, SKOS.prefLabel)
-                    if getattr(label, "language", None) == "en"
-                ]
-                assert labels, f"{s} (a {cls}) has no English skos:prefLabel"
-
-    def test_tag_instances_have_de_prefLabel(self, read_graph):
-        for cls in self.TAG_CLASSES:
-            for s in read_graph.subjects(RDF.type, cls):
-                labels = [
-                    label
-                    for label in read_graph.objects(s, SKOS.prefLabel)
-                    if getattr(label, "language", None) == "de"
-                ]
-                assert labels, f"{s} (a {cls}) has no German skos:prefLabel"
 
 
 # -- Forum/Project entities have rdfs:label for tag label discovery --
