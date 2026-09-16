@@ -1,18 +1,15 @@
 import { geoNaturalEarth1, geoPath, type GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 
-// Two baked rasters replace the old z0-z5 tile pyramid (scripts/build-bathymetry.mjs).
+// Rasters baked by scripts/build-bathymetry.mjs.
 //
-// Flat view: geoNaturalEarth1 only ever varies by scale and translate, so every
-// pan and zoom is an exact similarity transform of one fixed image -- a single
-// drawImage, no per-pixel work at all.
+// Flat: geoNaturalEarth1 only ever varies by scale and translate, so every pan
+// and zoom is an exact similarity transform of one fixed image -- a single
+// drawImage, no per-pixel work. Past about k=4 it upscales the base, so a 2x
+// level is tiled over it, only where the viewport looks.
 //
-// Globe view: rotation is the one transform that is not affine, so it still
-// resamples per frame, but from one contiguous equirectangular buffer rather
-// than a patchwork of tiles.
-//
-// Detail level: the flat view upscales the base past 1:1 from about k=4, so a 2x
-// raster is fetched on top of it there, tiled and only where the viewport looks.
+// Globe: rotation is the one transform that is not affine, so it resamples per
+// frame from the equirectangular raster.
 const FLAT = 'bathy/flat.webp';
 const EQUI = 'bathy/equirect.webp';
 const DETAIL = 'bathy/d';
@@ -25,13 +22,11 @@ const DETAIL_TILE = 2048;
 // ImageData. A viewport spans about 2x2 of them; this is room to pan.
 const DETAIL_KEEP = 12;
 
-const LAT_MAX = 85.0511287798;
-
 const CELL = 8;
 
-// Once the globe settles we rasterise near the device resolution: the old
-// budget upscaled ~2x into the canvas, which is what made the globe soft.
-// Paid once on settle, never during a drag -- that keeps BUDGET_DRAG.
+// Enough that a settled globe rasterises about 1:1 against the sphere's own
+// bounds. A drag gets far less: rotation cannot reuse a previous frame, so this
+// is paid per frame while it moves.
 const BUDGET_IDLE = 2_800_000;
 const BUDGET_DRAG = 500_000;
 
@@ -263,16 +258,14 @@ export class Bathymetry {
     const want = 1 << Math.ceil(Math.log2(Math.max(64, drawW)));
     if (this.mip && this.mipW === want) return this.mip;
 
-    const h = Math.max(1, Math.round((want * img.height) / img.width));
-    const cv = this.mip && this.mipW !== want ? this.mip : document.createElement('canvas');
-    cv.width = want;
-    cv.height = h;
+    const cv = this.mip ?? document.createElement('canvas');
+    cv.width = want; // also clears it
+    cv.height = Math.max(1, Math.round((want * img.height) / img.width));
     const c = cv.getContext('2d');
     if (!c) return img;
     c.imageSmoothingEnabled = true;
     c.imageSmoothingQuality = 'high';
-    c.clearRect(0, 0, want, h);
-    c.drawImage(img, 0, 0, want, h);
+    c.drawImage(img, 0, 0, cv.width, cv.height);
     this.mip = cv;
     this.mipW = want;
     return cv;
@@ -321,7 +314,7 @@ export class Bathymetry {
         const x = box.x + (i * CELL) / perCss;
         const k = j * (cols + 1) + i;
         const ll = invert([x, y]);
-        if (!ll || !isFinite(ll[0]) || !isFinite(ll[1]) || Math.abs(ll[1]) > LAT_MAX) {
+        if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) {
           ok[k] = 0;
           continue;
         }
@@ -384,7 +377,7 @@ export class Bathymetry {
         const xa = X0 & SMASK, // longitude wraps
           xb = (X0 + 1) & SMASK;
         const ya = Y0 < 0 ? 0 : Y0 > SH - 1 ? SH - 1 : Y0;
-        const yb = Y0 + 1 > SH - 1 ? SH - 1 : Y0 + 1 < 0 ? 0 : Y0 + 1;
+        const yb = Y0 + 1 > SH - 1 ? SH - 1 : Y0 + 1;
         const ra = ya * SW,
           rb = yb * SW;
 
