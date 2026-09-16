@@ -10,11 +10,6 @@ aside.filters {
     opacity 0.2s ease,
     transform 0.34s cubic-bezier(0.32, 0.72, 0.3, 1);
 }
-.mapc.railout aside.filters {
-  transform: translateX(-100%);
-  opacity: 0;
-  pointer-events: none;
-}
 @media (prefers-reduced-motion: reduce) {
   aside.filters {
     transition: none;
@@ -49,31 +44,6 @@ aside.filters::-webkit-scrollbar-track {
   height: 38px;
   width: auto;
   margin-left: -1px;
-}
-.logo span {
-  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 11px;
-  color: var(--cerulean);
-}
-.collapse {
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border: 1px solid var(--land-hi);
-  background: #fff;
-  color: var(--astronaut);
-  font-size: 15px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.collapse:hover {
-  background: var(--sea);
-  border-color: var(--cerulean);
 }
 
 .tallybox {

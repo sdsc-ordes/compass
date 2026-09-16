@@ -35,7 +35,6 @@ export interface SheetHost {
   isDetail: () => boolean;
   queue: (full?: boolean) => void;
   dismiss: () => void;
-  onState: (s: SheetState) => void;
 }
 
 export class Sheet {
@@ -107,7 +106,6 @@ export class Sheet {
     if (shaded) this.armAt = performance.now() + 400;
     if (this.paintTimer) clearTimeout(this.paintTimer);
     this.paintTimer = setTimeout(() => this.h.queue(true), 340);
-    this.h.onState(state);
   }
 
   toggle(): void {

@@ -232,7 +232,6 @@
       isDetail: () => !!selectedId,
       queue: (full) => stageComp?.refresh(full),
       dismiss: () => dismissEntry(),
-      onState: () => {},
     });
     sheet.wire();
 
