@@ -39,7 +39,7 @@ mod check 'tools/just/check.just'
 [group('modules')]
 mod data 'tools/just/data.just'
 
-# Rebuild map regions, basemap geometry, and bathymetry tiles.
+# Rebuild map regions, basemap geometry, and bathymetry rasters.
 [group('modules')]
 mod map 'tools/just/map.just'
 

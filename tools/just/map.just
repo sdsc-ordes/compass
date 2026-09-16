@@ -16,8 +16,22 @@ atlas:
 fonts:
     cd "{{root_dir}}/src/frontend" && node scripts/build-fonts.mjs
 
-# Pre-render GEBCO bathymetry tiles (needs network; ~13 MB to z4, ~53 MB to z5).
-# The stage reprojects these onto the map -- see src/frontend/src/lib/bathymetry.ts.
-# Without them the map falls back to a flat sea and hides the switch.
+# Fetch the GEBCO tile pyramid (needs network; ~13 MB to z4, ~53 MB to z5).
+# This is a build input only -- nothing ships it. Run `bathymetry` afterwards to
+# bake it down into the two rasters the widget actually loads.
 tiles maxzoom="5":
     node "{{root_dir}}/src/frontend/scripts/build-tiles.mjs" {{maxzoom}}
+
+# Rebake the committed pair, src/frontend/bathy/{flat,equirect}.webp (~6 MB, no
+# network). These are what the widget loads: see src/frontend/src/lib/bathymetry.ts.
+# Without them the map falls back to a flat sea and hides the depth switch.
+# Only needed to refresh the imagery -- a fresh clone already has them.
+bathymetry:
+    cd "{{root_dir}}/src/frontend" && BATHY_NO_DETAIL=1 node --max-old-space-size=4096 scripts/build-bathymetry.mjs
+
+# The same, plus the d/ detail tiles the flat view lazily overlays past k~4
+# (~20 MB, gitignored). Run this before `just deploy` to ship deep-zoom detail;
+# without it the map simply stays at the base resolution. The detail level goes
+# through a 16384x16384 mercator mosaic, hence the heap.
+bathymetry-detail:
+    cd "{{root_dir}}/src/frontend" && node --max-old-space-size=8192 scripts/build-bathymetry.mjs

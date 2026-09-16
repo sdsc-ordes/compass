@@ -52,7 +52,8 @@
   const S: ViewState = initialView();
   let atlas: Atlas | null = null;
   let interact = false;
-  let qid: ReturnType<typeof setTimeout> | null = null;
+  let qid: number | null = null;
+  let painted = 0;
   let retry: ReturnType<typeof setTimeout> | null = null;
   let hovered: PinTarget | null = null;
   let pinbox: PinBox[] = [];
@@ -138,12 +139,20 @@
   function queue(full?: boolean): void {
     if (!S.ready) return;
     if (qid) return;
-    const ms = interact && !full ? 36 : 0;
-    qid = setTimeout(() => {
+    // rAF rather than a bare timer so paints land in phase with the compositor;
+    // the gap keeps the mid-gesture work budget the old 36ms throttle bought us.
+    const gap = interact && !full ? 36 : 0;
+    const step = (now: number): void => {
+      if (gap && now - painted < gap) {
+        qid = requestAnimationFrame(step);
+        return;
+      }
       qid = null;
+      painted = now;
       syncFan();
       renderAll();
-    }, ms);
+    };
+    qid = requestAnimationFrame(step);
   }
 
   function renderAll(): void {
@@ -567,7 +576,7 @@
     ro?.disconnect();
     tween.stop();
     anim.stop();
-    if (qid) clearTimeout(qid);
+    if (qid) cancelAnimationFrame(qid);
     if (retry) clearTimeout(retry);
     if (fade) clearTimeout(fade);
     if (coachTimer) clearTimeout(coachTimer);
@@ -580,7 +589,7 @@
 
   export function refreshNow(): void {
     if (qid) {
-      clearTimeout(qid);
+      cancelAnimationFrame(qid);
       qid = null;
     }
     if (!S.ready) return;
