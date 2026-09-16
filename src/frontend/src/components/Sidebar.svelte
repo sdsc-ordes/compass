@@ -109,7 +109,7 @@
   <DetailPane
     {t}
     entry={selected}
-    dimIds={dims.map((d) => d.id)}
+    {dims}
     {onBack}
     onClose={onCloseDetail}
     {onFilterByTag}
