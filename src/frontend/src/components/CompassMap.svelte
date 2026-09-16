@@ -197,8 +197,12 @@
 
   let lastSelectedId: string | null = null;
   $: if (selectedId !== lastSelectedId) {
+    const had = lastSelectedId;
     lastSelectedId = selectedId;
     if (selectedId) onEntryOpened();
+    // Coming back, the filters inherit however far the detail was scrolled,
+    // which lands the reader somewhere in the middle of a list they never left.
+    else if (had && sidebarEl) sidebarEl.scrollTop = 0;
   }
 
   async function onEntryOpened(): Promise<void> {

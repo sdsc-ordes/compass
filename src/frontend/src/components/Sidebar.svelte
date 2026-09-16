@@ -63,7 +63,7 @@
       backTimer = setTimeout(() => {
         back = false;
         backTimer = null;
-      }, 240);
+      }, 220); // just past the 0.19s animation in detail.css
     }
     wasDetail = isDetail;
   }
