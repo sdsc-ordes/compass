@@ -13,7 +13,9 @@ export const i18n = {
     newTab: '(opens in a new tab)',
     oceancareHome: 'https://www.oceancare.org/en/',
     oceancareHomeOf: 'OceanCare home page',
-    creditBuiltBy: 'Built by the',
+    creditBefore: 'Built with',
+    creditLove: 'love',
+    creditAfter: 'at the',
 
     filterDimensions: 'Filter dimensions',
     dimOptionsCount: '{n} options · {m} selected',
@@ -89,7 +91,9 @@ export const i18n = {
     newTab: '(öffnet in neuem Tab)',
     oceancareHome: 'https://www.oceancare.org/de/',
     oceancareHomeOf: 'OceanCare Startseite',
-    creditBuiltBy: 'Umgesetzt vom',
+    creditBefore: 'Mit',
+    creditLove: 'Liebe',
+    creditAfter: 'umgesetzt am',
 
     filterDimensions: 'Filterdimensionen',
     dimOptionsCount: '{n} Optionen · {m} ausgewählt',

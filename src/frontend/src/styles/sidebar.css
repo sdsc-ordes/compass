@@ -63,6 +63,13 @@ aside.filters::-webkit-scrollbar-track {
   line-height: 17px;
   color: var(--tundora);
 }
+/* Inherits the footer's ink on purpose: Burnt Sienna is the donate CTA's colour
+   in the design system and is not spent on decoration elsewhere. */
+.sidefoot .heart {
+  margin: 0 0.28em;
+  font-size: 1.05em;
+  line-height: 1;
+}
 .sidefoot a {
   color: var(--astronaut);
   font-weight: 700;
