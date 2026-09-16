@@ -123,11 +123,13 @@ const mercV = (lat) => {
 
 async function equirect(merc) {
   const sample = sampler(merc, MERC);
-  const dst = Buffer.alloc(EQUI_W * EQUI_H * 4); // alloc: transparent beyond the mercator limit
+  const dst = Buffer.alloc(EQUI_W * EQUI_H * 4);
   const px = [0, 0, 0];
+  let first = -1;
+  let last = -1;
   for (let j = 0; j < EQUI_H; j++) {
     const lat = 90 - ((j + 0.5) / EQUI_H) * 180;
-    if (Math.abs(lat) > LAT_MAX) continue; // no source data; the sea colour shows through
+    if (Math.abs(lat) > LAT_MAX) continue;
     const v = mercV(lat);
     for (let i = 0; i < EQUI_W; i++) {
       sample((i + 0.5) / EQUI_W, v, px);
@@ -137,7 +139,20 @@ async function equirect(merc) {
       dst[d + 2] = px[2];
       dst[d + 3] = 255;
     }
+    if (first < 0) first = j;
+    last = j;
   }
+
+  // Mercator stops at 85.05 deg, so the source has nothing for the last ~5 deg
+  // at each pole. Carry the outermost row up to it: the globe samples this
+  // bilinearly, and a transparent gap there would not merely be a hole -- the
+  // unwritten pixels are black, so every sample straddling the edge would pull
+  // that black into the picture as a dark ring. Polar ocean is nearly uniform,
+  // so the smear reads as ice rather than as an artefact.
+  const row = EQUI_W * 4;
+  for (let j = 0; j < first; j++) dst.copyWithin(j * row, first * row, first * row + row);
+  for (let j = last + 1; j < EQUI_H; j++) dst.copyWithin(j * row, last * row, last * row + row);
+
   return { data: dst, width: EQUI_W, height: EQUI_H, channels: 4 };
 }
 
