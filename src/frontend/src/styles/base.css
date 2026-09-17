@@ -28,6 +28,7 @@
   --card-prev-edge: #8fc3e4;
   --rail: 420px;
   --halo: rgba(255, 255, 255, 0.92);
+  --halo-dark: rgba(8, 24, 39, 0.92);
 }
 .sr {
   position: absolute;
