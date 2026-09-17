@@ -38,6 +38,7 @@ compass:AdvocacyWork
     skos:prefLabel "Advocacy Arbeit"@de ;
     skos:definition "Campaigning to change the laws, policies and international agreements that govern the sea."@en ;
     skos:definition "Einsatz für Gesetze, politische Massnahmen und internationale Abkommen, die das Meer regeln."@de ;
+    compass:wpTagId "146"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -130,6 +131,7 @@ compass:OceanConservation
     skos:prefLabel "Meeresschutz"@de ;
     skos:definition "Protecting marine habitats and the health of the ocean as a whole."@en ;
     skos:definition "Schutz mariner Lebensräume und der Gesundheit des Ozeans als Ganzes."@de ;
+    compass:wpTagId "144"^^xsd:integer ;
     skos:inScheme compass:ConservationScheme ;
     skos:topConceptOf compass:ConservationScheme .
 
@@ -241,6 +243,7 @@ compass:Hunting
     skos:prefLabel "Bejagung"@de ;
     skos:definition "The killing of marine mammals, commercial and so-called scientific whaling included."@en ;
     skos:definition "Die Tötung von Meeressäugern, einschliesslich des kommerziellen und des sogenannten wissenschaftlichen Walfangs."@de ;
+    compass:wpTagId "911"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -427,6 +430,7 @@ compass:SmallCetaceans
     skos:prefLabel "Kleinwale"@de ;
     skos:definition "Dolphins, porpoises and lesser whales, barely covered by the whaling treaties."@en ;
     skos:definition "Delfine, Schweinswale und Kleinwale, die von den Walfangabkommen kaum erfasst werden."@de ;
+    compass:wpTagId "910"^^xsd:integer ;
     skos:inScheme compass:SpeciesScheme ;
     skos:topConceptOf compass:SpeciesScheme .
 
