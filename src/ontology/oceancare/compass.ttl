@@ -37,6 +37,7 @@ ocinst:ACCOBAMS
     compass:species compass:Dolphins, compass:Orcas, compass:SmallCetaceans, compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece, compass:Italy, compass:Slovenia, compass:Spain, compass:WesternMediterraneanSea ;
     compass:relatedProject ocinst:SAVEWhales ;
+    compass:wpEntityTagId "950"^^xsd:integer ;
     geo:lat "43.73090"^^xsd:float ;
     geo:long "7.41650"^^xsd:float .
 
@@ -58,6 +59,7 @@ ocinst:ASCOBANS
     compass:topic compass:OutOfHabitat ;
     compass:species compass:Dolphins, compass:SmallCetaceans, compass:Whales ;
     compass:countryArea compass:BalticSea, compass:FaroeIslands, compass:Germany ;
+    compass:wpEntityTagId "1000"^^xsd:integer ;
     geo:lat "50.71938"^^xsd:float ;
     geo:long "7.12599"^^xsd:float .
 
@@ -77,6 +79,7 @@ ocinst:AbidjanConvention
     compass:topic compass:AquaticWildMeat, compass:Fisheries, compass:Hunting ;
     compass:species compass:Dolphins, compass:Manatees, compass:SeaTurtles, compass:Sharks, compass:SmallCetaceans ;
     compass:countryArea compass:Benin ;
+    compass:wpEntityTagId "1002"^^xsd:integer ;
     geo:lat "5.36756"^^xsd:float ;
     geo:long "-3.98766"^^xsd:float .
 
@@ -117,6 +120,7 @@ ocinst:CBD
     compass:conservation compass:SpeciesConservation ;
     compass:pollution compass:OceanNoisePollution ;
     compass:species compass:Dolphins, compass:Fish, compass:Manatees, compass:PolarBears, compass:SeaTurtles, compass:Seals, compass:Sharks, compass:SmallCetaceans, compass:Whales ;
+    compass:wpEntityTagId "1004"^^xsd:integer ;
     geo:lat "45.50178"^^xsd:float ;
     geo:long "-73.56021"^^xsd:float .
 
@@ -138,6 +142,7 @@ ocinst:CMSBonnConvention
     compass:topic compass:AquaticWildMeat, compass:Hunting, compass:OutOfHabitat ;
     compass:pollution compass:OceanNoisePollution ;
     compass:species compass:Dolphins, compass:Fish, compass:SeaTurtles, compass:Sharks, compass:SmallCetaceans, compass:Whales ;
+    compass:wpEntityTagId "1006"^^xsd:integer ;
     geo:lat "50.71938"^^xsd:float ;
     geo:long "7.12599"^^xsd:float .
 
@@ -158,6 +163,7 @@ ocinst:EUCommission
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:species compass:Dolphins, compass:Fish, compass:Sharks, compass:SmallCetaceans, compass:Whales ;
     compass:countryArea compass:Spain ;
+    compass:wpEntityTagId "1008"^^xsd:integer ;
     geo:lat "50.84361"^^xsd:float ;
     geo:long "4.38278"^^xsd:float .
 
@@ -179,6 +185,7 @@ ocinst:FAOCOFI
     compass:topic compass:Fisheries ;
     compass:pollution compass:OceanNoisePollution ;
     compass:species compass:Fish, compass:Sharks ;
+    compass:wpEntityTagId "1010"^^xsd:integer ;
     geo:lat "41.88395"^^xsd:float ;
     geo:long "12.48332"^^xsd:float .
 
@@ -201,6 +208,7 @@ ocinst:FAOGFCM
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:species compass:Fish ;
     compass:countryArea compass:EasternMediterraneanSea ;
+    compass:wpEntityTagId "952"^^xsd:integer ;
     geo:lat "41.88395"^^xsd:float ;
     geo:long "12.48332"^^xsd:float .
 
@@ -222,6 +230,7 @@ ocinst:IMO
     compass:topic compass:ClimateProtection, compass:Collisions, compass:FossilFuels, compass:Shipping ;
     compass:pollution compass:ChemicalPollution, compass:OceanNoisePollution ;
     compass:species compass:Whales ;
+    compass:wpEntityTagId "1012"^^xsd:integer ;
     geo:lat "51.49075"^^xsd:float ;
     geo:long "-0.12457"^^xsd:float .
 
@@ -244,6 +253,7 @@ ocinst:ISA
     compass:pollution compass:OceanNoisePollution ;
     compass:countryArea compass:Switzerland ;
     compass:relatedOrganization ocinst:DSCC ;
+    compass:wpEntityTagId "1014"^^xsd:integer ;
     geo:lat "17.96477"^^xsd:float ;
     geo:long "-76.79171"^^xsd:float .
 
@@ -285,6 +295,7 @@ ocinst:LondonConvention
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:topic compass:Geoengineering ;
+    compass:wpEntityTagId "1016"^^xsd:integer ;
     geo:lat "51.49075"^^xsd:float ;
     geo:long "-0.12457"^^xsd:float .
 
@@ -304,6 +315,7 @@ ocinst:UNCLOS
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:pollution compass:OceanNoisePollution ;
+    compass:wpEntityTagId "1020"^^xsd:integer ;
     geo:lat "40.74944"^^xsd:float ;
     geo:long "-73.96806"^^xsd:float .
 
@@ -322,6 +334,7 @@ ocinst:UNECOSOC
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:relatedOrganization ocinst:OceanCare ;
+    compass:wpEntityTagId "1018"^^xsd:integer ;
     geo:lat "40.74944"^^xsd:float ;
     geo:long "-73.96806"^^xsd:float .
 
@@ -341,6 +354,7 @@ ocinst:UNEPGPML
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:pollution compass:PlasticPollution ;
+    compass:wpEntityTagId "1022"^^xsd:integer ;
     geo:lat "-1.23210"^^xsd:float ;
     geo:long "36.81690"^^xsd:float .
 
@@ -361,6 +375,7 @@ ocinst:UNEPMAP
     compass:conservation compass:OceanConservation ;
     compass:pollution compass:ChemicalPollution, compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:countryArea compass:Spain ;
+    compass:wpEntityTagId "1024"^^xsd:integer ;
     geo:lat "37.97241"^^xsd:float ;
     geo:long "23.74471"^^xsd:float .
 
@@ -382,6 +397,7 @@ ocinst:UNEPUNEA
     compass:topic compass:Geoengineering ;
     compass:pollution compass:ChemicalPollution, compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:countryArea compass:Switzerland ;
+    compass:wpEntityTagId "1026"^^xsd:integer ;
     geo:lat "-1.23210"^^xsd:float ;
     geo:long "36.81690"^^xsd:float .
 
@@ -401,6 +417,7 @@ ocinst:UNFCCC
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:topic compass:ClimateProtection, compass:FossilFuels, compass:Geoengineering ;
+    compass:wpEntityTagId "1028"^^xsd:integer ;
     geo:lat "50.71938"^^xsd:float ;
     geo:long "7.12599"^^xsd:float .
 
@@ -420,6 +437,7 @@ ocinst:UNOC
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
     compass:relatedProject ocinst:BecauseOurPlanetIsBlue ;
+    compass:wpEntityTagId "1030"^^xsd:integer ;
     geo:lat "40.74944"^^xsd:float ;
     geo:long "-73.96806"^^xsd:float .
 
@@ -440,6 +458,7 @@ ocinst:BFFP
     compass:managedByOceanCare false ;
     compass:conservation compass:OceanConservation ;
     compass:pollution compass:PlasticPollution ;
+    compass:wpEntityTagId "1032"^^xsd:integer ;
     geo:lat "14.64878"^^xsd:float ;
     geo:long "121.04343"^^xsd:float .
 
@@ -458,6 +477,7 @@ ocinst:DSCC
     compass:topic compass:DeepSeaMining ;
     compass:pollution compass:OceanNoisePollution ;
     compass:forum ocinst:ISA ;
+    compass:wpEntityTagId "1034"^^xsd:integer ;
     geo:lat "52.37309"^^xsd:float ;
     geo:long "4.89220"^^xsd:float .
 
@@ -476,6 +496,7 @@ ocinst:GGGI
     compass:topic compass:Fisheries ;
     compass:pollution compass:PlasticPollution ;
     compass:species compass:Fish ;
+    compass:wpEntityTagId "1036"^^xsd:integer ;
     geo:lat "38.90683"^^xsd:float ;
     geo:long "-77.04364"^^xsd:float .
 
@@ -492,6 +513,7 @@ ocinst:HSA
     compass:managedByOceanCare false ;
     compass:conservation compass:OceanConservation ;
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
+    compass:wpEntityTagId "1038"^^xsd:integer ;
     geo:lat "52.36563"^^xsd:float ;
     geo:long "4.90791"^^xsd:float .
 
@@ -509,6 +531,7 @@ ocinst:STRA
     compass:workArea compass:RescueActivities ;
     compass:conservation compass:AnimalConservation ;
     compass:species compass:SeaTurtles ;
+    compass:wpEntityTagId "1040"^^xsd:integer ;
     geo:lat "51.45328"^^xsd:float ;
     geo:long "-2.60019"^^xsd:float .
 
@@ -525,6 +548,7 @@ ocinst:SeasAtRisk
     compass:managedByOceanCare false ;
     compass:conservation compass:OceanConservation ;
     compass:forum ocinst:BBNJ ;
+    compass:wpEntityTagId "1042"^^xsd:integer ;
     geo:lat "50.85487"^^xsd:float ;
     geo:long "4.36883"^^xsd:float .
 
@@ -541,6 +565,7 @@ ocinst:SpeciesSurvivalNetwork
     compass:managedByOceanCare false ;
     compass:conservation compass:SpeciesConservation ;
     compass:species compass:Dolphins, compass:Fish, compass:Manatees, compass:PolarBears, compass:SeaTurtles, compass:Seals, compass:Sharks, compass:SmallCetaceans, compass:Whales ;
+    compass:wpEntityTagId "1044"^^xsd:integer ;
     geo:lat "38.90536"^^xsd:float ;
     geo:long "-77.05044"^^xsd:float .
 
@@ -565,6 +590,7 @@ ocinst:AlnitakResearchInstitute
     compass:pollution compass:PlasticPollution ;
     compass:species compass:Fish, compass:SeaTurtles ;
     compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
+    compass:wpEntityTagId "1046"^^xsd:integer ;
     geo:lat "39.76636"^^xsd:float ;
     geo:long "2.71522"^^xsd:float .
 
@@ -587,6 +613,7 @@ ocinst:BEES
     compass:species compass:Dolphins, compass:Manatees, compass:SeaTurtles, compass:Sharks, compass:SmallCetaceans ;
     compass:countryArea compass:Benin ;
     compass:forum ocinst:AbidjanConvention, ocinst:CMSBonnConvention ;
+    compass:wpEntityTagId "1050"^^xsd:integer ;
     geo:lat "6.49650"^^xsd:float ;
     geo:long "2.60360"^^xsd:float .
 
@@ -607,6 +634,7 @@ ocinst:BritishDiversMarineLifeRescue
     compass:conservation compass:AnimalConservation ;
     compass:species compass:Dolphins, compass:Seals, compass:Whales ;
     compass:countryArea compass:UnitedKingdom ;
+    compass:wpEntityTagId "1048"^^xsd:integer ;
     geo:lat "50.20263"^^xsd:float ;
     geo:long "-5.20263"^^xsd:float .
 
@@ -625,6 +653,7 @@ ocinst:CBDHabitat
     compass:conservation compass:SpeciesConservation ;
     compass:species compass:Seals ;
     compass:countryArea compass:Mauritania, compass:Spain ;
+    compass:wpEntityTagId "1052"^^xsd:integer ;
     geo:lat "20.83690"^^xsd:float ;
     geo:long "-17.06360"^^xsd:float .
 
@@ -646,6 +675,7 @@ ocinst:CIT
     compass:topic compass:AquaticWildMeat, compass:Fisheries, compass:Hunting ;
     compass:species compass:Dolphins, compass:Manatees, compass:Sharks ;
     compass:countryArea compass:Venezuela ;
+    compass:wpEntityTagId "1054"^^xsd:integer ;
     geo:lat "10.48059"^^xsd:float ;
     geo:long "-66.90361"^^xsd:float .
 
@@ -665,6 +695,7 @@ ocinst:DolphinBiologyAndConservation
     compass:topic compass:Fisheries ;
     compass:species compass:Dolphins ;
     compass:countryArea compass:Italy ;
+    compass:wpEntityTagId "954"^^xsd:integer ;
     geo:lat "45.98233"^^xsd:float ;
     geo:long "12.70265"^^xsd:float .
 
@@ -686,6 +717,7 @@ ocinst:FORTH
     compass:species compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
     compass:relatedProject ocinst:SAVEWhales ;
+    compass:wpEntityTagId "956"^^xsd:integer ;
     geo:lat "35.32500"^^xsd:float ;
     geo:long "25.13060"^^xsd:float .
 
@@ -704,6 +736,7 @@ ocinst:GreenBalcans
     compass:conservation compass:SpeciesConservation ;
     compass:species compass:Dolphins, compass:SmallCetaceans ;
     compass:countryArea compass:Bulgaria ;
+    compass:wpEntityTagId "1056"^^xsd:integer ;
     geo:lat "42.13573"^^xsd:float ;
     geo:long "24.73194"^^xsd:float .
 
@@ -724,6 +757,7 @@ ocinst:IonianDolphinProject
     compass:conservation compass:SpeciesConservation ;
     compass:species compass:Dolphins, compass:Seals ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
+    compass:wpEntityTagId "1058"^^xsd:integer ;
     geo:lat "38.91630"^^xsd:float ;
     geo:long "20.88780"^^xsd:float .
 
@@ -743,6 +777,7 @@ ocinst:LPACalais
     compass:workArea compass:RescueActivities ;
     compass:conservation compass:AnimalConservation ;
     compass:species compass:Seals ;
+    compass:wpEntityTagId "1060"^^xsd:integer ;
     geo:lat "50.96018"^^xsd:float ;
     geo:long "1.88591"^^xsd:float .
 
@@ -761,6 +796,7 @@ ocinst:Morigenos
     compass:conservation compass:SpeciesConservation ;
     compass:species compass:Dolphins ;
     compass:countryArea compass:Slovenia ;
+    compass:wpEntityTagId "958"^^xsd:integer ;
     geo:lat "45.52883"^^xsd:float ;
     geo:long "13.56811"^^xsd:float .
 
@@ -802,6 +838,7 @@ ocinst:OliveRidleyProject
     compass:topic compass:AquaticWildMeat, compass:Hunting ;
     compass:species compass:SeaTurtles ;
     compass:countryArea compass:Maldives ;
+    compass:wpEntityTagId "1062"^^xsd:integer ;
     geo:lat "5.01690"^^xsd:float ;
     geo:long "73.06170"^^xsd:float .
 
@@ -821,6 +858,7 @@ ocinst:PelagosCetaceanResearchInstitute
     compass:topic compass:Collisions, compass:Shipping ;
     compass:species compass:Dolphins, compass:SmallCetaceans, compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
+    compass:wpEntityTagId "1064"^^xsd:integer ;
     geo:lat "35.32500"^^xsd:float ;
     geo:long "25.13060"^^xsd:float .
 
@@ -838,6 +876,7 @@ ocinst:TethysResearchInstitute
     compass:workArea compass:CommunityInvolvement, compass:ResearchExpeditions, compass:ScientificResearch ;
     compass:conservation compass:SpeciesConservation ;
     compass:species compass:Dolphins, compass:Whales ;
+    compass:wpEntityTagId "960"^^xsd:integer ;
     geo:lat "45.47230"^^xsd:float ;
     geo:long "9.17900"^^xsd:float .
 
@@ -858,6 +897,7 @@ ocinst:iSeas
     compass:pollution compass:PlasticPollution ;
     compass:species compass:Sharks ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
+    compass:wpEntityTagId "1066"^^xsd:integer ;
     geo:lat "40.60192"^^xsd:float ;
     geo:long "22.95759"^^xsd:float .
 
@@ -900,6 +940,6 @@ ocinst:SAVEWhales
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
     compass:forum ocinst:ACCOBAMS ;
     compass:relatedOrganization ocinst:FORTH, ocinst:PelagosCetaceanResearchInstitute ;
-    compass:wpEntityTagId "921"^^xsd:integer ;
+    compass:wpEntityTagId "900"^^xsd:integer ;
     geo:lat "35.84280"^^xsd:float ;
     geo:long "23.23250"^^xsd:float .
