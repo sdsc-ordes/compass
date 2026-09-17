@@ -19,9 +19,10 @@ function bbox(z, x, y) {
 
 function source(z, x, y) {
   const [west, south, east, north] = bbox(z, x, y);
+  // Pinned: GEBCO_LATEST silently rolls onto the next annual grid.
   return (
-    'https://wms.gebco.net/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
-    `&LAYERS=GEBCO_LATEST&WIDTH=${TILE_PX}&HEIGHT=${TILE_PX}&CRS=EPSG:3857` +
+    'https://wms.gebco.net/2026/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap' +
+    `&LAYERS=GEBCO_2026&WIDTH=${TILE_PX}&HEIGHT=${TILE_PX}&CRS=EPSG:3857` +
     `&BBOX=${west},${south},${east},${north}&FORMAT=${FORMAT}`
   );
 }
