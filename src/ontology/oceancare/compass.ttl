@@ -36,7 +36,7 @@ ocinst:ACCOBAMS
     compass:pollution compass:OceanNoisePollution, compass:PlasticPollution ;
     compass:species compass:Dolphins, compass:Orcas, compass:SmallCetaceans, compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece, compass:Italy, compass:Slovenia, compass:Spain, compass:WesternMediterraneanSea ;
-    compass:relatedProject ocinst:SAVEWhales ;
+    compass:relatedProgramme ocinst:SAVEWhales ;
     compass:wpEntityTagId "950"^^xsd:integer ;
     geo:lat "43.73090"^^xsd:float ;
     geo:long "7.41650"^^xsd:float .
@@ -436,7 +436,7 @@ ocinst:UNOC
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:conservation compass:OceanConservation ;
-    compass:relatedProject ocinst:BecauseOurPlanetIsBlue ;
+    compass:relatedProgramme ocinst:BecauseOurPlanetIsBlue ;
     compass:wpEntityTagId "1030"^^xsd:integer ;
     geo:lat "40.74944"^^xsd:float ;
     geo:long "-73.96806"^^xsd:float .
@@ -716,7 +716,7 @@ ocinst:FORTH
     compass:topic compass:Collisions, compass:Shipping ;
     compass:species compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
-    compass:relatedProject ocinst:SAVEWhales ;
+    compass:relatedProgramme ocinst:SAVEWhales ;
     compass:wpEntityTagId "956"^^xsd:integer ;
     geo:lat "35.32500"^^xsd:float ;
     geo:long "25.13060"^^xsd:float .
@@ -815,7 +815,7 @@ ocinst:OceanCare
     compass:managedByOceanCare true ;
     compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:Events, compass:Petitions, compass:ScientificResearch ;
     compass:conservation compass:AnimalConservation, compass:SpeciesConservation ;
-    compass:relatedProject ocinst:BecauseOurPlanetIsBlue ;
+    compass:relatedProgramme ocinst:BecauseOurPlanetIsBlue ;
     compass:wpEntityTagId "458"^^xsd:integer ;
     geo:lat "47.22953"^^xsd:float ;
     geo:long "8.67306"^^xsd:float .
@@ -902,11 +902,11 @@ ocinst:iSeas
     geo:long "22.95759"^^xsd:float .
 
 # ============================================================
-# Projects and Programmes (2)
+# Programmes (2)
 # ============================================================
 
 ocinst:BecauseOurPlanetIsBlue
-    a compass:Project ;
+    a compass:Programme ;
     compass:name "Because Our Planet Is Blue"@en ;
     compass:name "Because Our Planet Is Blue"@de ;
     rdfs:label "Because Our Planet Is Blue"@en ;
@@ -924,7 +924,7 @@ ocinst:BecauseOurPlanetIsBlue
     geo:long "8.67306"^^xsd:float .
 
 ocinst:SAVEWhales
-    a compass:Project ;
+    a compass:Programme ;
     compass:name "SAvE Whales"@en ;
     compass:name "SAvE Whales"@de ;
     rdfs:label "SAvE Whales"@en ;

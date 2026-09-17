@@ -163,8 +163,8 @@ class TestEntitiesEndpoint:
                 if not f["properties"].get("is_region")
             }
 
-        project, network = str(COMPASS.Project), str(COMPASS.Network)
-        assert pins(project, network) == pins(project) | pins(network)
+        programme, network = str(COMPASS.Programme), str(COMPASS.Network)
+        assert pins(programme, network) == pins(programme) | pins(network)
 
     def test_german_entities(self, client):
         data = client.get("/api/v1/entities?lang=de").json()
@@ -188,10 +188,10 @@ class TestFacetsEndpoint:
                 assert isinstance(n, int) and n > 0
 
     def test_excludes_relations(self, client):
-        # relatedProject and forum are relations, not tags, so a count under
+        # relatedProgramme and forum are relations, not tags, so a count under
         # them would not mean what a count under a tag means.
         data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert "relatedProject" not in data
+        assert "relatedProgramme" not in data
         assert "forum" not in data
 
     def test_counts_entity_types(self, client):
@@ -203,7 +203,12 @@ class TestFacetsEndpoint:
         assert counts, "every fixture entity has a class, so this cannot be empty"
         assert set(counts) <= {
             str(COMPASS[name])
-            for name in ("InternationalForum", "Network", "Project", "PartnerOrganization")
+            for name in (
+                "InternationalForum",
+                "Network",
+                "Programme",
+                "PartnerOrganization",
+            )
         }
 
     def test_entity_type_counts_match_the_entities(self, client):
@@ -274,7 +279,7 @@ class TestFacetsEndpoint:
         base = client.get("/api/v1/entities/facets?lang=en").json()["entityType"]
         after = client.get(
             "/api/v1/entities/facets",
-            params={"lang": "en", "entityType": str(COMPASS.Project)},
+            params={"lang": "en", "entityType": str(COMPASS.Programme)},
         ).json()["entityType"]
         assert after == base
 
@@ -307,7 +312,7 @@ class TestFacetsEndpoint:
 
     def test_counts_exclude_regions(self, client):
         """Faroe Islands carries compass:pollution ChemicalPollution as a region,
-        but the pollution facet must not count it — only the project pin."""
+        but the pollution facet must not count it — only the pin itself."""
         data = client.get(
             "/api/v1/entities/facets",
             params={

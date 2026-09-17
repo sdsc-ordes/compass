@@ -79,7 +79,7 @@ CLASSES = {
     "InternationalForum": "International Forums",
     "Network": "Networks",
     "PartnerOrganization": "Partner Organizations",
-    "Project": "Projects and Programmes",
+    "Programme": "Programmes",
 }
 
 # Which predicate a link becomes, keyed by what the link points at.
@@ -91,12 +91,12 @@ TAG_PREDICATE = {
     "Species": "compass:species",
     "CountryArea": "compass:countryArea",
     "InternationalForum": "compass:forum",
-    "Project": "compass:relatedProject",
+    "Programme": "compass:relatedProgramme",
     "PartnerOrganization": "compass:relatedOrganization",
     "Network": "compass:relatedOrganization",
 }
 
-# compass:managedByOceanCare is true for every Project plus these ids.
+# compass:managedByOceanCare is true for every Programme plus these ids.
 MANAGED_BY_OCEANCARE = {"OceanCare"}
 
 SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition_en", "definition_de"]
@@ -152,7 +152,7 @@ PREDICATE_ORDER = [
     "compass:countryArea",
     "compass:forum",
     "compass:relatedOrganization",
-    "compass:relatedProject",
+    "compass:relatedProgramme",
     "compass:wpTagId",
     "compass:wpEntityTagId",
     "skos:hasTopConcept",
@@ -491,7 +491,7 @@ def pin_triples(
     if wp_entity_tag_id:
         triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
-    managed = row["class"] == "Project" or row["id"] in MANAGED_BY_OCEANCARE
+    managed = row["class"] == "Programme" or row["id"] in MANAGED_BY_OCEANCARE
     triples.append(("compass:managedByOceanCare", "true" if managed else "false"))
     triples += link_triples(parse_links(row, kinds, problems))
 

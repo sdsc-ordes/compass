@@ -188,12 +188,12 @@ class TestWithinDimensionIsConjunctive:
     def test_entity_type_stays_disjunctive(self):
         """An entity has exactly one class, so two picks can only mean "either"."""
         clauses = _build_where_clauses(
-            QueryParams(f"entityType={COMPASS.Project}&entityType={COMPASS.Network}"),
+            QueryParams(f"entityType={COMPASS.Programme}&entityType={COMPASS.Network}"),
             {},
             {},
             {},
         )
-        assert clauses == [f"FILTER(?type IN (<{COMPASS.Project}>, <{COMPASS.Network}>))"]
+        assert clauses == [f"FILTER(?type IN (<{COMPASS.Programme}>, <{COMPASS.Network}>))"]
 
     def test_range_and_date_are_single_valued_and_untouched(self):
         """Thresholds take one value, so conjunction within them cannot arise."""
@@ -262,7 +262,10 @@ class TestFacetQueryUnderAnd:
     def test_entity_type_still_drops_its_own_selection(self, property_specs):
         """Disjunctive, so keeping it would zero every class the user did not pick."""
         sparql = build_facet_query(
-            property_specs, "en", QueryParams(f"entityType={COMPASS.Project}"), "entityType"
+            property_specs,
+            "en",
+            QueryParams(f"entityType={COMPASS.Programme}"),
+            "entityType",
         )
         assert "FILTER(?type IN" not in sparql
 
@@ -302,10 +305,10 @@ class TestFilterSubjects:
 
     def test_entity_type_reaches_regions_through_their_pins(self):
         sparql = sparql_for_instances(
-            [], "en", QueryParams(f"entityType={COMPASS.Project}")
+            [], "en", QueryParams(f"entityType={COMPASS.Programme}")
         )
-        assert f"FILTER(?type IN (<{COMPASS.Project}>))" in sparql
-        assert f"?pin a ?pinType . FILTER(?pinType IN (<{COMPASS.Project}>))" in sparql
+        assert f"FILTER(?type IN (<{COMPASS.Programme}>))" in sparql
+        assert f"?pin a ?pinType . FILTER(?pinType IN (<{COMPASS.Programme}>))" in sparql
 
     def test_facet_query_counts_pins_only(self, property_specs):
         sparql = build_facet_query(property_specs, "en", QueryParams(""), "topic")

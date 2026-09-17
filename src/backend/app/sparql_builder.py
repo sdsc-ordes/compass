@@ -106,7 +106,7 @@ def build_select_expr(spec: EntityShape) -> str:
     return f"(SAMPLE(?{sid}) AS ?{sid}Result)"
 
 
-PIN_CLASSES = ("InternationalForum", "Network", "Project", "PartnerOrganization")
+PIN_CLASSES = ("InternationalForum", "Network", "Programme", "PartnerOrganization")
 
 # The synthetic dimension over rdf:type. shacl_to_filters builds its widget and
 # _build_where_clauses filters on it; neither reaches it through a property shape.

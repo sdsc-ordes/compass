@@ -35,7 +35,7 @@ class TestTopLevelEntityClasses:
     REQUIRED_CLASSES: ClassVar[list] = [
         COMPASS.InternationalForum,
         COMPASS.Network,
-        COMPASS.Project,
+        COMPASS.Programme,
         COMPASS.PartnerOrganization,
     ]
 
@@ -144,7 +144,7 @@ class TestValidationOnlyShapes:
         "forum",
         "managedByOceanCare",
         "pollution",
-        "relatedProject",
+        "relatedProgramme",
         "species",
         "topic",
         "workArea",
@@ -222,13 +222,13 @@ class TestTagVocabularies:
             )
 
 
-# -- Forum/Project entities have rdfs:label for tag label discovery --
+# -- Forum/Programme entities have rdfs:label for tag label discovery --
 
 
-class TestForumProjectLabels:
-    """InternationalForum and Project entities are used as tag values.
+class TestForumProgrammeLabels:
+    """InternationalForum and Programme entities are used as tag values.
     build_optional() looks up labels via skos:prefLabel / rdfs:label,
-    so every Forum/Project entity must have rdfs:label."""
+    so every Forum/Programme entity must have rdfs:label."""
 
     def test_forums_have_rdfs_label(self, read_graph):
         missing = []
@@ -243,12 +243,12 @@ class TestForumProjectLabels:
 
     def test_projects_have_rdfs_label(self, read_graph):
         missing = []
-        for s in read_graph.subjects(RDF.type, COMPASS.Project):
+        for s in read_graph.subjects(RDF.type, COMPASS.Programme):
             labels = list(read_graph.objects(s, RDFS.label))
             if not labels:
                 missing.append(str(s))
         assert not missing, (
-            f"Project entities missing rdfs:label (tag labels will be blank): {missing}"
+            f"Programme entities missing rdfs:label (tag labels will be blank): {missing}"
         )
 
 

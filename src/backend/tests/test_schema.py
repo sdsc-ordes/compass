@@ -29,7 +29,7 @@ class TestGetFilterWidgets:
             str(COMPASS.InternationalForum),
             str(COMPASS.Network),
             str(COMPASS.PartnerOrganization),
-            str(COMPASS.Project),
+            str(COMPASS.Programme),
         }
         assert expected <= type_iris, (
             f"Missing entity types in filter: {expected - type_iris}"
@@ -57,7 +57,7 @@ class TestGetFilterWidgets:
         # editorial content at once: a concept whose definition cell is emptied
         # fails here rather than quietly dropping a line from the panel. The
         # dimensions listed are the ones whose options are skos:Concepts --
-        # relatedProject and forum point at entities, which define nothing.
+        # relatedProgramme and forum point at entities, which define nothing.
         #
         # countryArea is a concept dimension and is still not here: a country's
         # name is its own description, so those cells are deliberately empty.
@@ -127,11 +127,11 @@ class TestGetFilterWidgets:
             )
 
     def test_dimensions_without_a_scheme_carry_no_description(self, read_graph):
-        # entityType is synthetic and relatedProject points at entities, so
+        # entityType is synthetic and relatedProgramme points at entities, so
         # neither has a scheme to quote; the key is absent rather than empty.
         filters = {f.id: f for f in get_filters_from_shacl(read_graph, "en")}
         assert filters["entityType"].description is None
-        assert filters["relatedProject"].description is None
+        assert filters["relatedProgramme"].description is None
 
     def test_slider_filters_have_bounds(self, read_graph):
         filters = get_filters_from_shacl(read_graph, "en")

@@ -90,7 +90,7 @@ flowchart TB
 
 For the map user, the relationship is simple: **filters ask; entities answer.**
 
-**Entities** are the **things on the map** (and in the list): a Project, Network,
+**Entities** are the **things on the map** (and in the list): a Programme, Network,
 Partner, or Forum as a pin, or a Country/Area as a shaded region. Click one and
 the sidebar or list row shows name, type, and colored tag chips.
 
@@ -102,7 +102,7 @@ which entities stay visible; the result-count badge is “how many entities matc
 | --- | --- | --- |
 | Looks like | Sections of clickable chips / legend dots | Pins, regions, list rows, detail sidebar |
 | Role | “Show me only …” | “Here is one matching thing” |
-| Example | Chip **Pollution → Plastics** | Project pin whose properties include that tag |
+| Example | Chip **Pollution → Plastics** | Programme pin whose properties include that tag |
 
 In the backend, those two faces are separate SHACL projections:
 

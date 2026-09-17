@@ -315,7 +315,7 @@ def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
         COMPASS.InternationalForum,
         COMPASS.Network,
         COMPASS.PartnerOrganization,
-        COMPASS.Project,
+        COMPASS.Programme,
     ]
     return FilterWidget(
         id="entityType",

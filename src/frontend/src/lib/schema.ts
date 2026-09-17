@@ -10,7 +10,7 @@ export const DIM_IDS: string[] = [
   'conservation',
   'pollution',
   'countryArea',
-  'relatedProject',
+  'relatedProgramme',
 ];
 
 export const TYPE_DIM = 'entityType';
@@ -26,7 +26,7 @@ export const DIM_ICONS: Partial<Record<string, IconName>> = {
   conservation: 'shield',
   pollution: 'droplet',
   countryArea: 'globe',
-  relatedProject: 'folder',
+  relatedProgramme: 'folder',
 };
 
 export interface Dim {

@@ -24,7 +24,7 @@ export function onMobileChange(cb: (mobile: boolean) => void): () => void {
 
 const SHEET_HALF = 0.58;
 // Mirrors max-height on the sheet in sidebar.css: how much of the map an open
-// project covers. Taken from the stylesheet rather than measured, because the
+// entry covers. Taken from the stylesheet rather than measured, because the
 // stage asks where to put the pin while the pane is still being swapped in.
 const SHEET_MAX = 0.9;
 // ...and the floor under the strip that leaves, so the pin has somewhere to sit.
@@ -56,7 +56,7 @@ export class Sheet {
     return isMobile();
   }
 
-  // A project fills the sheet, so 'detail' is the only stop it has: there is
+  // An entry fills the sheet, so 'detail' is the only stop it has: there is
   // nowhere further to open to, and pulling down dismisses it.
   private stops(): SheetState[] {
     return this.h.isDetail() ? ['detail'] : ['dock', 'half', 'full'];
