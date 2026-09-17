@@ -14,6 +14,7 @@ from app.config import (
     create_stories_frontend_url,
 )
 from app.main import app
+from app.namespaces import COMPASS
 from app.routers.stories import _resolve_tags_ids
 
 # ---------------------------------------------------------------------------
@@ -113,12 +114,17 @@ def test_stories_count_no_tags():
     assert data["url"] == STORIES_BASE_URL_EN
 
 
-def test_stories_count_unmapped_tag():
-    """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
-    resp = client.get(
-        "/api/v1/stories/count",
-        params={"tags": "http://example.org/ocean-org/ontology#AdvocacyWork"},
+def test_stories_count_unmapped_tag(read_graph):
+    """Tags with no compass:wpTagId mapping return count=0 without an HTTP call.
+
+    Corals carries no WordPress term upstream either, so it is a stable example;
+    the precondition is asserted so this fails loudly if it ever gains one.
+    """
+    corals = COMPASS.Corals
+    assert not list(read_graph.objects(corals, COMPASS.wpTagId)), (
+        "Corals now has a compass:wpTagId -- pick another unmapped concept here."
     )
+    resp = client.get("/api/v1/stories/count", params={"tags": str(corals)})
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
