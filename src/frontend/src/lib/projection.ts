@@ -11,26 +11,9 @@ export interface ViewState {
   ready: boolean;
 }
 
-const DARK_SCHEME =
-  typeof window !== 'undefined' && window.matchMedia
-    ? window.matchMedia('(prefers-color-scheme: dark)')
-    : ({
-        matches: false,
-        addEventListener() {},
-        removeEventListener() {},
-      } as unknown as MediaQueryList);
-
-export const prefersDark = (): boolean => DARK_SCHEME.matches;
-
-export function onSchemeChange(cb: (dark: boolean) => void): () => void {
-  const handler = () => cb(DARK_SCHEME.matches);
-  DARK_SCHEME.addEventListener('change', handler);
-  return () => DARK_SCHEME.removeEventListener('change', handler);
-}
-
 export const initialView = (): ViewState => ({
   view: 'flat',
-  theme: prefersDark() ? 'dark' : 'light',
+  theme: 'light',
   rot: [-18, -8],
   k: 1,
   tx: 0,

@@ -11,8 +11,6 @@
     frontCentre,
     bindInput,
     fitScale,
-    onSchemeChange,
-    prefersDark,
     Tweener,
     REDUCED,
     K_MIN,
@@ -94,8 +92,7 @@
   $: armCoach(!loading && !error && projs.length > 0);
 
   let viewMode: 'flat' | 'globe' = 'flat';
-  let night = prefersDark();
-  let themePinned = false;
+  let night = false;
 
   let stage: HTMLDivElement;
   let water: HTMLCanvasElement;
@@ -358,8 +355,7 @@
     });
   }
 
-  function setTheme(dark: boolean, pin = true): void {
-    if (pin) themePinned = true;
+  function setTheme(dark: boolean): void {
     if (dark === night) return;
     night = dark;
     onTheme(dark);
@@ -545,7 +541,6 @@
 
   let unbind: (() => void) | null = null;
   let unfonts: (() => void) | null = null;
-  let unscheme: (() => void) | null = null;
   let ro: ResizeObserver | null = null;
 
   onMount(() => {
@@ -577,15 +572,11 @@
       ro.observe(stage);
     }
     unfonts = onFontsReady(() => queue(true));
-    unscheme = onSchemeChange((dark) => {
-      if (!themePinned) setTheme(dark, false);
-    });
   });
 
   onDestroy(() => {
     unbind?.();
     unfonts?.();
-    unscheme?.();
     ro?.disconnect();
     tween.stop();
     anim.stop();

@@ -18,7 +18,6 @@
     syncUrl,
     type QueryFilters,
   } from '../lib/urlstate';
-  import { prefersDark } from '../lib/projection';
   import { fmt, i18n, type Lang } from '../lib/i18n';
   import { styles } from '../lib/styles';
 
@@ -42,7 +41,7 @@
   let error: string | null = null;
   let mounted = false;
   let selectedId: string | null = null;
-  let night = prefersDark();
+  let night = false;
   let juston: string | null = null;
 
   $: t = i18n[lang] || i18n.en;
