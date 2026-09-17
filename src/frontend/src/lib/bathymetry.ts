@@ -24,9 +24,6 @@ const DETAIL_KEEP = 12;
 
 const CELL = 8;
 
-// Tones GEBCO's ramp toward the theme's sea colour: 65% raster, 35% scrim.
-const DEPTH_TONE = 0.65;
-
 // Enough that a settled globe rasterises about 1:1 against the sphere's own
 // bounds. A drag gets far less: rotation cannot reuse a previous frame, so this
 // is paid per frame while it moves.
@@ -129,9 +126,6 @@ export class Bathymetry {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       this.overlay(ctx, pr, W, H, globe, interact, dpr);
-      ctx.globalAlpha = 1 - DEPTH_TONE;
-      ctx.fillStyle = p.sea;
-      ctx.fillRect(0, 0, W, H);
     }
     ctx.restore();
   }
