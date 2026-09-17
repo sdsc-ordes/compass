@@ -42,6 +42,7 @@ interface Style {
 
 const STYLES: Record<string, Style> = {
   'lbl-cty': { size: 11.5, weight: 600, track: 0.02, caps: false, h: 14 },
+  'lbl-con': { size: 11.5, weight: 700, track: 0.2, caps: true, h: 15 },
   'lbl-sea0': { size: 11.5, weight: 700, track: 0.2, caps: true, h: 15 },
   'lbl-sea1': { size: 10.5, weight: 600, track: 0.08, caps: false, h: 14 },
   'lbl-sea2': { size: 10, weight: 400, track: 0.05, caps: false, h: 13 },
@@ -50,6 +51,19 @@ const STYLES: Record<string, Style> = {
 const FACE = 'Cabin, system-ui, sans-serif';
 
 const SEA_INK = '#FFFFFF';
+
+/* Below this k continents are the only land labels, above it the countries are. */
+const CON_K = 2;
+
+const CON: Omit<MapLabel, 'k'>[] = [
+  { en: 'Africa', de: 'Afrika', c: [20, 5] },
+  { en: 'Asia', de: 'Asien', c: [90, 45] },
+  { en: 'Europe', de: 'Europa', c: [18, 50] },
+  { en: 'North America', de: 'Nordamerika', c: [-100, 48] },
+  { en: 'South America', de: 'Südamerika', c: [-58, -15] },
+  { en: 'Oceania', de: 'Ozeanien', c: [140, -25] },
+  { en: 'Antarctica', de: 'Antarktis', c: [0, -80] },
+];
 
 export function placeLabels(a: LabelPass): void {
   const { pr, W, H, p, S, ov, measureCtx: cx } = a;
@@ -114,11 +128,15 @@ export function placeLabels(a: LabelPass): void {
     ov.appendChild(el);
   };
 
+  // Placed first so the continents win every collision they are in.
+  if (k < CON_K)
+    CON.forEach((d) => place(d.c, 'lbl-con', a.lang === 'de' ? d.de : d.en, p.lblCty, false));
   const seaInk = a.depth ? SEA_INK : p.lblCty;
   a.sea.forEach((d) => {
     if (k >= d.k) place(d.c, 'lbl-sea' + d.t, a.lang === 'de' ? d.de : d.en, seaInk, true);
   });
   a.cty.forEach((d) => {
-    if (k >= d.k) place(d.c, 'lbl-cty', a.lang === 'de' ? d.de : d.en, p.lblCty, false);
+    if (k >= CON_K && k >= d.k)
+      place(d.c, 'lbl-cty', a.lang === 'de' ? d.de : d.en, p.lblCty, false);
   });
 }
