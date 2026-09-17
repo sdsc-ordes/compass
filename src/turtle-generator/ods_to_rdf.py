@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pyshacl
+from odf import teletype
 from odf.opendocument import load
 from odf.table import Table, TableCell, TableRow
 from odf.text import P
@@ -233,7 +234,9 @@ def _cell_text(cell) -> str:
         if stored is not None:
             # Trim the trailing .0 a spreadsheet adds to whole numbers.
             return stored[:-2] if stored.endswith(".0") else stored
-    return "\n".join(str(p) for p in cell.getElementsByType(P)).strip()
+    # teletype, not str(): a spreadsheet packs runs of spaces into <text:s/>
+    # elements that str() renders as nothing, silently joining words.
+    return "\n".join(teletype.extractText(p) for p in cell.getElementsByType(P)).strip()
 
 
 def _row_values(row, width: int) -> list[str]:
