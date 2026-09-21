@@ -2,7 +2,7 @@
   border-top: 1px solid var(--land-hi);
 }
 .asec {
-  border-bottom: 1px solid #fff;
+  border-bottom: 1px solid var(--land-hi);
 }
 .acc h2 {
   margin: 0;
@@ -14,9 +14,8 @@
   align-items: center;
   gap: 11px;
   width: 100%;
-  padding: 13px 8px 13px 11px;
-  background: var(--land-hi);
-  box-shadow: inset 3px 0 0 var(--chrome);
+  padding: 13px 8px;
+  background: none;
   border: 0;
   text-align: left;
   font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
@@ -26,19 +25,16 @@
   line-height: 1.2;
   letter-spacing: 0.5px;
   color: var(--astronaut);
-  transition:
-    color 0.18s ease,
-    box-shadow 0.14s ease;
+  transition: color 0.18s ease;
 }
-/* The band is already tinted, so hover and open turn the spine cerulean rather
-   than shifting the fill -- and --sea is spoken for by a hovered or chosen row. */
+/* No fill on the header: --sea now tints an open group's rows, so spending it on
+   hover too would merge the two. The label turning cerulean is what every other
+   text action in the panel does. */
 .ahbtn:hover {
-  box-shadow: inset 3px 0 0 var(--cerulean);
+  color: var(--cerulean);
 }
 .asec.open .ahbtn {
-  box-shadow:
-    inset 3px 0 0 var(--cerulean),
-    inset 0 -3px 0 var(--cerulean);
+  box-shadow: inset 0 -3px 0 var(--cerulean);
 }
 .ahbtn:focus-visible {
   outline: 3px solid var(--cerulean);
@@ -73,7 +69,7 @@
   font-size: 12px;
   line-height: 14px;
   letter-spacing: 0;
-  color: var(--astronaut);
+  color: var(--cerulean);
   font-variant-numeric: tabular-nums;
   transition: opacity 0.2s ease;
 }
@@ -102,9 +98,13 @@
 .asec.open .apanel {
   grid-template-rows: 1fr;
 }
+/* The tint marks which group is open, and sits on .ainner rather than on
+   .asec.open so it shrinks away with the collapse instead of vanishing on its
+   first frame. --sea is the design system's panel tint, 1.07:1 on white. */
 .apanel > .ainner {
   min-height: 0;
   overflow: hidden;
+  background: var(--sea);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -153,7 +153,7 @@
     color 0.14s;
 }
 .frow:hover {
-  background: var(--sea);
+  background: #fff;
 }
 .frow .mk {
   width: 16px;
@@ -164,7 +164,7 @@
   position: relative;
 }
 .frow[aria-pressed='true'] {
-  background: var(--sea);
+  background: var(--land-hi);
 }
 .frow[aria-pressed='true'] .mk {
   border-color: var(--cerulean);
