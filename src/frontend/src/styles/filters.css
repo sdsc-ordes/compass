@@ -21,7 +21,7 @@
   font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.2;
   letter-spacing: 0.5px;
   color: var(--astronaut);
@@ -50,8 +50,8 @@
 .acc .dsc {
   margin: 0;
   padding: 11px 8px 0;
-  font-size: 12.5px;
-  line-height: 16.5px;
+  font-size: 13px;
+  line-height: 18px;
   color: var(--tundora);
   text-wrap: pretty;
 }
@@ -118,12 +118,11 @@
   padding: 10px 8px 3px;
   min-height: 33px;
 }
+/* Sentence case, and not Condensed: the group title is the one heading inside a
+   group, and this said the same thing in the same voice one size down. */
 .dimmeta .c {
-  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+  line-height: 14px;
   color: var(--tundora);
   font-variant-numeric: tabular-nums;
 }
@@ -185,18 +184,18 @@
   min-width: 0;
 }
 .frow .t b {
-  font-size: 15.5px;
+  font-size: 15px;
   line-height: 19px;
   font-weight: 600;
-  color: var(--astronaut);
+  color: var(--tundora);
 }
 .frow[aria-pressed='true'] .t b {
   color: var(--cerulean);
 }
 .frow .t i {
   font-style: normal;
-  font-size: 13px;
-  line-height: 17.5px;
+  font-size: 12.5px;
+  line-height: 17px;
   color: var(--tundora);
   text-wrap: pretty;
 }
@@ -207,6 +206,11 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   margin-top: 3px;
+}
+/* Astronaut is the panel's heading ink, so on a row it reads as promotion: the
+   chosen option steps up out of body copy. */
+.frow[aria-pressed='true'] .t b {
+  color: var(--astronaut);
 }
 .frow[aria-pressed='true'] .n {
   color: var(--astronaut);
@@ -262,9 +266,8 @@
     left: 4px;
     top: 1px;
   }
-  .acc .dsc {
-    font-size: 13px;
-    line-height: 17px;
+  .ahbtn {
+    font-size: 17px;
   }
   .frow .t b {
     font-size: 16px;
