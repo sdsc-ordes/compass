@@ -79,7 +79,7 @@
 }
 .acc .chev {
   display: flex;
-  color: #5f7285;
+  color: var(--ink-dim);
   transform: rotate(180deg);
   transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
 }
@@ -125,7 +125,7 @@
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: #6d6d6d;
+  color: var(--ink-mute);
   font-variant-numeric: tabular-nums;
 }
 
@@ -214,14 +214,14 @@
   color: var(--astronaut);
 }
 .frow[data-empty='true'] .t b {
-  color: #5f7285;
+  color: var(--ink-dim);
 }
 .frow[data-empty='true'] .t i {
-  color: #6d6d6d;
+  color: var(--ink-mute);
   opacity: 1;
 }
 .frow[data-empty='true'] .n {
-  color: #5f7285;
+  color: var(--ink-dim);
 }
 .frow[data-empty='true'] .mk {
   border-color: #9fb4c6;

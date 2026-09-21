@@ -8,6 +8,14 @@
   --chrome: #6e8ca6;
   --chrome-night: #5a7c97;
   --sienna-ink: #c9482c;
+  /* Two inks below --tundora, for a label that must sit under the thing it
+     names: --ink-dim for a heading or count, --ink-mute for a note. Neither is
+     in the OceanCare five; they were literals in four stylesheets before. */
+  --ink-dim: #5f7285;
+  --ink-mute: #6d6d6d;
+  /* Astronaut's channels, for the rgba() shadows and rules that need it with an
+     alpha. Same pattern as --stage-scrim. */
+  --astronaut-rgb: 42, 78, 113;
   --stage-surface: #fff;
   --stage-ink: var(--astronaut);
   --stage-dim: #5a6b7d;

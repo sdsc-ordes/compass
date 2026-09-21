@@ -19,7 +19,7 @@ aside.filters::-webkit-scrollbar {
   width: 9px;
 }
 aside.filters::-webkit-scrollbar-thumb {
-  background: rgba(42, 78, 113, 0.24);
+  background: rgba(var(--astronaut-rgb), 0.24);
 }
 aside.filters::-webkit-scrollbar-track {
   background: transparent;
@@ -276,7 +276,7 @@ aside.filters::-webkit-scrollbar-track {
     border-top: 1px solid var(--land-hi);
     border-radius: 18px 18px 0 0;
     background: #fff;
-    box-shadow: 0 -8px 34px rgba(42, 78, 113, 0.22);
+    box-shadow: 0 -8px 34px rgba(var(--astronaut-rgb), 0.22);
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;

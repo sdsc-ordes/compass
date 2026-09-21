@@ -101,7 +101,7 @@
   padding: 14px;
   background: var(--stage-surface);
   border: 1px solid var(--stage-edge);
-  box-shadow: 0 10px 30px rgba(42, 78, 113, 0.16);
+  box-shadow: 0 10px 30px rgba(var(--astronaut-rgb), 0.16);
   animation: setpop 0.16s cubic-bezier(0.32, 0.72, 0.3, 1) both;
 }
 @keyframes setpop {
@@ -629,7 +629,7 @@
   .setbtn {
     width: 44px;
     height: 44px;
-    box-shadow: 0 2px 8px rgba(42, 78, 113, 0.14);
+    box-shadow: 0 2px 8px rgba(var(--astronaut-rgb), 0.14);
   }
   .setwrap {
     position: static;

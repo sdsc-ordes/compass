@@ -1,13 +1,13 @@
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
-import type { Pal } from './palette';
+import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
 import { frontCentre, K_MAX, REDUCED, type ViewState } from './projection';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
-const PIN_EDGE = '#2A4E71';
+const PIN_EDGE = ASTRONAUT;
 
 const PIN_INK_LIGHT = '#FFFFFF';
-const PIN_INK_DARK = '#081827';
+const PIN_INK_DARK = NIGHT_INK;
 
 const inkCache = new Map<string, string>();
 

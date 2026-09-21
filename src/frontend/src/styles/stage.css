@@ -34,6 +34,8 @@
 .mapc.night {
   --halo: var(--halo-dark);
 }
+/* NIGHT_INK in palette.ts, which paints the same colour onto the canvas. CSS
+   cannot import it, so the two are kept in step by hand. */
 .mapc.night .stage {
   background: #081827;
 }
