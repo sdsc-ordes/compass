@@ -7,6 +7,9 @@ export interface Proj {
   id: string;
   c: [number, number];
   title: string;
+  // The unabbreviated name, where the display name is an acronym. Empty for
+  // the entities whose workbook row leaves skos:altLabel blank.
+  longName: string;
   where: string;
   txt: string;
   entity: string;

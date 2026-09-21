@@ -87,6 +87,9 @@
     <p class="etag etag-flat">{entry?.entity ?? ''}</p>
   {/if}
   <h2 bind:this={titleEl} tabindex="-1">{entry?.title ?? ''}</h2>
+  {#if entry?.longName}
+    <p class="longname">{entry.longName}</p>
+  {/if}
   <p class="where">{entry?.where ?? ''}</p>
   <p class="txt">{entry?.txt ?? ''}</p>
 

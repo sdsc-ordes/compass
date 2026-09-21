@@ -173,6 +173,12 @@ aside.filters.detail .pane-detail {
     transition: none;
   }
 }
+.pane-detail .longname {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 21px;
+  color: var(--tundora);
+}
 .pane-detail .where {
   margin: 8px 0 0;
   font-size: 15px;
@@ -284,6 +290,10 @@ aside.filters.detail .pane-detail {
   .pane-detail .etag + h2 {
     font-size: 22px;
     line-height: 28px;
+  }
+  .pane-detail .longname {
+    font-size: 14px;
+    line-height: 20px;
   }
   .pane-detail .where {
     font-size: 14px;

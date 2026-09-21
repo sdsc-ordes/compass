@@ -14,6 +14,7 @@ export function toProj(f: Feature): Proj | null {
     id: p.id,
     c: [Number(c[0]), Number(c[1])],
     title: p.label ?? '',
+    longName: text(p.altLabel),
     where: text(p.location),
     txt: text(p.description),
     entity: p.type ?? '',
