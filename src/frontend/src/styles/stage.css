@@ -13,7 +13,7 @@
   outline-offset: -3px;
 }
 .mapc.night .stage:focus-visible {
-  outline-color: #8fc3e4;
+  outline-color: var(--iso);
 }
 .pinnav {
   position: absolute;

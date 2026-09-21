@@ -144,10 +144,7 @@ export function renderBasemap(
     bm.globeClipPath.setAttribute('d', sphereD);
     bm.sh0.setAttribute('stop-color', 'rgba(255,255,255,0)');
     bm.sh1.setAttribute('stop-color', 'rgba(8,26,44,0)');
-    bm.sh2.setAttribute(
-      'stop-color',
-      S.theme === 'light' ? 'rgba(20,46,73,.26)' : 'rgba(2,10,18,.5)',
-    );
+    bm.sh2.setAttribute('stop-color', p.shade);
     bm.shade.setAttribute('d', sphereD);
     bm.shade.style.display = '';
     set(bm.rim, { d: sphereD, stroke: p.rim, 'stroke-width': 1, fill: 'none' });

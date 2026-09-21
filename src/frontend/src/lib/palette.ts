@@ -10,6 +10,8 @@ export interface Pal {
   pin: string;
   pinSel: string;
   pinRing: string;
+  // The globe's terminator wash. Astronaut by day, NIGHT_INK after dark.
+  shade: string;
 }
 
 // Astronaut, and the near-black the night map is painted in. Named here because
@@ -34,6 +36,7 @@ export const P: Record<Theme, Pal> = {
     pin: ASTRONAUT,
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.18)',
+    shade: 'rgba(42,78,113,.26)',
   },
   dark: {
     page: NIGHT_INK,
@@ -47,5 +50,6 @@ export const P: Record<Theme, Pal> = {
     pin: '#FFFFFF',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.35)',
+    shade: 'rgba(8,24,39,.5)',
   },
 };

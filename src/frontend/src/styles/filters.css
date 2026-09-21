@@ -79,7 +79,7 @@
 }
 .acc .chev {
   display: flex;
-  color: var(--ink-dim);
+  color: var(--chrome);
   transform: rotate(180deg);
   transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
 }
@@ -125,7 +125,7 @@
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--ink-mute);
+  color: var(--tundora);
   font-variant-numeric: tabular-nums;
 }
 
@@ -213,18 +213,21 @@
 .frow[aria-pressed='true'] .n {
   color: var(--astronaut);
 }
+/* A zero-result row is still selectable, so its text keeps 4.5:1 and drops to
+   --tundora: it reads as unavailable by losing the astronaut and cerulean an
+   active row carries, not by fading toward the background. */
 .frow[data-empty='true'] .t b {
-  color: var(--ink-dim);
+  color: var(--tundora);
 }
 .frow[data-empty='true'] .t i {
-  color: var(--ink-mute);
+  color: var(--tundora);
   opacity: 1;
 }
 .frow[data-empty='true'] .n {
-  color: var(--ink-dim);
+  color: var(--tundora);
 }
 .frow[data-empty='true'] .mk {
-  border-color: #9fb4c6;
+  border-color: var(--chrome);
 }
 .frow:focus-visible {
   outline: 3px solid var(--cerulean);
