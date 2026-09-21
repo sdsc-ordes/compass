@@ -1,4 +1,10 @@
-import { geoNaturalEarth1, geoOrthographic, type GeoProjection } from 'd3-geo';
+import {
+  geoBounds,
+  geoDistance,
+  geoNaturalEarth1,
+  geoOrthographic,
+  type GeoProjection,
+} from 'd3-geo';
 import type { Theme } from './palette';
 
 export interface ViewState {
@@ -24,40 +30,39 @@ export const initialView = (): ViewState => ({
 export const K_MIN = 1;
 export const K_MAX = 9;
 
-export function proj(S: ViewState, w: number, h: number): GeoProjection {
-  if (S.view === 'globe') {
-    const p = geoOrthographic()
-      .rotate(S.rot)
-      .fitExtent(
-        [
-          [24, 24],
-          [w - 24, h - 24],
-        ],
-        { type: 'Sphere' },
-      );
-    return p.scale(p.scale() * S.k).translate([w / 2, h / 2]);
-  }
-  const p = geoNaturalEarth1().fitExtent(
+// The k = 1 camera each view is a multiple of. Every flat projection below is
+// this one scaled about the origin, which is what makes a fit a ratio rather
+// than a search.
+const flatBase = (w: number, h: number): GeoProjection =>
+  geoNaturalEarth1().fitExtent(
     [
       [10, 18],
       [w - 10, h - 18],
     ],
     { type: 'Sphere' },
   );
+
+const globeBase = (w: number, h: number): GeoProjection =>
+  geoOrthographic().fitExtent(
+    [
+      [24, 24],
+      [w - 24, h - 24],
+    ],
+    { type: 'Sphere' },
+  );
+
+export function proj(S: ViewState, w: number, h: number): GeoProjection {
+  if (S.view === 'globe') {
+    const p = globeBase(w, h).rotate(S.rot);
+    return p.scale(p.scale() * S.k).translate([w / 2, h / 2]);
+  }
+  const p = flatBase(w, h);
   const t0 = p.translate();
   return p.scale(p.scale() * S.k).translate([S.tx + t0[0] * S.k, S.ty + t0[1] * S.k]);
 }
 
 export function fitScale(w: number, h: number): number {
-  return geoNaturalEarth1()
-    .fitExtent(
-      [
-        [10, 18],
-        [w - 10, h - 18],
-      ],
-      { type: 'Sphere' },
-    )
-    .scale();
+  return flatBase(w, h).scale();
 }
 
 export const frontCentre = (S: ViewState): [number, number] => [-S.rot[0], -S.rot[1]];
@@ -76,16 +81,78 @@ export function flatOffsetFor(
   k?: number,
 ): { tx: number; ty: number } {
   const kk = k === undefined ? S.k : k;
-  const p = geoNaturalEarth1().fitExtent(
-    [
-      [10, 18],
-      [W - 10, H - 18],
-    ],
-    { type: 'Sphere' },
-  );
+  const p = flatBase(W, H);
   const t0 = p.translate();
   const xy = p.scale(p.scale() * kk).translate([t0[0] * kk, t0[1] * kk])(c);
   return xy && isFinite(xy[0]) ? { tx: W / 2 - xy[0], ty: H / 2 - xy[1] } : { tx: 0, ty: 0 };
+}
+
+// An auto-fit stops well short of K_MAX. A filter that leaves one entity, or a
+// handful of them a few hundred metres apart, would otherwise fit to a patch of
+// empty sea with no coastline in frame to say where it is; going closer than
+// this stays the user's own move.
+export const FOCUS_K_MAX = 5;
+
+// Breathing room around a framed set, in px. About a pin's height, so the
+// outermost pin sits inside the stage rather than half off it.
+const FOCUS_PAD = 64;
+
+const wrapLon = (v: number) => ((((v + 180) % 360) + 360) % 360) - 180;
+
+// geoBounds walks the geometry the way d3 projects it, so a set straddling the
+// antimeridian comes back as the short way round. A min/max over the longitudes
+// would call the same handful of points a whole world wide.
+function boundsCentre(pts: [number, number][]): [number, number] {
+  const [[x0, y0], [x1, y1]] = geoBounds({ type: 'MultiPoint', coordinates: pts });
+  const span = x1 >= x0 ? x1 - x0 : x1 - x0 + 360;
+  return [wrapLon(x0 + span / 2), (y0 + y1) / 2];
+}
+
+// The camera that frames `pts`, or null when there is nothing to frame.
+export function frameFor(
+  S: ViewState,
+  W: number,
+  H: number,
+  pts: [number, number][],
+): TweenTo | null {
+  if (!pts.length || W <= 0 || H <= 0) return null;
+  const fit = (k: number) => Math.max(K_MIN, Math.min(FOCUS_K_MAX, k));
+  const roomW = Math.max(1, W - 2 * FOCUS_PAD);
+  const roomH = Math.max(1, H - 2 * FOCUS_PAD);
+
+  if (S.view === 'globe') {
+    // The globe pans by turning, so framing is a rotation plus however far the
+    // camera pulls back for the furthest point to clear the limb. Past a
+    // hemisphere nothing more fits however far out it goes.
+    const c = boundsCentre(pts);
+    const r = pts.reduce((m, p) => Math.max(m, geoDistance(p, c)), 0);
+    const half = Math.min(roomW, roomH) / 2;
+    const k = r >= Math.PI / 2 ? K_MIN : fit(half / (globeBase(W, H).scale() * Math.sin(r)));
+    return { k, rot: [-c[0], -c[1]] };
+  }
+
+  // Natural Earth is cut at the antimeridian, so a set straddling it really
+  // does span the sheet and no centre draws it together -- which is why the
+  // flat fit is measured in projected px rather than in degrees. It is also
+  // exact for a projection whose parallels are not evenly spaced.
+  const p = flatBase(W, H);
+  let x0 = Infinity,
+    y0 = Infinity,
+    x1 = -Infinity,
+    y1 = -Infinity;
+  for (const c of pts) {
+    const xy = p(c);
+    if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) continue;
+    x0 = Math.min(x0, xy[0]);
+    x1 = Math.max(x1, xy[0]);
+    y0 = Math.min(y0, xy[1]);
+    y1 = Math.max(y1, xy[1]);
+  }
+  if (x0 > x1) return null;
+  // A degenerate span divides to Infinity and clamps to FOCUS_K_MAX, which is
+  // what a single entity should get anyway.
+  const k = fit(Math.min(roomW / (x1 - x0), roomH / (y1 - y0)));
+  return { k, tx: W / 2 - ((x0 + x1) / 2) * k, ty: H / 2 - ((y0 + y1) / 2) * k };
 }
 
 export const REDUCED =

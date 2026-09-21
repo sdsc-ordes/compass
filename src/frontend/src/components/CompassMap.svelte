@@ -79,8 +79,21 @@
   let loadSeq = 0;
   const nextTick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+  // Which filters a reload is for, as one comparable string. The map reframes
+  // on a change of these and on nothing else: a language switch re-queries the
+  // same entities, and the first load -- including the one that restores
+  // ?state= -- is the view the user asked to arrive at, not a change from it.
+  const filterKey = (f: QueryFilters): string =>
+    JSON.stringify(DIM_IDS.map((id) => [...(f[id] ?? [])].sort()));
+
+  let lastFilterKey: string | null = null;
+  let focusKey = 0;
+
   async function loadData(l: Lang, f: QueryFilters): Promise<void> {
     const seq = ++loadSeq;
+    const key = filterKey(f);
+    const reframe = lastFilterKey !== null && key !== lastFilterKey;
+    lastFilterKey = key;
     loading = true;
     error = null;
     syncUrl(f, l, DIM_IDS);
@@ -91,6 +104,7 @@
       if (selectedId && !entities.some((e) => e.properties?.id === selectedId)) {
         selectedId = null;
       }
+      if (reframe) focusKey += 1;
       loading = false;
 
       await nextTick();
@@ -312,6 +326,7 @@
     {selected}
     {loading}
     {error}
+    {focusKey}
     onSelect={(p) => (p ? openEntry(p) : dismissEntry())}
     onTheme={(n) => (night = n)}
     onLang={(l) => (lang = l)}

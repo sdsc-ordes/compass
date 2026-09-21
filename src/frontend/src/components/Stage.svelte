@@ -11,6 +11,7 @@
     frontCentre,
     bindInput,
     fitScale,
+    frameFor,
     Tweener,
     REDUCED,
     K_MIN,
@@ -46,10 +47,16 @@
   export let tileurl = '';
   export let lang: 'en' | 'de' = 'en';
   export let onLang: (l: 'en' | 'de') => void = () => {};
+  // Bumped by the host when a filter change has landed a new set of entities.
+  // A count rather than the list itself: `projs` gets a fresh identity on every
+  // reload, and a language switch is not a reason to move the camera.
+  export let focusKey = 0;
 
   const S: ViewState = initialView();
   let atlas: Atlas | null = null;
   let interact = false;
+  // interact is also raised by a running tween; this one is only ever the user.
+  let gesturing = false;
   let qid: number | null = null;
   let painted = 0;
   let cost = 0;
@@ -515,6 +522,24 @@
     tween.to({ tx: o.tx, ty: o.ty }, 620);
   }
 
+  const FOCUS_MS = 620;
+
+  // Reframe on what survived a filter -- but never over something the user is
+  // doing. A gesture owns the camera outright, and an entry that outlived the
+  // filter keeps the frame zoomToProject just gave it. An empty result moves
+  // nothing: the stage says so in words, and leaving the view where it was is
+  // what makes undoing the filter feel like undoing it.
+  function refocus(list: Proj[]): void {
+    if (!stage || gesturing || selected || !list.length) return;
+    const to = frameFor(
+      S,
+      stage.clientWidth,
+      stage.clientHeight,
+      list.map((d) => d.c),
+    );
+    if (to) tween.to(to, FOCUS_MS);
+  }
+
   let lastSelectedId: string | null = null;
   $: if (S.ready && (selected?.id ?? null) !== lastSelectedId) {
     lastSelectedId = selected?.id ?? null;
@@ -535,6 +560,15 @@
     pumpPins();
   }
 
+  // After the selection block, not before it: a filter that drops the open
+  // entry clears the selection in the same flush, and onSelectionChanged stops
+  // the tween on its way out.
+  let lastFocusKey = focusKey;
+  $: if (S.ready && focusKey !== lastFocusKey) {
+    lastFocusKey = focusKey;
+    refocus(projs);
+  }
+
   $: pumpPins(projs);
 
   let unbind: (() => void) | null = null;
@@ -550,6 +584,7 @@
       queue,
       setInteract: (on) => {
         interact = on;
+        gesturing = on;
       },
       tween,
       clickAt,
