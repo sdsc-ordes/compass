@@ -134,6 +134,18 @@
   color: var(--stage-dim);
   z-index: 2;
 }
+.attriblink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.attriblink:hover {
+  color: var(--cerulean);
+}
+.attriblink:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
 .stage.depth .attrib {
   color: var(--stage-ink);
   text-shadow:

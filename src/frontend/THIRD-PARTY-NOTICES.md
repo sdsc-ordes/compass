@@ -9,11 +9,19 @@ Regenerate with `node scripts/build-notices.mjs`.
 
 - Land, borders, lakes and rivers: **Natural Earth**, public domain
   (<https://www.naturalearthdata.com>). Credit is requested, not required.
-- Bathymetry imagery: reproduced from the **GEBCO_2026 Grid**, GEBCO
-  Compilation Group (<https://www.gebco.net>). Free to use with attribution.
-  GEBCO state the imagery is not to be used for navigation or any purpose
-  relating to safety at sea. Both notices appear in the map's attribution
-  control at runtime.
+- Bathymetry imagery: reproduced from the **GEBCO_2026 Grid**, served by
+  GEBCO as a Web Map Service. GEBCO ask to be cited as: GEBCO Bathymetric
+  Compilation Group 2026 (2026). The GEBCO_2026 Grid - a continuous terrain
+  model for oceans and land at 15 arc-second intervals. NERC EDS British
+  Oceanographic Data Centre NOC.
+  doi:10.5285/4f68d5c7-45eb-f999-e063-7086abc036fa
+- The grid is public domain and free to use, commercial use included, on
+  three conditions: acknowledge the source; do not imply that GEBCO, the IHO
+  or the IOC endorses this application; and do not use it for navigation or
+  any other purpose involving safety at sea. Full terms:
+  <https://www.gebco.net/data-products/gridded-bathymetry/terms-of-use>
+- Both sources are credited in the map's attribution control at runtime, where
+  GEBCO_2026 links to the grid page carrying the citation above.
 
 ## d3-geo 3.1.1
 

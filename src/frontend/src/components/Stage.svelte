@@ -73,6 +73,12 @@
     anim.setFan(want);
   }
 
+  // GEBCO ask that the source be acknowledged; the grid's own page carries the
+  // citation, the DOI and the terms, so the credit links there rather than
+  // spending the attribution line on a DOI nobody can read at 10px.
+  const GEBCO_GRID =
+    'https://www.gebco.net/data-products-gridded-bathymetry-data/gebco2026-grid';
+
   const COACH_DELAY = 3000;
   let coachOn = false;
   let coachDone = false;
@@ -691,7 +697,14 @@
   </div>
   <div class="plate plate-error" class:show={!!error} bind:this={errEl}>{error ?? ''}</div>
   <div class="attrib" bind:this={attribEl}>
-    {depth && depthOn ? t.attributionDepth : t.attribution}
+    {t.attribution}{#if depth && depthOn}<span aria-hidden="true"> · </span><a
+        class="attriblink"
+        href={GEBCO_GRID}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${t.attribGebcoOf} ${t.newTab}`}
+        on:pointerdown|stopPropagation>{t.attribGebco}</a
+      >{/if}
   </div>
 
   <StageChrome
