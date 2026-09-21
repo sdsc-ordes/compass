@@ -98,13 +98,15 @@
 .asec.open .apanel {
   grid-template-rows: 1fr;
 }
-/* The tint marks which group is open, and sits on .ainner rather than on
-   .asec.open so it shrinks away with the collapse instead of vanishing on its
-   first frame. --sea is the design system's panel tint, 1.07:1 on white. */
+/* No fill anywhere: an open group's rows are indented and tied to their header
+   by a rule, so the grouping is carried by geometry. The 16px margin is the
+   header's icon column, so the rule drops from directly under that icon and the
+   rows' own 11px gap keeps their labels on the header's label line. */
 .apanel > .ainner {
   min-height: 0;
   overflow: hidden;
-  background: var(--sea);
+  margin-left: 16px;
+  border-left: 1px solid var(--land-hi);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -153,7 +155,7 @@
     color 0.14s;
 }
 .frow:hover {
-  background: #fff;
+  background: var(--sea);
 }
 .frow .mk {
   width: 16px;
@@ -164,7 +166,7 @@
   position: relative;
 }
 .frow[aria-pressed='true'] {
-  background: var(--land-hi);
+  background: var(--sea);
 }
 .frow[aria-pressed='true'] .mk {
   border-color: var(--cerulean);
