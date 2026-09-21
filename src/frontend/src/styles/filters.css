@@ -189,9 +189,6 @@
   font-weight: 600;
   color: var(--tundora);
 }
-.frow[aria-pressed='true'] .t b {
-  color: var(--cerulean);
-}
 .frow .t i {
   font-style: normal;
   font-size: 12.5px;
@@ -207,8 +204,9 @@
   font-variant-numeric: tabular-nums;
   margin-top: 3px;
 }
-/* Astronaut is the panel's heading ink, so on a row it reads as promotion: the
-   chosen option steps up out of body copy. */
+/* This was cerulean until the panel went onto one scale. Cerulean now means
+   quantity throughout the panel -- the group count, the row count -- so a chosen
+   row promotes to astronaut, the heading ink, and steps up out of body copy. */
 .frow[aria-pressed='true'] .t b {
   color: var(--astronaut);
 }
@@ -239,7 +237,7 @@
   .ahbtn {
     min-height: 56px;
     padding: 15px 18px;
-    font-size: 13.5px;
+    font-size: 17px;
     letter-spacing: 0.3px;
     grid-template-columns: 20px minmax(0, 1fr) auto auto;
     gap: 13px;
@@ -265,9 +263,6 @@
   .frow[aria-pressed='true'] .mk::after {
     left: 4px;
     top: 1px;
-  }
-  .ahbtn {
-    font-size: 17px;
   }
   .frow .t b {
     font-size: 16px;
