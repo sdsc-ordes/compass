@@ -23,6 +23,9 @@ const DETAIL_TILE = 2048;
 const DETAIL_KEEP = 12;
 
 const CELL = 8;
+// Fraction of the texture width one mesh cell may span before it is sampled
+// exactly rather than interpolated. See the pole note in the globe sampler.
+const SMEAR = 0.12;
 
 // Enough that a settled globe rasterises about 1:1 against the sphere's own
 // bounds. A drag gets far less: rotation cannot reuse a previous frame, so this
@@ -335,6 +338,27 @@ export class Bathymetry {
     }
     if (!any) return null;
 
+    // Crossing a pole flips longitude by half a turn, and the unwrap above only
+    // ever corrects by whole ones -- so the row of cells that straddles a pole
+    // keeps the jump and interpolates u across most of the texture, smearing one
+    // raster row into a ray from the pole out to the limb. It is a handful of
+    // cells, so they are inverted per pixel instead of off the mesh.
+    // A cell spanning more than SMEAR of the texture -- 43 degrees of longitude
+    // inside 8 screen pixels -- is either that pole row or hard against the limb,
+    // and the mesh is too coarse to carry either. Below about this the count
+    // climbs into ordinary limb cells for no visible gain; it costs 0.5% of them.
+    const exact = new Uint8Array(cols * rows);
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const a = j * (cols + 1) + i;
+        const c = a + (cols + 1);
+        if (!ok[a] || !ok[a + 1] || !ok[c] || !ok[c + 1]) continue;
+        const lo = Math.min(nx[a], nx[a + 1], nx[c], nx[c + 1]);
+        const hi = Math.max(nx[a], nx[a + 1], nx[c], nx[c + 1]);
+        if (hi - lo > SMEAR) exact[j * cols + i] = 1;
+      }
+    }
+
     const out = this.buffer(rw, rh, interact);
     if (!out) return null;
     const ctx = out.getContext('2d');
@@ -362,12 +386,22 @@ export class Bathymetry {
           c = rowB + i0;
         if (!ok[a] || !ok[a + 1] || !ok[c] || !ok[c + 1]) continue;
 
-        const wa = (1 - fx) * (1 - fy),
-          wb = fx * (1 - fy),
-          wc = (1 - fx) * fy,
-          wd = fx * fy;
-        const mx = nx[a] * wa + nx[a + 1] * wb + nx[c] * wc + nx[c + 1] * wd;
-        const my = ny[a] * wa + ny[a + 1] * wb + ny[c] * wc + ny[c + 1] * wd;
+        let mx: number;
+        let my: number;
+        if (exact[j0 * cols + i0]) {
+          const ll = invert([box.x + u / perCss, box.y + v / perCss]);
+          if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) continue;
+          // The lookup masks x into the texture, so a raw turn needs no unwrap.
+          mx = (ll[0] + 180) / 360;
+          my = (90 - ll[1]) / 180;
+        } else {
+          const wa = (1 - fx) * (1 - fy),
+            wb = fx * (1 - fy),
+            wc = (1 - fx) * fy,
+            wd = fx * fy;
+          mx = nx[a] * wa + nx[a + 1] * wb + nx[c] * wc + nx[c + 1] * wd;
+          my = ny[a] * wa + ny[a + 1] * wb + ny[c] * wc + ny[c + 1] * wd;
+        }
         if (!(my >= 0) || my >= 1) continue;
 
         const gX = mx * SW - 0.5;
