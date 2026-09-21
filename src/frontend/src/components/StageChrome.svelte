@@ -2,6 +2,7 @@
   import { onDestroy, tick } from 'svelte';
   import Icon from './Icon.svelte';
   import type { Strings } from '../lib/i18n';
+  import { ZOOM_BTN } from '../lib/projection';
 
   export let t: Strings;
   export let viewMode: 'flat' | 'globe' = 'flat';
@@ -173,11 +174,14 @@
     {/if}
   </div>
 
-  <button class="zbtn" type="button" aria-label={t.zoomIn} on:click={() => onZoom(1.6)}
+  <button class="zbtn" type="button" aria-label={t.zoomIn} on:click={() => onZoom(ZOOM_BTN)}
     ><Icon name="zoomIn" /></button
   >
-  <button class="zbtn" type="button" aria-label={t.zoomOut} on:click={() => onZoom(1 / 1.6)}
-    ><Icon name="zoomOut" /></button
+  <button
+    class="zbtn"
+    type="button"
+    aria-label={t.zoomOut}
+    on:click={() => onZoom(1 / ZOOM_BTN)}><Icon name="zoomOut" /></button
   >
   <button class="zbtn" type="button" id="zreset" aria-label={t.resetViewAria} on:click={onReset}
     ><Icon name="reset" /></button

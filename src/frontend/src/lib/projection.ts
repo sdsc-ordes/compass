@@ -29,6 +29,9 @@ export const initialView = (): ViewState => ({
 
 export const K_MIN = 1;
 export const K_MAX = 9;
+// What one press of a zoom button multiplies k by. The keyboard steps finer
+// (1.4, or 2 with shift) and is not derived from this.
+export const ZOOM_BTN = 1.6;
 
 // The k = 1 camera each view is a multiple of. Every flat projection below is
 // this one scaled about the origin, which is what makes a fit a ratio rather

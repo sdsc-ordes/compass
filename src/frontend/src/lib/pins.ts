@@ -1,7 +1,7 @@
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
-import { frontCentre, K_MAX, REDUCED, type ViewState } from './projection';
+import { frontCentre, K_MAX, REDUCED, ZOOM_BTN, type ViewState } from './projection';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
 const PIN_EDGE = ASTRONAUT;
@@ -186,9 +186,10 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 // Pins cluster by screen distance, so most groups come apart on their own as the
 // map zooms. The ones that never do sit on the same coordinate, and waiting for
 // K_MAX to fan them made the user ride the zoom to the end to find out what was
-// under a pin. Two zoom-button steps earlier (1.4x each) is enough to break them
-// out while the map is still somewhere the user chose to be.
-export const K_FAN = K_MAX - 3;
+// under a pin. So fan two zoom-button presses before the limit -- a division,
+// because k is multiplicative: subtracting a constant from it would drift the
+// moment K_MAX or the button's factor changed.
+const K_FAN = K_MAX / (ZOOM_BTN * ZOOM_BTN);
 
 export const atFanZoom = (S: ViewState) => S.k >= K_FAN - 1e-6;
 
