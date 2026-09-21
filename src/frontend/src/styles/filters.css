@@ -54,7 +54,6 @@
   letter-spacing: 0;
   text-transform: none;
   color: var(--tundora);
-  opacity: 0.82;
   text-wrap: pretty;
 }
 .ahbtn.sub {
@@ -199,7 +198,6 @@
   font-size: 13px;
   line-height: 17.5px;
   color: var(--tundora);
-  opacity: 0.82;
   text-wrap: pretty;
 }
 .frow .n {
@@ -218,10 +216,6 @@
    active row carries, not by fading toward the background. */
 .frow[data-empty='true'] .t b {
   color: var(--tundora);
-}
-.frow[data-empty='true'] .t i {
-  color: var(--tundora);
-  opacity: 1;
 }
 .frow[data-empty='true'] .n {
   color: var(--tundora);
