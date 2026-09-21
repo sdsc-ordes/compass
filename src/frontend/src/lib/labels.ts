@@ -95,11 +95,11 @@ export function placeLabels(a: LabelPass): void {
   ) => {
     const st = STYLES[cls];
     const w = measure(txt, st);
-    if (globe && geoDistance(c, ctr) > 1.24) return;
+    if (globe && geoDistance(c, ctr) > 1.24) return false;
     const xy = pr(c);
-    if (!xy || isNaN(xy[0])) return;
+    if (!xy || isNaN(xy[0])) return false;
     const [x, y] = xy;
-    if (x - w / 2 < 8 || x + w / 2 > W - 8 || y < 16 || y > H - 16) return;
+    if (x - w / 2 < 8 || x + w / 2 > W - 8 || y < 16 || y > H - 16) return false;
     const pad = atSea ? 5 : 4;
     if (
       boxes.some(
@@ -107,14 +107,14 @@ export function placeLabels(a: LabelPass): void {
           Math.abs(b.x - x) < (b.w + w) / 2 + pad && Math.abs(b.y - y) < (b.h + st.h) / 2 + pad,
       )
     )
-      return;
+      return false;
     if (atSea) {
       for (const f of [-0.44, -0.2, 0.2, 0.44]) {
         const px = x + w * f;
         const ll = pr.invert?.([px, y]);
-        if (!ll || isNaN(ll[0]) || geoContains(a.land, ll)) return;
+        if (!ll || isNaN(ll[0]) || geoContains(a.land, ll)) return false;
         const back = pr(ll);
-        if (!back || Math.hypot(back[0] - px, back[1] - y) > 1) return;
+        if (!back || Math.hypot(back[0] - px, back[1] - y) > 1) return false;
       }
     }
     boxes.push({ x, y, w, h: st.h });
@@ -126,14 +126,19 @@ export function placeLabels(a: LabelPass): void {
       (st.caps ? 'text-transform:uppercase;' : '');
     el.textContent = txt;
     ov.appendChild(el);
+    return true;
   };
 
   // Placed first so the continents win every collision they are in.
   if (k < CON_K)
     CON.forEach((d) => place(d.c, 'lbl-con', a.lang === 'de' ? d.de : d.en, p.lblCty, false));
   const seaInk = a.depth ? SEA_INK : p.lblCty;
+  // Natural Earth splits the Atlantic and the Pacific in two, under one name each.
+  const named = new Set<string>();
   a.sea.forEach((d) => {
-    if (k >= d.k) place(d.c, 'lbl-sea' + d.t, a.lang === 'de' ? d.de : d.en, seaInk, true);
+    const txt = a.lang === 'de' ? d.de : d.en;
+    if (k >= d.k && !named.has(txt) && place(d.c, 'lbl-sea' + d.t, txt, seaInk, true))
+      named.add(txt);
   });
   a.cty.forEach((d) => {
     if (k >= CON_K && k >= d.k)
