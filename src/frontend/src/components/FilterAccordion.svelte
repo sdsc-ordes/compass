@@ -65,23 +65,17 @@
         <button
           type="button"
           class="ahbtn"
-          class:sub={!!dim.description}
           data-head={dim.id}
           id={'acch-' + dim.id}
           aria-expanded={open}
           aria-controls={'accp-' + dim.id}
           aria-label={n ? fmt(t.dimSelected, { label: dim.label, n }) : dim.label}
-          aria-describedby={dim.description ? 'accd-' + dim.id : undefined}
           on:click={() => onToggleDim(dim.id)}
         >
           <span class="dico"
             >{#if dim.icon}<Icon name={dim.icon} size={16} />{/if}</span
           >
-          <span class="lb"
-            >{dim.label}{#if dim.description}<span class="dsc" id={'accd-' + dim.id}
-                >{dim.description}</span
-              >{/if}</span
-          >
+          <span class="lb">{dim.label}</span>
           <span class="cnt" class:off={n === 0} aria-hidden="true">{n || '0'}</span>
           <span class="chev"><Icon name="chevronUp" size={16} /></span>
         </button>
@@ -93,6 +87,9 @@
           id={'accp-' + dim.id}
           aria-labelledby={'acch-' + dim.id}
         >
+          {#if dim.description}
+            <p class="dsc">{dim.description}</p>
+          {/if}
           <FilterRows
             bind:this={rows[dim.id]}
             {t}

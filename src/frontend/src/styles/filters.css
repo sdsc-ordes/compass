@@ -44,20 +44,16 @@
   min-width: 0;
   text-wrap: pretty;
 }
+/* Leads the panel rather than the header: collapsed, the accordion is a column
+   of titles and counts, and the prose arrives when the group is opened and the
+   reader has asked for it. */
 .acc .dsc {
-  display: block;
-  margin-top: 7px;
-  font-family: Cabin, system-ui, sans-serif;
-  font-weight: 400;
+  margin: 0;
+  padding: 11px 8px 0;
   font-size: 12.5px;
   line-height: 16.5px;
-  letter-spacing: 0;
-  text-transform: none;
   color: var(--tundora);
   text-wrap: pretty;
-}
-.ahbtn.sub {
-  align-items: start;
 }
 .acc .dico {
   display: flex;
