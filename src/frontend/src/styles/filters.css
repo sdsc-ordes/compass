@@ -2,7 +2,7 @@
   border-top: 1px solid var(--land-hi);
 }
 .asec {
-  border-bottom: 1px solid var(--land-hi);
+  border-bottom: 1px solid #fff;
 }
 .acc h2 {
   margin: 0;
@@ -14,8 +14,9 @@
   align-items: center;
   gap: 11px;
   width: 100%;
-  padding: 13px 8px;
-  background: none;
+  padding: 13px 8px 13px 11px;
+  background: var(--land-hi);
+  box-shadow: inset 3px 0 0 var(--chrome);
   border: 0;
   text-align: left;
   font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
@@ -27,14 +28,17 @@
   color: var(--astronaut);
   transition:
     color 0.18s ease,
-    background 0.14s ease;
+    box-shadow 0.14s ease;
 }
+/* The band is already tinted, so hover and open turn the spine cerulean rather
+   than shifting the fill -- and --sea is spoken for by a hovered or chosen row. */
 .ahbtn:hover {
-  background: var(--sea);
-  color: var(--cerulean);
+  box-shadow: inset 3px 0 0 var(--cerulean);
 }
 .asec.open .ahbtn {
-  box-shadow: inset 0 -3px 0 var(--cerulean);
+  box-shadow:
+    inset 3px 0 0 var(--cerulean),
+    inset 0 -3px 0 var(--cerulean);
 }
 .ahbtn:focus-visible {
   outline: 3px solid var(--cerulean);
@@ -69,7 +73,7 @@
   font-size: 12px;
   line-height: 14px;
   letter-spacing: 0;
-  color: var(--cerulean);
+  color: var(--astronaut);
   font-variant-numeric: tabular-nums;
   transition: opacity 0.2s ease;
 }
@@ -78,7 +82,7 @@
 }
 .acc .chev {
   display: flex;
-  color: var(--chrome);
+  color: var(--astronaut);
   transform: rotate(180deg);
   transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
 }
