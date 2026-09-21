@@ -110,10 +110,8 @@
 
   const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
 
-  // Off by default: the brand sea is the map's own colour, and the raster is
-  // megabytes a visitor who never asks for it should not pay for. Turning the
-  // switch on is what fetches it.
-  let depth = false;
+  // On by default, so every visitor pays for the raster up front.
+  let depth = true;
   let depthReady = true;
   let depthOn = false;
   const bathy = new Bathymetry(tileurl, () => {

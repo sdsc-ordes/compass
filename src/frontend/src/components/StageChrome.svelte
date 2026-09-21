@@ -7,7 +7,7 @@
   export let viewMode: 'flat' | 'globe' = 'flat';
   export let night = false;
   export let lang: 'en' | 'de' = 'en';
-  export let depth = false;
+  export let depth = true;
   export let depthReady = false;
 
   export let onMode: (m: 'flat' | 'globe') => void;
