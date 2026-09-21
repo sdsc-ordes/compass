@@ -41,6 +41,15 @@
     };
   }
 
+  // The unabbreviated name leads and the display name follows in brackets, so
+  // the panel reads as prose while the acronym the rest of the UI uses stays
+  // findable. Bracketed only when the two actually differ -- an entity whose
+  // long name is its name would otherwise say it twice.
+  $: heading =
+    entry && entry.longName && entry.longName !== entry.title
+      ? `${entry.longName} (${entry.title})`
+      : (entry?.title ?? '');
+
   $: groups = entry ? tagGroups(entry, dims) : [];
 
   // the groups read in the sidebar's section order, so the panel and the filter
@@ -86,10 +95,7 @@
   {:else}
     <p class="etag etag-flat">{entry?.entity ?? ''}</p>
   {/if}
-  <h2 bind:this={titleEl} tabindex="-1">{entry?.title ?? ''}</h2>
-  {#if entry?.longName}
-    <p class="longname">{entry.longName}</p>
-  {/if}
+  <h2 bind:this={titleEl} tabindex="-1">{heading}</h2>
   <p class="where">{entry?.where ?? ''}</p>
   <p class="txt">{entry?.txt ?? ''}</p>
 
