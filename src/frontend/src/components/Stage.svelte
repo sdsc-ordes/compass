@@ -20,7 +20,7 @@
   } from '../lib/projection';
   import { loadAtlas, nudgeBasemap, renderBasemap, type Atlas } from '../lib/basemap';
   import { Bathymetry } from '../lib/bathymetry';
-  import { atMaxZoom, drawPins, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
+  import { atFanZoom, drawPins, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
   import { onFontsReady } from '../lib/fonts';
   import { placeLabels } from '../lib/labels';
   import { CardLayer } from '../lib/cards';
@@ -67,7 +67,7 @@
   let fanned = false;
 
   function syncFan(): void {
-    const want = atMaxZoom(S);
+    const want = atFanZoom(S);
     if (want === fanned) return;
     fanned = want;
     anim.setFan(want);

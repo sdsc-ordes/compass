@@ -183,7 +183,14 @@ const fanFrom = (n: number) => (n === 2 ? 0 : -Math.PI / 2);
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
-export const atMaxZoom = (S: ViewState) => S.k >= K_MAX - 1e-6;
+// Pins cluster by screen distance, so most groups come apart on their own as the
+// map zooms. The ones that never do sit on the same coordinate, and waiting for
+// K_MAX to fan them made the user ride the zoom to the end to find out what was
+// under a pin. Two zoom-button steps earlier (1.4x each) is enough to break them
+// out while the map is still somewhere the user chose to be.
+export const K_FAN = K_MAX - 3;
+
+export const atFanZoom = (S: ViewState) => S.k >= K_FAN - 1e-6;
 
 function fanAngle(ax: number, ay: number, R: number, n: number, W: number, H: number): number {
   const M = 14;
