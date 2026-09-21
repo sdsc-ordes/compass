@@ -72,7 +72,6 @@ that is not OceanCare's has to change them and rebuild:
 | Which dimensions the panel draws, and in what order | `src/lib/schema.ts` (`DIM_IDS`) |
 | The icon on each filter section | `src/lib/schema.ts` (`DIM_ICONS`) |
 | Palette and type scale | `src/lib/palette.ts`, `src/styles/` |
-| Logo | `src/assets/oceancare.png` |
 | Interface strings, including the screen-reader page title | `src/lib/i18n.ts` |
 | The two web fonts | `scripts/build-fonts.mjs`, then `just map::fonts` |
 
