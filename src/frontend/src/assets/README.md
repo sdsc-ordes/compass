@@ -10,7 +10,10 @@ self-contained script with no network calls; share/, docker/ and the WordPress
 embed all load exactly one file.
 
 The cost is real, though, and paid on every page load: base64 is ~4/3 the file's
-size on disk, and an already-compressed PNG gzips badly on top of that —
-oceancare.png is 26.6 KB and cost 29.4 KB gzipped. Prefer SVG. A flat-colour
-logo like this one would be a couple of KB, sharper at any DPI, and would gzip
-properly.
+size on disk, and an already-compressed PNG gzips badly on top of that — the
+OceanCare logo that used to live here was 26.6 KB and cost 29.4 KB gzipped, which
+is why the sidebar carries no mark at all now that the widget is embedded in the
+site. Prefer SVG for anything that lands here next: a flat-colour mark is a couple
+of KB, sharper at any DPI, and gzips properly.
+
+Nothing is inlined at the moment, so the directory is empty but for this note.

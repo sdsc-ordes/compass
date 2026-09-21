@@ -4,7 +4,6 @@
   import TypePills from './TypePills.svelte';
   import FilterAccordion from './FilterAccordion.svelte';
   import { plural, storyLine, type Strings } from '../lib/i18n';
-  import logoSrc from '../assets/oceancare.png';
   import type { Proj } from '../lib/types';
   import { TYPE_DIM, type Dim } from '../lib/schema';
 
@@ -72,20 +71,6 @@
     <div class="grabrow">
       <span class="grabtitle">{sheetTitle}</span>
       <span class="grabcount">{sheetCount}</span>
-    </div>
-  </div>
-
-  <div class="sidehead">
-    <div class="logo">
-      <a
-        class="logolink"
-        href={t.oceancareHome}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`${t.oceancareHomeOf} ${t.newTab}`}
-      >
-        <img class="logomark" src={logoSrc} alt="OceanCare" width="232" height="103" />
-      </a>
     </div>
   </div>
 

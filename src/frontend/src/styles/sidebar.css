@@ -25,35 +25,6 @@ aside.filters::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.sidehead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 16px;
-  margin-bottom: 18px;
-  border-bottom: 2px solid var(--astronaut);
-}
-.logo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.logolink {
-  display: block;
-  border-radius: 2px;
-}
-.logolink:focus-visible {
-  outline: 2px solid var(--cerulean);
-  outline-offset: 3px;
-}
-.logomark {
-  display: block;
-  height: 38px;
-  width: auto;
-  margin-left: -1px;
-}
-
 /* Outside both panes, so the credit stays put when the detail view takes over. */
 .sidefoot {
   margin-top: 26px;
@@ -319,9 +290,6 @@ aside.filters::-webkit-scrollbar-track {
   }
   aside.filters[data-sheet='dock'] {
     overflow: hidden;
-  }
-  .sidehead {
-    display: none;
   }
   .pane-filters {
     padding: 0 0 calc(26px + var(--sbtm));
