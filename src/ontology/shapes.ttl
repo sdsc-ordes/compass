@@ -282,7 +282,7 @@ compass:AltLabelShape a sh:Shape ;
     sh:path skos:altLabel ;
     sh:name "long name"@en ;
     sh:name "Langform"@de ;
-    sh:description "The unabbreviated name, shown on hover where the display name is an acronym."@en ;
+    sh:description "The unabbreviated name. Where it differs from the display name, the detail panel leads with it and brackets the display name after it."@en ;
     sh:datatype rdf:langString ;
     sh:uniqueLang true .
 

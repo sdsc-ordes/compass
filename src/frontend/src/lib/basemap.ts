@@ -143,7 +143,7 @@ export function renderBasemap(
     const sphereD = path({ type: 'Sphere' }) ?? '';
     bm.globeClipPath.setAttribute('d', sphereD);
     bm.sh0.setAttribute('stop-color', 'rgba(255,255,255,0)');
-    bm.sh1.setAttribute('stop-color', 'rgba(8,26,44,0)');
+    bm.sh1.setAttribute('stop-color', p.shadeFade);
     bm.sh2.setAttribute('stop-color', p.shade);
     bm.shade.setAttribute('d', sphereD);
     bm.shade.style.display = '';

@@ -27,9 +27,9 @@
   color: var(--astronaut);
   transition: color 0.18s ease;
 }
-/* No fill on the header: --sea now tints an open group's rows, so spending it on
-   hover too would merge the two. The label turning cerulean is what every other
-   text action in the panel does. */
+/* No fill: the header is flush with the page and its type alone says it is a
+   heading, so hover only turns the label cerulean -- what every other text action
+   in the panel does. --sea is left to the rows, for hover and for chosen. */
 .ahbtn:hover {
   color: var(--cerulean);
 }
@@ -94,9 +94,10 @@
 .asec.open .apanel {
   grid-template-rows: 1fr;
 }
-/* No fill and no rule: an open group's contents are simply indented, and the
-   16px is the header's icon column, so they start under the header's label
-   rather than under its icon. */
+/* No fill and no rule: an open group's contents are simply indented by the width
+   of the header's icon column, which nests them under their group. It does not
+   line them up with anything -- the header's label starts further in again, past
+   the grid gap -- so this is nesting, not alignment. */
 .apanel > .ainner {
   min-height: 0;
   overflow: hidden;
