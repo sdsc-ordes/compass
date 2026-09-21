@@ -16,7 +16,7 @@ export type Theme = 'light' | 'dark';
 
 export const P: Record<Theme, Pal> = {
   light: {
-    page: '#F4F8FB',
+    page: '#FFFFFF',
     sea: '#E8F1F8',
     grat: 'rgba(42,78,113,.06)',
     land: '#FFFFFF',
