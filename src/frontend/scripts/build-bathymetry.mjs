@@ -42,6 +42,9 @@ const DETAIL_TILE = 2048;
 const QUALITY = Number(process.env.BATHY_Q ?? 70);
 // sharp quantises the unsharp mask, so anything below ~0.5 is silently a no-op.
 const SHARPEN = Number(process.env.BATHY_SHARPEN ?? 0.5);
+// GEBCO's own colours are too vivid for this map, so the ramp is toned down.
+const SAT = Number(process.env.BATHY_SAT ?? 0.6);
+const REC709 = [0.2126, 0.7152, 0.0722];
 
 const DEG = 180 / Math.PI;
 const LAT_MAX = 85.0511287798;
@@ -252,6 +255,10 @@ async function detail(merc) {
   return { cols, rows, wrote, height: ne.H };
 }
 
+function saturate(s) {
+  return REC709.map((_, i) => REC709.map((l, j) => (i === j ? l + (1 - l) * s : l - l * s)));
+}
+
 async function write(name, raw, alpha) {
   const file = join(OUT, name);
   const pipe = sharp(raw.data, {
@@ -259,7 +266,8 @@ async function write(name, raw, alpha) {
   });
   // The stage upscales this past 1:1 at deep zoom, where plain interpolation
   // reads as mush. A light unsharp adds no data but keeps shelf edges legible.
-  const shaped = SHARPEN > 0 ? pipe.sharpen({ sigma: SHARPEN }) : pipe;
+  const sharpened = SHARPEN > 0 ? pipe.sharpen({ sigma: SHARPEN }) : pipe;
+  const shaped = SAT === 1 ? sharpened : sharpened.recomb(saturate(SAT));
   await shaped
     .webp({ quality: QUALITY, alpha_quality: alpha ? 100 : undefined, effort: 5 })
     .toFile(file);
