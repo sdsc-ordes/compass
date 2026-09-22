@@ -186,6 +186,21 @@ aside.filters.detail .pane-detail {
   color: var(--tundora);
   margin: 20px 0 0;
 }
+/* The one outbound link a reader is likely to want, so it follows the prose it
+   follows from instead of waiting below the tag list, and it sits on the --sea
+   block the tally block already uses for the same errand. Not a filled slab:
+   the map is this panel's primary action and every text action in the sidebar
+   is a link. */
+.storiescall {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  background: var(--sea);
+}
+.pane-detail .storiescall .storiesbtn {
+  margin: 0;
+  font-size: 17px;
+  line-height: 24px;
+}
 .ptags {
   display: flex;
   flex-direction: column;
@@ -293,13 +308,15 @@ aside.filters.detail .pane-detail {
     font-size: 16px;
     line-height: 25px;
   }
-  .pane-detail > .storiesbtn {
+  .storiescall {
+    padding: 12px 14px;
+  }
+  .pane-detail .storiesbtn {
     align-items: center;
-    margin: 10px 0 0;
     min-height: 44px;
   }
   .pane-detail > .storiesbtn.ghost {
-    margin: 0;
+    margin: 14px 0 0;
   }
   .ptag {
     padding: 8px 14px;

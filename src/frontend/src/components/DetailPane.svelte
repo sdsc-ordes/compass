@@ -99,6 +99,19 @@
   <p class="where">{entry?.where ?? ''}</p>
   <p class="txt">{entry?.txt ?? ''}</p>
 
+  {#if storiesHref}
+    <div class="storiescall">
+      <a
+        class="storiesbtn"
+        href={storiesHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${fmt(t.relatedStoriesFrom, { title: entry?.title ?? '' })} ${t.newTab}`}
+        ><span class="sb-lb">{t.relatedStories}</span><Icon name="extLink" /></a
+      >
+    </div>
+  {/if}
+
   <div class="ptags">
     {#each groups as { dim, label, tags } (dim)}
       <div class="ptaggroup">
@@ -116,17 +129,6 @@
       </div>
     {/each}
   </div>
-
-  {#if storiesHref}
-    <a
-      class="storiesbtn"
-      href={storiesHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={`${fmt(t.relatedStoriesFrom, { title: entry?.title ?? '' })} ${t.newTab}`}
-      ><span class="sb-lb">{t.relatedStories}</span><Icon name="extLink" /></a
-    >
-  {/if}
 
   {#if entry?.url}
     <a
