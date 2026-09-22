@@ -89,6 +89,8 @@ ocinst:BBNJ
     compass:name "BBNJ-Abkommen"@de ;
     rdfs:label "BBNJ Agreement"@en ;
     rdfs:label "BBNJ-Abkommen"@de ;
+    skos:altLabel "UN Agreement on Biodiversity Beyond National Jurisdiction"@en ;
+    skos:altLabel "UN-Abkommen über die biologische Vielfalt ausserhalb nationaler Hoheitsgebiete"@de ;
     compass:location "UN Headquarter, NY - ad interim"@en ;
     compass:location "UN-Hauptquartier, New York – ad interim"@de ;
     compass:description "OceanCare has been monitoring the development of the BBNJ Agreement since 2007, actively supported the intergovernmental negotiations from 2018 to 2023, and has consistently advocated for its rapid ratification and implementation following the adoption of the treaty text."@en ;
@@ -121,8 +123,8 @@ ocinst:CBD
     compass:pollution compass:OceanNoisePollution ;
     compass:species compass:Dolphins, compass:Fish, compass:Manatees, compass:PolarBears, compass:SeaTurtles, compass:Seals, compass:Sharks, compass:SmallCetaceans, compass:Whales ;
     compass:wpEntityTagId "1004"^^xsd:integer ;
-    geo:lat "45.50178"^^xsd:float ;
-    geo:long "-73.56021"^^xsd:float .
+    geo:lat "45.50186"^^xsd:float ;
+    geo:long "-73.56064"^^xsd:float .
 
 ocinst:CMSBonnConvention
     a compass:InternationalForum ;
