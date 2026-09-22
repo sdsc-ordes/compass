@@ -59,13 +59,24 @@
   display: flex;
   justify-self: center;
 }
+/* The panel shows two kinds of number and they used to look the same: a group's
+   count is filters the reader chose, a row's is entities found. A choice is
+   already said with a cerulean fill -- that is what a ticked checkbox is -- so
+   the group count takes the fill and the white ink, and the bare cerulean
+   numeral is left to mean a quantity. It is the same filled/outlined split the
+   sidebar's .etag and .ptag pills use, square as everything here is. */
 .acc .cnt {
+  justify-self: end;
+  min-width: 18px;
+  padding: 0 4px;
+  background: var(--cerulean);
+  color: #fff;
   font-family: Cabin, system-ui, sans-serif;
   font-weight: 700;
-  font-size: 12px;
-  line-height: 14px;
+  font-size: 11px;
+  line-height: 16px;
   letter-spacing: 0;
-  color: var(--cerulean);
+  text-align: center;
   font-variant-numeric: tabular-nums;
   transition: opacity 0.2s ease;
 }
@@ -205,9 +216,9 @@
   font-variant-numeric: tabular-nums;
   margin-top: 3px;
 }
-/* This was cerulean until the panel went onto one scale. Cerulean now means
-   quantity throughout the panel -- the group count, the row count -- so a chosen
-   row promotes to astronaut, the heading ink, and steps up out of body copy. */
+/* This was cerulean until the panel went onto one scale. A bare cerulean numeral
+   means a quantity -- the row count -- so a chosen row promotes to astronaut, the
+   heading ink, and steps up out of body copy. */
 .frow[aria-pressed='true'] .t b {
   color: var(--astronaut);
 }
@@ -242,6 +253,11 @@
     letter-spacing: 0.3px;
     grid-template-columns: 20px minmax(0, 1fr) auto auto;
     gap: 13px;
+  }
+  .acc .cnt {
+    min-width: 20px;
+    font-size: 12px;
+    line-height: 18px;
   }
   .dimmeta {
     min-height: 36px;
