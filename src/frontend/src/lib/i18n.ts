@@ -68,10 +68,10 @@ export const i18n = {
     filterByType: 'filter by this type',
     allTypes: 'All',
     typeShort: {
-      InternationalForum: { one: 'Forum', other: 'Forums' },
-      Network: { one: 'Network', other: 'Networks' },
-      PartnerOrganization: { one: 'Partner', other: 'Partners' },
-      Programme: { one: 'Programme', other: 'Programmes' },
+      InternationalForum: 'International Fora',
+      Network: 'Networks',
+      PartnerOrganization: 'Partners',
+      Programme: 'Programmes',
     },
     clusterTitle: '{n} entries here',
     clusterWhere: 'Zoom in to separate them',
@@ -133,8 +133,7 @@ export const i18n = {
     coachPinch: 'Zwei Finger zum Zoomen',
     coachClick: 'Auf einen Pin klicken',
     coachTap: 'Auf einen Pin tippen',
-    coachStatic:
-      'Ziehen zum Erkunden, scrollen zum Zoomen, auf einen Pin klicken für Details.',
+    coachStatic: 'Ziehen zum Erkunden, scrollen zum Zoomen, auf einen Pin klicken für Details.',
     filtersPane: 'Filter',
     detailsPane: 'Eintragsdetails',
     backToFilters: 'Zurück zu den Filtern',
@@ -146,10 +145,10 @@ export const i18n = {
     filterByType: 'nach dieser Art filtern',
     allTypes: 'Alle',
     typeShort: {
-      InternationalForum: { one: 'Forum', other: 'Foren' },
-      Network: { one: 'Netzwerk', other: 'Netzwerke' },
-      PartnerOrganization: { one: 'Partner', other: 'Partner' },
-      Programme: { one: 'Programm', other: 'Programme' },
+      InternationalForum: 'Internationale Foren',
+      Network: 'Netzwerke',
+      PartnerOrganization: 'Partner',
+      Programme: 'Programme',
     },
     clusterTitle: '{n} Einträge hier',
     clusterWhere: 'Zum Trennen hineinzoomen',
@@ -166,17 +165,13 @@ export const storyLine = (n: number, t: Strings): string =>
 export const plural = (n: number, one: string, other: string): string =>
   n === 1 ? one : other;
 
-export const typeLabel = (
-  n: number | null,
-  iri: string,
-  ontology: string,
-  t: Strings,
-): string => {
+// Always the plural, whatever the count: the pills name the groups a visitor
+// can pick between, and a row that renamed itself on the way to one result read
+// as a different control rather than the same one, now narrowed.
+export const typeLabel = (iri: string, ontology: string, t: Strings): string => {
   const cut = Math.max(iri.lastIndexOf('#'), iri.lastIndexOf('/'));
-  const short: Record<string, { one: string; other: string }> = t.typeShort;
-  const pair = short[iri.slice(cut + 1)];
-  if (!pair) return ontology;
-  return n === 1 ? pair.one : pair.other;
+  const short: Record<string, string> = t.typeShort;
+  return short[iri.slice(cut + 1)] ?? ontology;
 };
 
 export function fmt(tpl: string, vars: Record<string, string | number>): string {

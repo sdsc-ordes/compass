@@ -37,7 +37,7 @@
     {#each dim.options as opt (opt.value)}
       {@const n = countOf(facets, dim.id, opt.value)}
       {@const on = sel[dim.id]?.has(opt.value) ?? false}
-      {@const short = typeLabel(n, opt.value, opt.label, t)}
+      {@const short = typeLabel(opt.value, opt.label, t)}
       <button
         type="button"
         class="tpill"

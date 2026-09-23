@@ -2,15 +2,15 @@ import { getFilterWidgets } from '../engine';
 import type { FilterOption } from '../engine/namespaces';
 import type { IconName } from './icons';
 
+// Section order follows the editorial taxonomy in source-data.ods, so the
+// sidebar reads the way the workbook does.
 export const DIM_IDS: string[] = [
   'entityType',
-  'species',
-  'topic',
   'workArea',
-  'conservation',
-  'pollution',
-  'countryArea',
+  'topic',
   'relatedProgramme',
+  'species',
+  'countryArea',
 ];
 
 export const TYPE_DIM = 'entityType';
@@ -20,13 +20,11 @@ export const SECTION_IDS: string[] = DIM_IDS.filter((id) => id !== TYPE_DIM);
 export type Option = FilterOption;
 
 export const DIM_ICONS: Partial<Record<string, IconName>> = {
-  species: 'whale',
-  topic: 'tag',
   workArea: 'briefcase',
-  conservation: 'shield',
-  pollution: 'droplet',
-  countryArea: 'globe',
+  topic: 'tag',
   relatedProgramme: 'folder',
+  species: 'whale',
+  countryArea: 'globe',
 };
 
 export interface Dim {
