@@ -67,7 +67,8 @@ that is not OceanCare's has to change them and rebuild:
 | What | Where |
 | --- | --- |
 | Ontology and instance namespaces | `src/engine/namespaces.ts` (`COMPASS_NS`, `DATA_NS`) |
-| The four classes drawn as pins | `src/engine/namespaces.ts` (`ENTITY_CLASS`) |
+| The classes drawn as pins | `src/engine/namespaces.ts` (`ENTITY_CLASS`) |
+| The classes drawn whatever the filters say, and left out of the result tally | `src/engine/namespaces.ts` (`ALWAYS_ON_CLASSES`) |
 | The entity drawn as a star rather than a dot | `src/engine/namespaces.ts` (`FEATURED_IRI`) |
 | Which dimensions the panel draws, and in what order | `src/lib/schema.ts` (`DIM_IDS`) |
 | The icon on each filter section | `src/lib/schema.ts` (`DIM_ICONS`) |

@@ -22,9 +22,9 @@ intergovernmental bodies, driven by a SHACL-validated RDF ontology.
 
 ### Knowledge modeling via the COMPASS ontology
 
-Compass models a conservation organisation’s partners, projects, networks, and
-international forums as RDF instances, tagged with bilingual SKOS vocabularies
-(work area, conservation focus, topic, pollution, species, and country/area).
+Compass models a conservation organisation’s partners, programmes, networks, and
+international fora as RDF instances, tagged with bilingual SKOS vocabularies
+(work areas, topics, species, and countries / regions).
 Schema and validation live in SHACL (`src/ontology/shapes.ttl`); instance and
 vocabulary Turtle are generated from an editorial spreadsheet.
 
@@ -182,7 +182,7 @@ reload leaves the previous ontology serving. See
 | File | Purpose |
 |---|---|
 | `src/ontology/template-source-data.ods` | **Starting point** — empty workbook (headers only) for modeling a new use-case |
-| `src/ontology/<COMPASS_USE_CASE>/source-data.ods` | **Source of truth** — `schemes` (the six tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
+| `src/ontology/<COMPASS_USE_CASE>/source-data.ods` | **Source of truth** — `schemes` (the four tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
 | `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
 | `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
 | `src/ontology/<COMPASS_USE_CASE>/compass.ttl` | *Generated* — instance data (the pins on the map) |
