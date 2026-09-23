@@ -16,7 +16,7 @@ from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib.namespace import SKOS
 
 from app.core.settings import settings
-from app.namespaces import COMPASS, GEO
+from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, GEO, PIN_CLASSES
 from app.shacl_to_entities import get_shacl_property, targets_map_entity
 from app.shacl_to_filters import _entity_type_dimension, get_filters_from_shacl
 
@@ -30,35 +30,32 @@ _SHACL_SHACL = os.path.join(_ONTOLOGY_DIR, "shacl-shacl.ttl")
 
 
 class TestTopLevelEntityClasses:
-    """The UNION in _sparql_preamble() requires exactly these 4 classes."""
+    """The UNION in _pin_branch() requires every one of these classes."""
 
     REQUIRED_CLASSES: ClassVar[list] = [
-        COMPASS.InternationalForum,
-        COMPASS.Network,
-        COMPASS.Programme,
-        COMPASS.PartnerOrganization,
+        COMPASS[name] for name in (*PIN_CLASSES, *ALWAYS_ON_CLASSES)
     ]
 
     def test_classes_have_instances(self, read_graph):
-        """Each of the 4 entity types must have at least one instance in compass.ttl."""
+        """Each entity class must have at least one instance in compass.ttl."""
         for cls in self.REQUIRED_CLASSES:
             subjects = list(read_graph.subjects(RDF.type, cls))
             assert subjects, (
                 f"{cls} has no instances in compass.ttl. "
-                f"Add at least one instance or remove from _sparql_preamble()."
+                f"Add at least one instance or remove it from _pin_branch()."
             )
 
-    def test_entity_type_filter_classes_match_ontology(self, read_graph):
-        """shacl_to_filters entity-type dimension hardcodes type classes.
-        Verify every class in that list matches what the ontology declares."""
-        widget = _entity_type_dimension(read_graph, "en")
-        schema_type_iris = {opt.value for opt in widget.options}
+    def test_entity_type_offers_every_filterable_class(self, read_graph):
+        """The entity-type dimension offers each filterable class, and only those.
 
-        expected = {str(cls) for cls in self.REQUIRED_CLASSES}
-        missing = expected - schema_type_iris
-        assert expected <= schema_type_iris, (
-            f"Entity classes missing from _entity_type_dimension: {missing}"
-        )
+        ALWAYS_ON_CLASSES stays out: its pins ignore the filters, so an option
+        selecting on their class would promise a narrowing it cannot deliver.
+        """
+        widget = _entity_type_dimension(read_graph, "en")
+        offered = {opt.value for opt in widget.options}
+
+        assert offered == {str(COMPASS[name]) for name in PIN_CLASSES}
+        assert offered.isdisjoint({str(COMPASS[name]) for name in ALWAYS_ON_CLASSES})
 
 
 # -- Required predicates that the SPARQL preamble hardcodes --
@@ -138,12 +135,10 @@ class TestValidationOnlyShapes:
     ]
 
     EXPECTED_WIDGET_IDS: ClassVar[set] = {
-        "conservation",
         "countryArea",
         "entityType",
         "forum",
         "managedByOceanCare",
-        "pollution",
         "relatedProgramme",
         "species",
         "topic",
@@ -183,7 +178,7 @@ class TestValidationOnlyShapes:
 
 
 class TestTagVocabularies:
-    """All 6 SKOS-based tag dimension classes must have instances.
+    """All 4 SKOS-based tag dimension classes must have instances.
 
     Label and metadata correctness is enforced by compass:ConceptShape in
     shapes.ttl; SHACL cannot express "this class has at least one instance".
@@ -191,9 +186,7 @@ class TestTagVocabularies:
 
     TAG_CLASSES: ClassVar[list] = [
         COMPASS.WorkArea,
-        COMPASS.Conservation,
         COMPASS.Topic,
-        COMPASS.Pollution,
         COMPASS.Species,
         COMPASS.CountryArea,
     ]

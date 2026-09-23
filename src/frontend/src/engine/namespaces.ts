@@ -6,7 +6,12 @@ export const ENTITY_CLASS = {
   Network: `${COMPASS_NS}Network`,
   InternationalForum: `${COMPASS_NS}InternationalForum`,
   Programme: `${COMPASS_NS}Programme`,
+  HostOrganization: `${COMPASS_NS}HostOrganization`,
 } as const;
+
+// The map's subject rather than one of its results: the API draws it whatever
+// the filters say, it has no entityType option, and it is left out of the tally.
+export const ALWAYS_ON_CLASSES: readonly string[] = [ENTITY_CLASS.HostOrganization];
 
 export const FEATURED_IRI = `${DATA_NS}OceanCare`;
 

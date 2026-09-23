@@ -266,8 +266,6 @@ def test_repeated_cells_expand():
         ("Dolphins", "compass:species"),
         ("Greece", "compass:countryArea"),
         ("AdvocacyWork", "compass:workArea"),
-        ("PlasticPollution", "compass:pollution"),
-        ("OceanConservation", "compass:conservation"),
         ("Shipping", "compass:topic"),
         ("ACCOBAMS", "compass:forum"),
         ("SAVEWhales", "compass:relatedProgramme"),

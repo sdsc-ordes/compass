@@ -14,13 +14,13 @@
 @prefix ocinst: <http://example.org/ocean-org/data#> .
 
 # ============================================================
-# Work Area (7 concepts)
+# Work Areas (7 concepts)
 # ============================================================
 
 compass:WorkAreaScheme
     a skos:ConceptScheme ;
-    skos:prefLabel "Work Area"@en ;
-    skos:prefLabel "Arbeitsbereich"@de ;
+    skos:prefLabel "Work Areas"@en ;
+    skos:prefLabel "Arbeitsbereiche"@de ;
     skos:definition "Types of work OceanCare performs."@en ;
     skos:definition "Arten der Arbeit, die OceanCare leistet."@de ;
     skos:hasTopConcept compass:AdvocacyWork ;
@@ -103,61 +103,18 @@ compass:ScientificResearch
     skos:topConceptOf compass:WorkAreaScheme .
 
 # ============================================================
-# Conservation (3 concepts)
-# ============================================================
-
-compass:ConservationScheme
-    a skos:ConceptScheme ;
-    skos:prefLabel "Conservation"@en ;
-    skos:prefLabel "Schutz"@de ;
-    skos:definition "Conservation focus areas."@en ;
-    skos:definition "Schwerpunkte der Schutzarbeit."@de ;
-    skos:hasTopConcept compass:AnimalConservation ;
-    skos:hasTopConcept compass:OceanConservation ;
-    skos:hasTopConcept compass:SpeciesConservation ;
-    dct:isPartOf <http://example.org/ocean-org/ontology> .
-
-compass:AnimalConservation
-    a skos:Concept, compass:Conservation ;
-    skos:prefLabel "Animal Conservation"@en ;
-    skos:prefLabel "Tierschutz"@de ;
-    skos:definition "Protecting individual marine animals from harm, capture and disturbance."@en ;
-    skos:definition "Schutz einzelner Meerestiere vor Schädigung, Fang und Störung."@de ;
-    compass:wpTagId "1070"^^xsd:integer ;
-    skos:inScheme compass:ConservationScheme ;
-    skos:topConceptOf compass:ConservationScheme .
-
-compass:OceanConservation
-    a skos:Concept, compass:Conservation ;
-    skos:prefLabel "Ocean Conservation"@en ;
-    skos:prefLabel "Meeresschutz"@de ;
-    skos:definition "Protecting marine habitats and the health of the ocean as a whole."@en ;
-    skos:definition "Schutz mariner Lebensräume und der Gesundheit des Ozeans als Ganzes."@de ;
-    compass:wpTagId "144"^^xsd:integer ;
-    skos:inScheme compass:ConservationScheme ;
-    skos:topConceptOf compass:ConservationScheme .
-
-compass:SpeciesConservation
-    a skos:Concept, compass:Conservation ;
-    skos:prefLabel "Species Conservation"@en ;
-    skos:prefLabel "Artenschutz"@de ;
-    skos:definition "Safeguarding entire species and populations against decline and extinction."@en ;
-    skos:definition "Bewahrung ganzer Arten und Populationen vor Rückgang und Aussterben."@de ;
-    compass:wpTagId "455"^^xsd:integer ;
-    skos:inScheme compass:ConservationScheme ;
-    skos:topConceptOf compass:ConservationScheme .
-
-# ============================================================
-# Topic (10 concepts)
+# Topics (16 concepts)
 # ============================================================
 
 compass:TopicScheme
     a skos:ConceptScheme ;
-    skos:prefLabel "Topic"@en ;
-    skos:prefLabel "Thema"@de ;
-    skos:definition "Thematic topics addressed by OceanCare."@en ;
-    skos:definition "Themen, mit denen sich OceanCare befasst."@de ;
+    skos:prefLabel "Topics"@en ;
+    skos:prefLabel "Themen"@de ;
+    skos:definition "Thematic topics addressed by OceanCare, conservation focus and pollution among them."@en ;
+    skos:definition "Themen, mit denen sich OceanCare befasst, darunter Schutzschwerpunkte und Verschmutzung."@de ;
+    skos:hasTopConcept compass:AnimalConservation ;
     skos:hasTopConcept compass:AquaticWildMeat ;
+    skos:hasTopConcept compass:ChemicalPollution ;
     skos:hasTopConcept compass:ClimateProtection ;
     skos:hasTopConcept compass:Collisions ;
     skos:hasTopConcept compass:DeepSeaMining ;
@@ -165,9 +122,23 @@ compass:TopicScheme
     skos:hasTopConcept compass:FossilFuels ;
     skos:hasTopConcept compass:Geoengineering ;
     skos:hasTopConcept compass:Hunting ;
+    skos:hasTopConcept compass:OceanConservation ;
+    skos:hasTopConcept compass:OceanNoisePollution ;
     skos:hasTopConcept compass:OutOfHabitat ;
+    skos:hasTopConcept compass:PlasticPollution ;
     skos:hasTopConcept compass:Shipping ;
+    skos:hasTopConcept compass:SpeciesConservation ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:AnimalConservation
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Animal Conservation"@en ;
+    skos:prefLabel "Tierschutz"@de ;
+    skos:definition "Protecting individual marine animals from harm, capture and disturbance."@en ;
+    skos:definition "Schutz einzelner Meerestiere vor Schädigung, Fang und Störung."@de ;
+    compass:wpTagId "1070"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
 compass:AquaticWildMeat
     a skos:Concept, compass:Topic ;
@@ -176,6 +147,16 @@ compass:AquaticWildMeat
     skos:definition "The hunting of aquatic mammals, reptiles and birds for their meat."@en ;
     skos:definition "Die Jagd auf Wassersäugetiere, -reptilien und -vögel zur Fleischgewinnung."@de ;
     compass:wpTagId "445"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:ChemicalPollution
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Chemical Pollution"@en ;
+    skos:prefLabel "Chemische Verschmutzung"@de ;
+    skos:definition "Toxic substances reaching the sea from industry, agriculture and shipping."@en ;
+    skos:definition "Giftstoffe, die aus Industrie, Landwirtschaft und Schifffahrt ins Meer gelangen."@de ;
+    compass:wpTagId "845"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -249,6 +230,26 @@ compass:Hunting
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
+compass:OceanConservation
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Ocean Conservation"@en ;
+    skos:prefLabel "Meeresschutz"@de ;
+    skos:definition "Protecting marine habitats and the health of the ocean as a whole."@en ;
+    skos:definition "Schutz mariner Lebensräume und der Gesundheit des Ozeans als Ganzes."@de ;
+    compass:wpTagId "144"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:OceanNoisePollution
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Ocean Noise Pollution"@en ;
+    skos:prefLabel "Unterwasserlärmverschmutzung"@de ;
+    skos:definition "Human-made underwater noise that masks the sounds marine animals depend on."@en ;
+    skos:definition "Vom Menschen erzeugter Unterwasserlärm, der die Laute überdeckt, auf die Meerestiere angewiesen sind."@de ;
+    compass:wpTagId "142"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
 compass:OutOfHabitat
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Out of Habitat"@en ;
@@ -256,6 +257,16 @@ compass:OutOfHabitat
     skos:definition "Marine animals held in captivity or stranded far outside their natural range."@en ;
     skos:definition "Meerestiere in Gefangenschaft oder weit ausserhalb ihres natürlichen Verbreitungsgebiets."@de ;
     compass:wpTagId "907"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:PlasticPollution
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Plastic Pollution"@en ;
+    skos:prefLabel "Plastikverschmutzung"@de ;
+    skos:definition "Plastic waste that reaches the sea and breaks down into lasting fragments."@en ;
+    skos:definition "Plastikabfall, der ins Meer gelangt und zu langlebigen Partikeln zerfällt."@de ;
+    compass:wpTagId "143"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -269,50 +280,15 @@ compass:Shipping
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
-# ============================================================
-# Pollution (3 concepts)
-# ============================================================
-
-compass:PollutionScheme
-    a skos:ConceptScheme ;
-    skos:prefLabel "Pollution"@en ;
-    skos:prefLabel "Verschmutzung"@de ;
-    skos:definition "Types of ocean pollution."@en ;
-    skos:definition "Arten der Meeresverschmutzung."@de ;
-    skos:hasTopConcept compass:ChemicalPollution ;
-    skos:hasTopConcept compass:OceanNoisePollution ;
-    skos:hasTopConcept compass:PlasticPollution ;
-    dct:isPartOf <http://example.org/ocean-org/ontology> .
-
-compass:ChemicalPollution
-    a skos:Concept, compass:Pollution ;
-    skos:prefLabel "Chemical Pollution"@en ;
-    skos:prefLabel "Chemische Verschmutzung"@de ;
-    skos:definition "Toxic substances reaching the sea from industry, agriculture and shipping."@en ;
-    skos:definition "Giftstoffe, die aus Industrie, Landwirtschaft und Schifffahrt ins Meer gelangen."@de ;
-    compass:wpTagId "845"^^xsd:integer ;
-    skos:inScheme compass:PollutionScheme ;
-    skos:topConceptOf compass:PollutionScheme .
-
-compass:OceanNoisePollution
-    a skos:Concept, compass:Pollution ;
-    skos:prefLabel "Ocean Noise Pollution"@en ;
-    skos:prefLabel "Unterwasserlärmverschmutzung"@de ;
-    skos:definition "Human-made underwater noise that masks the sounds marine animals depend on."@en ;
-    skos:definition "Vom Menschen erzeugter Unterwasserlärm, der die Laute überdeckt, auf die Meerestiere angewiesen sind."@de ;
-    compass:wpTagId "142"^^xsd:integer ;
-    skos:inScheme compass:PollutionScheme ;
-    skos:topConceptOf compass:PollutionScheme .
-
-compass:PlasticPollution
-    a skos:Concept, compass:Pollution ;
-    skos:prefLabel "Plastic Pollution"@en ;
-    skos:prefLabel "Plastikverschmutzung"@de ;
-    skos:definition "Plastic waste that reaches the sea and breaks down into lasting fragments."@en ;
-    skos:definition "Plastikabfall, der ins Meer gelangt und zu langlebigen Partikeln zerfällt."@de ;
-    compass:wpTagId "143"^^xsd:integer ;
-    skos:inScheme compass:PollutionScheme ;
-    skos:topConceptOf compass:PollutionScheme .
+compass:SpeciesConservation
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Species Conservation"@en ;
+    skos:prefLabel "Artenschutz"@de ;
+    skos:definition "Safeguarding entire species and populations against decline and extinction."@en ;
+    skos:definition "Bewahrung ganzer Arten und Populationen vor Rückgang und Aussterben."@de ;
+    compass:wpTagId "455"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
 
 # ============================================================
 # Species (11 concepts)
@@ -448,15 +424,15 @@ compass:Whales
     skos:topConceptOf compass:SpeciesScheme .
 
 # ============================================================
-# Country / Area (25 concepts)
+# Countries / Regions (25 concepts)
 # ============================================================
 
 compass:CountryAreaScheme
     a skos:ConceptScheme ;
-    skos:prefLabel "Country / Area"@en ;
-    skos:prefLabel "Land / Gebiet"@de ;
-    skos:definition "Countries and geographic areas relevant to OceanCare's work."@en ;
-    skos:definition "Länder und geografische Gebiete, die für die Arbeit von OceanCare relevant sind."@de ;
+    skos:prefLabel "Countries / Regions"@en ;
+    skos:prefLabel "Länder / Regionen"@de ;
+    skos:definition "Countries and geographic regions relevant to OceanCare's work."@en ;
+    skos:definition "Länder und geografische Regionen, die für die Arbeit von OceanCare relevant sind."@de ;
     skos:hasTopConcept compass:Arctic ;
     skos:hasTopConcept compass:Australia ;
     skos:hasTopConcept compass:Austria ;

@@ -63,8 +63,6 @@ class TestGetFilterWidgets:
         # name is its own description, so those cells are deliberately empty.
         # test_country_options_are_undescribed holds that end of it.
         scheme_dims = {
-            "conservation",
-            "pollution",
             "species",
             "topic",
             "workArea",
@@ -104,10 +102,10 @@ class TestGetFilterWidgets:
             return next(o.description for o in f.options or [] if o.value == value)
 
         noise = f"{COMPASS}OceanNoisePollution"
-        assert described("en", "pollution", noise) == (
+        assert described("en", "topic", noise) == (
             "Human-made underwater noise that masks the sounds marine animals depend on."
         )
-        assert described("de", "pollution", noise) == (
+        assert described("de", "topic", noise) == (
             "Vom Menschen erzeugter Unterwasserlärm, der die Laute überdeckt, auf "
             "die Meerestiere angewiesen sind."
         )
@@ -120,7 +118,7 @@ class TestGetFilterWidgets:
         de = {f.id: f for f in get_filters_from_shacl(read_graph, "de")}
         assert en["workArea"].description == "Types of work OceanCare performs."
         assert de["workArea"].description == "Arten der Arbeit, die OceanCare leistet."
-        for dim in ("conservation", "topic", "pollution", "species", "countryArea"):
+        for dim in ("topic", "species", "countryArea"):
             assert en[dim].description, f"{dim} lost its English scheme definition"
             assert de[dim].description != en[dim].description, (
                 f"{dim} shows its English definition to a German reader"

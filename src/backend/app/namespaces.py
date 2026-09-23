@@ -16,6 +16,17 @@ GEO = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
 SCHEMA = Namespace("https://schema.org/")
 """schema.org namespace (``url``, ``image``, …)."""
 
+PIN_CLASSES = ("InternationalForum", "Network", "Programme", "PartnerOrganization")
+"""Entity classes the filters select over: one entityType option each."""
+
+ALWAYS_ON_CLASSES = ("HostOrganization",)
+"""Entity classes drawn whatever the filters say.
+
+The host organization is what the map is about rather than one of its results,
+so it carries no entityType option, stays out of the facet counts and the result
+tally, and keeps its pin when every filter would otherwise have hidden it.
+"""
+
 # Separators used by SPARQL GROUP_CONCAT expressions and the GeoJSON translator
 ITEM_SEP = ";;"
 """Separator between multi-valued items in GROUP_CONCAT output."""

@@ -71,33 +71,30 @@ OUT_VOCAB = USE_CASE_DIR / "vocab.ttl"
 ONTOLOGY_NS = "http://example.org/ocean-org/ontology#"
 DATA_NS = "http://example.org/ocean-org/data#"
 
-# The six tag dimensions, in the order their sections appear in vocab.ttl.
-DIMENSIONS = ["WorkArea", "Conservation", "Topic", "Pollution", "Species", "CountryArea"]
+# The four tag dimensions, in the order their sections appear in vocab.ttl.
+DIMENSIONS = ["WorkArea", "Topic", "Species", "CountryArea"]
 
-# The four entity classes, in the order their sections appear in compass.ttl.
+# The five entity classes, in the order their sections appear in compass.ttl.
 CLASSES = {
-    "InternationalForum": "International Forums",
+    "InternationalForum": "International Fora",
     "Network": "Networks",
     "PartnerOrganization": "Partner Organizations",
     "Programme": "Programmes",
+    "HostOrganization": "Host Organization",
 }
 
 # Which predicate a link becomes, keyed by what the link points at.
 TAG_PREDICATE = {
     "WorkArea": "compass:workArea",
-    "Conservation": "compass:conservation",
     "Topic": "compass:topic",
-    "Pollution": "compass:pollution",
     "Species": "compass:species",
     "CountryArea": "compass:countryArea",
     "InternationalForum": "compass:forum",
     "Programme": "compass:relatedProgramme",
     "PartnerOrganization": "compass:relatedOrganization",
     "Network": "compass:relatedOrganization",
+    "HostOrganization": "compass:relatedOrganization",
 }
-
-# compass:managedByOceanCare is true for every Programme plus these ids.
-MANAGED_BY_OCEANCARE = {"OceanCare"}
 
 SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition_en", "definition_de"]
 CONCEPT_COLUMNS = [
@@ -145,9 +142,7 @@ PREDICATE_ORDER = [
     "compass:isoCode",
     "compass:managedByOceanCare",
     "compass:workArea",
-    "compass:conservation",
     "compass:topic",
-    "compass:pollution",
     "compass:species",
     "compass:countryArea",
     "compass:forum",
@@ -491,7 +486,7 @@ def pin_triples(
     if wp_entity_tag_id:
         triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
-    managed = row["class"] == "Programme" or row["id"] in MANAGED_BY_OCEANCARE
+    managed = row["class"] in ("Programme", "HostOrganization")
     triples.append(("compass:managedByOceanCare", "true" if managed else "false"))
     triples += link_triples(parse_links(row, kinds, problems))
 

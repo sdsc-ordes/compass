@@ -13,7 +13,7 @@
 # ============================================================
 
 # ============================================================
-# Entity Classes (4 types appearing on the map)
+# Entity Classes (5 types appearing on the map)
 # ============================================================
 
 compass:MapEntity a rdfs:Class ;
@@ -35,6 +35,13 @@ compass:Network a rdfs:Class ;
     rdfs:comment "A collaborative ocean research or monitoring network spanning multiple organizations."@en ;
     rdfs:comment "Ein kollaboratives Netzwerk für Meeresforschung oder -überwachung über mehrere Organisationen hinweg."@de .
 
+compass:HostOrganization a rdfs:Class ;
+    rdfs:subClassOf compass:MapEntity ;
+    rdfs:label "OceanCare"@en ;
+    rdfs:label "OceanCare"@de ;
+    rdfs:comment "The organization whose map this is. Drawn whatever the filters say, and absent from the entity-type filter: it is the map's subject rather than one of its results."@en ;
+    rdfs:comment "Die Organisation, deren Karte dies ist. Wird unabhängig von den Filtern gezeichnet und erscheint nicht im Filter nach Eintragsart: Sie ist das Thema der Karte, nicht eines ihrer Ergebnisse."@de .
+
 compass:PartnerOrganization a rdfs:Class ;
     rdfs:subClassOf compass:MapEntity ;
     rdfs:label "Partner Organization"@en ;
@@ -50,32 +57,20 @@ compass:Programme a rdfs:Class ;
     rdfs:comment "Ein zeitlich begrenztes Programm zur Bewältigung von Meeresfragen."@de .
 
 # ============================================================
-# Tag Dimension Classes (6 SKOS-based tag vocabularies)
+# Tag Dimension Classes (4 SKOS-based tag vocabularies)
 # ============================================================
 
 compass:WorkArea a rdfs:Class ;
     rdfs:subClassOf skos:Concept ;
-    rdfs:label "Work Area"@en ;
-    rdfs:label "Arbeitsbereich"@de ;
+    rdfs:label "Work Areas"@en ;
+    rdfs:label "Arbeitsbereiche"@de ;
     rdfs:comment "A type of work OceanCare performs."@en .
-
-compass:Conservation a rdfs:Class ;
-    rdfs:subClassOf skos:Concept ;
-    rdfs:label "Conservation"@en ;
-    rdfs:label "Schutz"@de ;
-    rdfs:comment "A conservation focus area."@en .
 
 compass:Topic a rdfs:Class ;
     rdfs:subClassOf skos:Concept ;
-    rdfs:label "Topic"@en ;
-    rdfs:label "Thema"@de ;
-    rdfs:comment "A thematic topic addressed by OceanCare."@en .
-
-compass:Pollution a rdfs:Class ;
-    rdfs:subClassOf skos:Concept ;
-    rdfs:label "Pollution"@en ;
-    rdfs:label "Verschmutzung"@de ;
-    rdfs:comment "A type of ocean pollution."@en .
+    rdfs:label "Topics"@en ;
+    rdfs:label "Themen"@de ;
+    rdfs:comment "A thematic topic addressed by OceanCare, conservation focus and pollution among them."@en .
 
 compass:Species a rdfs:Class ;
     rdfs:subClassOf skos:Concept ;
@@ -85,9 +80,9 @@ compass:Species a rdfs:Class ;
 
 compass:CountryArea a rdfs:Class ;
     rdfs:subClassOf skos:Concept ;
-    rdfs:label "Country / Area"@en ;
-    rdfs:label "Land / Gebiet"@de ;
-    rdfs:comment "A country or geographic area relevant to OceanCare's work."@en .
+    rdfs:label "Countries / Regions"@en ;
+    rdfs:label "Länder / Regionen"@de ;
+    rdfs:comment "A country or geographic region relevant to OceanCare's work."@en .
 
 # ============================================================
 # Property Declarations
@@ -125,20 +120,10 @@ compass:workArea a rdf:Property ;
     rdfs:label "Arbeitsbereich"@de ;
     rdfs:comment "The type of work performed in relation to this entity."@en .
 
-compass:conservation a rdf:Property ;
-    rdfs:label "conservation"@en ;
-    rdfs:label "Schutz"@de ;
-    rdfs:comment "The conservation focus area of this entity."@en .
-
 compass:topic a rdf:Property ;
     rdfs:label "topic"@en ;
     rdfs:label "Thema"@de ;
     rdfs:comment "A thematic topic associated with this entity."@en .
-
-compass:pollution a rdf:Property ;
-    rdfs:label "pollution"@en ;
-    rdfs:label "Verschmutzung"@de ;
-    rdfs:comment "A type of pollution associated with this entity."@en .
 
 compass:species a rdf:Property ;
     rdfs:label "species"@en ;
@@ -146,9 +131,9 @@ compass:species a rdf:Property ;
     rdfs:comment "A species associated with this entity."@en .
 
 compass:countryArea a rdf:Property ;
-    rdfs:label "country / area"@en ;
-    rdfs:label "Land / Gebiet"@de ;
-    rdfs:comment "A country or geographic area associated with this entity."@en .
+    rdfs:label "country / region"@en ;
+    rdfs:label "Land / Region"@de ;
+    rdfs:comment "A country or geographic region associated with this entity."@en .
 
 compass:forum a rdf:Property ;
     rdfs:label "forum"@en ;
@@ -315,31 +300,17 @@ compass:ManagedByOceanCareShape a sh:Shape ;
 
 compass:WorkAreaPropertyShape a sh:Shape ;
     sh:path compass:workArea ;
-    sh:name "Work Area"@en ;
-    sh:name "Arbeitsbereich"@de ;
+    sh:name "Work Areas"@en ;
+    sh:name "Arbeitsbereiche"@de ;
     sh:description "The type of work performed."@en ;
     sh:class compass:WorkArea .
 
-compass:ConservationPropertyShape a sh:Shape ;
-    sh:path compass:conservation ;
-    sh:name "Conservation"@en ;
-    sh:name "Schutz"@de ;
-    sh:description "The conservation focus area."@en ;
-    sh:class compass:Conservation .
-
 compass:TopicPropertyShape a sh:Shape ;
     sh:path compass:topic ;
-    sh:name "Topic"@en ;
-    sh:name "Thema"@de ;
+    sh:name "Topics"@en ;
+    sh:name "Themen"@de ;
     sh:description "A thematic topic."@en ;
     sh:class compass:Topic .
-
-compass:PollutionPropertyShape a sh:Shape ;
-    sh:path compass:pollution ;
-    sh:name "Pollution"@en ;
-    sh:name "Verschmutzung"@de ;
-    sh:description "A type of ocean pollution."@en ;
-    sh:class compass:Pollution .
 
 compass:SpeciesPropertyShape a sh:Shape ;
     sh:path compass:species ;
@@ -350,35 +321,36 @@ compass:SpeciesPropertyShape a sh:Shape ;
 
 compass:CountryAreaPropertyShape a sh:Shape ;
     sh:path compass:countryArea ;
-    sh:name "Country / Area"@en ;
-    sh:name "Land / Gebiet"@de ;
-    sh:description "A country or geographic area."@en ;
+    sh:name "Countries / Regions"@en ;
+    sh:name "Länder / Regionen"@de ;
+    sh:description "A country or geographic region."@en ;
     sh:class compass:CountryArea .
 
 compass:ForumPropertyShape a sh:Shape ;
     sh:path compass:forum ;
-    sh:name "Forum"@en ;
-    sh:name "Forum"@de ;
+    sh:name "International Fora"@en ;
+    sh:name "Internationale Foren"@de ;
     sh:description "An international forum."@en ;
     sh:class compass:InternationalForum .
 
 compass:RelatedProgrammePropertyShape a sh:Shape ;
     sh:path compass:relatedProgramme ;
-    sh:name "Related Programme"@en ;
-    sh:name "Verwandtes Programm"@de ;
+    sh:name "Programmes"@en ;
+    sh:name "Programme"@de ;
     sh:description "A related programme."@en ;
     sh:class compass:Programme .
 
-# No sh:class: targets are partner organizations or networks, separate classes.
+# No sh:class: targets are partner organizations, networks or OceanCare itself,
+# separate classes.
 compass:RelatedOrganizationPropertyShape a sh:Shape ;
     sh:path compass:relatedOrganization ;
     sh:name "Related Organization"@en ;
     sh:name "Verwandte Organisation"@de ;
-    sh:description "A related partner organization or network."@en ;
+    sh:description "A related partner organization, network, or OceanCare itself."@en ;
     sh:nodeKind sh:IRI .
 
 # ============================================================
-# SHACL Node Shapes: 4 entity types
+# SHACL Node Shapes: 5 entity types
 # Each references the shared named property shapes above.
 # ============================================================
 
@@ -402,9 +374,7 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
-    sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
-    sh:property compass:PollutionPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:RelatedOrganizationPropertyShape ;
@@ -430,9 +400,34 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
-    sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
-    sh:property compass:PollutionPropertyShape ;
+    sh:property compass:SpeciesPropertyShape ;
+    sh:property compass:CountryAreaPropertyShape ;
+    sh:property compass:ForumPropertyShape ;
+    sh:property compass:RelatedOrganizationPropertyShape ;
+    sh:property compass:RelatedProgrammePropertyShape .
+
+compass:HostOrganizationShape a sh:NodeShape ;
+    sh:targetClass compass:HostOrganization ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    rdfs:label "Host Organization Shape"@en ;
+    rdfs:label "Trägerorganisation-Form"@de ;
+    rdfs:comment "Validates the expected structure of the organization the map belongs to."@en ;
+    sh:property compass:NameShape ;
+    sh:property [ sh:path rdfs:label ; sh:datatype rdf:langString ;
+                  sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "en" "de" ) ] ;
+    sh:property compass:WpEntityTagIdShape ;
+    sh:property compass:LatShape ;
+    sh:property compass:LongShape ;
+    sh:property compass:LocationShape ;
+    sh:property compass:WebsiteUrlShape ;
+    sh:property compass:ImageShape ;
+    sh:property compass:DescriptionShape ;
+    sh:property compass:AltLabelShape ;
+    sh:property compass:ManagedByOceanCareShape ;
+    sh:property compass:WorkAreaPropertyShape ;
+    sh:property compass:TopicPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
@@ -459,9 +454,7 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
-    sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
-    sh:property compass:PollutionPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
@@ -488,9 +481,7 @@ compass:ProgrammeShape a sh:NodeShape ;
     sh:property compass:AltLabelShape ;
     sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
-    sh:property compass:ConservationPropertyShape ;
     sh:property compass:TopicPropertyShape ;
-    sh:property compass:PollutionPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;

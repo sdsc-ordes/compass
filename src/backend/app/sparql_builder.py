@@ -6,7 +6,14 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from app.namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
+from app.namespaces import (
+    ALWAYS_ON_CLASSES,
+    FIELD_SEP,
+    ITEM_SEP,
+    PIN_CLASSES,
+    PREFIX_MAP,
+    SPARQL_PREFIXES,
+)
 from app.shacl_to_entities import EntityShape
 from app.sparql_terms import iri_term, is_iri, string_literal
 
@@ -106,8 +113,6 @@ def build_select_expr(spec: EntityShape) -> str:
     return f"(SAMPLE(?{sid}) AS ?{sid}Result)"
 
 
-PIN_CLASSES = ("InternationalForum", "Network", "Programme", "PartnerOrganization")
-
 # The synthetic dimension over rdf:type. shacl_to_filters builds its widget and
 # _build_where_clauses filters on it; neither reaches it through a property shape.
 ENTITY_TYPE_ID = "entityType"
@@ -139,23 +144,49 @@ PIN = Subject(var="?s", type_var="?type", suffix="", declare_type=False)
 REGION_PIN = Subject(var="?pin", type_var="?pinType", suffix="Pin", declare_type=True)
 
 
-def _pin_branch(where_clauses: list[str], indent: str = "        ") -> str:
-    """Build the UNION of the four entity classes that carry coordinates.
+def _class_union(names: tuple[str, ...], indent: str) -> str:
+    """Build the UNION of class branches, each binding ``?type`` to its class.
 
     Args:
-        where_clauses: Extra FILTER / pattern lines applied to each pin.
+        names: Local names of the entity classes to match.
         indent: Leading whitespace for generated lines.
+
+    Returns:
+        SPARQL group pattern alternatives, without a trailing newline.
+    """
+    return f"\n{indent}UNION ".join(
+        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}" for name in names
+    )
+
+
+def _pin_branch(
+    where_clauses: list[str], indent: str = "        ", *, with_always_on: bool = False
+) -> str:
+    """Build the UNION of the entity classes that carry coordinates.
+
+    Args:
+        where_clauses: Extra FILTER / pattern lines applied to each filtered pin.
+        indent: Leading whitespace for generated lines.
+        with_always_on: Also emit ``ALWAYS_ON_CLASSES``, outside the filtered
+            group so no clause reaches them. Off for facet counts, which report
+            how many *results* a tag would leave.
 
     Returns:
         SPARQL WHERE fragment for map pins.
     """
-    branches = f"\n{indent}UNION ".join(
-        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}" for name in PIN_CLASSES
-    )
-    body = f"{indent}{branches}\n"
+    inner = indent + "    " if with_always_on else indent
+    body = f"{inner}{_class_union(PIN_CLASSES, inner)}\n"
     if where_clauses:
-        body += indent + f"\n{indent}".join(where_clauses) + "\n"
-    return body
+        body += inner + f"\n{inner}".join(where_clauses) + "\n"
+    if not with_always_on:
+        return body
+    return (
+        f"{indent}{{\n"
+        + body
+        + f"{indent}}} UNION {{\n"
+        + f"{inner}{_class_union(ALWAYS_ON_CLASSES, inner)}\n"
+        + f"{indent}}}\n"
+    )
 
 
 def _region_branch(where_clauses: list[str], indent: str = "        ") -> str:
@@ -441,7 +472,7 @@ def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any)
 
     sparql_where = (
         "        {\n"
-        + _pin_branch(pin_clauses, "            ")
+        + _pin_branch(pin_clauses, "            ", with_always_on=True)
         + "        } UNION {\n"
         + _region_branch(region_clauses, "            ")
         + "        }\n"
