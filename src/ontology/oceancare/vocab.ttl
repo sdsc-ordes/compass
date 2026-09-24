@@ -504,7 +504,6 @@ compass:Australia
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Australia"@en ;
     skos:prefLabel "Australien"@de ;
-    compass:isoCode "AUS" ;
     compass:wpTagId "966"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -513,7 +512,6 @@ compass:Austria
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Austria"@en ;
     skos:prefLabel "Österreich"@de ;
-    compass:isoCode "AUT" ;
     compass:wpTagId "998"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -530,7 +528,6 @@ compass:Benin
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Benin"@en ;
     skos:prefLabel "Benin"@de ;
-    compass:isoCode "BEN" ;
     compass:wpTagId "968"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -539,7 +536,6 @@ compass:Bulgaria
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Bulgaria"@en ;
     skos:prefLabel "Bulgarien"@de ;
-    compass:isoCode "BGR" ;
     compass:wpTagId "970"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -556,7 +552,6 @@ compass:EuropeanUnion
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "European Union"@en ;
     skos:prefLabel "Europäische Union"@de ;
-    compass:isoCode "AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX MLT NLD POL PRT ROU SVK SVN ESP SWE" ;
     compass:wpTagId "905"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -565,7 +560,6 @@ compass:FaroeIslands
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Faroe Islands"@en ;
     skos:prefLabel "Färöer-Inseln"@de ;
-    compass:isoCode "FRO" ;
     compass:wpTagId "843"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -574,7 +568,6 @@ compass:France
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "France"@en ;
     skos:prefLabel "Frankreich"@de ;
-    compass:isoCode "FRA" ;
     compass:wpTagId "974"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -583,7 +576,6 @@ compass:Germany
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Germany"@en ;
     skos:prefLabel "Deutschland"@de ;
-    compass:isoCode "DEU" ;
     compass:wpTagId "972"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -592,7 +584,6 @@ compass:Greece
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Greece"@en ;
     skos:prefLabel "Griechenland"@de ;
-    compass:isoCode "GRC" ;
     compass:wpTagId "942"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -601,7 +592,6 @@ compass:Iceland
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Iceland"@en ;
     skos:prefLabel "Island"@de ;
-    compass:isoCode "ISL" ;
     compass:wpTagId "978"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -610,7 +600,6 @@ compass:Italy
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Italy"@en ;
     skos:prefLabel "Italien"@de ;
-    compass:isoCode "ITA" ;
     compass:wpTagId "944"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -619,7 +608,6 @@ compass:Japan
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Japan"@en ;
     skos:prefLabel "Japan"@de ;
-    compass:isoCode "JPN" ;
     compass:wpTagId "980"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -628,7 +616,6 @@ compass:Maldives
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Maldives"@en ;
     skos:prefLabel "Malediven"@de ;
-    compass:isoCode "MDV" ;
     compass:wpTagId "982"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -637,7 +624,6 @@ compass:Mauritania
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Mauritania"@en ;
     skos:prefLabel "Mauretanien"@de ;
-    compass:isoCode "MRT" ;
     compass:wpTagId "984"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -646,7 +632,6 @@ compass:Norway
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Norway"@en ;
     skos:prefLabel "Norwegen"@de ;
-    compass:isoCode "NOR" ;
     compass:wpTagId "986"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -655,7 +640,6 @@ compass:Slovenia
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Slovenia"@en ;
     skos:prefLabel "Slowenien"@de ;
-    compass:isoCode "SVN" ;
     compass:wpTagId "946"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -664,7 +648,6 @@ compass:Spain
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Spain"@en ;
     skos:prefLabel "Spanien"@de ;
-    compass:isoCode "ESP" ;
     compass:wpTagId "990"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -673,7 +656,6 @@ compass:Switzerland
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Switzerland"@en ;
     skos:prefLabel "Schweiz"@de ;
-    compass:isoCode "CHE" ;
     compass:wpTagId "913"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -682,7 +664,6 @@ compass:UnitedKingdom
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "United Kingdom"@en ;
     skos:prefLabel "Grossbritannien"@de ;
-    compass:isoCode "GBR" ;
     compass:wpTagId "976"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -691,7 +672,6 @@ compass:Venezuela
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "Venezuela"@en ;
     skos:prefLabel "Venezuela"@de ;
-    compass:isoCode "VEN" ;
     compass:wpTagId "992"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .
@@ -700,7 +680,6 @@ compass:WestAfrica
     a skos:Concept, compass:CountryArea ;
     skos:prefLabel "West Africa"@en ;
     skos:prefLabel "Westafrika"@de ;
-    compass:isoCode "BEN BFA CPV CIV GMB GHA GIN GNB LBR MLI MRT NER NGA SEN SLE TGO" ;
     compass:wpTagId "994"^^xsd:integer ;
     skos:inScheme compass:CountryAreaScheme ;
     skos:topConceptOf compass:CountryAreaScheme .

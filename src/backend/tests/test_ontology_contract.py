@@ -136,7 +136,6 @@ class TestValidationOnlyShapes:
         SKOS.topConceptOf,
         SKOS.hasTopConcept,
         SKOS.definition,
-        COMPASS.isoCode,
         COMPASS.wpTagId,
     ]
 

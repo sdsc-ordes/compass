@@ -107,7 +107,7 @@ def _parse_coordinates(instance: dict[str, Any]) -> Point | None:
     except (TypeError, ValueError):
         logger.warning(
             "entity %s has unparseable coordinates (lat=%r, long=%r); "
-            "rendering it as a region instead of a pin",
+            "leaving it off the map",
             instance.get("s"),
             lat_raw,
             long_raw,
@@ -128,8 +128,9 @@ def instances_to_geojson(
         lang: UI language for special properties.
 
     Returns:
-        GeoJSON FeatureCollection (pins with geometry; regions with
-        ``is_region`` / ``regionKey`` and null geometry).
+        GeoJSON FeatureCollection, one Point feature per pin. A row whose
+        coordinates are missing or unusable is logged and skipped: the generator
+        refuses to publish such a pin, so one here means hand-edited Turtle.
     """
     features = []
     for instance in instances:
@@ -152,8 +153,8 @@ def instances_to_geojson(
 
         geometry = _parse_coordinates(instance)
         if geometry is None:
-            properties["is_region"] = True
-            properties["regionKey"] = _local_name(instance["s"])
+            logger.warning("skipping %s: no usable coordinates", instance["s"])
+            continue
 
         features.append(Feature(geometry=geometry, properties=properties))
 

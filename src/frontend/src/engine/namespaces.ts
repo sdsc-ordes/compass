@@ -1,15 +1,3 @@
-export const COMPASS_NS = 'http://example.org/ocean-org/ontology#';
-export const DATA_NS = 'http://example.org/ocean-org/data#';
-
-export const ENTITY_CLASS = {
-  PartnerOrganization: `${COMPASS_NS}PartnerOrganization`,
-  Network: `${COMPASS_NS}Network`,
-  InternationalForum: `${COMPASS_NS}InternationalForum`,
-  HostOrganization: `${COMPASS_NS}HostOrganization`,
-} as const;
-
-export const FEATURED_IRI = `${DATA_NS}OceanCare`;
-
 export type Filters = Record<string, string | string[] | undefined>;
 
 export type FilterOption = { value: string; label: string; description?: string };

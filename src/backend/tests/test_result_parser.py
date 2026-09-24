@@ -85,28 +85,20 @@ class TestResultsToGeojsonIntegration:
             assert "label" in props
             assert "type" in props
             assert "typeIri" in props
-            if props.get("is_region"):
-                assert feature["geometry"] is None
-                assert props.get("regionKey")
-                continue
             assert feature["geometry"]["type"] == "Point"
             coords = feature["geometry"]["coordinates"]
             assert -180 <= coords[0] <= 180, f"Invalid longitude: {coords[0]}"
             assert -90 <= coords[1] <= 90, f"Invalid latitude: {coords[1]}"
 
-    def test_regions_are_exactly_those_a_pin_refers_to(self, store, property_specs):
-        referenced = store.query("""
-            PREFIX compass: <http://example.org/ocean-org/ontology#>
-            SELECT DISTINCT ?region WHERE { ?pin compass:countryArea ?region . }
-        """)
-        expected = {str(row["region"]).rsplit("#", 1)[-1] for row in referenced}
+    def test_only_entities_with_coordinates_come_back(self, store, property_specs):
+        """A tag vocabulary is never a feature.
 
+        Country/Area concepts used to arrive as geometry-less "region" features
+        for a layer the widget never drew; nothing but a pin belongs here now.
+        """
         sparql = sparql_for_instances(property_specs, "en", QueryParams(""))
         geojson = instances_to_geojson(store.query(sparql), property_specs)
-        regions = [f for f in geojson["features"] if f["properties"].get("is_region")]
-
-        assert expected, "the ontology records no pin-to-region link at all"
-        assert {r["properties"]["regionKey"] for r in regions} == expected
-        for region in regions:
-            assert region["geometry"] is None
-            assert region["properties"]["typeIri"].endswith("CountryArea")
+        assert geojson["features"]
+        assert not [
+            f for f in geojson["features"] if f["properties"]["typeIri"].endswith("Area")
+        ]

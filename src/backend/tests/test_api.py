@@ -19,13 +19,12 @@ ALWAYS_ON_IRIS = {str(COMPASS[name]) for name in ALWAYS_ON_CLASSES}
 
 
 def result_pins(features: list[dict]) -> list[dict]:
-    """The point features the selection produced.
+    """The pins the selection produced -- which is every feature it returns.
 
-    Only regions drop out: they are background context with no geometry, and no
-    count reports them. The host organization does count -- it carries every
-    concept in the vocabulary, so it genuinely matches any tag selection.
+    The host organization is among them: it carries every concept in the
+    vocabulary, so it genuinely matches any tag selection.
     """
-    return [f for f in features if not f["properties"].get("is_region")]
+    return list(features)
 
 
 @pytest.fixture(scope="module")
@@ -74,19 +73,25 @@ class TestEntitiesEndpoint:
 
     def test_feature_structure(self, client):
         data = client.get("/api/v1/entities?lang=en").json()
-        point = next(f for f in data["features"] if not f["properties"].get("is_region"))
+        point = data["features"][0]
         assert point["type"] == "Feature"
         assert point["geometry"]["type"] == "Point"
         assert len(point["geometry"]["coordinates"]) == 2
         assert "id" in point["properties"]
         assert "label" in point["properties"]
 
-    def test_region_features(self, client):
+    def test_every_feature_is_a_drawable_pin(self, client):
+        """The endpoint returns pins and nothing else.
+
+        It used to return Country/Area rows with null geometry for a region
+        layer the widget never drew, and the frontend dropped every one.
+        """
         data = client.get("/api/v1/entities?lang=en").json()
-        regions = [f for f in data["features"] if f["properties"].get("is_region")]
-        assert regions, "no region reached the map"
-        assert all(r["geometry"] is None for r in regions)
-        assert all(r["properties"].get("regionKey") for r in regions)
+        assert data["features"]
+        assert all(f["geometry"] is not None for f in data["features"])
+        assert all(f["geometry"]["type"] == "Point" for f in data["features"]), (
+            "a feature came back without a point to draw"
+        )
 
     def test_entity_type_filter(self, client):
         all_data = client.get("/api/v1/entities?lang=en").json()
@@ -105,11 +110,7 @@ class TestEntitiesEndpoint:
         def pins(*values: str) -> set[str]:
             params = [("lang", "en")] + [("species", v) for v in values]
             data = client.get("/api/v1/entities", params=params).json()
-            return {
-                f["properties"]["id"]
-                for f in data["features"]
-                if not f["properties"].get("is_region")
-            }
+            return {f["properties"]["id"] for f in data["features"]}
 
         a, b = pins(SPECIES_A), pins(SPECIES_B)
         both = pins(SPECIES_A, SPECIES_B)
@@ -123,11 +124,7 @@ class TestEntitiesEndpoint:
 
         def pins(params: list[tuple[str, str]]) -> set[str]:
             data = client.get("/api/v1/entities", params=[("lang", "en"), *params]).json()
-            return {
-                f["properties"]["id"]
-                for f in data["features"]
-                if not f["properties"].get("is_region")
-            }
+            return {f["properties"]["id"] for f in data["features"]}
 
         topic = str(COMPASS.Shipping)
         species_only = pins([("species", SPECIES_A)])
@@ -176,24 +173,6 @@ class TestEntitiesEndpoint:
         ]
         assert not empty, f"filter options matching nothing: {empty}"
 
-    def test_regions_narrow_with_their_pins(self, client):
-        """A region is shaded by one pin passing every filter, so two tags
-        shade only where a single pin carries both."""
-
-        def regions(*values: str) -> set[str]:
-            params = [("lang", "en")] + [("species", v) for v in values]
-            data = client.get("/api/v1/entities", params=params).json()
-            return {
-                f["properties"]["regionKey"]
-                for f in data["features"]
-                if f["properties"].get("is_region")
-            }
-
-        a, b = regions(SPECIES_A), regions(SPECIES_B)
-        both = regions(SPECIES_A, SPECIES_B)
-        assert both
-        assert both <= a and both <= b
-
     def test_entity_type_is_still_disjunctive(self, client):
         """An entity has exactly one class, so two picks there mean "either" --
         AND would empty the map."""
@@ -201,11 +180,7 @@ class TestEntitiesEndpoint:
         def pins(*types: str) -> set[str]:
             params = [("lang", "en")] + [("entityType", t) for t in types]
             data = client.get("/api/v1/entities", params=params).json()
-            return {
-                f["properties"]["id"]
-                for f in data["features"]
-                if not f["properties"].get("is_region")
-            }
+            return {f["properties"]["id"] for f in data["features"]}
 
         partner, network = str(COMPASS.PartnerOrganization), str(COMPASS.Network)
         assert pins(partner, network) == pins(partner) | pins(network)

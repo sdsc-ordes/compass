@@ -186,7 +186,7 @@ reload leaves the previous ontology serving. See
 | `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
 | `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
 | `src/ontology/<COMPASS_USE_CASE>/compass.ttl` | *Generated* — instance data (the pins on the map) |
-| `src/ontology/<COMPASS_USE_CASE>/vocab.ttl` | *Generated* — SKOS controlled vocabularies (topics, species, regions, …) |
+| `src/ontology/<COMPASS_USE_CASE>/vocab.ttl` | *Generated* — SKOS controlled vocabularies (work areas, topics, programmes, species, countries / regions) |
 
 Every row carries its own `id`, and **pins** link to other rows by id in a
 `links` column. **The predicate a link becomes is decided by what it points
@@ -196,11 +196,8 @@ adding an id to its `links` cell — nothing else. There is no configuration fil
 and no mapping to keep in step.
 
 Concepts never link out: the `concepts` sheet has no `links` column, so a tag is
-recorded once, on the pin that carries it. Country/Area concepts are the visible
-consequence — a region is shaded on the map only because some pin passing the
-active filters points at it, which is also why shading means "matching pins are
-in here" rather than something maintained by hand. A region no pin refers to
-stays a filter value that matches nothing.
+recorded once, on the pin that carries it. A concept no pin refers to stays a
+filter value that matches nothing.
 
 Adding a filter dimension means adding a property shape to `shapes.ttl` — the
 filter panel and the query follow automatically.
@@ -208,10 +205,6 @@ filter panel and the query follow automatically.
 A link to an id that does not exist fails the run, naming the sheet, the row and
 the id. Mistakes are collected across the whole run rather than reported one per
 attempt.
-
-Regions reach the widget as tags rather than as shaded polygons -- the stage
-draws no region layer -- so there is no boundary geometry to build. A region
-still needs a pin pointing at it before it appears at all.
 
 ---
 

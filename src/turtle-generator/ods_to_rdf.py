@@ -104,7 +104,6 @@ CONCEPT_COLUMNS = [
     "definition_en",
     "definition_de",
     "wp_tag_id",
-    "iso_codes",
     "notes",
 ]
 PIN_COLUMNS = [
@@ -138,7 +137,6 @@ PREDICATE_ORDER = [
     "compass:description",
     "schema:url",
     "schema:image",
-    "compass:isoCode",
     "compass:managedByOceanCare",
     "compass:workArea",
     "compass:topic",
@@ -451,8 +449,6 @@ def concept_triples(row: Row, problems: Problems, fallbacks: Fallbacks) -> Tripl
     wp_tag_id = number(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
-    if row["iso_codes"]:
-        triples.append(("compass:isoCode", f'"{row["iso_codes"]}"'))
     triples += [("skos:inScheme", scheme), ("skos:topConceptOf", scheme)]
     return triples
 

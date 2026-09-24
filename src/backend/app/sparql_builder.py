@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
@@ -118,30 +117,9 @@ def build_select_expr(spec: EntityShape) -> str:
 ENTITY_TYPE_ID = "entityType"
 
 
-@dataclass(frozen=True)
-class Subject:
-    """Which variable a set of filter clauses constrains.
-
-    Filters read the same for a pin the map draws and for the pin that puts a
-    region on the map, but they cannot share variable names: the region branch
-    nests its copy inside FILTER EXISTS, where the outer ``?type`` is already
-    bound to ``compass:CountryArea``.
-
-    Attributes:
-        var: Subject variable (e.g. ``?s`` or ``?pin``).
-        type_var: Variable holding the entity class IRI.
-        suffix: Keeps helper variables distinct across the two copies.
-        declare_type: Bind ``type_var`` here rather than relying on an outer BIND.
-    """
-
-    var: str
-    type_var: str
-    suffix: str
-    declare_type: bool
-
-
-PIN = Subject(var="?s", type_var="?type", suffix="", declare_type=False)
-REGION_PIN = Subject(var="?pin", type_var="?pinType", suffix="Pin", declare_type=True)
+# The one subject every clause constrains: the pin the map draws.
+PIN_VAR = "?s"
+TYPE_VAR = "?type"
 
 
 def _class_union(names: tuple[str, ...], indent: str) -> str:
@@ -189,48 +167,22 @@ def _pin_branch(
     )
 
 
-def _region_branch(where_clauses: list[str], indent: str = "        ") -> str:
-    """Build the Country/Area branch reachable only through a matching pin.
-
-    A region is a shaded polygon rather than a result, and it carries no tags of
-    its own: it reaches the map because some pin passing the same filters
-    records it, so shading always means "matching pins are in here".
-
-    Args:
-        where_clauses: Filter clauses applied to the nested ``?pin``.
-        indent: Leading whitespace for generated lines.
-
-    Returns:
-        SPARQL WHERE fragment for shaded regions.
-    """
-    inner = f"{indent}    ?pin compass:countryArea ?s .\n"
-    if where_clauses:
-        inner += indent + "    " + f"\n{indent}    ".join(where_clauses) + "\n"
-    return (
-        f"{indent}?s a compass:CountryArea .\n"
-        f"{indent}BIND(compass:CountryArea AS ?type)\n"
-        f"{indent}FILTER EXISTS {{\n{inner}{indent}}}\n"
-    )
-
-
 def _shared_optionals(lang: str) -> str:
-    """Geometry and label binding, applied to pins and regions alike.
+    """Geometry and label binding for every pin.
 
-    Regions have no coordinates and label themselves with skos:prefLabel, so
-    geometry is OPTIONAL and the label is COALESCEd across both properties.
+    Coordinates stay OPTIONAL so a pin missing them reaches the decoder, which
+    logs it, rather than dropping out of the query unremarked. A pin with no
+    name in the requested language drops out, exactly as it would on the map.
 
     Args:
         lang: Preferred language tag.
 
     Returns:
-        SPARQL OPTIONAL / BIND / FILTER block.
+        SPARQL OPTIONAL / FILTER block.
     """
     return f"""        OPTIONAL {{ ?s geo:lat ?lat . }}
         OPTIONAL {{ ?s geo:long ?long . }}
-        OPTIONAL {{ ?s compass:name ?nameLabel . FILTER(lang(?nameLabel) = "{lang}") }}
-        OPTIONAL {{ ?s skos:prefLabel ?prefLabel . FILTER(lang(?prefLabel) = "{lang}") }}
-        BIND(COALESCE(?nameLabel, ?prefLabel) AS ?label)
-        FILTER(BOUND(?label))
+        ?s compass:name ?label . FILTER(lang(?label) = "{lang}")
         OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
 """
 
@@ -262,7 +214,6 @@ def _build_where_clauses(
     range_filters: RangeFilters,
     date_filters: dict[str, str],
     *,
-    subject: Subject = PIN,
     exclude_key: str | None = None,
 ) -> list[str]:
     """Translate HTTP query params into SPARQL WHERE fragments.
@@ -284,20 +235,19 @@ def _build_where_clauses(
         filter_map: Multiselect/toggle property id → prefixed predicate.
         range_filters: Slider property id → (predicate, datatype).
         date_filters: Datepicker property id → prefixed predicate.
-        subject: Variable naming for pin vs region-pin copies.
         exclude_key: Dimension id to ignore (disjunctive-dimension faceting).
 
     Returns:
         List of SPARQL pattern / FILTER lines.
     """
     where_clauses = []
-    subj = subject.var
+    subj = PIN_VAR
 
     for key, val in query_params.items():
         if key in ("lang", exclude_key) or not val:
             continue
         values = query_params.getlist(key)
-        var = f"?{key}{subject.suffix}Val"
+        var = f"?{key}Val"
 
         if key in filter_map:
             prop = filter_map[key]
@@ -333,16 +283,9 @@ def _build_where_clauses(
             if iri_list:
                 # Disjunctive on purpose, unlike the tag dimensions above: an
                 # entity has exactly one rdf:type, so requiring two picked
-                # classes at once would empty the map. Picking Project and
+                # classes at once would empty the map. Picking Programme and
                 # Network means "either".
-                #
-                # A region has no type of its own to filter, so the legend
-                # reaches it through the pins: hide every Project and a region
-                # holding only projects stops being shaded.
-                clause = f"FILTER({subject.type_var} IN ({iri_list}))"
-                if subject.declare_type:
-                    clause = f"{subj} a {subject.type_var} . {clause}"
-                where_clauses.append(clause)
+                where_clauses.append(f"FILTER({TYPE_VAR} IN ({iri_list}))")
 
         elif key in range_filters:
             prop, datatype = range_filters[key]
@@ -406,9 +349,6 @@ def build_facet_query(
     drill-down: its own picks are excluded, or every class the user has not
     picked would count zero and look unpickable.
 
-    Regions are background context rather than results (see the map's result
-    badge, which counts point features only), so only the pin branch is counted.
-
     Args:
         specs: EntityShape list for the ontology.
         lang: Preferred language for shared optionals.
@@ -432,7 +372,7 @@ def build_facet_query(
     # to ?val keeps one result shape for the caller; ?val cannot be aliased to
     # itself, which is why the ordinary path selects it bare.
     if target_id == ENTITY_TYPE_ID:
-        selected, grouped = f"({PIN.type_var} AS ?val)", PIN.type_var
+        selected, grouped = f"({TYPE_VAR} AS ?val)", TYPE_VAR
     else:
         selected, grouped = "?val", "?val"
         sparql_where += f"        ?s {filter_map[target_id]} ?val .\n"
@@ -449,7 +389,7 @@ def build_facet_query(
 
 
 def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any) -> str:
-    """Compile the main entity SELECT (pins UNION regions) for the map.
+    """Compile the main entity SELECT for the map.
 
     Args:
         specs: EntityShape list for the ontology.
@@ -466,17 +406,8 @@ def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any)
     pin_clauses = _build_where_clauses(
         query_params, filter_map, range_filters, date_filters
     )
-    region_clauses = _build_where_clauses(
-        query_params, filter_map, range_filters, date_filters, subject=REGION_PIN
-    )
 
-    sparql_where = (
-        "        {\n"
-        + _pin_branch(pin_clauses, "            ", with_always_on=True)
-        + "        } UNION {\n"
-        + _region_branch(region_clauses, "            ")
-        + "        }\n"
-    )
+    sparql_where = _pin_branch(pin_clauses, with_always_on=True)
     sparql_where += _shared_optionals(lang)
     sparql_where += "        " + auto_optionals + "\n"
 

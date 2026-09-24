@@ -11,12 +11,9 @@ from starlette.datastructures import QueryParams
 from app.namespaces import COMPASS
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import (
-    PIN,
     PIN_CLASSES,
-    REGION_PIN,
     _build_where_clauses,
     _pin_branch,
-    _region_branch,
     _shared_optionals,
     build_facet_query,
     build_optional,
@@ -111,8 +108,8 @@ class TestPinBranch:
     def test_branch_offers_class(self, entity_class):
         assert f"compass:{entity_class}" in _pin_branch([])
 
-    def test_branch_excludes_regions(self):
-        """Regions are derived, so they must never be a pin alternative."""
+    def test_branch_excludes_tag_vocabularies(self):
+        """Only entity classes carry coordinates, so only they may be pins."""
         assert "compass:CountryArea" not in _pin_branch([])
 
     def test_shared_optionals_bind_geometry_and_name(self):
@@ -122,24 +119,9 @@ class TestPinBranch:
         assert "compass:name" in optionals
 
 
-class TestRegionBranch:
-    """A region reaches the map only through a pin that points at it."""
-
-    def test_requires_a_referring_pin(self):
-        branch = _region_branch([])
-        assert "FILTER EXISTS" in branch
-        assert "?pin compass:countryArea ?s ." in branch
-
-    def test_filters_apply_to_the_referring_pin(self):
-        """A region carries no tags, so the filters must constrain the pin."""
-        branch = _region_branch(["?pin compass:topic compass:Shipping ."])
-        assert "?pin compass:topic compass:Shipping ." in branch
-        assert "?s compass:topic" not in branch
-
-
-def _clauses(query: str, subject=PIN) -> list[str]:
+def _clauses(query: str) -> list[str]:
     """Filter clauses for a query string, against a two-tag filter map."""
-    return _build_where_clauses(QueryParams(query), _FILTER_MAP, {}, {}, subject=subject)
+    return _build_where_clauses(QueryParams(query), _FILTER_MAP, {}, {})
 
 
 class TestWithinDimensionIsConjunctive:
@@ -171,13 +153,6 @@ class TestWithinDimensionIsConjunctive:
         assert clauses == [
             '?s compass:topic ?topicVal0 . FILTER(str(?topicVal0) = "Shipping")',
             '?s compass:topic ?topicVal1 . FILTER(str(?topicVal1) = "Hunting")',
-        ]
-
-    def test_literal_variables_stay_distinct_in_the_region_copy(self):
-        clauses = _clauses("topic=Shipping&topic=Hunting", subject=REGION_PIN)
-        assert clauses == [
-            '?pin compass:topic ?topicPinVal0 . FILTER(str(?topicPinVal0) = "Shipping")',
-            '?pin compass:topic ?topicPinVal1 . FILTER(str(?topicPinVal1) = "Hunting")',
         ]
 
     def test_a_repeated_value_constrains_nothing_twice(self):
@@ -232,23 +207,6 @@ class TestConjunctionAgainstTheStore:
         assert both == dolphins & whales
         assert both < dolphins and both < whales, "AND must narrow, not widen"
 
-    def test_regions_narrow_with_their_pins(self, store, property_specs):
-        """A region is shaded by one pin passing every filter, not by two."""
-
-        def regions(query: str) -> set[str]:
-            sparql = sparql_for_instances(property_specs, "en", QueryParams(query))
-            return {
-                row["s"]
-                for row in store.query(sparql)
-                if row["type"] == str(COMPASS.CountryArea)
-            }
-
-        dolphins = regions(f"species={COMPASS.Dolphins}")
-        whales = regions(f"species={COMPASS.Whales}")
-        both = regions(f"species={COMPASS.Dolphins}&species={COMPASS.Whales}")
-        assert both, "some region holds a pin carrying both tags"
-        assert both <= dolphins and both <= whales
-
 
 class TestFacetQueryUnderAnd:
     """A facet count means "results if I also pick this"."""
@@ -296,23 +254,21 @@ class TestFacetQueryUnderAnd:
 
 
 class TestFilterSubjects:
-    """Both copies of a filter must constrain their own subject."""
+    """Every clause constrains the one subject the query has."""
 
-    def test_entities_query_filters_pins_and_referring_pins(self, property_specs):
+    def test_entities_query_filters_the_pin(self, property_specs):
         sparql = sparql_for_instances(
             property_specs, "en", QueryParams(f"countryArea={COMPASS.Greece}")
         )
         assert f"?s compass:countryArea <{COMPASS.Greece}> ." in sparql
-        assert f"?pin compass:countryArea <{COMPASS.Greece}> ." in sparql
 
-    def test_entity_type_reaches_regions_through_their_pins(self):
+    def test_entity_type_filters_the_bound_class(self):
         sparql = sparql_for_instances(
-            [], "en", QueryParams(f"entityType={COMPASS.Programme}")
+            [], "en", QueryParams(f"entityType={COMPASS.Network}")
         )
-        assert f"FILTER(?type IN (<{COMPASS.Programme}>))" in sparql
-        assert f"?pin a ?pinType . FILTER(?pinType IN (<{COMPASS.Programme}>))" in sparql
+        assert f"FILTER(?type IN (<{COMPASS.Network}>))" in sparql
 
-    def test_facet_query_counts_pins_only(self, property_specs):
+    def test_no_query_mentions_a_tag_vocabulary_as_a_subject(self, property_specs):
         sparql = build_facet_query(property_specs, "en", QueryParams(""), "topic")
         assert "compass:CountryArea" not in sparql
 

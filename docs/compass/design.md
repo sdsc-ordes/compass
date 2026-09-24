@@ -90,17 +90,17 @@ flowchart TB
 
 For the map user, the relationship is simple: **filters ask; entities answer.**
 
-**Entities** are the **things on the map** (and in the list): a Programme, Network,
-Partner, or Forum as a pin, or a Country/Area as a shaded region. Click one and
-the sidebar or list row shows name, type, and colored tag chips.
+**Entities** are the **things on the map**: a Network, Partner or Forum, each as
+a pin. Click one and the detail pane shows name, type, and colored tag chips.
 
-**Filters** are the **controls that narrow that set**: the filter panel (topics,
-species, regions, …) plus the map legend type toggles. Choosing chips changes
-which entities stay visible; the result-count badge is “how many entities match.”
+**Filters** are the **controls that narrow that set**: the filter panel (work
+areas, topics, programmes, species, countries / regions) plus the entity-type
+pills. Choosing chips changes which entities stay visible; the result-count
+badge is “how many entities match.”
 
 | | Filter (UI) | Entity (UI) |
 | --- | --- | --- |
-| Looks like | Sections of clickable chips / legend dots | Pins, regions, list rows, detail sidebar |
+| Looks like | Sections of clickable chips / type pills | Pins on the map, detail pane |
 | Role | “Show me only …” | “Here is one matching thing” |
 | Example | Chip **Topics → Plastic Pollution** | Partner pin whose properties include that tag |
 

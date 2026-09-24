@@ -6,8 +6,6 @@ export type EntityProperties = {
   type: string;
   typeIri: string;
   storiesUrl: string;
-  is_region?: boolean;
-  regionKey?: string;
 } & Record<string, unknown>;
 
 export type Geometry = { type: string; coordinates: number[] | number[][][] };

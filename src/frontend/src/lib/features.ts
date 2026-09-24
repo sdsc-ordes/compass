@@ -7,7 +7,7 @@ const text = (value: unknown): string => (typeof value === 'string' ? value : ''
 export function toProj(f: Feature): Proj | null {
   const p = f.properties;
   if (!p) return null;
-  if (!f.geometry || p.is_region) return null;
+  if (!f.geometry) return null;
   const c = f.geometry.coordinates as number[];
   if (!Array.isArray(c) || !isFinite(c[0]) || !isFinite(c[1])) return null;
   return {

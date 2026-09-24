@@ -161,11 +161,6 @@ compass:wpEntityTagId a rdf:Property ;
     rdfs:comment "Numeric WP term ID of the per-entity tag on OceanCare, used to link to stories about this entity. One term serves both language sites, which differ only in the URL the link is built on."@en ;
     rdfs:range xsd:integer .
 
-compass:isoCode a rdf:Property ;
-    rdfs:label "ISO / boundary code"@en ;
-    rdfs:comment "Boundary lookup key for a Country/Area concept: an ISO 3166-1 alpha-3 code, or several separated by spaces for a region dissolved from its members. Read by the frontend region-boundary build script; not sent to the map (regions are keyed by concept local name)."@en ;
-    rdfs:range xsd:string .
-
 # -- External properties (stub declarations) --
 
 rdfs:label a rdf:Property ;
@@ -530,12 +525,6 @@ compass:ConceptShape a sh:NodeShape ;
         sh:path compass:wpTagId ;
         sh:datatype xsd:integer ;
         sh:maxCount 1 ;
-    ] ;
-    sh:property [
-        sh:path compass:isoCode ;
-        sh:datatype xsd:string ;
-        sh:maxCount 1 ;
-        sh:pattern "^[A-Z]{3}( [A-Z]{3})*$" ;
     ] .
 
 compass:ConceptSchemeShape a sh:NodeShape ;
