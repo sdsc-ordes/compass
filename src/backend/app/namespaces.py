@@ -16,7 +16,7 @@ GEO = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
 SCHEMA = Namespace("https://schema.org/")
 """schema.org namespace (``url``, ``image``, …)."""
 
-PIN_CLASSES = ("InternationalForum", "Network", "Programme", "PartnerOrganization")
+PIN_CLASSES = ("InternationalForum", "Network", "PartnerOrganization")
 """Entity classes the filters select over: one entityType option each."""
 
 ALWAYS_ON_CLASSES = ("HostOrganization",)

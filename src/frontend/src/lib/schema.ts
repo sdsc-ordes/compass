@@ -8,7 +8,7 @@ export const DIM_IDS: string[] = [
   'entityType',
   'workArea',
   'topic',
-  'relatedProgramme',
+  'programme',
   'species',
   'countryArea',
 ];
@@ -22,7 +22,7 @@ export type Option = FilterOption;
 export const DIM_ICONS: Partial<Record<string, IconName>> = {
   workArea: 'briefcase',
   topic: 'tag',
-  relatedProgramme: 'folder',
+  programme: 'folder',
   species: 'whale',
   countryArea: 'globe',
 };

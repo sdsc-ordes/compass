@@ -139,7 +139,7 @@ class TestValidationOnlyShapes:
         "entityType",
         "forum",
         "managedByOceanCare",
-        "relatedProgramme",
+        "programme",
         "species",
         "topic",
         "workArea",
@@ -178,7 +178,7 @@ class TestValidationOnlyShapes:
 
 
 class TestTagVocabularies:
-    """All 4 SKOS-based tag dimension classes must have instances.
+    """All 5 SKOS-based tag dimension classes must have instances.
 
     Label and metadata correctness is enforced by compass:ConceptShape in
     shapes.ttl; SHACL cannot express "this class has at least one instance".
@@ -187,6 +187,7 @@ class TestTagVocabularies:
     TAG_CLASSES: ClassVar[list] = [
         COMPASS.WorkArea,
         COMPASS.Topic,
+        COMPASS.Programme,
         COMPASS.Species,
         COMPASS.CountryArea,
     ]
@@ -218,10 +219,12 @@ class TestTagVocabularies:
 # -- Forum/Programme entities have rdfs:label for tag label discovery --
 
 
-class TestForumProgrammeLabels:
-    """InternationalForum and Programme entities are used as tag values.
-    build_optional() looks up labels via skos:prefLabel / rdfs:label,
-    so every Forum/Programme entity must have rdfs:label."""
+class TestForumLabels:
+    """InternationalForum entities are used as tag values, through
+    compass:forum. build_optional() looks up labels via skos:prefLabel /
+    rdfs:label, so every Forum entity must have rdfs:label. The tag
+    vocabularies label themselves with skos:prefLabel and are covered by
+    compass:ConceptShape instead."""
 
     def test_forums_have_rdfs_label(self, read_graph):
         missing = []
@@ -232,16 +235,6 @@ class TestForumProgrammeLabels:
         assert not missing, (
             "InternationalForum entities missing rdfs:label "
             f"(tag labels will be blank): {missing}"
-        )
-
-    def test_projects_have_rdfs_label(self, read_graph):
-        missing = []
-        for s in read_graph.subjects(RDF.type, COMPASS.Programme):
-            labels = list(read_graph.objects(s, RDFS.label))
-            if not labels:
-                missing.append(str(s))
-        assert not missing, (
-            f"Programme entities missing rdfs:label (tag labels will be blank): {missing}"
         )
 
 

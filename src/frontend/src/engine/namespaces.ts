@@ -5,7 +5,6 @@ export const ENTITY_CLASS = {
   PartnerOrganization: `${COMPASS_NS}PartnerOrganization`,
   Network: `${COMPASS_NS}Network`,
   InternationalForum: `${COMPASS_NS}InternationalForum`,
-  Programme: `${COMPASS_NS}Programme`,
   HostOrganization: `${COMPASS_NS}HostOrganization`,
 } as const;
 

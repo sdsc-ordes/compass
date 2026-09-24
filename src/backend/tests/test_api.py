@@ -197,8 +197,8 @@ class TestEntitiesEndpoint:
                 if not f["properties"].get("is_region")
             }
 
-        programme, network = str(COMPASS.Programme), str(COMPASS.Network)
-        assert pins(programme, network) == pins(programme) | pins(network)
+        partner, network = str(COMPASS.PartnerOrganization), str(COMPASS.Network)
+        assert pins(partner, network) == pins(partner) | pins(network)
 
     def test_german_entities(self, client):
         data = client.get("/api/v1/entities?lang=de").json()
@@ -222,11 +222,12 @@ class TestFacetsEndpoint:
                 assert isinstance(n, int) and n > 0
 
     def test_excludes_relations(self, client):
-        # relatedProgramme and forum are relations, not tags, so a count under
-        # them would not mean what a count under a tag means.
+        # forum points at another pin rather than at a tag, so a count under it
+        # would not mean what a count under a tag means. programme used to be
+        # here too and is now a vocabulary like any other.
         data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert "relatedProgramme" not in data
         assert "forum" not in data
+        assert "programme" in data
 
     def test_counts_entity_types(self, client):
         # entityType has no property shape -- it is the class _pin_branch BINDs --
@@ -300,7 +301,7 @@ class TestFacetsEndpoint:
         base = client.get("/api/v1/entities/facets?lang=en").json()["entityType"]
         after = client.get(
             "/api/v1/entities/facets",
-            params={"lang": "en", "entityType": str(COMPASS.Programme)},
+            params={"lang": "en", "entityType": str(COMPASS.Network)},
         ).json()["entityType"]
         assert after == base
 

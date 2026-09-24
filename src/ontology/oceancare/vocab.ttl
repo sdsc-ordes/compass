@@ -14,7 +14,7 @@
 @prefix ocinst: <http://example.org/ocean-org/data#> .
 
 # ============================================================
-# Work Areas (7 concepts)
+# Work Areas (4 concepts)
 # ============================================================
 
 compass:WorkAreaScheme
@@ -25,10 +25,7 @@ compass:WorkAreaScheme
     skos:definition "Arten der Arbeit, die OceanCare leistet."@de ;
     skos:hasTopConcept compass:AdvocacyWork ;
     skos:hasTopConcept compass:CommunityInvolvement ;
-    skos:hasTopConcept compass:Events ;
-    skos:hasTopConcept compass:Petitions ;
     skos:hasTopConcept compass:RescueActivities ;
-    skos:hasTopConcept compass:ResearchExpeditions ;
     skos:hasTopConcept compass:ScientificResearch ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
 
@@ -52,26 +49,6 @@ compass:CommunityInvolvement
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
-compass:Events
-    a skos:Concept, compass:WorkArea ;
-    skos:prefLabel "Events"@en ;
-    skos:prefLabel "Veranstaltungen"@de ;
-    skos:definition "Talks, exhibitions and public gatherings that carry ocean issues to a wider audience."@en ;
-    skos:definition "Vorträge, Ausstellungen und öffentliche Anlässe, die Meeresthemen einem breiteren Publikum näherbringen."@de ;
-    compass:wpTagId "425"^^xsd:integer ;
-    skos:inScheme compass:WorkAreaScheme ;
-    skos:topConceptOf compass:WorkAreaScheme .
-
-compass:Petitions
-    a skos:Concept, compass:WorkArea ;
-    skos:prefLabel "Petitions"@en ;
-    skos:prefLabel "Petitionen"@de ;
-    skos:definition "Collecting signatures to press decision-makers on one specific demand."@en ;
-    skos:definition "Sammeln von Unterschriften, um Entscheidungsträgerinnen und Entscheidungsträger zu einer konkreten Forderung zu bewegen."@de ;
-    compass:wpTagId "443"^^xsd:integer ;
-    skos:inScheme compass:WorkAreaScheme ;
-    skos:topConceptOf compass:WorkAreaScheme .
-
 compass:RescueActivities
     a skos:Concept, compass:WorkArea ;
     skos:prefLabel "Rescue Activities"@en ;
@@ -79,16 +56,6 @@ compass:RescueActivities
     skos:definition "Rescuing, treating and releasing marine animals in distress."@en ;
     skos:definition "Rettung, Behandlung und Auswilderung von Meerestieren in Not."@de ;
     compass:wpTagId "440"^^xsd:integer ;
-    skos:inScheme compass:WorkAreaScheme ;
-    skos:topConceptOf compass:WorkAreaScheme .
-
-compass:ResearchExpeditions
-    a skos:Concept, compass:WorkArea ;
-    skos:prefLabel "Research Expeditions"@en ;
-    skos:prefLabel "Mitforschen"@de ;
-    skos:definition "Voyages that gather data at sea, often aboard research vessels."@en ;
-    skos:definition "Fahrten, die Daten auf See sammeln, oft an Bord von Forschungsschiffen."@de ;
-    compass:wpTagId "158"^^xsd:integer ;
     skos:inScheme compass:WorkAreaScheme ;
     skos:topConceptOf compass:WorkAreaScheme .
 
@@ -103,21 +70,22 @@ compass:ScientificResearch
     skos:topConceptOf compass:WorkAreaScheme .
 
 # ============================================================
-# Topics (16 concepts)
+# Topics (19 concepts)
 # ============================================================
 
 compass:TopicScheme
     a skos:ConceptScheme ;
     skos:prefLabel "Topics"@en ;
     skos:prefLabel "Themen"@de ;
-    skos:definition "Thematic topics addressed by OceanCare, conservation focus and pollution among them."@en ;
-    skos:definition "Themen, mit denen sich OceanCare befasst, darunter Schutzschwerpunkte und Verschmutzung."@de ;
+    skos:definition "Thematic topics OceanCare addresses and activities it runs."@en ;
+    skos:definition "Themen, mit denen sich OceanCare befasst, und Aktivitäten, die sie durchführt."@de ;
     skos:hasTopConcept compass:AnimalConservation ;
     skos:hasTopConcept compass:AquaticWildMeat ;
     skos:hasTopConcept compass:ChemicalPollution ;
     skos:hasTopConcept compass:ClimateProtection ;
     skos:hasTopConcept compass:Collisions ;
     skos:hasTopConcept compass:DeepSeaMining ;
+    skos:hasTopConcept compass:Events ;
     skos:hasTopConcept compass:Fisheries ;
     skos:hasTopConcept compass:FossilFuels ;
     skos:hasTopConcept compass:Geoengineering ;
@@ -125,7 +93,9 @@ compass:TopicScheme
     skos:hasTopConcept compass:OceanConservation ;
     skos:hasTopConcept compass:OceanNoisePollution ;
     skos:hasTopConcept compass:OutOfHabitat ;
+    skos:hasTopConcept compass:Petitions ;
     skos:hasTopConcept compass:PlasticPollution ;
+    skos:hasTopConcept compass:ResearchExpeditions ;
     skos:hasTopConcept compass:Shipping ;
     skos:hasTopConcept compass:SpeciesConservation ;
     dct:isPartOf <http://example.org/ocean-org/ontology> .
@@ -187,6 +157,16 @@ compass:DeepSeaMining
     skos:definition "Extracting minerals from the sea floor, and the habitats that destroys."@en ;
     skos:definition "Abbau von Mineralien am Meeresboden und die dabei zerstörten Lebensräume."@de ;
     compass:wpTagId "145"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:Events
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Events"@en ;
+    skos:prefLabel "Veranstaltungen"@de ;
+    skos:definition "Talks, exhibitions and public gatherings that carry ocean issues to a wider audience."@en ;
+    skos:definition "Vorträge, Ausstellungen und öffentliche Anlässe, die Meeresthemen einem breiteren Publikum näherbringen."@de ;
+    compass:wpTagId "425"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -260,6 +240,16 @@ compass:OutOfHabitat
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
+compass:Petitions
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Petitions"@en ;
+    skos:prefLabel "Petitionen"@de ;
+    skos:definition "Collecting signatures to press decision-makers on one specific demand."@en ;
+    skos:definition "Sammeln von Unterschriften, um Entscheidungsträgerinnen und Entscheidungsträger zu einer konkreten Forderung zu bewegen."@de ;
+    compass:wpTagId "443"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
 compass:PlasticPollution
     a skos:Concept, compass:Topic ;
     skos:prefLabel "Plastic Pollution"@en ;
@@ -267,6 +257,16 @@ compass:PlasticPollution
     skos:definition "Plastic waste that reaches the sea and breaks down into lasting fragments."@en ;
     skos:definition "Plastikabfall, der ins Meer gelangt und zu langlebigen Partikeln zerfällt."@de ;
     compass:wpTagId "143"^^xsd:integer ;
+    skos:inScheme compass:TopicScheme ;
+    skos:topConceptOf compass:TopicScheme .
+
+compass:ResearchExpeditions
+    a skos:Concept, compass:Topic ;
+    skos:prefLabel "Research Expeditions"@en ;
+    skos:prefLabel "Mitforschen"@de ;
+    skos:definition "Voyages that gather data at sea, often aboard research vessels."@en ;
+    skos:definition "Fahrten, die Daten auf See sammeln, oft an Bord von Forschungsschiffen."@de ;
+    compass:wpTagId "158"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
 
@@ -289,6 +289,38 @@ compass:SpeciesConservation
     compass:wpTagId "455"^^xsd:integer ;
     skos:inScheme compass:TopicScheme ;
     skos:topConceptOf compass:TopicScheme .
+
+# ============================================================
+# Programmes (2 concepts)
+# ============================================================
+
+compass:ProgrammeScheme
+    a skos:ConceptScheme ;
+    skos:prefLabel "Programmes"@en ;
+    skos:prefLabel "Programme"@de ;
+    skos:definition "Programmes and projects OceanCare runs."@en ;
+    skos:definition "Programme und Projekte, die OceanCare durchführt."@de ;
+    skos:hasTopConcept compass:BecauseOurPlanetIsBlue ;
+    skos:hasTopConcept compass:SAVEWhales ;
+    dct:isPartOf <http://example.org/ocean-org/ontology> .
+
+compass:BecauseOurPlanetIsBlue
+    a skos:Concept, compass:Programme ;
+    skos:prefLabel "Because Our Planet Is Blue"@en ;
+    skos:prefLabel "Because Our Planet Is Blue"@de ;
+    compass:wpTagId "895"^^xsd:integer ;
+    skos:inScheme compass:ProgrammeScheme ;
+    skos:topConceptOf compass:ProgrammeScheme .
+
+compass:SAVEWhales
+    a skos:Concept, compass:Programme ;
+    skos:prefLabel "SAvE Whales"@en ;
+    skos:prefLabel "SAvE Whales"@de ;
+    skos:definition "OceanCare enables the development of the SAvE Whales warning system."@en ;
+    skos:definition "OceanCare ermöglicht die Entwicklung des Frühwarnsystems SAvE Whales."@de ;
+    compass:wpTagId "900"^^xsd:integer ;
+    skos:inScheme compass:ProgrammeScheme ;
+    skos:topConceptOf compass:ProgrammeScheme .
 
 # ============================================================
 # Species (11 concepts)

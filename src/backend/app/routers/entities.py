@@ -14,9 +14,9 @@ from app.sparql_to_geojson_translator import instances_to_geojson
 
 router = APIRouter()
 
-# relatedProgramme and forum are relations rather than tags, so a count under them
-# would not mean what a count under a tag means.
-_FACET_EXCLUDED = {"relatedProgramme", "forum"}
+# forum is a relation to another pin rather than a tag, so a count under it would
+# not mean what a count under a tag means.
+_FACET_EXCLUDED = {"forum"}
 
 # entityType is counted, but it cannot be reached by the loop over the shapes:
 # it has no property shape at all, being the rdf:type that _pin_branch BINDs

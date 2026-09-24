@@ -268,7 +268,7 @@ def test_repeated_cells_expand():
         ("AdvocacyWork", "compass:workArea"),
         ("Shipping", "compass:topic"),
         ("ACCOBAMS", "compass:forum"),
-        ("SAVEWhales", "compass:relatedProgramme"),
+        ("SAVEWhales", "compass:programme"),
         ("OceanCare", "compass:relatedOrganization"),
     ],
 )

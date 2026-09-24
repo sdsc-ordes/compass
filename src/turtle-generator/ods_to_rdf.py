@@ -71,15 +71,14 @@ OUT_VOCAB = USE_CASE_DIR / "vocab.ttl"
 ONTOLOGY_NS = "http://example.org/ocean-org/ontology#"
 DATA_NS = "http://example.org/ocean-org/data#"
 
-# The four tag dimensions, in the order their sections appear in vocab.ttl.
-DIMENSIONS = ["WorkArea", "Topic", "Species", "CountryArea"]
+# The five tag dimensions, in the order their sections appear in vocab.ttl.
+DIMENSIONS = ["WorkArea", "Topic", "Programme", "Species", "CountryArea"]
 
-# The five entity classes, in the order their sections appear in compass.ttl.
+# The four entity classes, in the order their sections appear in compass.ttl.
 CLASSES = {
     "InternationalForum": "International Fora",
     "Network": "Networks",
     "PartnerOrganization": "Partner Organizations",
-    "Programme": "Programmes",
     "HostOrganization": "Host Organization",
 }
 
@@ -87,10 +86,10 @@ CLASSES = {
 TAG_PREDICATE = {
     "WorkArea": "compass:workArea",
     "Topic": "compass:topic",
+    "Programme": "compass:programme",
     "Species": "compass:species",
     "CountryArea": "compass:countryArea",
     "InternationalForum": "compass:forum",
-    "Programme": "compass:relatedProgramme",
     "PartnerOrganization": "compass:relatedOrganization",
     "Network": "compass:relatedOrganization",
     "HostOrganization": "compass:relatedOrganization",
@@ -143,11 +142,11 @@ PREDICATE_ORDER = [
     "compass:managedByOceanCare",
     "compass:workArea",
     "compass:topic",
+    "compass:programme",
     "compass:species",
     "compass:countryArea",
     "compass:forum",
     "compass:relatedOrganization",
-    "compass:relatedProgramme",
     "compass:wpTagId",
     "compass:wpEntityTagId",
     "skos:hasTopConcept",
@@ -486,7 +485,7 @@ def pin_triples(
     if wp_entity_tag_id:
         triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
-    managed = row["class"] in ("Programme", "HostOrganization")
+    managed = row["class"] == "HostOrganization"
     triples.append(("compass:managedByOceanCare", "true" if managed else "false"))
     triples += link_triples(parse_links(row, kinds, problems))
 

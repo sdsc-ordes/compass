@@ -13,7 +13,7 @@
 # ============================================================
 
 # ============================================================
-# Entity Classes (5 types appearing on the map)
+# Entity Classes (4 types appearing on the map)
 # ============================================================
 
 compass:MapEntity a rdfs:Class ;
@@ -49,15 +49,8 @@ compass:PartnerOrganization a rdfs:Class ;
     rdfs:comment "An OceanCare partner organization active in marine conservation or research."@en ;
     rdfs:comment "Eine OceanCare-Partnerorganisation, die im Meeresschutz oder in der Meeresforschung tätig ist."@de .
 
-compass:Programme a rdfs:Class ;
-    rdfs:subClassOf compass:MapEntity ;
-    rdfs:label "Programme"@en ;
-    rdfs:label "Programm"@de ;
-    rdfs:comment "A time-limited programme addressing ocean issues."@en ;
-    rdfs:comment "Ein zeitlich begrenztes Programm zur Bewältigung von Meeresfragen."@de .
-
 # ============================================================
-# Tag Dimension Classes (4 SKOS-based tag vocabularies)
+# Tag Dimension Classes (5 SKOS-based tag vocabularies)
 # ============================================================
 
 compass:WorkArea a rdfs:Class ;
@@ -70,7 +63,13 @@ compass:Topic a rdfs:Class ;
     rdfs:subClassOf skos:Concept ;
     rdfs:label "Topics"@en ;
     rdfs:label "Themen"@de ;
-    rdfs:comment "A thematic topic addressed by OceanCare, conservation focus and pollution among them."@en .
+    rdfs:comment "A thematic topic OceanCare addresses, or an activity it runs."@en .
+
+compass:Programme a rdfs:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Programmes"@en ;
+    rdfs:label "Programme"@de ;
+    rdfs:comment "A programme or project OceanCare runs. A thing it does rather than a place on the map, so it tags pins instead of being one."@en .
 
 compass:Species a rdfs:Class ;
     rdfs:subClassOf skos:Concept ;
@@ -145,10 +144,10 @@ compass:relatedOrganization a rdf:Property ;
     rdfs:label "Verwandte Organisation"@de ;
     rdfs:comment "A partner organization or network associated with this entity."@en .
 
-compass:relatedProgramme a rdf:Property ;
-    rdfs:label "related programme"@en ;
-    rdfs:label "Verwandtes Programm"@de ;
-    rdfs:comment "A programme associated with this entity."@en .
+compass:programme a rdf:Property ;
+    rdfs:label "programme"@en ;
+    rdfs:label "Programm"@de ;
+    rdfs:comment "A programme this entity takes part in."@en .
 
 # -- Bookkeeping properties (not filter dimensions) --
 
@@ -333,11 +332,11 @@ compass:ForumPropertyShape a sh:Shape ;
     sh:description "An international forum."@en ;
     sh:class compass:InternationalForum .
 
-compass:RelatedProgrammePropertyShape a sh:Shape ;
-    sh:path compass:relatedProgramme ;
+compass:ProgrammePropertyShape a sh:Shape ;
+    sh:path compass:programme ;
     sh:name "Programmes"@en ;
     sh:name "Programme"@de ;
-    sh:description "A related programme."@en ;
+    sh:description "A programme this entity takes part in."@en ;
     sh:class compass:Programme .
 
 # No sh:class: targets are partner organizations, networks or OceanCare itself,
@@ -350,7 +349,7 @@ compass:RelatedOrganizationPropertyShape a sh:Shape ;
     sh:nodeKind sh:IRI .
 
 # ============================================================
-# SHACL Node Shapes: 5 entity types
+# SHACL Node Shapes: 4 entity types
 # Each references the shared named property shapes above.
 # ============================================================
 
@@ -378,7 +377,7 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:SpeciesPropertyShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:RelatedOrganizationPropertyShape ;
-    sh:property compass:RelatedProgrammePropertyShape .
+    sh:property compass:ProgrammePropertyShape .
 
 compass:NetworkShape a sh:NodeShape ;
     sh:targetClass compass:Network ;
@@ -405,7 +404,7 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
     sh:property compass:RelatedOrganizationPropertyShape ;
-    sh:property compass:RelatedProgrammePropertyShape .
+    sh:property compass:ProgrammePropertyShape .
 
 compass:HostOrganizationShape a sh:NodeShape ;
     sh:targetClass compass:HostOrganization ;
@@ -432,7 +431,7 @@ compass:HostOrganizationShape a sh:NodeShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
     sh:property compass:RelatedOrganizationPropertyShape ;
-    sh:property compass:RelatedProgrammePropertyShape .
+    sh:property compass:ProgrammePropertyShape .
 
 compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:targetClass compass:PartnerOrganization ;
@@ -459,33 +458,7 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:CountryAreaPropertyShape ;
     sh:property compass:ForumPropertyShape ;
     sh:property compass:RelatedOrganizationPropertyShape ;
-    sh:property compass:RelatedProgrammePropertyShape .
-
-compass:ProgrammeShape a sh:NodeShape ;
-    sh:targetClass compass:Programme ;
-    sh:closed true ;
-    sh:ignoredProperties ( rdf:type ) ;
-    rdfs:label "Programme Shape"@en ;
-    rdfs:label "Programm-Form"@de ;
-    rdfs:comment "Validates the expected structure of a programme."@en ;
-    sh:property compass:NameShape ;
-    sh:property [ sh:path rdfs:label ; sh:datatype rdf:langString ;
-                  sh:minCount 2 ; sh:uniqueLang true ; sh:languageIn ( "en" "de" ) ] ;
-    sh:property compass:WpEntityTagIdShape ;
-    sh:property compass:LatShape ;
-    sh:property compass:LongShape ;
-    sh:property compass:LocationShape ;
-    sh:property compass:WebsiteUrlShape ;
-    sh:property compass:ImageShape ;
-    sh:property compass:DescriptionShape ;
-    sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
-    sh:property compass:WorkAreaPropertyShape ;
-    sh:property compass:TopicPropertyShape ;
-    sh:property compass:SpeciesPropertyShape ;
-    sh:property compass:CountryAreaPropertyShape ;
-    sh:property compass:ForumPropertyShape ;
-    sh:property compass:RelatedOrganizationPropertyShape .
+    sh:property compass:ProgrammePropertyShape .
 
 # ============================================================
 # SKOS Vocabulary

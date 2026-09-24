@@ -32,9 +32,9 @@ ocinst:ACCOBAMS
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:topic compass:ClimateProtection, compass:Fisheries, compass:FossilFuels, compass:OceanConservation, compass:OceanNoisePollution, compass:OutOfHabitat, compass:PlasticPollution, compass:Shipping, compass:SpeciesConservation ;
+    compass:programme compass:SAVEWhales ;
     compass:species compass:Dolphins, compass:Orcas, compass:SmallCetaceans, compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece, compass:Italy, compass:Slovenia, compass:Spain, compass:WesternMediterraneanSea ;
-    compass:relatedProgramme ocinst:SAVEWhales ;
     compass:wpEntityTagId "950"^^xsd:integer ;
     geo:lat "43.73090"^^xsd:float ;
     geo:long "7.41650"^^xsd:float .
@@ -412,7 +412,7 @@ ocinst:UNOC
     compass:managedByOceanCare false ;
     compass:workArea compass:AdvocacyWork ;
     compass:topic compass:OceanConservation ;
-    compass:relatedProgramme ocinst:BecauseOurPlanetIsBlue ;
+    compass:programme compass:BecauseOurPlanetIsBlue ;
     compass:wpEntityTagId "1030"^^xsd:integer ;
     geo:lat "40.74944"^^xsd:float ;
     geo:long "-73.96806"^^xsd:float .
@@ -554,8 +554,8 @@ ocinst:AlnitakResearchInstitute
     compass:description "Alnitak works to tackle the harmful impacts of abandoned, lost and discarded fishing gear in the Mediterranean Sea, with support from OceanCare since 2021. This gear is estimated to account for 46–70% of  marine microplastic litter and can continue trapping and killing marine wildlife long after it has been lost, with sea turtles particularly at risk."@en ;
     compass:description "Alnitak setzt sich dafür ein, die schädlichen Auswirkungen von aufgegebenen, verlorenen und entsorgten Fanggeräten im Mittelmeer zu reduzieren, und wird dabei seit 2021 von OceanCare unterstützt. Schätzungen zufolge machen solche Fanggeräte 46–70 % des marinen Mikroplastikmülls aus und können noch lange nach ihrem Verlust Meerestiere fangen und töten, wobei insbesondere Meeresschildkröten gefährdet sind."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:CommunityInvolvement, compass:RescueActivities, compass:ResearchExpeditions, compass:ScientificResearch ;
-    compass:topic compass:AnimalConservation, compass:Fisheries, compass:PlasticPollution, compass:SpeciesConservation ;
+    compass:workArea compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:AnimalConservation, compass:Fisheries, compass:PlasticPollution, compass:ResearchExpeditions, compass:SpeciesConservation ;
     compass:species compass:Fish, compass:SeaTurtles ;
     compass:countryArea compass:Spain, compass:WesternMediterraneanSea ;
     compass:wpEntityTagId "1046"^^xsd:integer ;
@@ -678,9 +678,9 @@ ocinst:FORTH
     compass:description "OceanCare spielt eine Schlüsselrolle bei der Entwicklung von SAvE Whales in Zusammenarbeit mit dem Pelagos Cetacean Research Institute und der Foundation for Research and Technology - Hellas (FORTH). SAvE Whales ist das weltweit erste Warnsystem, das Pottwale lokalisieren und Schiffskapitän:innen in Echtzeit über die Anwesenheit der Tiere informieren kann."@de ;
     compass:managedByOceanCare false ;
     compass:topic compass:Collisions, compass:Shipping, compass:SpeciesConservation ;
+    compass:programme compass:SAVEWhales ;
     compass:species compass:Whales ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
-    compass:relatedProgramme ocinst:SAVEWhales ;
     compass:wpEntityTagId "956"^^xsd:integer ;
     geo:lat "35.32500"^^xsd:float ;
     geo:long "25.13060"^^xsd:float .
@@ -717,8 +717,8 @@ ocinst:IonianDolphinProject
     compass:description "The Ionian Dolphin Project (IDP) researches and protects dolphins in three Natura 2000 areas: the Central Ionian Sea, the Ambracian Gulf and the waters around Paxos and Antipaxos. OceanCare has been supporting its work since 2004."@en ;
     compass:description "Das Ionian Dolphin Project (IDP) erforscht und schützt Delfine in drei Natura-2000-Gebieten: dem zentralionischen Meer, dem Ambrakischen Golf und den Gewässern um Paxos und Antipaxos. OceanCare unterstützt diese Arbeit seit 2004."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:CommunityInvolvement, compass:ResearchExpeditions, compass:ScientificResearch ;
-    compass:topic compass:SpeciesConservation ;
+    compass:workArea compass:CommunityInvolvement, compass:ScientificResearch ;
+    compass:topic compass:ResearchExpeditions, compass:SpeciesConservation ;
     compass:species compass:Dolphins, compass:Seals ;
     compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
     compass:wpEntityTagId "1058"^^xsd:integer ;
@@ -777,8 +777,8 @@ ocinst:OliveRidleyProject
     compass:description "OceanCare has supported the Olive Ridley Project (ORP) in the rescue and treatment of, and research into injured sea turtles since 2017. With the establishment of the new Sea Turtle Health Institute, new standards for sea turtle medicine in the Indian Ocean are being set."@en ;
     compass:description "OceanCare unterstützt das Olive Ridley Project bei der Rettung, Behandlung und Erforschung verletzter Meeresschildkröten seit 2017. Mit dem neuen Sea Turtle Health Institute werden neue Standards für die Meeresschildkrötenmedizin im Indischen Ozean gesetzt."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:CommunityInvolvement, compass:RescueActivities, compass:ResearchExpeditions, compass:ScientificResearch ;
-    compass:topic compass:AnimalConservation, compass:AquaticWildMeat, compass:Hunting ;
+    compass:workArea compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:AnimalConservation, compass:AquaticWildMeat, compass:Hunting, compass:ResearchExpeditions ;
     compass:species compass:SeaTurtles ;
     compass:countryArea compass:Maldives ;
     compass:wpEntityTagId "1062"^^xsd:integer ;
@@ -815,8 +815,8 @@ ocinst:TethysResearchInstitute
     compass:description "Tethys Research Institute is a non-profit research organisation supporting marine conservation through science and public awareness with a focus on large marine vertebrates. OceanCare has cooperated with Tethys since 2004 in various areas – most recently as part of the Pelagos Consortium in the north-western Mediterranean Sea, where a PSSA (Particularly Sensitive Sea Area) was adopted by the International Maritime Organization (IMO) in July 2023 and came into force in January 2024. It is the first PSSA to be designated by the IMO explicitly to protect whales from the impact of maritime traffic."@en ;
     compass:description "Das Tethys Research Institute ist ein gemeinnütziges Forschungsinstitut mit Fokus auf den Schutz von Waltieren und ihrer Lebensräume. OceanCare arbeitet seit 2004 in verschiedenen Bereichen mit Tethys zusammen – unter anderem im nordwestlichen Mittelmeer, wo die Internationale Seeschifffahrts-Organisation (IMO) im Juli 2023 eine Particularly Sensitive Sea Area (PSSA, «Besonders empfindliches Meeresgebiet») auswies, die im Januar 2024 in Kraft trat. Es ist die erste PSSA der IMO, die ausdrücklich dem Schutz von Walen vor den Auswirkungen des Schiffsverkehrs dient."@de ;
     compass:managedByOceanCare false ;
-    compass:workArea compass:CommunityInvolvement, compass:ResearchExpeditions, compass:ScientificResearch ;
-    compass:topic compass:SpeciesConservation ;
+    compass:workArea compass:CommunityInvolvement, compass:ScientificResearch ;
+    compass:topic compass:ResearchExpeditions, compass:SpeciesConservation ;
     compass:species compass:Dolphins, compass:Whales ;
     compass:wpEntityTagId "960"^^xsd:integer ;
     geo:lat "45.47230"^^xsd:float ;
@@ -842,47 +842,6 @@ ocinst:iSeas
     geo:long "22.95759"^^xsd:float .
 
 # ============================================================
-# Programmes (2)
-# ============================================================
-
-ocinst:BecauseOurPlanetIsBlue
-    a compass:Programme ;
-    compass:name "Because Our Planet Is Blue"@en ;
-    compass:name "Because Our Planet Is Blue"@de ;
-    rdfs:label "Because Our Planet Is Blue"@en ;
-    rdfs:label "Because Our Planet Is Blue"@de ;
-    compass:location "Wädenswil, Switzerland"@en ;
-    compass:location "Wädenswil, Schweiz"@de ;
-    compass:managedByOceanCare true ;
-    compass:topic compass:DeepSeaMining, compass:Fisheries, compass:FossilFuels, compass:PlasticPollution, compass:Shipping ;
-    compass:countryArea compass:Austria ;
-    compass:forum ocinst:BBNJ, ocinst:UNOC ;
-    compass:relatedOrganization ocinst:OceanCare ;
-    compass:wpEntityTagId "895"^^xsd:integer ;
-    geo:lat "47.22953"^^xsd:float ;
-    geo:long "8.67306"^^xsd:float .
-
-ocinst:SAVEWhales
-    a compass:Programme ;
-    compass:name "SAvE Whales"@en ;
-    compass:name "SAvE Whales"@de ;
-    rdfs:label "SAvE Whales"@en ;
-    rdfs:label "SAvE Whales"@de ;
-    compass:location "Kythira Strait, Greece"@en ;
-    compass:location "Meerenge von Kythira, Griechenland"@de ;
-    compass:description "OceanCare enables the development of the SAvE Whales warning system"@en ;
-    compass:description "OceanCare ermöglicht die Entwicklung des Frühwarnsystems SAvE Whales."@de ;
-    compass:managedByOceanCare true ;
-    compass:workArea compass:AdvocacyWork, compass:ScientificResearch ;
-    compass:topic compass:AnimalConservation, compass:Shipping, compass:SpeciesConservation ;
-    compass:countryArea compass:EasternMediterraneanSea, compass:Greece ;
-    compass:forum ocinst:ACCOBAMS ;
-    compass:relatedOrganization ocinst:FORTH, ocinst:PelagosCetaceanResearchInstitute ;
-    compass:wpEntityTagId "900"^^xsd:integer ;
-    geo:lat "35.84280"^^xsd:float ;
-    geo:long "23.23250"^^xsd:float .
-
-# ============================================================
 # Host Organization (1)
 # ============================================================
 
@@ -899,9 +858,9 @@ ocinst:OceanCare
     schema:url "https://www.oceancare.org"^^xsd:anyURI ;
     schema:image "https://www.oceancare.org/wp-content/uploads/2022/01/OceanCare_logo.svg"^^xsd:anyURI ;
     compass:managedByOceanCare true ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:Events, compass:Petitions, compass:ScientificResearch ;
-    compass:topic compass:AnimalConservation, compass:SpeciesConservation ;
-    compass:relatedProgramme ocinst:BecauseOurPlanetIsBlue ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
+    compass:topic compass:AnimalConservation, compass:Events, compass:Petitions, compass:SpeciesConservation ;
+    compass:programme compass:BecauseOurPlanetIsBlue ;
     compass:wpEntityTagId "458"^^xsd:integer ;
     geo:lat "47.22953"^^xsd:float ;
     geo:long "8.67306"^^xsd:float .

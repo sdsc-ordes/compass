@@ -102,7 +102,7 @@ which entities stay visible; the result-count badge is “how many entities matc
 | --- | --- | --- |
 | Looks like | Sections of clickable chips / legend dots | Pins, regions, list rows, detail sidebar |
 | Role | “Show me only …” | “Here is one matching thing” |
-| Example | Chip **Topics → Plastic Pollution** | Programme pin whose properties include that tag |
+| Example | Chip **Topics → Plastic Pollution** | Partner pin whose properties include that tag |
 
 In the backend, those two faces are separate SHACL projections:
 
