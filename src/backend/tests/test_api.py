@@ -21,16 +21,11 @@ ALWAYS_ON_IRIS = {str(COMPASS[name]) for name in ALWAYS_ON_CLASSES}
 def result_pins(features: list[dict]) -> list[dict]:
     """The point features the selection produced.
 
-    Two kinds of feature come back that no count reports: a region is background
-    context with no geometry, and an always-on pin is drawn whatever the filters
-    say, so neither belongs in a total the filter panel prints.
+    Only regions drop out: they are background context with no geometry, and no
+    count reports them. The host organization does count -- it carries every
+    concept in the vocabulary, so it genuinely matches any tag selection.
     """
-    return [
-        f
-        for f in features
-        if not f["properties"].get("is_region")
-        and f["properties"]["typeIri"] not in ALWAYS_ON_IRIS
-    ]
+    return [f for f in features if not f["properties"].get("is_region")]
 
 
 @pytest.fixture(scope="module")
@@ -150,21 +145,36 @@ class TestEntitiesEndpoint:
         assert all(SPECIES_A in str(f["properties"].get("species", "")) for f in pins)
 
     def test_an_always_on_pin_survives_every_filter(self, client):
-        """The host organization is the map's subject, so it is drawn even when
-        the selection excludes it -- and it is no part of what was selected.
-
-        The tag picked exists in no vocabulary, which is the one selection
-        guaranteed to match nothing however the workbook changes.
+        """The host organization carries every concept, so the only selection it
+        cannot match names a tag no vocabulary defines -- a stale bookmark. Its
+        pin stays on the map even then, which is what always-on means.
         """
         data = client.get(
             "/api/v1/entities",
             params={"lang": "en", "species": str(COMPASS.NoSuchSpecies)},
         ).json()
-        types = {f["properties"]["typeIri"] for f in data["features"]}
-        assert types >= ALWAYS_ON_IRIS, "an always-on pin was filtered off the map"
-        assert not result_pins(data["features"]), (
-            "a selection matching nothing still reported results"
+        pins = result_pins(data["features"])
+        assert {f["properties"]["typeIri"] for f in pins} == ALWAYS_ON_IRIS, (
+            "the always-on pin should be the only one left on the map"
         )
+
+    def test_no_tag_option_can_empty_the_map(self, client):
+        """Every option the panel offers matches at least one pin.
+
+        The host organization is tagged with the whole vocabulary precisely so
+        that picking any single value leaves something on the map rather than an
+        empty stage under a zero.
+        """
+        widgets = client.get("/api/v1/filters?lang=en").json()
+        facets = client.get("/api/v1/entities/facets?lang=en").json()
+        empty = [
+            f"{widget['id']}/{option['label']}"
+            for widget in widgets
+            if widget["id"] in facets
+            for option in widget.get("options") or []
+            if facets[widget["id"]].get(option["value"], 0) == 0
+        ]
+        assert not empty, f"filter options matching nothing: {empty}"
 
     def test_regions_narrow_with_their_pins(self, client):
         """A region is shaded by one pin passing every filter, so two tags

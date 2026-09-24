@@ -16,7 +16,13 @@ from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib.namespace import SKOS
 
 from app.core.settings import settings
-from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, GEO, PIN_CLASSES
+from app.namespaces import (
+    ALWAYS_ON_CLASSES,
+    COMPASS,
+    FILTERABLE_PIN_CLASSES,
+    GEO,
+    PIN_CLASSES,
+)
 from app.shacl_to_entities import get_shacl_property, targets_map_entity
 from app.shacl_to_filters import _entity_type_dimension, get_filters_from_shacl
 
@@ -54,7 +60,7 @@ class TestTopLevelEntityClasses:
         widget = _entity_type_dimension(read_graph, "en")
         offered = {opt.value for opt in widget.options}
 
-        assert offered == {str(COMPASS[name]) for name in PIN_CLASSES}
+        assert offered == {str(COMPASS[name]) for name in FILTERABLE_PIN_CLASSES}
         assert offered.isdisjoint({str(COMPASS[name]) for name in ALWAYS_ON_CLASSES})
 
 

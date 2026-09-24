@@ -8,10 +8,6 @@ export const ENTITY_CLASS = {
   HostOrganization: `${COMPASS_NS}HostOrganization`,
 } as const;
 
-// The map's subject rather than one of its results: the API draws it whatever
-// the filters say, it has no entityType option, and it is left out of the tally.
-export const ALWAYS_ON_CLASSES: readonly string[] = [ENTITY_CLASS.HostOrganization];
-
 export const FEATURED_IRI = `${DATA_NS}OceanCare`;
 
 export type Filters = Record<string, string | string[] | undefined>;

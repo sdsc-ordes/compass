@@ -11,7 +11,7 @@ from rdflib.collection import Collection
 from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
 
-from app.namespaces import COMPASS, PIN_CLASSES
+from app.namespaces import COMPASS, FILTERABLE_PIN_CLASSES
 from app.shacl_to_entities import (
     BUILTIN_PATHS,
     DISPLAY_ONLY,
@@ -304,8 +304,8 @@ def _datepicker_bounds(g: Graph, path: Node) -> dict[str, str]:
 def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
     """Build the entity-type multiselect over the filterable pin classes.
 
-    ``ALWAYS_ON_CLASSES`` is absent by construction: a class whose pins ignore
-    the filters has nothing to offer a filter that selects on class.
+    ``ALWAYS_ON_CLASSES`` is absent by construction: a class whose pin stays on
+    the map through a type selection has nothing to offer a filter on type.
 
     Args:
         g: Ontology graph (for class labels).
@@ -314,7 +314,7 @@ def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
     Returns:
         Synthetic ``entityType`` widget over ``rdf:type``.
     """
-    type_classes = [COMPASS[name] for name in sorted(PIN_CLASSES)]
+    type_classes = [COMPASS[name] for name in sorted(FILTERABLE_PIN_CLASSES)]
     return FilterWidget(
         id="entityType",
         path=str(RDF.type),

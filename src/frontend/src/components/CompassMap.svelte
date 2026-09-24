@@ -10,7 +10,6 @@
   import { Stories, type StoryCount } from '../lib/stories';
   import type { Proj } from '../lib/types';
   import { getEntities, getFacets, init, type Feature } from '../engine';
-  import { ALWAYS_ON_CLASSES } from '../engine/namespaces';
   import { injectFonts } from '../lib/fonts';
   import {
     filtersFromQuery,
@@ -66,9 +65,8 @@
   $: anyFilters = DIM_IDS.some((id) => sel[id].size > 0);
 
   $: projs = toProjs(entities);
-  // The always-on pins are drawn whatever the filters say, so counting them
-  // would report a result the selection did not produce.
-  $: resultCount = projs.filter((p) => !ALWAYS_ON_CLASSES.includes(p.typeIri)).length;
+  // Every pin the API returns, so the number always describes what is drawn.
+  $: resultCount = projs.length;
   $: selected = selectedId ? (projs.find((p) => p.id === selectedId) ?? null) : null;
 
   $: statusText = error

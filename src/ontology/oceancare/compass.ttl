@@ -858,9 +858,11 @@ ocinst:OceanCare
     schema:url "https://www.oceancare.org"^^xsd:anyURI ;
     schema:image "https://www.oceancare.org/wp-content/uploads/2022/01/OceanCare_logo.svg"^^xsd:anyURI ;
     compass:managedByOceanCare true ;
-    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:ScientificResearch ;
-    compass:topic compass:AnimalConservation, compass:Events, compass:Petitions, compass:SpeciesConservation ;
-    compass:programme compass:BecauseOurPlanetIsBlue ;
+    compass:workArea compass:AdvocacyWork, compass:CommunityInvolvement, compass:RescueActivities, compass:ScientificResearch ;
+    compass:topic compass:AnimalConservation, compass:AquaticWildMeat, compass:ChemicalPollution, compass:ClimateProtection, compass:Collisions, compass:DeepSeaMining, compass:Events, compass:Fisheries, compass:FossilFuels, compass:Geoengineering, compass:Hunting, compass:OceanConservation, compass:OceanNoisePollution, compass:OutOfHabitat, compass:Petitions, compass:PlasticPollution, compass:ResearchExpeditions, compass:Shipping, compass:SpeciesConservation ;
+    compass:programme compass:BecauseOurPlanetIsBlue, compass:SAVEWhales ;
+    compass:species compass:Corals, compass:Dolphins, compass:Fish, compass:Manatees, compass:Orcas, compass:PolarBears, compass:SeaTurtles, compass:Seals, compass:Sharks, compass:SmallCetaceans, compass:Whales ;
+    compass:countryArea compass:Arctic, compass:Australia, compass:Austria, compass:BalticSea, compass:Benin, compass:Bulgaria, compass:EasternMediterraneanSea, compass:EuropeanUnion, compass:FaroeIslands, compass:France, compass:Germany, compass:Greece, compass:Iceland, compass:Italy, compass:Japan, compass:Maldives, compass:Mauritania, compass:Norway, compass:Slovenia, compass:Spain, compass:Switzerland, compass:UnitedKingdom, compass:Venezuela, compass:WestAfrica, compass:WesternMediterraneanSea ;
     compass:wpEntityTagId "458"^^xsd:integer ;
     geo:lat "47.22953"^^xsd:float ;
     geo:long "8.67306"^^xsd:float .

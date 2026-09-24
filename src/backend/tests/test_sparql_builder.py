@@ -8,7 +8,7 @@ import pytest
 from rdflib.namespace import XSD
 from starlette.datastructures import QueryParams
 
-from app.namespaces import ALWAYS_ON_CLASSES, COMPASS
+from app.namespaces import COMPASS
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import (
     PIN,
@@ -287,12 +287,11 @@ class TestFacetQueryUnderAnd:
             "en",
             QueryParams(f"species={COMPASS.Dolphins}&species={COMPASS.Whales}"),
         )
-        # Regions are background context and always-on pins ignore the filters,
-        # so neither is part of what the selection returned.
-        skipped = {str(COMPASS.CountryArea)} | {
-            str(COMPASS[name]) for name in ALWAYS_ON_CLASSES
-        }
-        pins = [row for row in store.query(entities) if row["type"] not in skipped]
+        # Regions are background context rather than results, so they are the
+        # only rows the count leaves out.
+        pins = [
+            row for row in store.query(entities) if row["type"] != str(COMPASS.CountryArea)
+        ]
         assert counts[str(COMPASS.Whales)] == len(pins)
 
 

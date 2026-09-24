@@ -16,16 +16,27 @@ GEO = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
 SCHEMA = Namespace("https://schema.org/")
 """schema.org namespace (``url``, ``image``, …)."""
 
-PIN_CLASSES = ("InternationalForum", "Network", "PartnerOrganization")
-"""Entity classes the filters select over: one entityType option each."""
+PIN_CLASSES = (
+    "InternationalForum",
+    "Network",
+    "PartnerOrganization",
+    "HostOrganization",
+)
+"""Entity classes the map draws and the counts include."""
 
 ALWAYS_ON_CLASSES = ("HostOrganization",)
-"""Entity classes drawn whatever the filters say.
+"""Entity classes that keep their pin when the filters would have hidden it.
 
-The host organization is what the map is about rather than one of its results,
-so it carries no entityType option, stays out of the facet counts and the result
-tally, and keeps its pin when every filter would otherwise have hidden it.
+The host organization carries every concept in the vocabulary, so a tag
+selection always matches it and it counts like any other pin -- which is what
+keeps every filter option above zero. A type selection is the one filter it
+cannot satisfy, having no type of its own to offer, and there it stays on the
+map as context rather than disappearing.
 """
+
+FILTERABLE_PIN_CLASSES = tuple(c for c in PIN_CLASSES if c not in ALWAYS_ON_CLASSES)
+"""The classes entityType offers. A class whose pin ignores a type selection has
+nothing to offer a filter that selects on type."""
 
 # Separators used by SPARQL GROUP_CONCAT expressions and the GeoJSON translator
 ITEM_SEP = ";;"
