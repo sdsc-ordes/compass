@@ -137,7 +137,6 @@ PREDICATE_ORDER = [
     "compass:description",
     "schema:url",
     "schema:image",
-    "compass:managedByOceanCare",
     "compass:workArea",
     "compass:topic",
     "compass:programme",
@@ -481,8 +480,6 @@ def pin_triples(
     if wp_entity_tag_id:
         triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
-    managed = row["class"] == "HostOrganization"
-    triples.append(("compass:managedByOceanCare", "true" if managed else "false"))
     triples += link_triples(parse_links(row, kinds, problems))
 
     latitude = number(row, "lat", problems, float)

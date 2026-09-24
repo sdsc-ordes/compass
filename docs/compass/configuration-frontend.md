@@ -77,9 +77,9 @@ that is not OceanCare's has to change them and rebuild:
 
 `DIM_IDS` is the sharpest edge of these: it names dimensions the API may or may
 not return, and a name that does not match a widget id renders an empty section
-rather than failing. It now lists every concept scheme the source spreadsheet
+rather than failing. It lists every concept scheme the source spreadsheet
 defines, plus `entityType`, which is not a scheme — so the panel offers the
-whole vocabulary. `forum` is the one widget the API returns that it leaves out:
-it points at another pin rather than at a tag. Keeping that true as the ontology grows is still a manual
-step: a scheme added to the spreadsheet reaches the API on its own, and the
-panel only after someone adds its id here.
+whole vocabulary. It leaves out `forum`, which points at another pin rather than
+at a tag. Keeping that true as the ontology grows is a manual step: a scheme
+added to the spreadsheet reaches the API on its own, and the panel only after
+someone adds its id here.

@@ -2,6 +2,68 @@
 
 ## Unreleased
 
+### Taxonomy realigned with the editorial spreadsheet
+
+- **Breaking.** Fold the Conservation and Pollution schemes into Topics: their
+  six concepts become topics and `compass:conservation` / `compass:pollution`
+  are gone. The workbook's taxonomy has four sections, not six.
+- Move Events, Research Expeditions and Petitions from Work Areas to Topics.
+- Rename the sections to the spreadsheet's own wording: Work Areas, Topics,
+  Countries / Regions, International Fora, Programmes.
+- Order the filter panel the way the workbook reads — Work Areas, Topics,
+  Programmes, Species, Countries / Regions — instead of leading with Species.
+- Print the entity-type pills in the plural whatever the count. Switching to the
+  singular at one result made the same control read as a different one.
+
+### Programmes are a vocabulary, not pins
+
+- **Breaking.** `compass:Programme` is a SKOS scheme rather than a
+  `compass:MapEntity`; the two programme pins leave the map and become tags, and
+  `compass:relatedProgramme` becomes `compass:programme`. A programme carried
+  the same name as the entity-type pill and as a filter section, and picking it
+  in the section hid its own pin.
+- Count programmes in the facets like any other tag, and resolve their story
+  counts: as concepts they carry `compass:wpTagId`, which is what the stories
+  router looks up. The relation carried `compass:wpEntityTagId`, so every
+  programme selection had reported zero stories.
+
+### OceanCare is its own entity class
+
+- Add `compass:HostOrganization` and move OceanCare to it, out of the partner
+  organizations. It is drawn whatever the filters say and offers no entity-type
+  button: it is the subject of the map rather than one of its results.
+- Tag it with every concept in the vocabulary, so no filter option matches
+  nothing and the map never empties under a selection.
+- **Breaking.** Remove `compass:managedByOceanCare`. It was projected into the
+  filter API as a toggle no panel rendered, and once programmes stopped being
+  pins it was true of exactly one entity — which its class already says.
+
+### Region layer removed
+
+- **Breaking.** Stop returning Country/Area features from `/api/v1/entities`.
+  The widget has drawn no region layer since the v4 rebuild and discarded every
+  one; they were 15% of each response. `is_region` and `regionKey` are gone from
+  the payload, with the `FILTER EXISTS` sub-query that built them.
+- **Breaking.** Remove `compass:isoCode` and the workbook's `iso_codes` column.
+  They were the boundary lookup for shaded polygons, unread since the same
+  rebuild deleted `build-regions.mjs`.
+
+### Entry panel
+
+- Print an entity's unabbreviated name, which the API had always sent as
+  `skos:altLabel` and the widget never showed.
+
+### Tooling and contribution
+
+- Add a `ci` workflow running lint, tests, the type and offline gates, and
+  `just data::check` on every pull request. Only the docs site was built before,
+  and only on pushes to `main`.
+- Split `just check::lint` into `lint-python` and `lint-frontend`, and add
+  `just check::ontology` so a workbook edit committed without its regenerated
+  Turtle fails the build.
+- Document in `CONTRIBUTING.md` that the shared agent guidelines are a separate
+  repository cloned into the gitignored `.agents/`.
+
 ### Widget rebuilt on the v4 design
 
 - Replace `App.svelte`, `map/Map.svelte` and `shared/*` with `components/`,

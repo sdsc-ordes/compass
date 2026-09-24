@@ -68,9 +68,11 @@ class TestBuildOptional:
         assert "rdfs:label" in result
 
     def test_boolean(self):
+        # No boolean property is declared today; the projection still supports
+        # one, so the clause it would build is asserted against a stand-in.
         spec = _ep(
-            id="managedByOceanCare",
-            path_iri=str(COMPASS.managedByOceanCare),
+            id="someFlag",
+            path_iri=str(COMPASS.someFlag),
             category="boolean",
         )
         result = build_optional(spec, "en")

@@ -59,12 +59,12 @@
   display: flex;
   justify-self: center;
 }
-/* The panel shows two kinds of number and they used to look the same: a group's
-   count is filters the reader chose, a row's is entities found. A choice is
-   already said with a cerulean fill -- that is what a ticked checkbox is -- so
-   the group count takes the fill and the white ink, and the bare cerulean
-   numeral is left to mean a quantity. It is the same filled/outlined split the
-   sidebar's .etag and .ptag pills use, square as everything here is. */
+/* The panel shows two kinds of number: a group's count is filters the reader
+   chose, a row's is entities found. A choice is already said with a cerulean
+   fill -- that is what a ticked checkbox is -- so the group count takes the fill
+   and the white ink, and the bare cerulean numeral is left to mean a quantity.
+   It is the same filled/outlined split the sidebar's .etag and .ptag pills use,
+   square as everything here is. */
 .acc .cnt {
   justify-self: end;
   min-width: 18px;

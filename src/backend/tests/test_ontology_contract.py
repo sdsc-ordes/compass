@@ -143,7 +143,6 @@ class TestValidationOnlyShapes:
         "countryArea",
         "entityType",
         "forum",
-        "managedByOceanCare",
         "programme",
         "species",
         "topic",

@@ -154,10 +154,9 @@
     if (!S.ready) return;
     if (qid) return;
     // rAF rather than a bare timer so paints land in phase with the compositor.
-    // The gap used to be a flat 36ms, which held a gesture to ~20fps however
-    // little the frame actually cost; budgeting it from what the last paint
-    // measured lets a cheap frame -- a nudged basemap -- run every vsync and
-    // only backs off after one that genuinely overran.
+    // The gap is budgeted from what the last paint measured, so a cheap frame --
+    // a nudged basemap -- runs every vsync and only one that genuinely overran
+    // backs the rate off.
     const gap = interact && !full ? Math.min(32, cost) : 0;
     const step = (now: number): void => {
       if (gap && now - painted < gap) {

@@ -1,0 +1,71 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend and generator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Lint
+        run: just check::lint-python
+
+      - name: Test the backend
+        run: cd src/backend && uv run pytest tests/
+
+      - name: Test the generator
+        run: cd src/turtle-generator && uv run --group dev pytest
+
+      # The workbook is the source of truth and the Turtle is committed, so an
+      # edit to one without the other has to fail here rather than at deploy.
+      - name: Verify the committed ontology matches the workbook
+        run: just data::check
+
+  frontend:
+    name: Widget
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Type-check
+        run: npm run check
+
+      # The widget must contact no third party at runtime; this is the gate.
+      - name: Verify no third-party hosts
+        run: node scripts/check-offline.mjs
+
+      - name: Test
+        run: npm run test

@@ -343,7 +343,7 @@ def test_generated_data_passes_shacl():
 
 
 class TestMissingSchemeRow:
-    """The error path for an absent scheme row used to crash on a str attribute."""
+    """An absent scheme row is reported, naming the dimension that is missing."""
 
     def test_reports_the_missing_dimension(self):
         schemes = [

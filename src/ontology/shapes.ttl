@@ -107,11 +107,6 @@ compass:description a rdf:Property ;
     rdfs:label "Beschreibung"@de ;
     rdfs:comment "A paragraph describing the entity and OceanCare's involvement with it."@en .
 
-compass:managedByOceanCare a rdf:Property ;
-    rdfs:label "managed by OceanCare"@en ;
-    rdfs:label "verwaltet von OceanCare"@de ;
-    rdfs:comment "Whether this entity is directly managed by OceanCare."@en .
-
 # -- Tag dimension properties --
 
 compass:workArea a rdf:Property ;
@@ -282,14 +277,6 @@ compass:WpEntityTagIdShape a sh:Shape ;
     sh:datatype xsd:integer ;
     sh:maxCount 1 .
 
-compass:ManagedByOceanCareShape a sh:Shape ;
-    sh:path compass:managedByOceanCare ;
-    sh:name "Managed by OceanCare"@en ;
-    sh:name "Verwaltet von OceanCare"@de ;
-    sh:description "Whether this entity is directly managed by OceanCare."@en ;
-    sh:datatype xsd:boolean ;
-    sh:maxCount 1 .
-
 # -- Tag dimension property shapes --
 
 compass:WorkAreaPropertyShape a sh:Shape ;
@@ -366,7 +353,6 @@ compass:InternationalForumShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:TopicPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
@@ -392,7 +378,6 @@ compass:NetworkShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:TopicPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
@@ -419,7 +404,6 @@ compass:HostOrganizationShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:TopicPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
@@ -446,7 +430,6 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:ImageShape ;
     sh:property compass:DescriptionShape ;
     sh:property compass:AltLabelShape ;
-    sh:property compass:ManagedByOceanCareShape ;
     sh:property compass:WorkAreaPropertyShape ;
     sh:property compass:TopicPropertyShape ;
     sh:property compass:SpeciesPropertyShape ;
