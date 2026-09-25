@@ -142,7 +142,7 @@ aside.filters::-webkit-scrollbar-track {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 18px 14px;
+  margin: 0 18px 18px;
 }
 .tpill {
   display: inline-flex;
@@ -204,10 +204,15 @@ aside.filters::-webkit-scrollbar-track {
 
 /* Active selections: a chosen .tpill with a ×, on up to two rows; the rest go under "+N". */
 .apills {
+  /* pill: 22px × + 3px padding + 1px border, each side; two rows always reserved */
+  --ah: calc(22px + 2 * (3px + 1px));
+  --agap: 8px;
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-content: flex-start;
+  gap: var(--agap) 8px;
+  height: calc(2 * var(--ah) + var(--agap));
   margin: 0 18px 14px;
   padding: 0;
   list-style: none;
@@ -224,10 +229,6 @@ aside.filters::-webkit-scrollbar-track {
 .tpill.apill:has(.ax:hover) {
   background: var(--cerulean);
   border-color: var(--cerulean);
-}
-/* anchor scrolling on the filters, not on what grows above them */
-.pane-filters > :not(.acc) {
-  overflow-anchor: none;
 }
 /* hidden beats .tpill's display; a removed pill keeps its slot until the pointer leaves */
 .apills [hidden] {
@@ -304,7 +305,7 @@ aside.filters::-webkit-scrollbar-track {
 .areset {
   display: flex;
   align-items: center;
-  min-height: 30px;
+  min-height: var(--ah);
 }
 .reset {
   background: none;
@@ -443,7 +444,7 @@ aside.filters::-webkit-scrollbar-track {
   .tpills {
     column-gap: 8px;
     row-gap: 12px;
-    margin: 4px 18px 12px;
+    margin: 4px 18px 14px;
   }
   .tpill {
     position: relative;
@@ -454,7 +455,7 @@ aside.filters::-webkit-scrollbar-track {
     inset: -6px 0;
   }
   .apills {
-    row-gap: 14px;
+    --agap: 14px;
     margin: 4px 18px 12px;
   }
   .apill::after {

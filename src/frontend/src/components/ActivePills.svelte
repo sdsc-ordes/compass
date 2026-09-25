@@ -73,20 +73,12 @@
 
   $: if (rowEl) void (items, tick().then(fit));
 
-  // Refit on width only. If the row grows while the filters below are in use at scrollTop 0,
-  // where scroll anchoring does not apply, scroll by the growth so they stay put.
+  // Refit on width only.
   function watch(el: HTMLElement): { destroy: () => void } {
-    const cs = getComputedStyle(el);
     let w = 0;
-    let h = -parseFloat(cs.marginTop) - parseFloat(cs.marginBottom);
     const ro = new ResizeObserver(() => {
       if (el.clientWidth !== w) fit();
-      const sc = el.closest('aside');
-      const d = el.offsetHeight - h;
-      const busy = el.nextElementSibling?.matches(':hover, :focus-within');
-      if (d > 0 && busy && sc?.scrollTop === 0) sc.scrollTop = d;
       w = el.clientWidth;
-      h = el.offsetHeight;
     });
     ro.observe(el);
     document.fonts?.ready.then(fit);
@@ -117,15 +109,16 @@
   }
 </script>
 
-{#if items.some((it) => !it.gone)}
-  <ul
-    class="apills"
-    bind:this={rowEl}
-    use:watch
-    on:pointerdown={(e) => (ptr = e.pointerType)}
-    on:pointerleave={() => (hold = false)}
-    aria-label={t.activeFilters}
-  >
+<!-- always rendered, so its fixed two-row height never shifts the filters -->
+<ul
+  class="apills"
+  bind:this={rowEl}
+  use:watch
+  on:pointerdown={(e) => (ptr = e.pointerType)}
+  on:pointerleave={() => (hold = false)}
+  aria-label={t.activeFilters}
+>
+  {#if items.some((it) => !it.gone)}
     {#each items as it, i (it.key)}
       <li class="tpill apill" class:gone={it.gone} hidden={i >= shown}>
         <span class="al">{it.label}</span>
@@ -151,5 +144,5 @@
     <li class="areset">
       <button class="reset" type="button" on:click={reset}>{t.resetFiltersLong}</button>
     </li>
-  </ul>
-{/if}
+  {/if}
+</ul>
