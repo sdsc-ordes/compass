@@ -33,9 +33,12 @@
   });
   $: hidden = items.slice(shown).filter((it) => !it.gone);
 
-  // Synchronous, so the unfolded layout is never painted: unhide all, measure, fold.
-  function fit(): void {
+  let runs = 0;
+
+  // Unhide all, measure, fold; all before paint, so the unfolded layout never shows.
+  async function fit(): Promise<void> {
     if (!rowEl) return;
+    const run = ++runs;
     const lis = [...rowEl.querySelectorAll<HTMLElement>('.apill:not(.amore)')];
     const more = rowEl.querySelector<HTMLElement>('.amore');
     const reset = rowEl.querySelector<HTMLElement>('.areset');
@@ -69,6 +72,14 @@
     more.hidden = k >= lis.length;
     rowEl.classList.remove('measuring');
     shown = k;
+    // The guess misses the final "+N" width; fold until it and reset sit in the two rows.
+    const out = (el: HTMLElement): boolean =>
+      !el.hidden && el.offsetTop + el.offsetHeight > rowEl!.clientHeight;
+    for (;;) {
+      await tick();
+      if (run !== runs || shown <= 1 || !(out(reset) || out(more))) return;
+      shown -= 1;
+    }
   }
 
   $: if (rowEl) void (items, tick().then(fit));
@@ -77,7 +88,7 @@
   function watch(el: HTMLElement): { destroy: () => void } {
     let w = 0;
     const ro = new ResizeObserver(() => {
-      if (el.clientWidth !== w) fit();
+      if (el.clientWidth !== w) void fit();
       w = el.clientWidth;
     });
     ro.observe(el);
