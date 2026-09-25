@@ -22,16 +22,13 @@ PIN_CLASSES = (
     "PartnerOrganization",
     "HostOrganization",
 )
-"""Entity classes the map draws and the counts include."""
+"""Entity classes the map draws."""
 
 ALWAYS_ON_CLASSES = ("HostOrganization",)
-"""Entity classes that keep their pin when the filters would have hidden it.
+"""Entity classes that keep their pin whatever the filters say.
 
-The host organization carries every concept in the vocabulary, so a tag
-selection always matches it and it counts like any other pin -- which is what
-keeps every filter option above zero. A type selection is the one filter it
-cannot satisfy, having no type of its own to offer, and there it stays on the
-map as context rather than disappearing.
+The backend never counts them in the facets; the frontend adds them to every
+count.
 """
 
 FILTERABLE_PIN_CLASSES = tuple(c for c in PIN_CLASSES if c not in ALWAYS_ON_CLASSES)

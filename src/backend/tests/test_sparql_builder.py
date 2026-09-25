@@ -8,10 +8,9 @@ import pytest
 from rdflib.namespace import XSD
 from starlette.datastructures import QueryParams
 
-from app.namespaces import COMPASS
+from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, FILTERABLE_PIN_CLASSES
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import (
-    PIN_CLASSES,
     _build_where_clauses,
     _pin_branch,
     _shared_optionals,
@@ -104,11 +103,18 @@ class TestBuildSelectExpr:
 
 
 class TestPinBranch:
-    """The pin branch must offer every class that can carry coordinates."""
+    """The filtered branch offers every filterable pin class; always-on classes
+    join only through their own branch."""
 
-    @pytest.mark.parametrize("entity_class", PIN_CLASSES)
+    @pytest.mark.parametrize("entity_class", FILTERABLE_PIN_CLASSES)
     def test_branch_offers_class(self, entity_class):
         assert f"compass:{entity_class}" in _pin_branch([])
+
+    @pytest.mark.parametrize("entity_class", ALWAYS_ON_CLASSES)
+    def test_always_on_class_only_in_its_own_branch(self, entity_class):
+        term = f"?s a compass:{entity_class} ."
+        assert term not in _pin_branch([])
+        assert _pin_branch([], with_always_on=True).count(term) == 1
 
     def test_branch_excludes_tag_vocabularies(self):
         """Only entity classes carry coordinates, so only they may be pins."""
@@ -247,11 +253,9 @@ class TestFacetQueryUnderAnd:
             "en",
             QueryParams(f"species={COMPASS.Dolphins}&species={COMPASS.Whales}"),
         )
-        # Regions are background context rather than results, so they are the
-        # only rows the count leaves out.
-        pins = [
-            row for row in store.query(entities) if row["type"] != str(COMPASS.CountryArea)
-        ]
+        # The facets never count always-on pins.
+        always_on = {str(COMPASS[name]) for name in ALWAYS_ON_CLASSES}
+        pins = [row for row in store.query(entities) if str(row["type"]) not in always_on]
         assert counts[str(COMPASS.Whales)] == len(pins)
 
 

@@ -8,8 +8,8 @@ from typing import Any
 from app.namespaces import (
     ALWAYS_ON_CLASSES,
     FIELD_SEP,
+    FILTERABLE_PIN_CLASSES,
     ITEM_SEP,
-    PIN_CLASSES,
     PREFIX_MAP,
     SPARQL_PREFIXES,
 )
@@ -146,14 +146,14 @@ def _pin_branch(
         where_clauses: Extra FILTER / pattern lines applied to each filtered pin.
         indent: Leading whitespace for generated lines.
         with_always_on: Also emit ``ALWAYS_ON_CLASSES``, outside the filtered
-            group so no clause reaches them. Off for facet counts, which report
-            how many *results* a tag would leave.
+            group so no clause reaches them. Off for facet counts, which never
+            count them.
 
     Returns:
         SPARQL WHERE fragment for map pins.
     """
     inner = indent + "    " if with_always_on else indent
-    body = f"{inner}{_class_union(PIN_CLASSES, inner)}\n"
+    body = f"{inner}{_class_union(FILTERABLE_PIN_CLASSES, inner)}\n"
     if where_clauses:
         body += inner + f"\n{inner}".join(where_clauses) + "\n"
     if not with_always_on:

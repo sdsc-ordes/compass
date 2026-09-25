@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, PIN_CLASSES
+from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, FILTERABLE_PIN_CLASSES
 
 # Two species the fixture data shares across several entities, so the
 # intersection of the two is neither empty nor either one of them.
@@ -19,12 +19,8 @@ ALWAYS_ON_IRIS = {str(COMPASS[name]) for name in ALWAYS_ON_CLASSES}
 
 
 def result_pins(features: list[dict]) -> list[dict]:
-    """The pins the selection produced -- which is every feature it returns.
-
-    The host organization is among them: it carries every concept in the
-    vocabulary, so it genuinely matches any tag selection.
-    """
-    return list(features)
+    """The pins the facets count: every feature but the always-on ones."""
+    return [f for f in features if f["properties"]["typeIri"] not in ALWAYS_ON_IRIS]
 
 
 @pytest.fixture(scope="module")
@@ -150,28 +146,10 @@ class TestEntitiesEndpoint:
             "/api/v1/entities",
             params={"lang": "en", "species": str(COMPASS.NoSuchSpecies)},
         ).json()
-        pins = result_pins(data["features"])
+        pins = data["features"]
         assert {f["properties"]["typeIri"] for f in pins} == ALWAYS_ON_IRIS, (
             "the always-on pin should be the only one left on the map"
         )
-
-    def test_no_tag_option_can_empty_the_map(self, client):
-        """Every option the panel offers matches at least one pin.
-
-        The host organization is tagged with the whole vocabulary precisely so
-        that picking any single value leaves something on the map rather than an
-        empty stage under a zero.
-        """
-        widgets = client.get("/api/v1/filters?lang=en").json()
-        facets = client.get("/api/v1/entities/facets?lang=en").json()
-        empty = [
-            f"{widget['id']}/{option['label']}"
-            for widget in widgets
-            if widget["id"] in facets
-            for option in widget.get("options") or []
-            if facets[widget["id"]].get(option["value"], 0) == 0
-        ]
-        assert not empty, f"filter options matching nothing: {empty}"
 
     def test_entity_type_is_still_disjunctive(self, client):
         """An entity has exactly one class, so two picks there mean "either" --
@@ -221,7 +199,17 @@ class TestFacetsEndpoint:
         assert "entityType" in data
         counts = data["entityType"]
         assert counts, "every fixture entity has a class, so this cannot be empty"
-        assert set(counts) <= {str(COMPASS[name]) for name in PIN_CLASSES}
+        assert set(counts) <= {str(COMPASS[name]) for name in FILTERABLE_PIN_CLASSES}
+
+    def test_counts_exclude_the_host_but_entities_return_it_once(self, client):
+        """The frontend adds the host to every count, so the backend never counts it."""
+        params = {"lang": "en", "species": SPECIES_A}
+        features = client.get("/api/v1/entities", params=params).json()["features"]
+        hosts = [f for f in features if f["properties"]["typeIri"] in ALWAYS_ON_IRIS]
+        assert len(hosts) == 1
+        facets = client.get("/api/v1/entities/facets", params=params).json()
+        assert not set(facets["entityType"]) & ALWAYS_ON_IRIS
+        assert facets["species"][SPECIES_A] == len(features) - 1
 
     def test_entity_type_counts_match_the_entities(self, client):
         # The same drill-down rule as every other dimension: a dimension's own

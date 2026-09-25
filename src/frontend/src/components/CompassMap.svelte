@@ -7,6 +7,7 @@
   import { Sheet, isMobile } from '../lib/sheet';
   import { DIM_IDS, SECTION_IDS, TYPE_DIM, buildDims } from '../lib/schema';
   import { toProjs } from '../lib/features';
+  import { isHost } from '../lib/pins';
   import { Stories, type StoryCount } from '../lib/stories';
   import type { Proj } from '../lib/types';
   import { getEntities, getFacets, init, type Feature } from '../engine';
@@ -67,6 +68,21 @@
   $: projs = toProjs(entities);
   // Every pin the API returns, so the number always describes what is drawn.
   $: resultCount = projs.length;
+  // The backend never counts always-on pins, so add them to every count.
+  $: hostCount = projs.filter(isHost).length;
+  $: shownFacets = Object.fromEntries(
+    dims
+      .filter((d) => facets[d.id])
+      .map((d) => {
+        const counts = facets[d.id];
+        return [
+          d.id,
+          Object.fromEntries(
+            d.options.map((o) => [o.value, (counts[o.value] ?? 0) + hostCount]),
+          ),
+        ];
+      }),
+  );
   $: selected = selectedId ? (projs.find((p) => p.id === selectedId) ?? null) : null;
 
   $: statusText = error
@@ -297,7 +313,7 @@
     {dims}
     {openDim}
     {sel}
-    {facets}
+    facets={shownFacets}
     {resultCount}
     {storyCount}
     {storiesPending}
