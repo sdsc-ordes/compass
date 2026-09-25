@@ -12,13 +12,7 @@
   import type { Proj } from '../lib/types';
   import { getEntities, getFacets, init, type Feature } from '../engine';
   import { injectFonts } from '../lib/fonts';
-  import {
-    filtersFromQuery,
-    langFromQuery,
-    pickDimensions,
-    syncUrl,
-    type QueryFilters,
-  } from '../lib/urlstate';
+  import { decodeFilters, langFromQuery, syncUrl, type QueryFilters } from '../lib/urlstate';
   import { fmt, i18n, type Lang } from '../lib/i18n';
   import { styles } from '../lib/styles';
 
@@ -113,7 +107,7 @@
     lastFilterKey = key;
     loading = true;
     error = null;
-    syncUrl(f, l, DIM_IDS);
+    syncUrl(f, l, dims);
     try {
       const data = await getEntities(l, f);
       if (seq !== loadSeq) return;
@@ -256,14 +250,13 @@
     const params = new URLSearchParams(window.location.search);
     lang = langFromQuery(params) ?? lang;
 
-    applyFilters(filtersFromQuery(params));
-
     try {
       await init(apiurl);
     } catch (e) {
       console.error('[Compass] Failed to load the filter schema:', e);
       error = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
     }
+    applyFilters(decodeFilters(params, buildDims(lang)));
 
     sheet = new Sheet({
       mapc: mapcEl,
@@ -281,9 +274,9 @@
     mounted = true;
   });
 
-  function applyFilters(f: Record<string, unknown>): void {
+  function applyFilters(f: QueryFilters): void {
     const next = emptySel();
-    for (const [id, values] of Object.entries(pickDimensions(f, DIM_IDS))) {
+    for (const [id, values] of Object.entries(f)) {
       values.forEach((v) => next[id].add(v));
     }
     sel = next;
