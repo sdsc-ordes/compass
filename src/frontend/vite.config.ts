@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type ModuleNode, type Plugin } from 'vite';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -49,6 +49,27 @@ function serveBathymetry(): Plugin {
   };
 }
 
+// Custom elements can't be redefined: full-reload any update reaching the element.
+function reloadCustomElement(file: string): Plugin {
+  return {
+    name: 'compass-reload-custom-element',
+    apply: 'serve',
+    handleHotUpdate({ modules, server }) {
+      const seen = new Set<ModuleNode>();
+      const reaches = (mod: ModuleNode): boolean => {
+        if (seen.has(mod)) return false;
+        seen.add(mod);
+        if (mod.file === file) return true;
+        if (mod.isSelfAccepting) return false;
+        return [...mod.importers].some(reaches);
+      };
+      if (!modules.some(reaches)) return;
+      server.ws.send({ type: 'full-reload' });
+      return [];
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, repoRoot, 'COMPASS_');
   const devPort = Number(env.COMPASS_DEV_PORT || 5173);
@@ -69,6 +90,7 @@ export default defineConfig(({ mode }) => {
           customElement: true,
         },
       }),
+      reloadCustomElement(path.join(root, 'src/components/CompassMap.svelte')),
       serveBathymetry(),
     ],
     esbuild: { legalComments: 'eof' },
