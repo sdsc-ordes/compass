@@ -20,7 +20,7 @@
   } from '../lib/projection';
   import { loadAtlas, nudgeBasemap, renderBasemap, type Atlas } from '../lib/basemap';
   import { Bathymetry } from '../lib/bathymetry';
-  import { drawPins, fanGroups, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
+  import { drawPins, overlaps, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
   import { onFontsReady } from '../lib/fonts';
   import { placeLabels } from '../lib/labels';
   import { CardLayer } from '../lib/cards';
@@ -70,12 +70,6 @@
   let retry: ReturnType<typeof setTimeout> | null = null;
   let hovered: PinTarget | null = null;
   let pinbox: PinBox[] = [];
-  let fanK = 0;
-
-  // Zooming out past where a cluster was clicked folds its fan.
-  function foldFan(): void {
-    if (S.k < fanK - 1e-6) anim.closeFan();
-  }
 
   // GEBCO ask that the source be acknowledged; the grid's own page carries the
   // citation, the DOI and the terms, so the credit links there rather than
@@ -169,7 +163,6 @@
       }
       qid = null;
       painted = now;
-      foldFan();
       const t0 = performance.now();
       renderAll();
       if (interact) cost = cost * 0.6 + (performance.now() - t0) * 0.4;
@@ -428,7 +421,6 @@
   function clickAt(e: PointerEvent): void {
     const hit = pinAt(e);
     if (!hit) {
-      anim.closeFan();
       onSelect(null);
       return;
     }
@@ -444,23 +436,16 @@
     setHover(d);
   }
 
-  // Zoom in and, in the same click, fan whatever still overlaps at the new zoom.
+  // Straight to max zoom, where whatever still overlaps fans.
   function zoomIntoCluster(cl: Cluster): void {
-    const box = pinbox.find((b) => b.p.id === cl.id);
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
-    const k = Math.min(K_MAX, S.k * 2.2);
-    const g = k / S.k;
-    const mx = box ? box.x : W / 2,
-      my = box ? box.y : H / 2;
-    const to =
-      S.view === 'globe'
-        ? { k, rot: [-cl.c[0], -cl.c[1]] as [number, number] }
-        : { k, tx: mx - g * (mx - S.tx), ty: my - g * (my - S.ty) };
     setHover(null);
-    fanK = S.k;
-    anim.openFan(fanGroups(proj({ ...S, ...to }, W, H), cl.cluster));
-    tween.to(to, 520);
+    const k = K_MAX;
+    tween.to(
+      S.view === 'globe'
+        ? { k, rot: [-cl.c[0], -cl.c[1]] }
+        : { k, ...flatOffsetFor(S, stage.clientWidth, stage.clientHeight, cl.c, k) },
+      620,
+    );
   }
 
   const DETAIL_K = 3.4;
@@ -507,14 +492,17 @@
   const ENTRY_MS = 520;
 
   function zoomToProject(p: Proj): void {
-    const k = Math.max(S.k, DETAIL_K);
-    if (S.view === 'globe') {
-      tween.to({ k, rot: [-p.c[0], -p.c[1]] }, ENTRY_MS);
-      return;
-    }
-    const W = settledWidth() || stage.clientWidth;
-    const o = flatOffsetFor(S, W, stage.clientHeight, p.c, k);
-    tween.to({ k, tx: o.tx, ty: o.ty - lift() }, ENTRY_MS);
+    const W = settledWidth() || stage.clientWidth,
+      H = stage.clientHeight;
+    const frame = (k: number) => {
+      if (S.view === 'globe') return { k, rot: [-p.c[0], -p.c[1]] as [number, number] };
+      const o = flatOffsetFor(S, W, H, p.c, k);
+      return { k, tx: o.tx, ty: o.ty - lift() };
+    };
+    let to = frame(Math.max(S.k, DETAIL_K));
+    // Still clustered there (e.g. opened from a link): go to max zoom, where it fans.
+    if (overlaps(proj({ ...S, ...to }, W, H), projs, p)) to = frame(K_MAX);
+    tween.to(to, ENTRY_MS);
   }
 
   function flyTo(p: Proj): void {
@@ -565,7 +553,6 @@
 
   function onSelectionChanged(p: Proj | null): void {
     setHover(null);
-    if (p && !anim.fanIds.has(p.id)) anim.closeFan();
     if (p) {
       cancelCoach();
       zoomToProject(p);
@@ -648,7 +635,6 @@
       qid = null;
     }
     if (!S.ready) return;
-    foldFan();
     renderAll();
   }
 

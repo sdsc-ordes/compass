@@ -1,7 +1,7 @@
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
-import { frontCentre, REDUCED, type ViewState } from './projection';
+import { frontCentre, K_MAX, REDUCED, type ViewState } from './projection';
 import logoUrl from '../assets/www.oceancare.org-192x192.png';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
@@ -254,15 +254,13 @@ function group<T extends { hx: number; hy: number }>(pts: T[]): Group<T>[] {
   return groups;
 }
 
-// Ids of the members that still cluster under `pr`, one list per group.
-export function fanGroups(pr: GeoProjection, members: Proj[]): string[][] {
-  const pts = members.flatMap((d) => {
-    const q = pr(d.c);
-    return q ? [{ hx: q[0], hy: q[1] - HEAD, id: d.id }] : [];
+// Whether `d` still clusters with another pin under `pr`.
+export function overlaps(pr: GeoProjection, pins: Proj[], d: Proj): boolean {
+  const pts = pins.flatMap((q) => {
+    const xy = !isHost(q) && pr(q.c);
+    return xy ? [{ hx: xy[0], hy: xy[1] - HEAD, id: q.id }] : [];
   });
-  return group(pts)
-    .filter((g) => g.items.length > 1)
-    .map((g) => g.items.map((i) => i.id));
+  return group(pts).some((g) => g.items.length > 1 && g.items.some((i) => i.id === d.id));
 }
 
 const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
@@ -317,9 +315,9 @@ export class PinAnimator {
   private hoveredId: string | null = null;
   fan = 0;
   private fanTo = 0;
-  // The clicked cluster's still-overlapping groups, kept until the fan has closed.
-  fanSets: string[][] = [];
-  fanIds = new Set<string>();
+  // Groups fanned at max zoom, kept until the fan has folded.
+  private fanSets: string[][] = [];
+  private fanIds = new Set<string>();
 
   constructor(
     private paint: () => void,
@@ -344,33 +342,26 @@ export class PinAnimator {
     return this.anim.get(id)?.fade ?? 1;
   }
 
-  openFan(sets: string[][]): void {
-    this.fanSets = sets;
-    this.fanIds = new Set(sets.flat());
-    this.fan = 0;
-    this.setFan(1);
-  }
-
-  closeFan(): void {
-    if (this.fanIds.size) this.setFan(0);
-  }
-
-  private setFan(to: number): void {
-    this.fanTo = to;
-    if (REDUCED.matches) {
-      this.landFan();
-      this.paint();
-      this.settled();
-      return;
+  // Open at max zoom, re-reading `sets` each paint; folds below it.
+  aimFan(open: boolean, sets: () => string[][]): { sets: string[][]; ids: Set<string> } {
+    const to = open ? 1 : 0;
+    if (to !== this.fanTo) {
+      this.fanTo = to;
+      if (REDUCED.matches) this.landFan();
+      else this.kick();
     }
-    this.kick();
+    if (open) {
+      this.fanSets = sets();
+      this.fanIds = new Set(this.fanSets.flat());
+    }
+    return { sets: this.fanSets, ids: this.fanIds };
   }
 
   private landFan(): void {
     this.fan = this.fanTo;
     if (this.fan) return;
     this.fanSets = [];
-    this.fanIds.clear();
+    this.fanIds = new Set();
   }
 
   private kick(): void {
@@ -470,21 +461,24 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
   const pinbox: PinBox[] = [];
   const onStage = (xy: [number, number] | null) =>
     !!xy && !isNaN(xy[0]) && xy[0] > -30 && xy[0] < W + 30 && xy[1] > -30 && xy[1] < H + 30;
-  const pts: { x: number; y: number; hx: number; hy: number; d: Proj }[] = [];
-  const hosts: typeof pts = [];
-  const fanned = new Map<string, (typeof pts)[number]>();
+  const all: { x: number; y: number; hx: number; hy: number; d: Proj }[] = [];
+  const hosts: typeof all = [];
   anim.live
     .filter((d) => onFront(S, d.c))
     .forEach((d) => {
       const xy = pr(d.c);
       if (!onStage(xy)) return;
       const q = xy as [number, number];
-      const pt = { x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d };
-      if (isHost(d)) hosts.push(pt);
-      else if (anim.fanIds.has(d.id)) fanned.set(d.id, pt);
-      else pts.push(pt);
+      (isHost(d) ? hosts : all).push({ x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d });
     });
-  const rings = anim.fanSets.map((ids) => ids.flatMap((id) => fanned.get(id) ?? []));
+  const fan = anim.aimFan(S.k >= K_MAX - 1e-6, () =>
+    group(all)
+      .filter((g) => g.items.length > 1)
+      .map((g) => g.items.map((i) => i.d.id)),
+  );
+  const pts = all.filter((q) => !fan.ids.has(q.d.id));
+  const byId = new Map(all.map((q) => [q.d.id, q]));
+  const rings = fan.sets.map((ids) => ids.flatMap((id) => byId.get(id) ?? []));
   rings.filter((ring) => ring.length < 2).forEach((ring) => pts.push(...ring));
 
   // Tip at (x, y); `rise` lifts a pin that is fading in or out.
