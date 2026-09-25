@@ -50,6 +50,10 @@ const STYLES: Record<string, Style> = {
 
 const FACE = 'Cabin, system-ui, sans-serif';
 
+// The ink for a label standing on open water with the depth raster under it,
+// which is dark in either theme. Plain white, unhaloed: the raster is dark
+// enough on its own, and anything ringing the glyphs reads as a smear at the
+// fractional positions the labels land on.
 const SEA_INK = '#FFFFFF';
 
 /* Below this k continents are the only land labels, above it the countries are. */
@@ -86,13 +90,23 @@ export function placeLabels(a: LabelPass): void {
     return w + ('letterSpacing' in cx ? 0 : em * txt.length) + 6;
   };
 
-  const place = (
-    c: [number, number],
-    cls: string,
-    txt: string,
-    ink: string,
-    atSea: boolean,
-  ) => {
+  /* Whether the whole span of a label centred on (x, y) clears the coast.
+     Sampled across the width rather than tested as a box: four points catch an
+     overhang without walking the coastline. A point the projection cannot
+     invert -- past the globe's limb -- counts as dry, so an unknown answer
+     leaves the land treatment standing. */
+  const overWater = (x: number, y: number, w: number) => {
+    for (const f of [-0.44, -0.2, 0.2, 0.44]) {
+      const px = x + w * f;
+      const ll = pr.invert?.([px, y]);
+      if (!ll || isNaN(ll[0]) || geoContains(a.land, ll)) return false;
+      const back = pr(ll);
+      if (!back || Math.hypot(back[0] - px, back[1] - y) > 1) return false;
+    }
+    return true;
+  };
+
+  const place = (c: [number, number], cls: string, txt: string, atSea: boolean) => {
     const st = STYLES[cls];
     const w = measure(txt, st);
     if (globe && geoDistance(c, ctr) > 1.24) return false;
@@ -108,20 +122,19 @@ export function placeLabels(a: LabelPass): void {
       )
     )
       return false;
-    if (atSea) {
-      for (const f of [-0.44, -0.2, 0.2, 0.44]) {
-        const px = x + w * f;
-        const ll = pr.invert?.([px, y]);
-        if (!ll || isNaN(ll[0]) || geoContains(a.land, ll)) return false;
-        const back = pr(ll);
-        if (!back || Math.hypot(back[0] - px, back[1] - y) > 1) return false;
-      }
-    }
+    /* An ocean name has to clear the coast to be placed at all. A land name does
+       not, but one that happens to -- an island's, set wider than the island --
+       is standing on open water and goes white like the ocean names around it,
+       whatever class put it there. Only worth asking when there is a seafloor
+       under it to read against. */
+    const wet = atSea || a.depth ? overWater(x, y, w) : false;
+    if (atSea && !wet) return false;
+    const sea = wet && a.depth;
     boxes.push({ x, y, w, h: st.h });
     const el = document.createElement('div');
     el.className = 'lbl ' + cls;
     el.style.cssText +=
-      `left:${x}px;top:${y}px;color:${ink};font-size:${st.size}px;` +
+      `left:${x}px;top:${y}px;color:${sea ? SEA_INK : p.lblCty};font-size:${st.size}px;` +
       `font-weight:${st.weight};letter-spacing:${st.track}em;` +
       (st.caps ? 'text-transform:uppercase;' : '');
     el.textContent = txt;
@@ -131,17 +144,14 @@ export function placeLabels(a: LabelPass): void {
 
   // Placed first so the continents win every collision they are in.
   if (k < CON_K)
-    CON.forEach((d) => place(d.c, 'lbl-con', a.lang === 'de' ? d.de : d.en, p.lblCty, false));
-  const seaInk = a.depth ? SEA_INK : p.lblCty;
+    CON.forEach((d) => place(d.c, 'lbl-con', a.lang === 'de' ? d.de : d.en, false));
   // Natural Earth splits the Atlantic and the Pacific in two, under one name each.
   const named = new Set<string>();
   a.sea.forEach((d) => {
     const txt = a.lang === 'de' ? d.de : d.en;
-    if (k >= d.k && !named.has(txt) && place(d.c, 'lbl-sea' + d.t, txt, seaInk, true))
-      named.add(txt);
+    if (k >= d.k && !named.has(txt) && place(d.c, 'lbl-sea' + d.t, txt, true)) named.add(txt);
   });
   a.cty.forEach((d) => {
-    if (k >= CON_K && k >= d.k)
-      place(d.c, 'lbl-cty', a.lang === 'de' ? d.de : d.en, p.lblCty, false);
+    if (k >= CON_K && k >= d.k) place(d.c, 'lbl-cty', a.lang === 'de' ? d.de : d.en, false);
   });
 }

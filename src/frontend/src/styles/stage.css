@@ -112,16 +112,6 @@
   pointer-events: none;
   line-height: 1.1;
   font-family: Cabin, system-ui, sans-serif;
-  text-shadow:
-    0 0 2px var(--halo),
-    0 0 2px var(--halo),
-    0 0 4px var(--halo);
-}
-/* Sea labels go white over the bathymetry raster, which is dark in either theme. */
-.stage.depth .ov .lbl-sea0,
-.stage.depth .ov .lbl-sea1,
-.stage.depth .ov .lbl-sea2 {
-  --halo: var(--halo-dark);
 }
 
 .attrib {
