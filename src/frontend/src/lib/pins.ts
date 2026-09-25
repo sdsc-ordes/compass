@@ -586,7 +586,7 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       if (!onStage(xy)) return;
       const q = xy as [number, number];
       const y = q[1] - (1 - anim.fadeOf(d.id)) * 7;
-      if (isHost(d)) drawHost(ctx, q[0], y, p.host, 0, anim.fadeOf(d.id));
+      if (isHost(d)) drawHost(ctx, q[0], y, PIN_EDGE, 0, anim.fadeOf(d.id));
       else drawGmapsPin(ctx, q[0], y, p.pin, p.pinRing, 0, anim.fadeOf(d.id));
     });
 
@@ -594,7 +594,7 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     const fade = anim.fadeOf(d.id);
     const cy = y - (1 - fade) * 7;
     const on = !!selected && selected.id === d.id;
-    const R = drawHost(ctx, x, cy, on ? p.pinSel : p.host, anim.growOf(d.id), fade);
+    const R = drawHost(ctx, x, cy, on ? p.pinSel : PIN_EDGE, anim.growOf(d.id), fade);
     pinbox.push({ x, y: cy, w: R * 2, h: R * 2, headR: R, tipY: cy + R, p: d, r: R });
   });
   ctx.restore();
