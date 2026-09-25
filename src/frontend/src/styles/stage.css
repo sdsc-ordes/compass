@@ -31,9 +31,6 @@
   font: inherit;
   color: inherit;
 }
-.mapc.night {
-  --halo: var(--halo-dark);
-}
 /* NIGHT_INK in palette.ts, which paints the same colour onto the canvas. CSS
    cannot import it, so the two are kept in step by hand. */
 .mapc.night .stage {
@@ -136,12 +133,15 @@
   outline: 2px solid var(--cerulean);
   outline-offset: 2px;
 }
-.stage.depth .attrib {
-  color: var(--stage-ink);
-  text-shadow:
-    0 0 2px var(--halo),
-    0 0 2px var(--halo),
-    0 0 4px var(--halo);
+.mapc.night .stage.depth .attrib {
+  color: #fff;
+}
+/* Cerulean is under 4.5:1 on the dark map. */
+.mapc.night .attriblink:hover {
+  color: var(--land-hi);
+}
+.mapc.night .attriblink:focus-visible {
+  outline-color: var(--iso);
 }
 
 @media (max-width: 860px) {

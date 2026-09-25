@@ -34,8 +34,6 @@
   /* Cerulean is 1.7:1 on astronaut; --iso is 3.46:1 and keeps the edge visible. */
   --card-prev-edge: var(--iso);
   --rail: 420px;
-  --halo: rgba(255, 255, 255, 0.92);
-  --halo-dark: rgba(8, 24, 39, 0.92);
 }
 .sr {
   position: absolute;
