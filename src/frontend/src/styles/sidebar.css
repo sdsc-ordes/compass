@@ -209,9 +209,10 @@ aside.filters::-webkit-scrollbar-track {
   }
 }
 
-/* Active selections: a chosen .tpill with a ×, on one line; the rest go under "+N". */
+/* Active selections: a chosen .tpill with a ×, on up to two rows; the rest go under "+N". */
 .apills {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 0 18px 14px;
   padding: 0;
@@ -230,8 +231,8 @@ aside.filters::-webkit-scrollbar-track {
   background: var(--cerulean);
   border-color: var(--cerulean);
 }
-/* the first pill ellipsizes rather than overflow when alone */
-.apills:not(.measuring) .apill:first-child {
+/* a pill wider than the row ellipsizes rather than overflow */
+.apills:not(.measuring) .apill {
   flex-shrink: 1;
   min-width: 0;
 }
@@ -450,6 +451,7 @@ aside.filters::-webkit-scrollbar-track {
     inset: -6px 0;
   }
   .apills {
+    row-gap: 14px;
     margin: 4px 18px 12px;
   }
   .apill::after {

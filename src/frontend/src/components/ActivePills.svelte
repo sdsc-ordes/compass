@@ -24,7 +24,7 @@
   $: visible = measuring ? items : items.slice(0, shown);
   $: hidden = measuring ? [] : items.slice(shown);
 
-  // Lay every pill out unshrunk, then keep as many as fit beside the "+N".
+  // Lay every pill out unshrunk and wrapped, then keep two rows with the "+N" on the second.
   async function fit(): Promise<void> {
     if (!rowEl) return;
     measuring = true;
@@ -36,11 +36,11 @@
       const left = rowEl.getBoundingClientRect().left;
       const gap = parseFloat(getComputedStyle(rowEl).columnGap) || 0;
       const end = (i: number): number => pills[i].getBoundingClientRect().right - left;
-      let k = pills.length;
-      if (end(k - 1) > w) {
+      const r2 = pills.find((p) => p.offsetTop > pills[0].offsetTop)?.offsetTop ?? Infinity;
+      let k = pills.filter((p) => p.offsetTop <= r2).length;
+      if (k < pills.length) {
         const room = w - gap - (more?.offsetWidth ?? 0);
-        k -= 1;
-        while (k > 1 && end(k - 1) > room) k -= 1;
+        while (k > 1 && pills[k - 1].offsetTop === r2 && end(k - 1) > room) k -= 1;
       }
       shown = k;
     }
