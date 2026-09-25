@@ -1,7 +1,7 @@
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
-import { frontCentre, K_MAX, REDUCED, type ViewState } from './projection';
+import { frontCentre, REDUCED, type ViewState } from './projection';
 import logoUrl from '../assets/www.oceancare.org-192x192.png';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
@@ -254,15 +254,6 @@ function group<T extends { hx: number; hy: number }>(pts: T[]): Group<T>[] {
   return groups;
 }
 
-// Whether `d` still clusters with another pin under `pr`.
-export function overlaps(pr: GeoProjection, pins: Proj[], d: Proj): boolean {
-  const pts = pins.flatMap((q) => {
-    const xy = !isHost(q) && pr(q.c);
-    return xy ? [{ hx: xy[0], hy: xy[1] - HEAD, id: q.id }] : [];
-  });
-  return group(pts).some((g) => g.items.length > 1 && g.items.some((i) => i.id === d.id));
-}
-
 const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
 
 const fanGap = (touch: boolean) => (touch ? 44 : 31);
@@ -272,6 +263,30 @@ const fanRadius = (n: number, touch: boolean) =>
 const fanFrom = (n: number) => (n === 2 ? 0 : -Math.PI / 2);
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+// Where `d` lands once fanned under `pr`, or null when it does not fan.
+export function fanSpot(
+  pr: GeoProjection,
+  pins: Proj[],
+  d: Proj,
+  W: number,
+  H: number,
+  touch: boolean,
+): [number, number] | null {
+  const pts = pins.flatMap((q) => {
+    const xy = !isHost(q) && pr(q.c);
+    return xy ? [{ x: xy[0], y: xy[1], hx: xy[0], hy: xy[1] - HEAD, id: q.id }] : [];
+  });
+  const g = group(pts).find((gg) => gg.items.length > 1 && gg.items.some((i) => i.id === d.id));
+  if (!g) return null;
+  const n = g.items.length;
+  const ax = mean(g.items.map((i) => i.x)),
+    ay = mean(g.items.map((i) => i.y));
+  const R = fanRadius(n, touch);
+  const th =
+    fanAngle(ax, ay, R, n, W, H) + (g.items.findIndex((i) => i.id === d.id) * 2 * Math.PI) / n;
+  return [ax + Math.cos(th) * R, ay + Math.sin(th) * R];
+}
 
 function fanAngle(ax: number, ay: number, R: number, n: number, W: number, H: number): number {
   const M = 14;
@@ -471,7 +486,7 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       const q = xy as [number, number];
       (isHost(d) ? hosts : all).push({ x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d });
     });
-  const fan = anim.aimFan(S.k >= K_MAX - 1e-6, () =>
+  const fan = anim.aimFan(S.k >= S.kMax - 1e-6, () =>
     group(all)
       .filter((g) => g.items.length > 1)
       .map((g) => g.items.map((i) => i.d.id)),
@@ -582,13 +597,22 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
   return pinbox;
 }
 
-// Top-most first: pinbox is in paint order, hosts last.
-export function hitPin(pinbox: PinBox[], x: number, y: number): PinTarget | null {
+// Top-most first: pinbox is in paint order, hosts last. A miss falls back to
+// the nearest pin within `slop` (touch).
+export function hitPin(pinbox: PinBox[], x: number, y: number, slop = 0): PinTarget | null {
   for (let i = pinbox.length - 1; i >= 0; i--) {
     const b = pinbox[i];
     if (Math.hypot(b.x - x, b.y - y) <= b.r) return b.p;
   }
-  return null;
+  let best: PinTarget | null = null;
+  pinbox.forEach((b) => {
+    const d = Math.hypot(b.x - x, b.y - y);
+    if (d <= slop) {
+      slop = d;
+      best = b.p;
+    }
+  });
+  return best;
 }
 
 export const boxFor = (pinbox: PinBox[], id: string): PinBox | undefined =>

@@ -14,6 +14,8 @@ export interface ViewState {
   k: number;
   tx: number;
   ty: number;
+  // Per-stage zoom ceiling; K_MAX unless a small screen raises it.
+  kMax: number;
   ready: boolean;
 }
 
@@ -24,6 +26,7 @@ export const initialView = (): ViewState => ({
   k: 1,
   tx: 0,
   ty: 0,
+  kMax: K_MAX,
   ready: false,
 });
 
@@ -67,6 +70,10 @@ export function proj(S: ViewState, w: number, h: number): GeoProjection {
 export function fitScale(w: number, h: number): number {
   return flatBase(w, h).scale();
 }
+
+// A phone reaches the same px/degree as a 1280 px desktop does at K_MAX.
+export const smallKMax = (w: number, h: number): number =>
+  K_MAX * Math.max(1, fitScale(1280, 800) / fitScale(w, h));
 
 export const frontCentre = (S: ViewState): [number, number] => [-S.rot[0], -S.rot[1]];
 
@@ -251,6 +258,8 @@ export function bindInput(h: InputHooks): () => void {
   let p0: [number, number] | null = null;
   let base: { rot: [number, number]; tx: number; ty: number } | null = null;
   let moved = 0;
+  // Finger jitter allowance before a tap turns into a pan.
+  let slop = 4;
   let dragging = false;
   let pinch: {
     d: number;
@@ -289,7 +298,7 @@ export function bindInput(h: InputHooks): () => void {
       // it per-frame instead mixes an absolute pan with an incremental zoom
       // anchor and the map slides out from under the fingers.
       const m = midpoint();
-      const k = Math.max(K_MIN, Math.min(K_MAX, pinch.k * (spread() / pinch.d)));
+      const k = Math.max(K_MIN, Math.min(S.kMax, pinch.k * (spread() / pinch.d)));
       const g = k / pinch.k;
       h.setInteract(true);
       if (S.view === 'flat') {
@@ -304,7 +313,7 @@ export function bindInput(h: InputHooks): () => void {
     const dx = e.clientX - p0[0],
       dy = e.clientY - p0[1];
     moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
-    if (moved < 4) return;
+    if (moved < slop) return;
     if (!dragging) {
       dragging = true;
       h.clearHover();
@@ -343,7 +352,7 @@ export function bindInput(h: InputHooks): () => void {
       return;
     }
     if (PT.size) return;
-    const wasClick = moved < 4;
+    const wasClick = moved < slop;
     p0 = null;
     dragging = false;
     stage.style.cursor = 'crosshair';
@@ -366,6 +375,7 @@ export function bindInput(h: InputHooks): () => void {
     if (PT.size > 2) return;
     p0 = [e.clientX, e.clientY];
     moved = 0;
+    slop = e.pointerType === 'mouse' ? 4 : 16;
     dragging = false;
     base = { rot: S.rot.slice() as [number, number], tx: S.tx, ty: S.ty };
     window.addEventListener('pointermove', mv);

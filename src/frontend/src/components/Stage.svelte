@@ -11,6 +11,7 @@
     frontCentre,
     bindInput,
     fitScale,
+    smallKMax,
     frameFor,
     Tweener,
     REDUCED,
@@ -20,7 +21,7 @@
   } from '../lib/projection';
   import { loadAtlas, nudgeBasemap, renderBasemap, type Atlas } from '../lib/basemap';
   import { Bathymetry } from '../lib/bathymetry';
-  import { drawPins, overlaps, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
+  import { drawPins, fanSpot, hitPin, boxFor, onFront, PinAnimator } from '../lib/pins';
   import { onFontsReady } from '../lib/fonts';
   import { placeLabels } from '../lib/labels';
   import { CardLayer } from '../lib/cards';
@@ -179,6 +180,7 @@
       retry = setTimeout(() => queue(true), 80);
       return;
     }
+    fitKMax(W, H);
     if (!interact || !nudgeBasemap(basemap.refs(), S, W, H))
       renderBasemap(basemap.refs(), S, W, H, atlas);
     const pr = paintCanvas(W, H);
@@ -186,6 +188,11 @@
     paintWater(pr, W, H);
     if (!interact) runLabels(pr, W, H);
     else ov.textContent = '';
+  }
+
+  function fitKMax(W: number, H: number): void {
+    S.kMax = isMobile() ? smallKMax(W, H) : K_MAX;
+    S.k = Math.min(S.k, S.kMax);
   }
 
   function paintPins(): void {
@@ -297,7 +304,7 @@
   }
 
   function zoomTo(k: number, mx: number, my: number): void {
-    k = Math.max(K_MIN, Math.min(K_MAX, k));
+    k = Math.max(K_MIN, Math.min(S.kMax, k));
     if (S.view === 'flat') {
       const g = k / S.k;
       S.tx = mx - g * (mx - S.tx);
@@ -308,7 +315,7 @@
   }
 
   function zoomStep(f: number): void {
-    const k = Math.max(K_MIN, Math.min(K_MAX, S.k * f));
+    const k = Math.max(K_MIN, Math.min(S.kMax, S.k * f));
     if (k === S.k) return;
     const mx = stage.clientWidth / 2,
       my = stage.clientHeight / 2,
@@ -411,7 +418,12 @@
 
   function pinAt(e: PointerEvent): PinTarget | null {
     const r = stage.getBoundingClientRect();
-    return hitPin(pinbox, e.clientX - r.left, e.clientY - r.top);
+    return hitPin(
+      pinbox,
+      e.clientX - r.left,
+      e.clientY - r.top,
+      e.pointerType === 'mouse' ? 0 : 22,
+    );
   }
 
   function hoverAt(e: PointerEvent): void {
@@ -439,7 +451,7 @@
   // Straight to max zoom, where whatever still overlaps fans.
   function zoomIntoCluster(cl: Cluster): void {
     setHover(null);
-    const k = K_MAX;
+    const k = S.kMax;
     tween.to(
       S.view === 'globe'
         ? { k, rot: [-cl.c[0], -cl.c[1]] }
@@ -477,9 +489,10 @@
       return;
     }
     if (W === lastW && H === lastH) return;
+    fitKMax(W, H);
     if (S.view === 'flat' && !tween.running) {
       const want = S.k * (fitScale(lastW, lastH) / fitScale(W, H));
-      if (want >= K_MIN && want <= K_MAX) {
+      if (want >= K_MIN && want <= S.kMax) {
         const c = centreLonLat(S, lastW, lastH);
         S.k = want;
         Object.assign(S, flatOffsetFor(S, W, H, c, want));
@@ -499,9 +512,20 @@
       const o = flatOffsetFor(S, W, H, p.c, k);
       return { k, tx: o.tx, ty: o.ty - lift() };
     };
+    const at = (v: typeof to) => proj({ ...S, ...v }, W, H);
     let to = frame(Math.max(S.k, DETAIL_K));
-    // Still clustered there (e.g. opened from a link): go to max zoom, where it fans.
-    if (overlaps(proj({ ...S, ...to }, W, H), projs, p)) to = frame(K_MAX);
+    // Still clustered there (e.g. opened from a link): go to max zoom, where it fans,
+    // and frame the pin's fanned spot rather than its coordinate.
+    if (fanSpot(at(to), projs, p, W, H, isMobile())) {
+      to = frame(S.kMax);
+      const aim = at(to)(p.c);
+      for (let i = 0; i < 2 && aim && to.tx !== undefined && to.ty !== undefined; i++) {
+        const f = fanSpot(at(to), projs, p, W, H, isMobile());
+        if (!f) break;
+        to.tx += aim[0] - f[0];
+        to.ty += aim[1] - f[1];
+      }
+    }
     tween.to(to, ENTRY_MS);
   }
 
