@@ -311,7 +311,6 @@
     {storyCount}
     {storiesPending}
     {statusText}
-    {anyFilters}
     {selected}
     {juston}
     onToggleDim={toggleDim}

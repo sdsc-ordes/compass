@@ -17,7 +17,6 @@
   export let storyCount: { count: number; url: string } | null = null;
   export let storiesPending = false;
   export let statusText = '';
-  export let anyFilters = false;
   export let selected: Proj | null = null;
   export let juston: string | null = null;
 
@@ -78,16 +77,7 @@
   <div class="pane-filters">
     <Tally {t} {resultCount} {storyCount} {storiesPending} {statusText} bind:tallyEl />
     <TypePills bind:this={pills} {t} dim={typeDim} {sel} {facets} {juston} {onPickType} />
-    <div class="resetrow">
-      <button
-        class="reset"
-        class:off={!anyFilters}
-        type="button"
-        disabled={!anyFilters}
-        on:click={onReset}>{t.resetFiltersLong}</button
-      >
-    </div>
-    <ActivePills {t} {dims} {sel} {onToggleOption} />
+    <ActivePills {t} {dims} {sel} {onToggleOption} {onReset} />
     <FilterAccordion
       bind:this={acc}
       {t}

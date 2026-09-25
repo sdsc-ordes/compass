@@ -10,7 +10,7 @@
 }
 .ahbtn {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto auto;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
   align-items: center;
   gap: 11px;
   width: 100%;
@@ -45,7 +45,7 @@
   text-wrap: pretty;
 }
 /* Leads the panel rather than the header: collapsed, the accordion is a column
-   of titles and counts, and the prose arrives when the group is opened and the
+   of titles, and the prose arrives when the group is opened and the
    reader has asked for it. */
 .acc .dsc {
   margin: 0;
@@ -58,30 +58,6 @@
 .acc .dico {
   display: flex;
   justify-self: center;
-}
-/* The panel shows two kinds of number: a group's count is filters the reader
-   chose, a row's is entities found. A choice is already said with a cerulean
-   fill -- that is what a ticked checkbox is -- so the group count takes the fill
-   and the white ink, and the bare cerulean numeral is left to mean a quantity.
-   It is the same filled/outlined split the sidebar's .etag and .ptag pills use,
-   square as everything here is. */
-.acc .cnt {
-  justify-self: end;
-  min-width: 18px;
-  padding: 0 4px;
-  background: var(--cerulean);
-  color: #fff;
-  font-family: Cabin, system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  line-height: 16px;
-  letter-spacing: 0;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  transition: opacity 0.2s ease;
-}
-.acc .cnt.off {
-  opacity: 0;
 }
 .acc .chev {
   display: flex;
@@ -118,8 +94,7 @@
 @media (prefers-reduced-motion: reduce) {
   .apanel,
   .acc .chev,
-  .ahbtn,
-  .acc .cnt {
+  .ahbtn {
     transition: none;
   }
 }
@@ -251,13 +226,8 @@
     padding: 15px 18px;
     font-size: 17px;
     letter-spacing: 0.3px;
-    grid-template-columns: 20px minmax(0, 1fr) auto auto;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
     gap: 13px;
-  }
-  .acc .cnt {
-    min-width: 20px;
-    font-size: 12px;
-    line-height: 18px;
   }
   .dimmeta {
     min-height: 36px;

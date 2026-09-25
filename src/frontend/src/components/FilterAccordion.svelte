@@ -2,7 +2,7 @@
   import { tick } from 'svelte';
   import FilterRows from './FilterRows.svelte';
   import Icon from './Icon.svelte';
-  import { fmt, type Strings } from '../lib/i18n';
+  import type { Strings } from '../lib/i18n';
   import { REDUCED } from '../lib/projection';
   import type { Dim } from '../lib/schema';
 
@@ -59,7 +59,6 @@
 <div class="acc" bind:this={accEl} role="group" aria-label={t.filterDimensions}>
   {#each dims as dim (dim.id)}
     {@const open = openDim === dim.id}
-    {@const n = sel[dim.id]?.size ?? 0}
     <div class="asec" class:open>
       <h2>
         <button
@@ -69,14 +68,12 @@
           id={'acch-' + dim.id}
           aria-expanded={open}
           aria-controls={'accp-' + dim.id}
-          aria-label={n ? fmt(t.dimSelected, { label: dim.label, n }) : dim.label}
           on:click={() => onToggleDim(dim.id)}
         >
           <span class="dico"
             >{#if dim.icon}<Icon name={dim.icon} size={16} />{/if}</span
           >
           <span class="lb">{dim.label}</span>
-          <span class="cnt" class:off={n === 0} aria-hidden="true">{n || '0'}</span>
           <span class="chev"><Icon name="chevronUp" size={16} /></span>
         </button>
       </h2>
