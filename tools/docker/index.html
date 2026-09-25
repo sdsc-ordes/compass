@@ -4,6 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OceanCare Compass</title>
+  <!-- Social card. Crawlers run no JS, so nginx fills the __OG_*__ placeholders
+       (origin, and the German copy and card on ?lang=de): see nginx.conf. -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="OceanCare Compass">
+  <meta property="og:description" content="__OG_DESC__">
+  <meta property="og:url" content="__OG_ORIGIN__/__OG_QUERY__">
+  <meta property="og:image" content="__OG_ORIGIN__/og/compass-og-__OG_LANG__.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="__OG_ALT__">
+  <meta name="twitter:card" content="summary_large_image">
   <style>
     html, body { margin: 0; height: 100%; background: #f1f5f9; }
     compass-map { display: block; height: 100vh; }

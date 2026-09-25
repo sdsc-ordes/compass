@@ -15,6 +15,7 @@ COPY --from=build /app/THIRD-PARTY-NOTICES.md /usr/share/nginx/html/
 # has been run (it is gitignored, so it is present only if built). Absent is
 # fine either way: the map falls back to a flat sea.
 COPY src/frontend/bathy/ /usr/share/nginx/html/bathy/
+COPY tools/docker/og/ /usr/share/nginx/html/og/
 COPY tools/docker/index.html /usr/share/nginx/html/index.html
 COPY tools/docker/nginx.conf /etc/nginx/conf.d/default.conf
 
