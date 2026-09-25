@@ -168,6 +168,48 @@ export function drawAnchor(
   return out;
 }
 
+export const isHost = (d: Proj) => d.typeIri.endsWith('#HostOrganization');
+
+function starPath(ctx: CanvasRenderingContext2D, x: number, y: number, R: number): void {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 ? R * 0.48 : R;
+    const th = -Math.PI / 2 + (i * Math.PI) / 5;
+    ctx.lineTo(x + Math.cos(th) * r, y + Math.sin(th) * r);
+  }
+  ctx.closePath();
+}
+
+export function drawStar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  fill: string,
+  ring: string,
+  grow: number,
+  alpha?: number,
+): number {
+  const sc = 1 + 0.1 * grow;
+  const R = 14 * sc;
+  ctx.save();
+  if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
+  ctx.lineJoin = 'round';
+  starPath(ctx, x, y, R);
+  ctx.strokeStyle = ring;
+  ctx.lineWidth = 7 * sc;
+  ctx.stroke();
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 4 * sc;
+  ctx.stroke();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.4 * sc;
+  ctx.stroke();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.restore();
+  return R;
+}
+
 export const onFront = (S: ViewState, c: [number, number]) =>
   S.view === 'flat' || geoDistance(c, frontCentre(S)) < 1.52;
 
@@ -368,13 +410,14 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     !!xy && !isNaN(xy[0]) && xy[0] > -30 && xy[0] < W + 30 && xy[1] > -30 && xy[1] < H + 30;
   const fanning = anim.fan > 0.002;
   const pts: { x: number; y: number; hx: number; hy: number; d: Proj }[] = [];
+  const hosts: typeof pts = [];
   anim.live
     .filter((d) => onFront(S, d.c))
     .forEach((d) => {
       const xy = pr(d.c);
       if (!onStage(xy)) return;
       const q = xy as [number, number];
-      pts.push({ x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d });
+      (isHost(d) ? hosts : pts).push({ x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d });
     });
 
   interface Group {
@@ -540,16 +583,25 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       const xy = pr(d.c);
       if (!onStage(xy)) return;
       const q = xy as [number, number];
-      drawGmapsPin(
+      const draw = isHost(d) ? drawStar : drawGmapsPin;
+      draw(
         ctx,
         q[0],
         q[1] - (1 - anim.fadeOf(d.id)) * 7,
-        p.pin,
+        isHost(d) ? p.host : p.pin,
         p.pinRing,
         0,
         anim.fadeOf(d.id),
       );
     });
+
+  hosts.forEach(({ x, y, d }) => {
+    const fade = anim.fadeOf(d.id);
+    const cy = y - (1 - fade) * 7;
+    const on = !!selected && selected.id === d.id;
+    const R = drawStar(ctx, x, cy, on ? p.pinSel : p.host, p.pinRing, anim.growOf(d.id), fade);
+    pinbox.push({ x, y: cy, w: R * 2, h: R * 2, headR: R, tipY: cy + R, p: d, r: R + 3 });
+  });
   ctx.restore();
   return pinbox;
 }
@@ -558,8 +610,10 @@ export function hitPin(pinbox: PinBox[], x: number, y: number): PinTarget | null
   let hit: PinTarget | null = null,
     hd = 1e9;
   pinbox.forEach((b) => {
-    const d = Math.hypot(b.x - x, b.y - y);
-    if (d <= b.r && d < hd) {
+    const r = Math.hypot(b.x - x, b.y - y);
+    if (r > b.r) return;
+    const d = !isCluster(b.p) && isHost(b.p) ? -1 : r;
+    if (d < hd) {
       hd = d;
       hit = b.p;
     }
