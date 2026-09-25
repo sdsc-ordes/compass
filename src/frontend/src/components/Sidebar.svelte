@@ -2,6 +2,7 @@
   import DetailPane from './DetailPane.svelte';
   import Tally from './Tally.svelte';
   import TypePills from './TypePills.svelte';
+  import ActivePills from './ActivePills.svelte';
   import FilterAccordion from './FilterAccordion.svelte';
   import { plural, storyLine, type Strings } from '../lib/i18n';
   import type { Proj } from '../lib/types';
@@ -86,6 +87,7 @@
         on:click={onReset}>{t.resetFiltersLong}</button
       >
     </div>
+    <ActivePills {t} {dims} {sel} {onToggleOption} />
     <FilterAccordion
       bind:this={acc}
       {t}

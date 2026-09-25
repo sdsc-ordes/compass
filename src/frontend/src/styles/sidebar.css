@@ -209,6 +209,92 @@ aside.filters::-webkit-scrollbar-track {
   }
 }
 
+/* Active selections: a chosen .tpill with a ×, on one line; the rest go under "+N". */
+.apills {
+  display: flex;
+  gap: 8px;
+  margin: 0 18px 14px;
+  padding: 0;
+  list-style: none;
+}
+.tpill.apill {
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px 3px 12px;
+  background: var(--astronaut);
+  border-color: var(--astronaut);
+  color: #fff;
+}
+.tpill.apill:has(.ax:hover) {
+  background: var(--cerulean);
+  border-color: var(--cerulean);
+}
+/* the first pill ellipsizes rather than overflow when alone */
+.apills:not(.measuring) .apill:first-child {
+  flex-shrink: 1;
+  min-width: 0;
+}
+.apill .al {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apill .ax {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 60px;
+  background: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+}
+.apill .ax:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+.tpill.amore {
+  position: relative;
+  padding: 3px 12px;
+  background: none;
+  border-color: var(--chrome);
+  color: var(--astronaut);
+  font-weight: 700;
+  cursor: default;
+}
+.tpill.amore:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+  color: var(--cerulean);
+}
+.amore .atip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 6;
+  width: max-content;
+  max-width: 260px;
+  padding: 8px 12px;
+  background: var(--card-surface);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--card-shadow);
+  color: var(--card-ink);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: normal;
+  clip-path: inset(50%);
+  opacity: 0;
+}
+.amore:hover .atip,
+.amore:focus-visible .atip {
+  clip-path: none;
+  opacity: 1;
+}
+
 .reset {
   background: none;
   border: 0;
@@ -362,6 +448,20 @@ aside.filters::-webkit-scrollbar-track {
     content: '';
     position: absolute;
     inset: -6px 0;
+  }
+  .apills {
+    margin: 4px 18px 12px;
+  }
+  .apill::after {
+    content: none;
+  }
+  .apill .ax {
+    position: relative;
+  }
+  .apill .ax::after {
+    content: '';
+    position: absolute;
+    inset: -11px -6px;
   }
   .reset {
     display: inline-flex;

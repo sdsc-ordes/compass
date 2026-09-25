@@ -67,6 +67,9 @@ export const i18n = {
     sheetHow: 'Drag, tap, or use the arrow keys to resize this panel.',
     filterByTag: 'Filter by {label}',
     filterByType: 'filter by this type',
+    activeFilters: 'Active filters',
+    removeFilter: 'Remove {label}',
+    moreFilters: '{n} more: {labels}',
     allTypes: 'All',
     typeShort: {
       InternationalForum: 'International Fora',
@@ -144,6 +147,9 @@ export const i18n = {
     sheetHow: 'Ziehen, tippen oder mit den Pfeiltasten die Höhe ändern.',
     filterByTag: 'Nach {label} filtern',
     filterByType: 'nach dieser Art filtern',
+    activeFilters: 'Aktive Filter',
+    removeFilter: '{label} entfernen',
+    moreFilters: '{n} weitere: {labels}',
     allTypes: 'Alle',
     typeShort: {
       InternationalForum: 'Internationale Foren',
