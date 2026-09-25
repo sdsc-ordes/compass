@@ -12,7 +12,14 @@
   import type { Proj } from '../lib/types';
   import { getEntities, getFacets, init, type Feature } from '../engine';
   import { injectFonts } from '../lib/fonts';
-  import { decodeFilters, langFromQuery, syncUrl, type QueryFilters } from '../lib/urlstate';
+  import {
+    decodeFilters,
+    decodePin,
+    encodePin,
+    langFromQuery,
+    syncUrl,
+    type QueryFilters,
+  } from '../lib/urlstate';
   import { fmt, i18n, type Lang } from '../lib/i18n';
   import { styles } from '../lib/styles';
 
@@ -38,6 +45,8 @@
   let selectedId: string | null = null;
   let night = false;
   let juston: string | null = null;
+  // ?pin= token, held until the first load can resolve it.
+  let pendingPin: string | null = null;
 
   $: t = i18n[lang] || i18n.en;
 
@@ -77,6 +86,14 @@
         ];
       }),
   );
+  $: pinToken = selectedId
+    ? encodePin(
+        selectedId,
+        projs.map((p) => p.id),
+      )
+    : pendingPin;
+  $: if (mounted) syncUrl(filters, lang, dims, pinToken);
+
   $: selected = selectedId ? (projs.find((p) => p.id === selectedId) ?? null) : null;
 
   $: statusText = error
@@ -107,11 +124,17 @@
     lastFilterKey = key;
     loading = true;
     error = null;
-    syncUrl(f, l, dims);
     try {
       const data = await getEntities(l, f);
       if (seq !== loadSeq) return;
       entities = data.features;
+      if (pendingPin) {
+        selectedId = decodePin(
+          pendingPin,
+          toProjs(entities).map((p) => p.id),
+        );
+        pendingPin = null;
+      }
       if (selectedId && !entities.some((e) => e.properties?.id === selectedId)) {
         selectedId = null;
       }
@@ -257,7 +280,9 @@
       console.error('[Compass] Failed to load the filter schema:', e);
       error = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
     }
-    applyFilters(decodeFilters(params, buildDims(lang)));
+    pendingPin = params.get('pin');
+    // A pin link opens unfiltered, so the pin is always among the results.
+    if (!pendingPin) applyFilters(decodeFilters(params, buildDims(lang)));
 
     sheet = new Sheet({
       mapc: mapcEl,

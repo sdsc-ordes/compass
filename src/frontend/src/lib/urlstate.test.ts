@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeFilters, encodeFilters } from './urlstate';
+import { decodeFilters, decodePin, encodeFilters, encodePin } from './urlstate';
 
 const ns = 'http://example.org/onto#';
 const dims = [
@@ -35,5 +35,19 @@ describe('url filters', () => {
   it('accepts old full-IRI links and drops unknown values', () => {
     const params = toParams({ workArea: [`${ns}AdvocacyWork`, 'Nope'], other: ['x'] });
     expect(decodeFilters(params, dims)).toEqual({ workArea: [`${ns}AdvocacyWork`] });
+  });
+});
+
+describe('url pin', () => {
+  const ids = ['http://e.org/a/Reef', 'http://e.org/a/Bay', 'http://e.org/b/Bay'];
+
+  it('round-trips via local names, full IRIs where names clash', () => {
+    expect(ids.map((id) => encodePin(id, ids))).toEqual(['Reef', ids[1], ids[2]]);
+    ids.forEach((id) => expect(decodePin(encodePin(id, ids), ids)).toBe(id));
+  });
+
+  it('drops unknown or ambiguous pins', () => {
+    expect(decodePin('Nope', ids)).toBeNull();
+    expect(decodePin('Bay', ids)).toBeNull();
   });
 });
