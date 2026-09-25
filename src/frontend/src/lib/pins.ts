@@ -191,25 +191,23 @@ export function drawHost(
 ): number {
   const sc = 1 + 0.1 * grow;
   const R = 15 * sc;
+  // Same width as the anchor's ring.
+  const lw = 2.5 * sc;
   ctx.save();
   if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
-  ctx.beginPath();
-  ctx.arc(x, y, R + 2.5 * sc, 0, 6.2832);
-  ctx.fillStyle = ring;
-  ctx.fill();
   ctx.beginPath();
   ctx.arc(x, y, R, 0, 6.2832);
   ctx.fillStyle = '#fff';
   ctx.fill();
-  ctx.strokeStyle = PIN_EDGE;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = ring;
+  ctx.lineWidth = lw;
   ctx.stroke();
   if (logo?.complete && logo.naturalWidth) {
     const s = 1.3 * R;
     ctx.drawImage(logo, x - s / 2, y - s / 2, s, s);
   }
   ctx.restore();
-  return R + 2.5 * sc;
+  return R + lw / 2;
 }
 
 export const onFront = (S: ViewState, c: [number, number]) =>
@@ -588,7 +586,7 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       if (!onStage(xy)) return;
       const q = xy as [number, number];
       const y = q[1] - (1 - anim.fadeOf(d.id)) * 7;
-      if (isHost(d)) drawHost(ctx, q[0], y, p.pinRing, 0, anim.fadeOf(d.id));
+      if (isHost(d)) drawHost(ctx, q[0], y, p.host, 0, anim.fadeOf(d.id));
       else drawGmapsPin(ctx, q[0], y, p.pin, p.pinRing, 0, anim.fadeOf(d.id));
     });
 
@@ -596,7 +594,7 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     const fade = anim.fadeOf(d.id);
     const cy = y - (1 - fade) * 7;
     const on = !!selected && selected.id === d.id;
-    const R = drawHost(ctx, x, cy, on ? p.pinSel : p.pinRing, anim.growOf(d.id), fade);
+    const R = drawHost(ctx, x, cy, on ? p.pinSel : p.host, anim.growOf(d.id), fade);
     pinbox.push({ x, y: cy, w: R * 2, h: R * 2, headR: R, tipY: cy + R, p: d, r: R });
   });
   ctx.restore();
