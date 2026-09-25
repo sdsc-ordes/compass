@@ -10,7 +10,6 @@ export interface Pal {
   pin: string;
   pinSel: string;
   pinRing: string;
-  host: string;
   // The globe's terminator wash. Astronaut by day, NIGHT_INK after dark.
   shade: string;
   // The same colour at zero alpha: the gradient's middle stop, where the wash
@@ -24,7 +23,6 @@ export interface Pal {
 // in CSS that no import can reach -- keep that one in step by hand.
 export const ASTRONAUT = '#2A4E71';
 export const NIGHT_INK = '#081827';
-const CERULEAN = '#0171B4';
 
 // Canvas wants rgba() strings, so every wash of the two colours above is derived
 // rather than written out again -- four hand-synced spellings of one colour is
@@ -49,7 +47,6 @@ export const P: Record<Theme, Pal> = {
     pin: ASTRONAUT,
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.18)',
-    host: CERULEAN,
     shade: wash(ASTRONAUT, 0.26),
     shadeFade: wash(ASTRONAUT, 0),
   },
@@ -65,7 +62,6 @@ export const P: Record<Theme, Pal> = {
     pin: '#FFFFFF',
     pinSel: '#ED6D52',
     pinRing: 'rgba(0,0,0,.35)',
-    host: CERULEAN,
     shade: wash(NIGHT_INK, 0.5),
     shadeFade: wash(NIGHT_INK, 0),
   },

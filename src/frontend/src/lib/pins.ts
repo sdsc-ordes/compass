@@ -2,6 +2,7 @@ import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
 import { frontCentre, K_MAX, REDUCED, ZOOM_BTN, type ViewState } from './projection';
+import logoUrl from '../assets/www.oceancare.org-192x192.png';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
 const PIN_EDGE = ASTRONAUT;
@@ -170,44 +171,45 @@ export function drawAnchor(
 
 export const isHost = (d: Proj) => d.typeIri.endsWith('#HostOrganization');
 
-function starPath(ctx: CanvasRenderingContext2D, x: number, y: number, R: number): void {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const r = i % 2 ? R * 0.48 : R;
-    const th = -Math.PI / 2 + (i * Math.PI) / 5;
-    ctx.lineTo(x + Math.cos(th) * r, y + Math.sin(th) * r);
-  }
-  ctx.closePath();
+// Lib builds inline this as a data URL, so it resolves on any host page.
+let logo: HTMLImageElement | null = null;
+
+function loadLogo(onload: () => void): void {
+  if (logo || typeof Image === 'undefined') return;
+  logo = new Image();
+  logo.onload = onload;
+  logo.src = logoUrl;
 }
 
-export function drawStar(
+export function drawHost(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  fill: string,
   ring: string,
   grow: number,
   alpha?: number,
 ): number {
   const sc = 1 + 0.1 * grow;
-  const R = 14 * sc;
+  const R = 15 * sc;
   ctx.save();
   if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
-  ctx.lineJoin = 'round';
-  starPath(ctx, x, y, R);
-  ctx.strokeStyle = ring;
-  ctx.lineWidth = 7 * sc;
-  ctx.stroke();
-  ctx.strokeStyle = PIN_EDGE;
-  ctx.lineWidth = 4 * sc;
-  ctx.stroke();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2.4 * sc;
-  ctx.stroke();
-  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.arc(x, y, R + 2.5 * sc, 0, 6.2832);
+  ctx.fillStyle = ring;
   ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y, R, 0, 6.2832);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = PIN_EDGE;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  if (logo?.complete && logo.naturalWidth) {
+    const s = 1.3 * R;
+    ctx.drawImage(logo, x - s / 2, y - s / 2, s, s);
+  }
   ctx.restore();
-  return R;
+  return R + 2.5 * sc;
 }
 
 export const onFront = (S: ViewState, c: [number, number]) =>
@@ -281,7 +283,9 @@ export class PinAnimator {
   constructor(
     private paint: () => void,
     private settled: () => void = () => {},
-  ) {}
+  ) {
+    loadLogo(paint);
+  }
 
   private of(id: string): Anim {
     let a = this.anim.get(id);
@@ -583,24 +587,17 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
       const xy = pr(d.c);
       if (!onStage(xy)) return;
       const q = xy as [number, number];
-      const draw = isHost(d) ? drawStar : drawGmapsPin;
-      draw(
-        ctx,
-        q[0],
-        q[1] - (1 - anim.fadeOf(d.id)) * 7,
-        isHost(d) ? p.host : p.pin,
-        p.pinRing,
-        0,
-        anim.fadeOf(d.id),
-      );
+      const y = q[1] - (1 - anim.fadeOf(d.id)) * 7;
+      if (isHost(d)) drawHost(ctx, q[0], y, p.pinRing, 0, anim.fadeOf(d.id));
+      else drawGmapsPin(ctx, q[0], y, p.pin, p.pinRing, 0, anim.fadeOf(d.id));
     });
 
   hosts.forEach(({ x, y, d }) => {
     const fade = anim.fadeOf(d.id);
     const cy = y - (1 - fade) * 7;
     const on = !!selected && selected.id === d.id;
-    const R = drawStar(ctx, x, cy, on ? p.pinSel : p.host, p.pinRing, anim.growOf(d.id), fade);
-    pinbox.push({ x, y: cy, w: R * 2, h: R * 2, headR: R, tipY: cy + R, p: d, r: R + 3 });
+    const R = drawHost(ctx, x, cy, on ? p.pinSel : p.pinRing, anim.growOf(d.id), fade);
+    pinbox.push({ x, y: cy, w: R * 2, h: R * 2, headR: R, tipY: cy + R, p: d, r: R });
   });
   ctx.restore();
   return pinbox;
