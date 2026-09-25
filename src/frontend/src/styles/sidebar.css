@@ -204,6 +204,7 @@ aside.filters::-webkit-scrollbar-track {
 
 /* Active selections: a chosen .tpill with a ×, on up to two rows; the rest go under "+N". */
 .apills {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -223,6 +224,17 @@ aside.filters::-webkit-scrollbar-track {
 .tpill.apill:has(.ax:hover) {
   background: var(--cerulean);
   border-color: var(--cerulean);
+}
+/* anchor scrolling on the filters, not on what grows above them */
+.pane-filters > :not(.acc) {
+  overflow-anchor: none;
+}
+/* hidden beats .tpill's display; a removed pill keeps its slot until the pointer leaves */
+.apills [hidden] {
+  display: none;
+}
+.apill.gone {
+  visibility: hidden;
 }
 /* a pill wider than the row ellipsizes rather than overflow */
 .apills:not(.measuring) .apill {
@@ -251,7 +263,8 @@ aside.filters::-webkit-scrollbar-track {
   outline-offset: 2px;
 }
 .tpill.amore {
-  position: relative;
+  position: static;
+  align-items: center;
   padding: 3px 12px;
   background: none;
   border-color: var(--chrome);
@@ -267,10 +280,9 @@ aside.filters::-webkit-scrollbar-track {
 .amore .atip {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  left: 0;
   z-index: 6;
-  width: max-content;
-  max-width: 260px;
+  max-width: 100%;
   padding: 8px 12px;
   background: var(--card-surface);
   border: 1px solid var(--card-edge);
@@ -284,7 +296,7 @@ aside.filters::-webkit-scrollbar-track {
   opacity: 0;
 }
 .amore:hover .atip,
-.amore:focus-visible .atip {
+.amore:focus .atip {
   clip-path: none;
   opacity: 1;
 }
@@ -292,6 +304,7 @@ aside.filters::-webkit-scrollbar-track {
 .areset {
   display: flex;
   align-items: center;
+  min-height: 30px;
 }
 .reset {
   background: none;

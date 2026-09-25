@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { fmt, typeLabel, type Strings } from '../lib/i18n';
+  import { fmt, type Strings } from '../lib/i18n';
   import { TYPE_DIM, type Dim } from '../lib/schema';
 
   export let t: Strings;
@@ -11,88 +11,145 @@
 
   let rowEl: HTMLElement | null = null;
   let shown = Infinity;
-  let measuring = false;
+  // Mouse removals leave a blank in place until the pointer leaves, so nothing slides under it.
+  let hold = false;
+  let ptr = '';
   // "dim iri" keys, newest first; fresh keys (a toggle, or a URL restore in URL order) go on top.
+  // Types have their own pill row.
   let order: string[] = [];
 
+  $: now = Object.entries(sel)
+    .filter(([d]) => d !== TYPE_DIM)
+    .flatMap(([d, s]) => [...s].map((v) => `${d} ${v}`));
+  $: if (!now.length) hold = false;
   $: {
-    const now = Object.entries(sel).flatMap(([d, s]) => [...s].map((v) => `${d} ${v}`));
-    order = [...now.filter((k) => !order.includes(k)), ...order.filter((k) => now.includes(k))];
+    const kept = order.filter((k) => now.includes(k) || hold);
+    order = [...now.filter((k) => !order.includes(k)), ...kept];
   }
   $: items = order.flatMap((k) => {
     const [dim, iri] = k.split(' ');
-    const d = dims.find((x) => x.id === dim);
-    const o = d?.options.find((x) => x.value === iri);
-    return o
-      ? [{ dim, iri, label: dim === TYPE_DIM ? typeLabel(iri, o.label, t) : o.label }]
-      : [];
+    const o = dims.find((x) => x.id === dim)?.options.find((x) => x.value === iri);
+    return o ? [{ key: k, dim, iri, label: o.label, gone: !sel[dim]?.has(iri) }] : [];
   });
-  $: visible = measuring ? items : items.slice(0, shown);
-  $: hidden = measuring ? [] : items.slice(shown);
+  $: hidden = items.slice(shown).filter((it) => !it.gone);
 
-  // Lay every pill out unshrunk and wrapped, then keep two rows with "+N" and reset closing the last.
-  async function fit(): Promise<void> {
+  // Synchronous, so the unfolded layout is never painted: unhide all, measure, fold.
+  function fit(): void {
     if (!rowEl) return;
-    measuring = true;
-    await tick();
-    const w = rowEl?.clientWidth ?? 0;
-    const pills = [...(rowEl?.querySelectorAll<HTMLElement>('.apill:not(.amore)') ?? [])];
-    const more = rowEl?.querySelector<HTMLElement>('.amore');
-    const reset = rowEl?.querySelector<HTMLElement>('.areset');
-    if (rowEl && w && pills.length) {
-      const left = rowEl.getBoundingClientRect().left;
-      const gap = parseFloat(getComputedStyle(rowEl).columnGap) || 0;
-      const end = (i: number): number => pills[i].getBoundingClientRect().right - left;
-      const r2 = pills.find((p) => p.offsetTop > pills[0].offsetTop)?.offsetTop ?? Infinity;
-      let k = pills.filter((p) => p.offsetTop <= r2).length;
-      const tail = gap + (reset?.offsetWidth ?? 0);
-      if (k < pills.length || (r2 < Infinity && end(k - 1) + tail > w)) {
-        const room = w - gap - (more?.offsetWidth ?? 0) - tail;
-        while (k > 1 && pills[k - 1].offsetTop === r2 && end(k - 1) > room) k -= 1;
+    const lis = [...rowEl.querySelectorAll<HTMLElement>('.apill:not(.amore)')];
+    const more = rowEl.querySelector<HTMLElement>('.amore');
+    const reset = rowEl.querySelector<HTMLElement>('.areset');
+    if (!lis.length || !more || !reset) return;
+    rowEl.classList.add('measuring');
+    lis.forEach((li) => {
+      li.hidden = false;
+      li.style.maxWidth = '';
+    });
+    more.hidden = false;
+    const w = rowEl.clientWidth;
+    const gap = parseFloat(getComputedStyle(rowEl).columnGap) || 0;
+    const top = lis[0].offsetTop;
+    const r2 = lis.find((p) => p.offsetTop > top)?.offsetTop ?? Infinity;
+    // the row is positioned, so offsets are relative to it
+    const end = (i: number): number => lis[i].offsetLeft + lis[i].offsetWidth;
+    let k = lis.filter((p) => p.offsetTop <= r2).length;
+    const tail = gap + reset.offsetWidth;
+    if (k < lis.length || (r2 < Infinity && end(k - 1) + tail > w)) {
+      const room = (k < lis.length ? w - gap - more.offsetWidth : w) - tail;
+      while (k > 1 && lis[k - 1].offsetTop === r2 && end(k - 1) > room) {
+        // a lone long pill on row 2 is capped so it ellipsizes beside "+N" and reset
+        if (lis[k - 2].offsetTop < r2) {
+          lis[k - 1].style.maxWidth = `${room}px`;
+          break;
+        }
+        k -= 1;
       }
-      shown = k;
     }
-    measuring = false;
+    lis.forEach((li, i) => (li.hidden = i >= k));
+    more.hidden = k >= lis.length;
+    rowEl.classList.remove('measuring');
+    shown = k;
   }
 
-  $: if (rowEl) void (items, fit());
+  $: if (rowEl) void (items, tick().then(fit));
 
+  // Refit on width only. If the row grows while the filters below are in use at scrollTop 0,
+  // where scroll anchoring does not apply, scroll by the growth so they stay put.
   function watch(el: HTMLElement): { destroy: () => void } {
-    const ro = new ResizeObserver(() => void fit());
+    const cs = getComputedStyle(el);
+    let w = 0;
+    let h = -parseFloat(cs.marginTop) - parseFloat(cs.marginBottom);
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth !== w) fit();
+      const sc = el.closest('aside');
+      const d = el.offsetHeight - h;
+      const busy = el.nextElementSibling?.matches(':hover, :focus-within');
+      if (d > 0 && busy && sc?.scrollTop === 0) sc.scrollTop = d;
+      w = el.clientWidth;
+      h = el.offsetHeight;
+    });
     ro.observe(el);
-    document.fonts?.ready.then(() => void fit());
+    document.fonts?.ready.then(fit);
     return { destroy: () => ro.disconnect() };
+  }
+
+  // Focus the next pill's ×, else the previous one, else the filters; never body.
+  async function remove(e: MouseEvent, it: { dim: string; iri: string }): Promise<void> {
+    const li = (e.currentTarget as HTMLElement).closest('li')!;
+    const acc = rowEl?.nextElementSibling;
+    hold = e.detail > 0 && ptr === 'mouse';
+    const q = '.apill:not(.amore,.gone,[hidden])';
+    const pills = [...rowEl!.querySelectorAll<HTMLElement>(q)];
+    const i = pills.indexOf(li);
+    const next = pills[i + 1] ?? pills[i - 1];
+    onToggleOption(it.dim, it.iri);
+    await tick();
+    const to = next?.isConnected && next.querySelector<HTMLElement>('.ax');
+    if (to) to.focus();
+    else acc?.querySelector<HTMLElement>('button')?.focus();
+  }
+
+  async function reset(): Promise<void> {
+    const acc = rowEl?.nextElementSibling;
+    onReset();
+    await tick();
+    acc?.querySelector<HTMLElement>('button')?.focus();
   }
 </script>
 
-{#if items.length}
-  <ul class="apills" class:measuring bind:this={rowEl} use:watch aria-label={t.activeFilters}>
-    {#each visible as it (it.dim + it.iri)}
-      <li class="tpill apill">
+{#if items.some((it) => !it.gone)}
+  <ul
+    class="apills"
+    bind:this={rowEl}
+    use:watch
+    on:pointerdown={(e) => (ptr = e.pointerType)}
+    on:pointerleave={() => (hold = false)}
+    aria-label={t.activeFilters}
+  >
+    {#each items as it, i (it.key)}
+      <li class="tpill apill" class:gone={it.gone} hidden={i >= shown}>
         <span class="al">{it.label}</span>
         <button
           type="button"
           class="ax"
+          tabindex={it.gone ? -1 : undefined}
           aria-label={fmt(t.removeFilter, { label: it.label })}
-          on:click={() => onToggleOption(it.dim, it.iri)}
-          ><span aria-hidden="true">×</span></button
+          on:click={(e) => remove(e, it)}><span aria-hidden="true">×</span></button
         >
       </li>
     {/each}
-    {#if measuring || hidden.length}
-      <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-      <li class="tpill apill amore" tabindex="0">
-        <span aria-hidden="true">+{measuring ? items.length : hidden.length}</span>
-        <span class="atip"
-          >{fmt(t.moreFilters, {
-            n: hidden.length,
-            labels: hidden.map((h) => h.label).join(', '),
-          })}</span
-        >
-      </li>
-    {/if}
+    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+    <li class="tpill apill amore" tabindex="0" hidden={!hidden.length}>
+      <span aria-hidden="true">+{hidden.length}</span>
+      <span class="atip"
+        >{fmt(t.moreFilters, {
+          n: hidden.length,
+          labels: hidden.map((h) => h.label).join(', '),
+        })}</span
+      >
+    </li>
     <li class="areset">
-      <button class="reset" type="button" on:click={onReset}>{t.resetFiltersLong}</button>
+      <button class="reset" type="button" on:click={reset}>{t.resetFiltersLong}</button>
     </li>
   </ul>
 {/if}
