@@ -209,7 +209,8 @@ export class Tweener {
       : null;
     const t0 = performance.now();
     const step = (now: number) => {
-      const t = Math.min(1, (now - t0) / ms),
+      // rAF's timestamp can predate t0; a negative t would run the tween backwards.
+      const t = Math.max(0, Math.min(1, (now - t0) / ms)),
         e = easeInOut(t);
       const mix = (a: number, b: number) => a + (b - a) * e;
       if (to.k !== undefined) S.k = mix(from.k, to.k);

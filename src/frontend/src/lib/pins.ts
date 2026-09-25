@@ -1,7 +1,7 @@
 import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
-import { frontCentre, K_MAX, REDUCED, ZOOM_BTN, type ViewState } from './projection';
+import { frontCentre, REDUCED, type ViewState } from './projection';
 import logoUrl from '../assets/www.oceancare.org-192x192.png';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
@@ -214,6 +214,56 @@ export const onFront = (S: ViewState, c: [number, number]) =>
   S.view === 'flat' || geoDistance(c, frontCentre(S)) < 1.52;
 
 const CLUSTER_R = 26;
+const HEAD = 21;
+
+interface Group<T> {
+  x: number;
+  y: number;
+  items: T[];
+}
+
+// Screen-distance clustering on pin heads.
+function group<T extends { hx: number; hy: number }>(pts: T[]): Group<T>[] {
+  const recentre = (g: Group<T>) => {
+    g.x = mean(g.items.map((i) => i.hx));
+    g.y = mean(g.items.map((i) => i.hy));
+  };
+  const groups: Group<T>[] = [];
+  pts.forEach((pt) => {
+    const g = groups.find((gg) => Math.hypot(gg.x - pt.hx, gg.y - pt.hy) <= CLUSTER_R);
+    if (g) {
+      g.items.push(pt);
+      recentre(g);
+    } else groups.push({ x: pt.hx, y: pt.hy, items: [pt] });
+  });
+  for (let guard = 0; guard < 8; guard++) {
+    let merged = false;
+    outer: for (let i = 0; i < groups.length; i++) {
+      for (let j = i + 1; j < groups.length; j++) {
+        if (Math.hypot(groups[i].x - groups[j].x, groups[i].y - groups[j].y) <= CLUSTER_R + 8) {
+          groups[i].items = groups[i].items.concat(groups[j].items);
+          groups.splice(j, 1);
+          recentre(groups[i]);
+          merged = true;
+          break outer;
+        }
+      }
+    }
+    if (!merged) break;
+  }
+  return groups;
+}
+
+// Ids of the members that still cluster under `pr`, one list per group.
+export function fanGroups(pr: GeoProjection, members: Proj[]): string[][] {
+  const pts = members.flatMap((d) => {
+    const q = pr(d.c);
+    return q ? [{ hx: q[0], hy: q[1] - HEAD, id: d.id }] : [];
+  });
+  return group(pts)
+    .filter((g) => g.items.length > 1)
+    .map((g) => g.items.map((i) => i.id));
+}
 
 const mean = (a: number[]) => a.reduce((s, v) => s + v, 0) / a.length;
 
@@ -224,16 +274,6 @@ const fanRadius = (n: number, touch: boolean) =>
 const fanFrom = (n: number) => (n === 2 ? 0 : -Math.PI / 2);
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-
-// Pins cluster by screen distance, so most groups come apart on their own as the
-// map zooms. The ones that never do sit on the same coordinate, and waiting for
-// K_MAX to fan them made the user ride the zoom to the end to find out what was
-// under a pin. So fan two zoom-button presses before the limit -- a division,
-// because k is multiplicative: subtracting a constant from it would drift the
-// moment K_MAX or the button's factor changed.
-const K_FAN = K_MAX / (ZOOM_BTN * ZOOM_BTN);
-
-export const atFanZoom = (S: ViewState) => S.k >= K_FAN - 1e-6;
 
 function fanAngle(ax: number, ay: number, R: number, n: number, W: number, H: number): number {
   const M = 14;
@@ -277,6 +317,9 @@ export class PinAnimator {
   private hoveredId: string | null = null;
   fan = 0;
   private fanTo = 0;
+  // The clicked cluster's still-overlapping groups, kept until the fan has closed.
+  fanSets: string[][] = [];
+  fanIds = new Set<string>();
 
   constructor(
     private paint: () => void,
@@ -301,15 +344,33 @@ export class PinAnimator {
     return this.anim.get(id)?.fade ?? 1;
   }
 
-  setFan(open: boolean): void {
-    this.fanTo = open ? 1 : 0;
+  openFan(sets: string[][]): void {
+    this.fanSets = sets;
+    this.fanIds = new Set(sets.flat());
+    this.fan = 0;
+    this.setFan(1);
+  }
+
+  closeFan(): void {
+    if (this.fanIds.size) this.setFan(0);
+  }
+
+  private setFan(to: number): void {
+    this.fanTo = to;
     if (REDUCED.matches) {
-      this.fan = this.fanTo;
+      this.landFan();
       this.paint();
       this.settled();
       return;
     }
     this.kick();
+  }
+
+  private landFan(): void {
+    this.fan = this.fanTo;
+    if (this.fan) return;
+    this.fanSets = [];
+    this.fanIds.clear();
   }
 
   private kick(): void {
@@ -357,7 +418,7 @@ export class PinAnimator {
       });
       if (a.fade === 0 && a.fadeTo === 0 && a.grow === 0) this.anim.delete(id);
     });
-    if (Math.abs(this.fanTo - this.fan) < 0.006) this.fan = this.fanTo;
+    if (Math.abs(this.fanTo - this.fan) < 0.006) this.landFan();
     else {
       this.fan += (this.fanTo - this.fan) * 0.22;
       moving = true;
@@ -375,7 +436,7 @@ export class PinAnimator {
         a.grow = a.growTo;
         a.fade = a.fadeTo;
       });
-      this.fan = this.fanTo;
+      this.landFan();
       this.paint();
       this.settled();
       return;
@@ -407,150 +468,57 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
   const { ctx, pr, W, H, p, S, anim, selected } = a;
   anim.roster(a.visible);
   const pinbox: PinBox[] = [];
-  const HEAD = 21;
   const onStage = (xy: [number, number] | null) =>
     !!xy && !isNaN(xy[0]) && xy[0] > -30 && xy[0] < W + 30 && xy[1] > -30 && xy[1] < H + 30;
-  const fanning = anim.fan > 0.002;
   const pts: { x: number; y: number; hx: number; hy: number; d: Proj }[] = [];
   const hosts: typeof pts = [];
+  const fanned = new Map<string, (typeof pts)[number]>();
   anim.live
     .filter((d) => onFront(S, d.c))
     .forEach((d) => {
       const xy = pr(d.c);
       if (!onStage(xy)) return;
       const q = xy as [number, number];
-      (isHost(d) ? hosts : pts).push({ x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d });
+      const pt = { x: q[0], y: q[1], hx: q[0], hy: q[1] - HEAD, d };
+      if (isHost(d)) hosts.push(pt);
+      else if (anim.fanIds.has(d.id)) fanned.set(d.id, pt);
+      else pts.push(pt);
     });
+  const rings = anim.fanSets.map((ids) => ids.flatMap((id) => fanned.get(id) ?? []));
+  rings.filter((ring) => ring.length < 2).forEach((ring) => pts.push(...ring));
 
-  interface Group {
-    x: number;
-    y: number;
-    items: typeof pts;
-  }
-  const recentre = (g: Group) => {
-    g.x = mean(g.items.map((i) => i.hx));
-    g.y = mean(g.items.map((i) => i.hy));
-  };
-  const groups: Group[] = [];
-  pts.forEach((pt) => {
-    const g = groups.find((gg) => Math.hypot(gg.x - pt.hx, gg.y - pt.hy) <= CLUSTER_R);
-    if (g) {
-      g.items.push(pt);
-      recentre(g);
-    } else groups.push({ x: pt.hx, y: pt.hy, items: [pt] });
-  });
-  for (let guard = 0; guard < 8; guard++) {
-    let merged = false;
-    outer: for (let i = 0; i < groups.length; i++) {
-      for (let j = i + 1; j < groups.length; j++) {
-        if (Math.hypot(groups[i].x - groups[j].x, groups[i].y - groups[j].y) <= CLUSTER_R + 8) {
-          groups[i].items = groups[i].items.concat(groups[j].items);
-          groups.splice(j, 1);
-          recentre(groups[i]);
-          merged = true;
-          break outer;
-        }
-      }
+  // Tip at (x, y); `rise` lifts a pin that is fading in or out.
+  const drawOne = (d: Proj, x: number, y: number) => {
+    const grow = anim.growOf(d.id),
+      fade = anim.fadeOf(d.id);
+    const rise = (1 - fade) * 7;
+    if (selected?.id === d.id) {
+      const cy = y - rise;
+      const R = drawAnchor(ctx, x, cy, p, grow, fade);
+      pinbox.push({ x, y: cy, w: R * 2, h: R * 2, headR: R, tipY: cy + R, p: d, r: R + 3 });
+      return;
     }
-    if (!merged) break;
-  }
+    const pin = drawGmapsPin(ctx, x, y - rise, p.pin, p.pinRing, grow, fade);
+    pinbox.push({
+      x,
+      y: pin.headCy + rise,
+      w: pin.m.w,
+      h: pin.m.h,
+      headR: pin.m.headR,
+      tipY: pin.tipY + rise,
+      p: d,
+      r: pin.m.headR + 5,
+    });
+  };
 
   ctx.save();
-  groups.forEach((g) => {
+  group(pts).forEach((g) => {
     if (g.items.length === 1) {
-      const d = g.items[0].d;
-      const on = !!selected && selected.id === d.id;
-      const grow = anim.growOf(d.id),
-        fade = anim.fadeOf(d.id);
-      const rise = (1 - fade) * 7;
-      if (on) {
-        const q = g.items[0];
-        const cy = q.y - rise;
-        const R = drawAnchor(ctx, q.x, cy, p, grow, fade);
-        pinbox.push({
-          x: q.x,
-          y: cy,
-          w: R * 2,
-          h: R * 2,
-          headR: R,
-          tipY: cy + R,
-          p: d,
-          r: R + 3,
-        });
-        return;
-      }
-      const pin = drawGmapsPin(
-        ctx,
-        g.items[0].x,
-        g.items[0].y - rise,
-        on ? p.pinSel : p.pin,
-        p.pinRing,
-        grow,
-        fade,
-      );
-      pinbox.push({
-        x: g.items[0].x,
-        y: pin.headCy + rise,
-        w: pin.m.w,
-        h: pin.m.h,
-        headR: pin.m.headR,
-        tipY: pin.tipY + rise,
-        p: d,
-        r: pin.m.headR + 5,
-      });
+      drawOne(g.items[0].d, g.items[0].x, g.items[0].y);
       return;
     }
     const items = g.items.map((i) => i.d);
     const holds = !!selected && items.some((d) => d.id === selected.id);
-
-    if (fanning) {
-      const ax = g.x,
-        ay = g.y + HEAD;
-      const R = fanRadius(items.length, a.touch) * easeOut(anim.fan);
-      const a0 = fanAngle(ax, ay, R, items.length, W, H);
-      items.forEach((d, i) => {
-        const th = a0 + (i * 2 * Math.PI) / items.length;
-        const x = ax + Math.cos(th) * R,
-          y = ay + Math.sin(th) * R;
-        const on = !!selected && selected.id === d.id;
-        if (on) {
-          const cy = y - HEAD;
-          const ar = drawAnchor(ctx, x, cy, p, anim.growOf(d.id), anim.fadeOf(d.id));
-          pinbox.push({
-            x,
-            y: cy,
-            w: ar * 2,
-            h: ar * 2,
-            headR: ar,
-            tipY: cy + ar,
-            p: d,
-            r: ar + 3,
-          });
-          return;
-        }
-        const pin = drawGmapsPin(
-          ctx,
-          x,
-          y,
-          p.pin,
-          p.pinRing,
-          anim.growOf(d.id),
-          anim.fadeOf(d.id),
-        );
-        pinbox.push({
-          x,
-          y: pin.headCy,
-          w: pin.m.w,
-          h: pin.m.h,
-          headR: pin.m.headR,
-          tipY: pin.tipY,
-          p: d,
-          r: pin.m.headR + 5,
-        });
-      });
-      return;
-    }
-
     const cl: Cluster = {
       id: 'c' + items.map((d) => d.id).join('-'),
       cluster: items,
@@ -579,6 +547,25 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
     });
   });
 
+  // Each ring circles its centroid; at fan 0 every pin is back on its coordinate.
+  const e = easeOut(anim.fan);
+  rings.forEach((ring) => {
+    const n = ring.length;
+    if (n < 2) return;
+    const ax = mean(ring.map((q) => q.x)),
+      ay = mean(ring.map((q) => q.y));
+    const R = fanRadius(n, a.touch);
+    const a0 = fanAngle(ax, ay, R, n, W, H);
+    ring.forEach((q, i) => {
+      const th = a0 + (i * 2 * Math.PI) / n;
+      drawOne(
+        q.d,
+        q.x + (ax + Math.cos(th) * R - q.x) * e,
+        q.y + (ay + Math.sin(th) * R - q.y) * e,
+      );
+    });
+  });
+
   anim.leaving
     .filter((d) => onFront(S, d.c))
     .forEach((d) => {
@@ -601,19 +588,13 @@ export function drawPins(a: DrawPinsArgs): PinBox[] {
   return pinbox;
 }
 
+// Top-most first: pinbox is in paint order, hosts last.
 export function hitPin(pinbox: PinBox[], x: number, y: number): PinTarget | null {
-  let hit: PinTarget | null = null,
-    hd = 1e9;
-  pinbox.forEach((b) => {
-    const r = Math.hypot(b.x - x, b.y - y);
-    if (r > b.r) return;
-    const d = !isCluster(b.p) && isHost(b.p) ? -1 : r;
-    if (d < hd) {
-      hd = d;
-      hit = b.p;
-    }
-  });
-  return hit;
+  for (let i = pinbox.length - 1; i >= 0; i--) {
+    const b = pinbox[i];
+    if (Math.hypot(b.x - x, b.y - y) <= b.r) return b.p;
+  }
+  return null;
 }
 
 export const boxFor = (pinbox: PinBox[], id: string): PinBox | undefined =>
