@@ -73,6 +73,19 @@ describe('Stories', () => {
     expect(pending).toEqual([true, true, false]);
   });
 
+  it('ignores a repeat of the same query', async () => {
+    const { stub, settle } = deferredFetch();
+    const s = make(stub as unknown as typeof fetch);
+    s.schedule(true, 'http://api', 'en', ['a', 'b']);
+    await vi.advanceTimersByTimeAsync(10);
+    settle(0, answer(4));
+    await vi.waitFor(() => expect(counts).toEqual([answer(4)]));
+    s.schedule(true, 'http://api', 'en', ['b', 'a']);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(stub).toHaveBeenCalledTimes(1);
+    expect(pending).toEqual([true, false]);
+  });
+
   it('is not pending with nothing to ask', () => {
     const { stub } = deferredFetch();
     const s = make(stub as unknown as typeof fetch);

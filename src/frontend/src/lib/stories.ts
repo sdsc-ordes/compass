@@ -6,6 +6,7 @@ export interface StoryCount {
 export class Stories {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private seq = 0;
+  private key: string | null = null;
 
   constructor(
     private onCount: (c: StoryCount | null) => void,
@@ -14,7 +15,11 @@ export class Stories {
   ) {}
 
   schedule(on: boolean, apiurl: string, lang: string, iris: string[]): void {
+    // Same query as last time: keep the pending or landed answer.
+    const key = JSON.stringify([on, apiurl, lang, [...iris].sort()]);
+    if (key === this.key) return;
     this.cancel();
+    this.key = key;
     this.seq += 1;
     if (!on || !apiurl) {
       this.onPending(false);
@@ -28,6 +33,7 @@ export class Stories {
   cancel(): void {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
+    this.key = null;
   }
 
   private async fetch(apiurl: string, lang: string, iris: string[]): Promise<void> {

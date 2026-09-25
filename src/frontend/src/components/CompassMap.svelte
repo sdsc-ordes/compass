@@ -144,6 +144,7 @@
     },
   );
 
+  // Stories are tagged by topic etc., never by entity type.
   $: storyTagIris = DIM_IDS.filter((id) => id !== TYPE_DIM)
     .flatMap((id) => [...sel[id]])
     .filter((v) => v.startsWith('http'));
