@@ -81,6 +81,13 @@ aside.filters::-webkit-scrollbar-track {
   color: var(--tundora);
   text-wrap: pretty;
 }
+/* The lead sits on its own line and carries the weight the rest of the prompt
+   gives up. A block rather than a <br> so the copy stays two sentences for a
+   translator, and so text-wrap: pretty balances each one on its own. */
+.tallybox .lbl.ask .asklead {
+  display: block;
+  font-weight: 700;
+}
 .storiesgo {
   display: inline-flex;
   align-items: center;
@@ -312,6 +319,16 @@ aside.filters::-webkit-scrollbar-track {
   }
   .tallybox .big,
   .tallybox .lbl {
+    display: none;
+  }
+  /* The count the sidebar spends a headline on is already in the grab row, so
+     the dock drops it. The prompt is the one line with nothing standing in for
+     it up there, and it pays for itself: where it shows, .sub is reading out
+     the same count the grab row is, so that line gives up its space. */
+  .tallyband.asking .tallybox .lbl.ask {
+    display: block;
+  }
+  .tallyband.asking .sub {
     display: none;
   }
   .tallybox .spinner {

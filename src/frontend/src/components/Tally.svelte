@@ -19,7 +19,7 @@
 
 <p class="sr" role="status" aria-live="polite">{statusText}</p>
 
-<div class="tallyband" bind:this={tallyEl}>
+<div class="tallyband" class:asking={!!storyCount && !counted} bind:this={tallyEl}>
   {#if !storyCount && storiesPending}
     <div class="tallybox waiting" aria-hidden="true">
       <Spinner />
@@ -35,7 +35,10 @@
           {plural(counted.count, t.storiesCaptionOne, t.storiesCaption)}
         </p>
       {:else}
-        <p class="lbl ask" aria-hidden="true">{t.storiesPrompt}</p>
+        <p class="lbl ask" aria-hidden="true">
+          <span class="asklead">{t.storiesPromptLead}</span>
+          {t.storiesPrompt}
+        </p>
       {/if}
       <a class="storiesgo" href={storyCount.url} target="_blank" rel="noopener noreferrer">
         <span class="sb-lb"
