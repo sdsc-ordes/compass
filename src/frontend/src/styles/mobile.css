@@ -71,16 +71,6 @@
   .grabn {
     flex: none;
     align-self: center;
-    min-width: 20px;
-    padding: 0 6px;
-    border-radius: 60px;
-    background: var(--astronaut);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 18px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
   }
   /* with a badge and Clear in the row, the long count gives way before the title */
   .grabcount {

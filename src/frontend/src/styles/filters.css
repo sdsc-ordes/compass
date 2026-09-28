@@ -44,6 +44,27 @@
   min-width: 0;
   text-wrap: pretty;
 }
+/* A count of chosen options: on the sheet's grab row, and on a group's header so a
+   collapsed group still says it is filtering. */
+.nbadge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 60px;
+  background: var(--astronaut);
+  color: #fff;
+  font-family: Cabin, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: 0;
+  text-align: center;
+  vertical-align: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.acc .lb .nbadge {
+  margin-left: 8px;
+}
 /* Leads the panel rather than the header: collapsed, the accordion is a column
    of titles, and the prose arrives when the group is opened and the
    reader has asked for it. */
@@ -234,12 +255,12 @@
     grid-template-columns: 20px minmax(0, 1fr) auto;
     gap: 13px;
   }
+  /* the header's badge says what is chosen; the option count is not worth the row */
   .dimmeta {
-    min-height: 36px;
-    padding: 8px 6px 3px;
+    display: none;
   }
   .chips {
-    padding: 0 12px 18px;
+    padding: 8px 12px 18px;
   }
   .frow {
     min-height: 56px;

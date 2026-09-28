@@ -81,7 +81,7 @@
     <div class="grabrow">
       <span class="grabtitle">{sheetTitle}</span>
       {#if !selected && nsel}
-        <span class="grabn"
+        <span class="grabn nbadge"
           ><span aria-hidden="true">{nsel}</span><span class="sr"
             >{nsel} {plural(nsel, t.activeFilterOne, t.activeFilterMany)}</span
           ></span

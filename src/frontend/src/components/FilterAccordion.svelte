@@ -2,7 +2,7 @@
   import { tick } from 'svelte';
   import FilterRows from './FilterRows.svelte';
   import Icon from './Icon.svelte';
-  import type { Strings } from '../lib/i18n';
+  import { plural, type Strings } from '../lib/i18n';
   import { REDUCED } from '../lib/projection';
   import { Sheet } from '../lib/sheet';
   import type { Dim } from '../lib/schema';
@@ -78,6 +78,7 @@
 <div class="acc" bind:this={accEl} role="group" aria-label={t.filterDimensions}>
   {#each dims as dim (dim.id)}
     {@const open = openDim === dim.id}
+    {@const picked = sel[dim.id]?.size ?? 0}
     <div class="asec" class:open>
       <h2>
         <button
@@ -92,7 +93,13 @@
           <span class="dico"
             >{#if dim.icon}<Icon name={dim.icon} size={16} />{/if}</span
           >
-          <span class="lb">{dim.label}</span>
+          <span class="lb"
+            >{dim.label}{#if picked}<span class="nbadge"
+                ><span aria-hidden="true">{picked}</span><span class="sr"
+                  >{picked} {plural(picked, t.activeFilterOne, t.activeFilterMany)}</span
+                ></span
+              >{/if}</span
+          >
           <span class="chev"><Icon name="chevronUp" size={16} /></span>
         </button>
       </h2>
