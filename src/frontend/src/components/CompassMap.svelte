@@ -242,7 +242,13 @@
       const active = (root as ShadowRoot | null)?.activeElement as HTMLElement | null;
       const held = !!active?.closest?.('.pane-detail');
       selectedId = null;
-      if (held) tick().then(() => sidebarComp?.focusHeader(anchorDim()));
+      // on a phone, the grab: a header below the dock would lift the sheet
+      if (held)
+        tick().then(() =>
+          sheet?.mobile
+            ? grabEl?.focus({ preventScroll: true })
+            : sidebarComp?.focusHeader(anchorDim()),
+        );
     }
     if (sheet?.mobile) sheet.to('dock');
   }
