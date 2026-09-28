@@ -2,7 +2,8 @@
   import { tick } from 'svelte';
   import FilterRows from './FilterRows.svelte';
   import Icon from './Icon.svelte';
-  import { plural, type Strings } from '../lib/i18n';
+  import CountBadge from './CountBadge.svelte';
+  import type { Strings } from '../lib/i18n';
   import { REDUCED } from '../lib/projection';
   import { Sheet } from '../lib/sheet';
   import type { Dim } from '../lib/schema';
@@ -94,11 +95,7 @@
             >{#if dim.icon}<Icon name={dim.icon} size={16} />{/if}</span
           >
           <span class="lb"
-            >{dim.label}{#if picked}<span class="nbadge"
-                ><span aria-hidden="true">{picked}</span><span class="sr"
-                  >{picked} {plural(picked, t.activeFilterOne, t.activeFilterMany)}</span
-                ></span
-              >{/if}</span
+            >{dim.label}{#if picked}<CountBadge {t} n={picked} />{/if}</span
           >
           <span class="chev"><Icon name="chevronUp" size={16} /></span>
         </button>

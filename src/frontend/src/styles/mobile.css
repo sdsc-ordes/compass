@@ -69,7 +69,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .grabn {
+  .grabrow .nbadge {
     flex: none;
     align-self: center;
   }
@@ -90,24 +90,13 @@
     flex: none;
     position: relative;
     margin-left: 10px;
-    padding: 0;
-    background: none;
-    border: 0;
-    border-bottom: 2px solid var(--cerulean);
-    font-family: Cabin, system-ui, sans-serif;
     font-size: 14px;
-    font-weight: 700;
     line-height: 18px;
-    color: var(--astronaut);
-    cursor: pointer;
   }
   .grabclear::after {
     content: '';
     position: absolute;
     inset: -13px -8px;
-  }
-  .grabclear:hover {
-    color: var(--cerulean);
   }
   .grabclear:focus-visible {
     outline: 2px solid var(--cerulean);

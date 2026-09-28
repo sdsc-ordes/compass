@@ -4,6 +4,7 @@
   import TypePills from './TypePills.svelte';
   import ActivePills from './ActivePills.svelte';
   import FilterAccordion from './FilterAccordion.svelte';
+  import CountBadge from './CountBadge.svelte';
   import { tick } from 'svelte';
   import { plural, type Strings } from '../lib/i18n';
   import type { Proj } from '../lib/types';
@@ -79,19 +80,13 @@
     <span class="sr" id="grabhow">{t.sheetHow}</span>
     <div class="grabrow">
       <span class="grabtitle">{sheetTitle}</span>
-      {#if !selected && nsel}
-        <span class="grabn nbadge"
-          ><span aria-hidden="true">{nsel}</span><span class="sr"
-            >{nsel} {plural(nsel, t.activeFilterOne, t.activeFilterMany)}</span
-          ></span
-        >
-      {/if}
+      {#if !selected && nsel}<CountBadge {t} n={nsel} />{/if}
       <span class="grabcount">{sheetCount}</span>
       {#if !selected && nsel}
         <!-- kept from the grab's drag and toggle handlers in sheet.ts -->
         <button
           type="button"
-          class="grabclear"
+          class="reset grabclear"
           on:pointerdown|stopPropagation
           on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && e.stopPropagation()}
           on:click={clear}>{t.clearFilters}</button
