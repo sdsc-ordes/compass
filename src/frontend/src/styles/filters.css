@@ -85,7 +85,10 @@
    of the header's icon column, which nests them under their group. It does not
    line them up with anything -- the header's label starts further in again, past
    the grid gap -- so this is nesting, not alignment. */
+/* Positioned, so the rows' absolute .sr text is clipped with the panel instead of
+   stretching the sheet's scroll past its end. */
 .apanel > .ainner {
+  position: relative;
   min-height: 0;
   overflow: hidden;
   margin-left: 16px;
