@@ -118,17 +118,20 @@ function boundsCentre(pts: [number, number][]): [number, number] {
   return [wrapLon(x0 + span / 2), (y0 + y1) / 2];
 }
 
-// The camera that frames `pts`, or null when there is nothing to frame.
+// The camera that frames `pts` between `top` and `bot`, or null when there is
+// nothing to frame.
 export function frameFor(
   S: ViewState,
   W: number,
   H: number,
   pts: [number, number][],
+  [top, bot]: [number, number] = [0, H],
 ): TweenTo | null {
   if (!pts.length || W <= 0 || H <= 0) return null;
   const fit = (k: number) => Math.max(K_MIN, Math.min(FOCUS_K_MAX, k));
   const roomW = Math.max(1, W - 2 * FOCUS_PAD);
-  const roomH = Math.max(1, H - 2 * FOCUS_PAD);
+  const roomH = Math.max(1, bot - top - 2 * FOCUS_PAD);
+  const mid = (top + bot) / 2;
 
   if (S.view === 'globe') {
     // The globe pans by turning, so framing is a rotation plus however far the
@@ -137,8 +140,11 @@ export function frameFor(
     const c = boundsCentre(pts);
     const r = pts.reduce((m, p) => Math.max(m, geoDistance(p, c)), 0);
     const half = Math.min(roomW, roomH) / 2;
-    const k = r >= Math.PI / 2 ? K_MIN : fit(half / (globeBase(W, H).scale() * Math.sin(r)));
-    return { k, rot: [-c[0], -c[1]] };
+    const R = globeBase(W, H).scale();
+    const k = r >= Math.PI / 2 ? K_MIN : fit(half / (R * Math.sin(r)));
+    // turned past the centre by the arc that spans the band's offset on the rim
+    const d = (Math.asin(Math.max(-1, Math.min(1, (H / 2 - mid) / (R * k)))) * 180) / Math.PI;
+    return { k, rot: [-c[0], d - c[1]] };
   }
 
   // Natural Earth is cut at the antimeridian, so a set straddling it really
@@ -162,7 +168,7 @@ export function frameFor(
   // A degenerate span divides to Infinity and clamps to FOCUS_K_MAX, which is
   // what a single entity should get anyway.
   const k = fit(Math.min(roomW / (x1 - x0), roomH / (y1 - y0)));
-  return { k, tx: W / 2 - ((x0 + x1) / 2) * k, ty: H / 2 - ((y0 + y1) / 2) * k };
+  return { k, tx: W / 2 - ((x0 + x1) / 2) * k, ty: mid - ((y0 + y1) / 2) * k };
 }
 
 export const REDUCED =

@@ -42,7 +42,7 @@
   import StageChrome from './StageChrome.svelte';
   import Coach from './Coach.svelte';
   import { fmt, type Strings } from '../lib/i18n';
-  import { chipsBottom, isMobile } from '../lib/sheet';
+  import { isMobile } from '../lib/sheet';
 
   export let t: Strings;
   export let projs: Proj[] = [];
@@ -50,6 +50,8 @@
   export let onSelect: (p: Proj | null) => void;
   export let onTheme: (night: boolean) => void = () => {};
   export let lift: () => number = () => 0;
+  // The map left seen between the filter chips and the sheet, from the stage's top.
+  export let band: () => [number, number] | null = () => null;
   export let sheetEl: HTMLElement | null = null;
   export let settledWidth: () => number = () => 0;
   export let loading = false;
@@ -345,9 +347,7 @@
     if (!isMobile() || S.view !== 'flat' || !projs.length) return to;
     const W = stage.clientWidth,
       H = stage.clientHeight;
-    const top = chipsBottom(stage);
-    const sb = sheetEl?.getBoundingClientRect();
-    const bot = sb?.height ? Math.min(H, sb.top - stage.getBoundingClientRect().top) : H;
+    const [top, bot] = band() ?? [0, H];
     // k = 1 positions; any other flat camera is tx/ty plus k times these
     const pr = proj({ ...S, k: 1, tx: 0, ty: 0 }, W, H);
     let x0 = Infinity,
@@ -631,11 +631,13 @@
   // what makes undoing the filter feel like undoing it.
   function refocus(list: Proj[]): void {
     if (!stage || gesturing || selected || !list.length) return;
+    const H = stage.clientHeight;
     const to = frameFor(
       S,
       stage.clientWidth,
-      stage.clientHeight,
+      H,
       list.map((d) => d.c),
+      band() ?? [0, H],
     );
     if (to) tween.to(to, FOCUS_MS);
   }

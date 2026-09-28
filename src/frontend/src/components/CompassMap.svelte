@@ -377,6 +377,7 @@
     onTheme={(n) => (night = n)}
     onLang={(l) => (lang = l)}
     lift={() => sheet?.lift() ?? 0}
+    band={() => sheet?.band() ?? null}
     sheetEl={sidebarEl}
     settledWidth={settledStageWidth}
   >

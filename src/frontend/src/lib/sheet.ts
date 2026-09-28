@@ -69,14 +69,22 @@ export class Sheet {
     return this.state === (this.h.isDetail() ? 'half' : 'dock');
   }
 
+  // The map left seen between the filter chips and the sheet at a stop, as
+  // [top, bottom] from the stage's top. Off the stop, not the screen: the sheet
+  // may still be sliding there.
+  band(state: SheetState = this.state): [number, number] {
+    const { stage, mapc } = this.h;
+    const H = stage.clientHeight;
+    if (!this.mobile) return [0, H];
+    const box = mapc.clientHeight || window.innerHeight;
+    return [chipsBottom(stage), Math.min(H, box - this.seen(state))];
+  }
+
   // Centres the pin in the map that half leaves above it, below the filter chips.
   lift(): number {
     if (!this.mobile) return 0;
-    const { stage, mapc } = this.h;
-    const H = stage.clientHeight;
-    const box = mapc.clientHeight || window.innerHeight;
-    const halfTop = Math.min(H, box - Math.round(box * SHEET_HALF));
-    return H / 2 - (chipsBottom(stage) + halfTop) / 2;
+    const [top, bot] = this.band('half');
+    return this.h.stage.clientHeight / 2 - (top + bot) / 2;
   }
 
   // How much of the sheet shows at a stop, from its top.
