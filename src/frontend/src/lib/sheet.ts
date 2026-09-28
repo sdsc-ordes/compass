@@ -127,7 +127,7 @@ export class Sheet {
   }
 
   wire(): void {
-    const { sidebar: sh, grab, backdrop: bd } = this.h;
+    const { sidebar: sh, grab, backdrop: bd, dockFloor } = this.h;
     let pid: number | null = null,
       y0 = 0,
       off0 = 0,
@@ -304,13 +304,15 @@ export class Sheet {
         ? null
         : new ResizeObserver(() => {
             if (!this.mobile || sh.classList.contains('dragging')) return;
-            const h = sh.offsetHeight;
+            const h = sh.offsetHeight + dockFloor.offsetHeight;
             if (Math.abs(h - lastH) < 1) return;
             lastH = h;
             if (gt) clearTimeout(gt);
             gt = setTimeout(() => this.reseat(), 60);
           });
+    // the dock grows with the tally band, which a capped sheet does not show
     ro?.observe(sh);
+    ro?.observe(dockFloor);
     this.teardown.push(() => {
       ro?.disconnect();
       if (gt) clearTimeout(gt);
