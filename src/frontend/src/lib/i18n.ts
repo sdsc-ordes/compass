@@ -1,8 +1,8 @@
 export const i18n = {
   en: {
     srPageTitle: 'OceanCare projects worldwide',
-    tallyCaption: 'results in this selection',
-    tallyCaptionOne: 'result in this selection',
+    tallyCaption: 'results',
+    tallyCaptionOne: 'result',
     tallyResults: '{n} results on the map',
     tallyResultsOne: '{n} result on the map',
     resetFiltersLong: 'Reset filters',
@@ -25,8 +25,6 @@ export const i18n = {
     errorLoad: 'The map could not be loaded: {detail}',
     statusResults: '{n} results on the map.',
     statusResultsFiltered: '{n} results on the map, filtered.',
-    storiesInSelection: '{n} stories related to your selection',
-    storyInSelection: '1 story related to your selection',
     storiesCaption: 'stories related to your selection',
     storiesCaptionOne: 'story related to your selection',
     storiesPromptLead: 'Explore OceanCare’s work around the world.',
@@ -84,8 +82,8 @@ export const i18n = {
   },
   de: {
     srPageTitle: 'OceanCare-Projekte weltweit',
-    tallyCaption: 'Ergebnisse in dieser Auswahl',
-    tallyCaptionOne: 'Ergebnis in dieser Auswahl',
+    tallyCaption: 'Ergebnisse',
+    tallyCaptionOne: 'Ergebnis',
     tallyResults: '{n} Ergebnisse auf der Karte',
     tallyResultsOne: '{n} Ergebnis auf der Karte',
     resetFiltersLong: 'Filter zurücksetzen',
@@ -108,8 +106,6 @@ export const i18n = {
     errorLoad: 'Die Karte konnte nicht geladen werden: {detail}',
     statusResults: '{n} Ergebnisse auf der Karte.',
     statusResultsFiltered: '{n} Ergebnisse auf der Karte, gefiltert.',
-    storiesInSelection: '{n} Storys zu Ihrer Auswahl',
-    storyInSelection: '1 Story zu Ihrer Auswahl',
     storiesCaption: 'Storys zu Ihrer Auswahl',
     storiesCaptionOne: 'Story zu Ihrer Auswahl',
     storiesPromptLead: 'Entdecken Sie die weltweite Arbeit von OceanCare.',
@@ -170,9 +166,6 @@ export const i18n = {
 export type Lang = 'en' | 'de';
 
 export type Strings = (typeof i18n)['en'];
-
-export const storyLine = (n: number, t: Strings): string =>
-  n === 1 ? t.storyInSelection : fmt(t.storiesInSelection, { n });
 
 export const plural = (n: number, one: string, other: string): string =>
   n === 1 ? one : other;

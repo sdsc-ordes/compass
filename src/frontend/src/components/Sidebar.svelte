@@ -5,7 +5,7 @@
   import ActivePills from './ActivePills.svelte';
   import FilterAccordion from './FilterAccordion.svelte';
   import { tick } from 'svelte';
-  import { plural, storyLine, type Strings } from '../lib/i18n';
+  import { plural, type Strings } from '../lib/i18n';
   import type { Proj } from '../lib/types';
   import { TYPE_DIM, type Dim } from '../lib/schema';
 
@@ -60,11 +60,10 @@
   }
 
   $: sheetTitle = selected ? t.detailsPane : t.filtersPane;
+  // the one count on mobile; the stories count and its link sit together below
   $: sheetCount = selected
     ? ''
-    : storyCount && storyCount.count > 0
-      ? storyLine(storyCount.count, t)
-      : `${resultCount} ${plural(resultCount, t.tallyCaptionOne, t.tallyCaption)}`;
+    : `${resultCount} ${plural(resultCount, t.tallyCaptionOne, t.tallyCaption)}`;
 </script>
 
 <aside class="filters" class:detail={!!selected} bind:this={sidebarEl}>

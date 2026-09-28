@@ -29,7 +29,7 @@
     z-index: 4;
     background: #fff;
     border-radius: 18px 18px 0 0;
-    padding: 8px 18px 9px;
+    padding: 8px 18px 10px;
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
@@ -48,11 +48,11 @@
     border-radius: 5px;
     background: var(--land-hi);
   }
+  /* title and badge left; the result count and Clear right, on one baseline */
   .grabrow {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 8px;
     min-height: 22px;
   }
   .grabtitle {
@@ -62,7 +62,8 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-size: 15px;
+    font-size: 16px;
+    line-height: 22px;
     color: var(--astronaut);
     white-space: nowrap;
     overflow: hidden;
@@ -72,16 +73,15 @@
     flex: none;
     align-self: center;
   }
-  /* with a badge and Clear in the row, the long count gives way before the title */
   .grabcount {
     flex: 0 4 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     margin-left: auto;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--cerulean);
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--tundora);
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
@@ -89,6 +89,7 @@
   .grabclear {
     flex: none;
     position: relative;
+    margin-left: 10px;
     padding: 0;
     background: none;
     border: 0;
