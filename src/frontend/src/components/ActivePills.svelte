@@ -7,7 +7,7 @@
   export let dims: Dim[] = [];
   export let sel: Record<string, Set<string>> = {};
   export let onToggleOption: (dim: string, iri: string) => void;
-  export let onReset: () => void;
+  export let onReset: () => void = () => {};
   // One scrolling row over the map (mobile): no folding, no reset.
   export let bar = false;
 
@@ -58,8 +58,7 @@
     // the row is positioned, so offsets are relative to it
     const end = (i: number): number => lis[i].offsetLeft + lis[i].offsetWidth;
     let k = lis.filter((p) => p.offsetTop <= r2).length;
-    // reset is hidden on mobile, where the sheet's grab row carries Clear
-    const tail = reset.offsetWidth ? gap + reset.offsetWidth : 0;
+    const tail = gap + reset.offsetWidth;
     if (k < lis.length || (r2 < Infinity && end(k - 1) + tail > w)) {
       const room = (k < lis.length ? w - gap - more.offsetWidth : w) - tail;
       while (k > 1 && lis[k - 1].offsetTop === r2 && end(k - 1) > room) {
@@ -128,7 +127,6 @@
 <!-- always rendered, so its fixed two-row height never shifts the filters -->
 <ul
   class="apills"
-  class:abar={bar}
   bind:this={rowEl}
   use:watch
   on:pointerdown={(e) => (ptr = e.pointerType)}

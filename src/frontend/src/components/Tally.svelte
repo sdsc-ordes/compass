@@ -19,7 +19,7 @@
 
 <p class="sr" role="status" aria-live="polite">{statusText}</p>
 
-<div class="tallyband" class:asking={!!storyCount && !counted} bind:this={tallyEl}>
+<div class="tallyband" bind:this={tallyEl}>
   {#if !storyCount && storiesPending}
     <div class="tallybox waiting" aria-hidden="true">
       <Spinner />

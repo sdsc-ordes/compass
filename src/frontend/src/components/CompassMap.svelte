@@ -374,6 +374,6 @@
     sheetEl={sidebarEl}
     settledWidth={settledStageWidth}
   >
-    <ActivePills bar {t} {dims} {sel} onToggleOption={toggleOption} onReset={reset} />
+    <ActivePills bar {t} {dims} {sel} onToggleOption={toggleOption} />
   </Stage>
 </main>
