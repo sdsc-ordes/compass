@@ -107,7 +107,8 @@ export class Sheet {
     sh.dataset.sheet = state;
     sh.style.transform = 'translateY(' + offsets[state] + 'px)';
     if (state === 'dock') sh.scrollTop = 0;
-    const shaded = state !== 'dock';
+    // 'half' leaves the map live above it, so filter changes show on the pins.
+    const shaded = state === 'full' || state === 'detail';
     bd.classList.toggle('on', shaded);
     bd.setAttribute('aria-hidden', String(!shaded));
     grab.setAttribute('aria-expanded', String(state !== 'dock'));
