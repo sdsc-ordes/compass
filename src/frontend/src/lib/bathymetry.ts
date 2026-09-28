@@ -11,10 +11,16 @@ import type { Pal } from './palette';
 // Globe: rotation is the one transform that is not affine, so it resamples per
 // frame from the equirectangular raster.
 const FLAT = 'bathy/flat.webp';
+const FULL_W = 8192;
+// The same, narrower, for a stage drawing the sphere at no more device pixels
+// than this: a phone starts on 0.3 MB rather than 4.5 (140 MB decoded), and only
+// zooming past it fetches the full one. Save-Data stays on it.
+const FLAT_SMALL = 'bathy/flat-small.webp';
+const SMALL_W = 2048;
 const EQUI = 'bathy/equirect.webp';
 const DETAIL = 'bathy/d';
 
-// 2x the base, cut into tiles because WebP caps a side at 16383.
+// 2x the full base, cut into tiles because WebP caps a side at 16383.
 const DETAIL_SCALE = 2;
 const DETAIL_TILE = 2048;
 
@@ -77,7 +83,7 @@ export class Bathymetry {
   private mipW = 0;
 
   private equi: Grid | null = null;
-  private asked = { flat: false, equi: false };
+  private asked = { small: false, full: false, equi: false };
 
   // Insertion order is the LRU. A null value means asked for and not here yet --
   // or never coming, for a tile the bake left out as entirely off the sphere.
@@ -153,7 +159,7 @@ export class Bathymetry {
     dpr: number,
   ): void {
     if (!globe) {
-      this.blit(ctx, pr, W, H);
+      this.blit(ctx, pr, W, H, dpr);
       return;
     }
 
@@ -171,8 +177,14 @@ export class Bathymetry {
   }
 
   // Flat view: one drawImage of the pre-projected raster.
-  private blit(ctx: CanvasRenderingContext2D, pr: GeoProjection, W: number, H: number): void {
-    const img = this.flat();
+  private blit(
+    ctx: CanvasRenderingContext2D,
+    pr: GeoProjection,
+    W: number,
+    H: number,
+    dpr: number,
+  ): void {
+    const img = this.flat(pr.scale() * NE_SPAN * dpr);
     const ref = this.flatRef;
     if (!img || !ref) return;
 
@@ -184,11 +196,11 @@ export class Bathymetry {
     ctx.drawImage(this.level(img, dw), t.dx, t.dy, dw, dh);
     // Always underneath: a tile still in flight, or one the bake skipped, just
     // leaves the base showing rather than a hole.
-    if (dw > img.width) this.detail(ctx, t, img.width, img.height, W, H);
+    if (dw > FULL_W) this.detail(ctx, t, img.width, img.height, W, H);
   }
 
-  // Same similarity, half the gain: the base maps basePx -> g*basePx + d, so the
-  // 2x level maps detailPx -> (g/2)*detailPx + d.
+  // Same similarity, less gain: the base maps basePx -> g*basePx + d, so a level
+  // k times wider maps detailPx -> (g/k)*detailPx + d.
   private detail(
     ctx: CanvasRenderingContext2D,
     t: Move,
@@ -197,10 +209,11 @@ export class Bathymetry {
     W: number,
     H: number,
   ): void {
-    const g = t.g / DETAIL_SCALE;
+    const k = (FULL_W * DETAIL_SCALE) / baseW;
+    const g = t.g / k;
     const span = g * DETAIL_TILE;
-    const cols = Math.ceil((baseW * DETAIL_SCALE) / DETAIL_TILE);
-    const rows = Math.ceil((baseH * DETAIL_SCALE) / DETAIL_TILE);
+    const cols = Math.ceil((baseW * k) / DETAIL_TILE);
+    const rows = Math.ceil((baseH * k) / DETAIL_TILE);
 
     const c0 = Math.max(0, Math.floor(-t.dx / span));
     const c1 = Math.min(cols - 1, Math.floor((W - t.dx) / span));
@@ -486,7 +499,7 @@ export class Bathymetry {
 
   private load(
     path: string,
-    seen: 'flat' | 'equi',
+    seen: 'small' | 'full' | 'equi',
     done: (img: HTMLImageElement) => void,
   ): void {
     if (this.asked[seen] || typeof document === 'undefined') return;
@@ -509,11 +522,18 @@ export class Bathymetry {
     img.src = `${this.base}/${path}`;
   }
 
-  private flat(): HTMLImageElement | null {
-    this.load(FLAT, 'flat', (img) => {
+  // need: the sphere's drawn width in device pixels.
+  private flat(need: number): HTMLImageElement | null {
+    const full = need > SMALL_W && !saveData();
+    const done = (img: HTMLImageElement) => {
+      if (this.flatImg && this.flatImg.width >= img.width) return; // small landing late
       this.flatImg = img;
       this.flatRef = flatRefs(img.width);
-    });
+      this.mip = null;
+      this.mipW = 0;
+    };
+    if (full) this.load(FLAT, 'full', done);
+    else if (!this.flatImg) this.load(FLAT_SMALL, 'small', done);
     return this.flatImg;
   }
 
@@ -542,15 +562,23 @@ export class Bathymetry {
   }
 }
 
+function saveData(): boolean {
+  const nav = typeof navigator === 'undefined' ? undefined : navigator;
+  return !!(nav as { connection?: { saveData?: boolean } } | undefined)?.connection?.saveData;
+}
+
+const NE = geoNaturalEarth1().scale(1).translate([0, 0]);
+const [[NE_X0, NE_Y0], [NE_X1]] = geoPath(NE).bounds({ type: 'Sphere' });
+// The sphere's width at scale 1, so its drawn width is this times the scale.
+const NE_SPAN = NE_X1 - NE_X0;
+
 // Where the reference points land in the baked raster, which covers the sphere's
 // Natural Earth bounding box exactly and is fitted to width.
 function flatRefs(width: number): [number, number][] {
-  const base = geoNaturalEarth1().scale(1).translate([0, 0]);
-  const [[x0, y0], [x1]] = geoPath(base).bounds({ type: 'Sphere' });
-  const s = width / (x1 - x0);
+  const s = width / NE_SPAN;
   return REF.map((ll) => {
-    const q = base(ll) as [number, number];
-    return [(q[0] - x0) * s, (q[1] - y0) * s];
+    const q = NE(ll) as [number, number];
+    return [(q[0] - NE_X0) * s, (q[1] - NE_Y0) * s];
   });
 }
 

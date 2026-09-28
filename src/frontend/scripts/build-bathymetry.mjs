@@ -1,9 +1,11 @@
-// Bakes the GEBCO tile pyramid (see build-tiles.mjs) into the two rasters the
-// widget actually loads at runtime:
+// Bakes the GEBCO tile pyramid (see build-tiles.mjs) into the rasters the widget
+// actually loads at runtime:
 //
 //   bathy/flat.webp      world pre-projected into Natural Earth 1, drawn with a
 //                        single drawImage because flat pan/zoom is an exact
 //                        similarity transform of a fixed image.
+//   bathy/flat-small.webp  the same, narrower, for screens too small to use the
+//                        full one until they zoom in.
 //   bathy/equirect.webp  plate carree, decoded to ImageData and resampled per
 //                        frame -- only the globe needs that, because rotation is
 //                        the one transform that is not affine.
@@ -29,6 +31,11 @@ const FLAT_W = Number(process.env.BATHY_FLAT_W ?? 8192);
 // The intermediate Web Mercator mosaic matches the Natural Earth width it feeds,
 // so the reprojection resamples at roughly 1:1 and neither axis is starved.
 const MERC = FLAT_W;
+
+// ~16x lighter than the full base (0.27 MB against 4.5), and still 1:1 on a
+// phone to about k=2.6 (the stage caps dpr at 2). Must match SMALL_W in
+// src/lib/bathymetry.ts.
+const FLAT_SMALL_W = 2048;
 
 const EQUI_W = 4096;
 const EQUI_H = 2048;
@@ -287,6 +294,15 @@ async function main() {
   const f = await flat(merc);
   const ff = await write('flat.webp', f, true);
   console.log(`  ${ff}  ${f.width}x${f.height}`);
+
+  const { data, info } = await sharp(f.data, {
+    raw: { width: f.width, height: f.height, channels: 4 },
+  })
+    .resize(FLAT_SMALL_W, null, { kernel: 'lanczos3' })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const sf = await write('flat-small.webp', { ...info, data }, true);
+  console.log(`  ${sf}  ${info.width}x${info.height}`);
 
   const e = await equirect(merc);
   const ef = await write('equirect.webp', e, true);

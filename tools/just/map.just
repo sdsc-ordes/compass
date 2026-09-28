@@ -23,11 +23,11 @@ fonts:
 tiles maxzoom="5":
     node "{{root_dir}}/src/frontend/scripts/build-tiles.mjs" {{maxzoom}}
 
-# Rebake the committed pair, src/frontend/bathy/{flat,equirect}.webp (~6 MB, no
-# network). These are what the widget loads: see src/frontend/src/lib/bathymetry.ts.
+# Rebake the committed rasters, src/frontend/bathy/{flat,flat-small,equirect}.webp
+# (~6 MB, no network). These are what the widget loads: see src/frontend/src/lib/bathymetry.ts.
 # Without them the map falls back to a flat sea and hides the depth switch.
 # Only needed to refresh the imagery -- a fresh clone already has them.
-[doc("Rebake the committed bathy/{flat,equirect}.webp pair (no network).")]
+[doc("Rebake the committed bathy/{flat,flat-small,equirect}.webp (no network).")]
 bathymetry:
     cd "{{root_dir}}/src/frontend" && BATHY_NO_DETAIL=1 node --max-old-space-size=4096 scripts/build-bathymetry.mjs
 
