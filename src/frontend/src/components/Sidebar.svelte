@@ -4,6 +4,7 @@
   import TypePills from './TypePills.svelte';
   import ActivePills from './ActivePills.svelte';
   import FilterAccordion from './FilterAccordion.svelte';
+  import { tick } from 'svelte';
   import { plural, storyLine, type Strings } from '../lib/i18n';
   import type { Proj } from '../lib/types';
   import { TYPE_DIM, type Dim } from '../lib/schema';
@@ -49,6 +50,15 @@
   $: typeDim = dims.find((d) => d.id === TYPE_DIM) ?? null;
   $: sectionDims = dims.filter((d) => d.id !== TYPE_DIM);
 
+  $: nsel = Object.values(sel).reduce((n, s) => n + s.size, 0);
+
+  // Clears from the docked sheet; focus falls back to the grab it sat in.
+  async function clear(): Promise<void> {
+    onReset();
+    await tick();
+    grabEl?.focus();
+  }
+
   $: sheetTitle = selected ? t.detailsPane : t.filtersPane;
   $: sheetCount = selected
     ? ''
@@ -70,7 +80,24 @@
     <span class="sr" id="grabhow">{t.sheetHow}</span>
     <div class="grabrow">
       <span class="grabtitle">{sheetTitle}</span>
+      {#if !selected && nsel}
+        <span class="grabn"
+          ><span aria-hidden="true">{nsel}</span><span class="sr"
+            >{nsel} {plural(nsel, t.activeFilterOne, t.activeFilterMany)}</span
+          ></span
+        >
+      {/if}
       <span class="grabcount">{sheetCount}</span>
+      {#if !selected && nsel}
+        <!-- kept from the grab's drag and toggle handlers in sheet.ts -->
+        <button
+          type="button"
+          class="grabclear"
+          on:pointerdown|stopPropagation
+          on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && e.stopPropagation()}
+          on:click={clear}>{t.clearFilters}</button
+        >
+      {/if}
     </div>
   </div>
 
