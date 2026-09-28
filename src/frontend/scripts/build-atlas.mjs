@@ -52,7 +52,7 @@ const labels = {
     .sort((a, b) => a.k - b.k),
 };
 
-writeFileSync(join(here, '..', 'src', 'atlas.json'), JSON.stringify(topo));
+writeFileSync(join(here, '..', 'public', 'basemap', 'atlas.json'), JSON.stringify(topo));
 writeFileSync(join(here, '..', 'src', 'atlas-labels.json'), JSON.stringify(labels));
 console.log(
   `wrote ${topo.objects.countries.geometries.length} countries, ` +

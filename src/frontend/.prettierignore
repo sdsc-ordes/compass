@@ -1,7 +1,7 @@
 dist/
 node_modules/
 # Generated geometry: one line of megabytes, and nothing edits it by hand.
-src/atlas.json
+public/basemap/atlas.json
 src/atlas-labels.json
 # Generated font faces: base64 woff2, rebuilt by scripts/build-fonts.mjs.
 src/styles/fonts.css

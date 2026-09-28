@@ -7,7 +7,7 @@ import type {
   Polygon,
   Topology,
 } from 'topojson-specification';
-import atlasJson from '../atlas.json';
+import { writable } from 'svelte/store';
 import labelsJson from '../atlas-labels.json';
 import { P, type Theme } from './palette';
 import { proj, type ViewState } from './projection';
@@ -35,16 +35,39 @@ export interface BasemapRefs {
   sh2: SVGStopElement;
 }
 
-let cached: Atlas | null = null;
+// The topology is most of the widget's weight, so it is fetched beside the
+// bundle, from the same host as the rasters, rather than parsed as part of it.
+const ATLAS = 'basemap/atlas.json';
 
-export function loadAtlas(): Atlas {
-  if (cached) return cached;
-  const topo = atlasJson as unknown as Topology<{
+export const atlas = writable<Atlas | null>(null);
+
+let pending: Promise<Atlas> | null = null;
+
+export function loadAtlas(base: string): Promise<Atlas> {
+  pending ??= fetch(`${base}/${ATLAS}`)
+    .then((res) => {
+      if (!res.ok) throw new Error(`basemap HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((json) => {
+      const a = build(json);
+      atlas.set(a);
+      return a;
+    })
+    .catch((e) => {
+      pending = null;
+      throw e;
+    });
+  return pending;
+}
+
+function build(json: unknown): Atlas {
+  const topo = json as Topology<{
     countries: GeometryCollection<{ name: string }>;
   }>;
   const countries = topo.objects.countries;
   const table = labelsJson as { cty: MapLabel[]; sea: SeaLabel[] };
-  cached = {
+  return {
     land: merge(
       topo,
       countries.geometries as Array<Polygon | MultiPolygon>,
@@ -54,7 +77,6 @@ export function loadAtlas(): Atlas {
     cty: table.cty,
     sea: table.sea,
   };
-  return cached;
 }
 
 /* Re-projecting Natural Earth is the expensive half of a frame, and a gesture

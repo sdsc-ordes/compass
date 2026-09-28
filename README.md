@@ -264,10 +264,10 @@ Three constraints the widget has to satisfy wherever it is embedded.
 ### No third-party requests at runtime
 
 The widget contacts nothing but its own origin, so embedding it leaks no
-visitor data. The basemap is drawn from the Natural Earth topology bundled into
-the build (`src/frontend/src/atlas.json`, rebuilt with `just map::atlas`), not
-from a tile service, and its place names are drawn from that same file rather
-than from a glyph server. Cluster tallies and the OceanCare star are drawn on a
+visitor data. The basemap is drawn from a Natural Earth topology served beside
+the bundle from `tileurl` (`src/frontend/public/basemap/atlas.json`, rebuilt
+with `just map::atlas`), not from a tile service, and its place names are
+bundled with it rather than drawn from a glyph server. Cluster tallies and the OceanCare star are drawn on a
 canvas at runtime for the same reason.
 
 The bathymetry ships as baked rasters in `src/frontend/bathy/`, baked from the

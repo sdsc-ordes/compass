@@ -62,6 +62,7 @@
 
   const S: ViewState = initialView();
   let atlas: Atlas | null = null;
+  let atlasError: string | null = null;
   let interact = false;
   // interact is also raised by a running tween; this one is only ever the user.
   let gesturing = false;
@@ -606,8 +607,17 @@
   let ro: ResizeObserver | null = null;
 
   onMount(() => {
-    atlas = loadAtlas();
     S.ready = true;
+    loadAtlas(tileurl).then(
+      (a) => {
+        atlas = a;
+        queue(true);
+      },
+      (e) => {
+        console.error('[Compass] Failed to load the basemap:', e);
+        atlasError = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
+      },
+    );
     unbind = bindInput({
       S,
       stage,
@@ -665,8 +675,9 @@
 
   $: previewEntity = hovered ? entityLabel(hovered) : '';
   $: cardEntity = selected ? entityLabel(selected) : '';
-  $: showEmpty = !loading && !error && projs.length === 0;
-  $: showLoading = loading && !error && projs.length === 0;
+  $: fault = error ?? atlasError;
+  $: showEmpty = !loading && !fault && !!atlas && projs.length === 0;
+  $: showLoading = !fault && (!atlas || (loading && projs.length === 0));
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -677,7 +688,7 @@
   tabindex="0"
   role="application"
   aria-label={t.stageAria}
-  aria-busy={loading}
+  aria-busy={loading || !atlas}
 >
   <canvas id="water" bind:this={water} aria-hidden="true"></canvas>
   <Basemap bind:this={basemap} />
@@ -718,7 +729,7 @@
     <Spinner />
     {t.loadingMap}
   </div>
-  <div class="plate plate-error" class:show={!!error} bind:this={errEl}>{error ?? ''}</div>
+  <div class="plate plate-error" class:show={!!fault} bind:this={errEl}>{fault ?? ''}</div>
   <div class="attrib" bind:this={attribEl}>
     {t.attribution}{#if depth && depthOn}<span aria-hidden="true"> · </span><a
         class="attriblink"

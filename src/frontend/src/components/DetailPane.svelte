@@ -1,7 +1,7 @@
 <script lang="ts">
   import { geoOrthographic, geoPath, geoGraticule } from 'd3-geo';
   import Icon from './Icon.svelte';
-  import { loadAtlas } from '../lib/basemap';
+  import { atlas, type Atlas } from '../lib/basemap';
   import { fmt, type Strings } from '../lib/i18n';
   import type { Proj, Tag } from '../lib/types';
   import type { Dim } from '../lib/schema';
@@ -16,10 +16,9 @@
 
   const THUMB = 128;
 
-  $: thumb = entry ? buildThumb(entry) : null;
+  $: thumb = entry && $atlas ? buildThumb(entry, $atlas) : null;
 
-  function buildThumb(p: Proj) {
-    const atlas = loadAtlas();
+  function buildThumb(p: Proj, a: Atlas) {
     const pr = geoOrthographic()
       .rotate([-p.c[0], -p.c[1]])
       .fitExtent(
@@ -34,7 +33,7 @@
     return {
       sea: pth({ type: 'Sphere' }) ?? '',
       grat: pth(geoGraticule().step([30, 30])()) ?? '',
-      land: pth(atlas.land) ?? '',
+      land: pth(a.land) ?? '',
       rim: pth({ type: 'Sphere' }) ?? '',
       x: xy[0],
       y: xy[1],
