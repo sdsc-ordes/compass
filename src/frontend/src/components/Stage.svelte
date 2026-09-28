@@ -18,6 +18,7 @@
     easeStandard,
     K_MIN,
     K_MAX,
+    type TweenTo,
     type ViewState,
   } from '../lib/projection';
   import { loadAtlas, nudgeBasemap, renderBasemap, type Atlas } from '../lib/basemap';
@@ -334,8 +335,66 @@
     queue(true);
   }
 
+  // A phone's k = 1 is a thin strip of world, so it starts closer, framed on the
+  // pins in the map left between the filter chips and the docked sheet.
+  const PHONE_K = 1.5;
+  const HOME_PAD = 32;
+
+  function home(): TweenTo {
+    const to: TweenTo = { k: 1, tx: 0, ty: 0, rot: [-18, -8] };
+    if (!isMobile() || S.view !== 'flat' || !projs.length) return to;
+    const W = stage.clientWidth,
+      H = stage.clientHeight;
+    const sr = stage.getBoundingClientRect();
+    const top = chipsEl?.querySelector('li')
+      ? chipsEl.getBoundingClientRect().bottom - sr.top
+      : 0;
+    const sb = sheetEl?.getBoundingClientRect();
+    const bot = sb?.height ? Math.min(H, sb.top - sr.top) : H;
+    // k = 1 positions; any other flat camera is tx/ty plus k times these
+    const pr = proj({ ...S, k: 1, tx: 0, ty: 0 }, W, H);
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -Infinity,
+      y1 = -Infinity;
+    for (const d of projs) {
+      const xy = pr(d.c);
+      if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) continue;
+      x0 = Math.min(x0, xy[0]);
+      x1 = Math.max(x1, xy[0]);
+      y0 = Math.min(y0, xy[1]);
+      y1 = Math.max(y1, xy[1]);
+    }
+    if (x0 > x1) return to;
+    const k = Math.max(
+      K_MIN,
+      Math.min(PHONE_K, (W - 2 * HOME_PAD) / (x1 - x0), (bot - top - 2 * HOME_PAD) / (y1 - y0)),
+    );
+    return {
+      ...to,
+      k,
+      tx: W / 2 - ((x0 + x1) / 2) * k,
+      ty: (top + bot) / 2 - ((y0 + y1) / 2) * k,
+    };
+  }
+
   function resetView(): void {
-    tween.to({ k: 1, tx: 0, ty: 0, rot: [-18, -8] }, 420);
+    tween.to(home(), 420);
+  }
+
+  // Once, on the first entities, unless a gesture or a ?pin= got there first.
+  let homed = false;
+  $: if (S.ready && !homed && projs.length) {
+    homed = true;
+    if (!selected && !gesturing && S.view === 'flat' && S.k === 1 && !S.tx && !S.ty) {
+      const to = home();
+      // before the basemap is up there is nothing to glide from
+      if (atlas) tween.to(to, 620);
+      else {
+        Object.assign(S, to);
+        queue();
+      }
+    }
   }
 
   let fade: ReturnType<typeof setTimeout> | null = null;
@@ -363,6 +422,8 @@
     viewMode = m;
     underFade(140, () => {
       S.view = m;
+      // the phone's flat runs PHONE_K ahead of its globe, whose k = 1 already fills the width
+      if (isMobile()) S.k = Math.max(K_MIN, m === 'globe' ? S.k / PHONE_K : S.k * PHONE_K);
       if (m === 'globe') {
         S.rot = [-c[0], -c[1]];
         S.tx = 0;
