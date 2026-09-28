@@ -265,22 +265,22 @@ aside.filters.detail .pane-detail {
     position: sticky;
     top: var(--grabh);
     z-index: 3;
+    justify-content: flex-start;
     margin: 0 -18px 14px;
-    padding: 6px 12px 6px 16px;
+    padding: 6px 12px 6px 4px;
     background: #fff;
     border-bottom: 1px solid var(--land-hi);
     min-height: 60px;
   }
+  /* One close, top left: back and close both dismiss the entry, and the map
+     is what the sheet goes back to. */
   .back {
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
-    font-size: 16px;
+    display: none;
   }
   .xclose {
     width: 48px;
     height: 48px;
-    font-size: 30px;
+    font-size: 28px;
     opacity: 0.9;
   }
   /* Tag, title and description lead under the header, so half height opens
