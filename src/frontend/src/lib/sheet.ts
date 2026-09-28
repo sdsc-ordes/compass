@@ -182,7 +182,8 @@ export class Sheet {
       const target = off0 + dy + (Math.abs(v) > 0.5 ? v * 170 : 0);
       const offsets = this.offsets ?? this.measure();
       const d = (k: SheetState) => Math.abs(offsets[k] - target);
-      this.to(this.stops().reduce((a, b) => (d(b) < d(a) ? b : a)));
+      // from the current stop, which wins a tie with one at the same offset
+      this.to(this.stops().reduce((a, b) => (d(b) < d(a) ? b : a), this.state));
     };
 
     const onDown = (e: PointerEvent) => {
@@ -210,11 +211,14 @@ export class Sheet {
       settle(true);
     };
 
-    // The content takes over from native scrolling only for a pull down from
-    // the top, or any pull up from the resting stop, which lifts the sheet
-    // first. Decided past a small threshold, so taps on buttons and links still
-    // land.
+    // A gesture on the content is a sheet drag or a native scroll for its whole
+    // length, decided on its first move, before the browser commits to a pan:
+    // it scrolls up only a full sheet with more to show, and down only content
+    // already scrolled off its top. Anything else drags, so the host page never
+    // takes it. The sheet follows past a small threshold, so taps still land.
     let ty: number | null = null,
+      atTop = false,
+      held = false,
       tdrag = false;
     const onTouchStart = (e: TouchEvent) => {
       const el = e.target as Element | null;
@@ -222,22 +226,28 @@ export class Sheet {
         this.mobile && pid === null && e.touches.length === 1 && !el?.closest?.('.sheet-grab')
           ? e.touches[0].clientY
           : null;
-      tdrag = false;
+      // under 1px, as iOS can rest a subpixel off the top
+      atTop = sh.scrollTop < 1;
+      held = tdrag = false;
     };
     const onTouchMove = (e: TouchEvent) => {
       if (ty === null) return;
       const y = e.touches[0].clientY;
-      if (!tdrag) {
-        const d = y - ty;
-        if (Math.abs(d) < 8) return;
-        if (!((d > 0 && sh.scrollTop <= 0) || (d < 0 && this.low()))) {
+      const d = y - ty;
+      if (!held) {
+        const more = this.state === 'full' && sh.scrollHeight - sh.clientHeight >= 1;
+        if (d < 0 ? more : !atTop) {
           ty = null;
           return;
         }
+        held = true;
+      }
+      if (e.cancelable) e.preventDefault();
+      if (!tdrag) {
+        if (Math.abs(d) < 8) return;
         tdrag = true;
         begin(ty);
       }
-      if (e.cancelable) e.preventDefault();
       track(y);
     };
     const onTouchEnd = () => {
