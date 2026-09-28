@@ -16,6 +16,8 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
+    /* a drag on the shade would scroll the host page */
+    touch-action: none;
   }
   .sheet-backdrop.on {
     opacity: 1;
