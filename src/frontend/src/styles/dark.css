@@ -14,6 +14,10 @@
   --card-prev-edge: var(--cerulean);
 }
 
+/* astronaut on the night sea needs an edge to read as a control */
+.mapc.night .chipbar .apill {
+  border-color: var(--chrome-night);
+}
 .mapc.night .plate {
   background: rgba(10, 22, 34, 0.92);
 }

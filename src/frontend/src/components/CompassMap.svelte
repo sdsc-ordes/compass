@@ -4,6 +4,7 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import Sidebar from './Sidebar.svelte';
   import Stage from './Stage.svelte';
+  import ActivePills from './ActivePills.svelte';
   import { Sheet, isMobile } from '../lib/sheet';
   import { DIM_IDS, SECTION_IDS, TYPE_DIM, buildDims } from '../lib/schema';
   import { toProjs } from '../lib/features';
@@ -373,5 +374,7 @@
     sheetEl={sidebarEl}
     {isMobile}
     settledWidth={settledStageWidth}
-  />
+  >
+    <ActivePills bar {t} {dims} {sel} onToggleOption={toggleOption} onReset={reset} />
+  </Stage>
 </main>

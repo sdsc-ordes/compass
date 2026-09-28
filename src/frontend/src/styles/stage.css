@@ -121,6 +121,9 @@
   color: var(--stage-dim);
   z-index: 2;
 }
+.chipbar {
+  display: none;
+}
 .attriblink {
   color: inherit;
   text-decoration: underline;
@@ -150,5 +153,44 @@
     bottom: auto;
     max-width: 44vw;
     font-size: 9.5px;
+  }
+  .stage:has(.chipbar li) .attrib {
+    top: calc(52px + env(safe-area-inset-top, 0px));
+  }
+  /* Active filters as one scrolling row of chips over the map; the grab row's
+     Clear is the one clear-all. The 7px padding holds the ×'s 44px target. */
+  .chipbar:has(li) {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(7px + env(safe-area-inset-top, 0px));
+    z-index: 3;
+  }
+  .chipbar .apills {
+    height: auto;
+    margin: 0;
+    padding: 7px calc(14px + env(safe-area-inset-right, 0px)) 7px
+      calc(14px + env(safe-area-inset-left, 0px));
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      #000 14px,
+      #000 calc(100% - 14px),
+      transparent
+    );
+  }
+  .chipbar .apills::-webkit-scrollbar {
+    display: none;
+  }
+  .chipbar .apills .tpill.apill {
+    flex: none;
+    max-width: min(260px, 72vw);
+    box-shadow: 0 2px 8px rgba(var(--astronaut-rgb), 0.14);
   }
 }

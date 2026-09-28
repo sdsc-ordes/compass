@@ -8,6 +8,8 @@
   export let sel: Record<string, Set<string>> = {};
   export let onToggleOption: (dim: string, iri: string) => void;
   export let onReset: () => void;
+  // One scrolling row over the map (mobile): no folding, no reset.
+  export let bar = false;
 
   let rowEl: HTMLElement | null = null;
   let shown = Infinity;
@@ -37,7 +39,7 @@
 
   // Unhide all, measure, fold; all before paint, so the unfolded layout never shows.
   async function fit(): Promise<void> {
-    if (!rowEl) return;
+    if (!rowEl || bar) return;
     const run = ++runs;
     const lis = [...rowEl.querySelectorAll<HTMLElement>('.apill:not(.amore)')];
     const more = rowEl.querySelector<HTMLElement>('.amore');
@@ -85,34 +87,24 @@
 
   $: if (rowEl) void (items, tick().then(fit));
 
-  // When a pill's own × last changed the row; that change is not scrolled away from under it.
-  let ownAt = 0;
-
-  // Refit on width only. On mobile the row grows and shrinks with its pills, so the
-  // sheet scrolls by the difference and the row just tapped below stays put.
+  // Refit on width only.
   function watch(el: HTMLElement): { destroy: () => void } {
     let w = 0;
-    let h = -1;
     const ro = new ResizeObserver(() => {
       if (el.clientWidth !== w) void fit();
       w = el.clientWidth;
-      const sc = el.closest('aside');
-      const cs = getComputedStyle(el);
-      const outer = el.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
-      if (h >= 0 && sc && performance.now() - ownAt > 500) sc.scrollTop += outer - h;
-      h = outer;
     });
     ro.observe(el);
     document.fonts?.ready.then(fit);
     return { destroy: () => ro.disconnect() };
   }
 
-  // Focus the next pill's ×, else the previous one, else the filters; never body.
+  // Focus the next pill's ×, else the previous one, else the filters (the map for the bar); never body.
   async function remove(e: MouseEvent, it: { dim: string; iri: string }): Promise<void> {
     const li = (e.currentTarget as HTMLElement).closest('li')!;
     const acc = rowEl?.nextElementSibling;
+    const stage = rowEl?.closest<HTMLElement>('.stage');
     hold = e.detail > 0 && ptr === 'mouse';
-    ownAt = performance.now();
     const q = '.apill:not(.amore,.gone,[hidden])';
     const pills = [...rowEl!.querySelectorAll<HTMLElement>(q)];
     const i = pills.indexOf(li);
@@ -121,6 +113,7 @@
     await tick();
     const to = next?.isConnected && next.querySelector<HTMLElement>('.ax');
     if (to) to.focus();
+    else if (bar) stage?.focus();
     else acc?.querySelector<HTMLElement>('button')?.focus();
   }
 
@@ -135,6 +128,7 @@
 <!-- always rendered, so its fixed two-row height never shifts the filters -->
 <ul
   class="apills"
+  class:abar={bar}
   bind:this={rowEl}
   use:watch
   on:pointerdown={(e) => (ptr = e.pointerType)}
@@ -154,18 +148,20 @@
         >
       </li>
     {/each}
-    <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-    <li class="tpill apill amore" tabindex="0" hidden={!hidden.length}>
-      <span aria-hidden="true">+{hidden.length}</span>
-      <span class="atip"
-        >{fmt(t.moreFilters, {
-          n: hidden.length,
-          labels: hidden.map((h) => h.label).join(', '),
-        })}</span
-      >
-    </li>
-    <li class="areset">
-      <button class="reset" type="button" on:click={reset}>{t.resetFiltersLong}</button>
-    </li>
+    {#if !bar}
+      <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+      <li class="tpill apill amore" tabindex="0" hidden={!hidden.length}>
+        <span aria-hidden="true">+{hidden.length}</span>
+        <span class="atip"
+          >{fmt(t.moreFilters, {
+            n: hidden.length,
+            labels: hidden.map((h) => h.label).join(', '),
+          })}</span
+        >
+      </li>
+      <li class="areset">
+        <button class="reset" type="button" on:click={reset}>{t.resetFiltersLong}</button>
+      </li>
+    {/if}
   {/if}
 </ul>

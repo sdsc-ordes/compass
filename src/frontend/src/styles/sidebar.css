@@ -458,16 +458,9 @@ aside.filters::-webkit-scrollbar-track {
     position: absolute;
     inset: -6px 0;
   }
-  /* Sized to its pills rather than two reserved rows; ActivePills scrolls the sheet by
-     the change itself, so the browser's own anchoring is off to avoid doing it twice. */
-  .apills {
-    --agap: 14px;
-    height: auto;
-    max-height: calc(2 * var(--ah) + var(--agap));
-    margin: 4px 18px 12px;
-  }
-  .apills:not(:has(li)) {
-    margin: 0;
+  /* the chips float over the map instead (.chipbar) */
+  .pane-filters .apills {
+    display: none;
   }
   .apill::after {
     content: none;
@@ -479,9 +472,5 @@ aside.filters::-webkit-scrollbar-track {
     content: '';
     position: absolute;
     inset: -11px -6px;
-  }
-  /* the grab row's Clear is the sheet's one clear-all: it stays in view at every stop */
-  .areset {
-    display: none;
   }
 }

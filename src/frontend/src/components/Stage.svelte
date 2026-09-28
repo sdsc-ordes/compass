@@ -121,6 +121,7 @@
   let errEl: HTMLDivElement;
   let zoomEl: HTMLDivElement;
   let panelEl: HTMLDivElement | null = null;
+  let chipsEl: HTMLDivElement;
 
   const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
 
@@ -269,7 +270,7 @@
       });
     };
     [attribEl, emptyEl, loadEl, errEl].forEach((el) => add(el, 40, 16));
-    [zoomEl, panelEl].forEach((el) => add(el, 30, 20));
+    [zoomEl, panelEl, chipsEl].forEach((el) => add(el, 30, 20));
     if (isMobile() && sheetEl) {
       const sb = sheetEl.getBoundingClientRect();
       if (sb.width) {
@@ -749,6 +750,16 @@
         aria-label={`${t.attribGebcoOf} ${t.newTab}`}
         on:pointerdown|stopPropagation>{t.attribGebco}</a
       >{/if}
+  </div>
+
+  <!-- the active filters, over the map on mobile; kept from the map's own gestures -->
+  <div
+    class="chipbar"
+    bind:this={chipsEl}
+    on:pointerdown|stopPropagation
+    on:wheel|stopPropagation
+  >
+    <slot />
   </div>
 
   <StageChrome
