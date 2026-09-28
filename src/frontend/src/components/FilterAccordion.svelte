@@ -4,6 +4,7 @@
   import Icon from './Icon.svelte';
   import type { Strings } from '../lib/i18n';
   import { REDUCED } from '../lib/projection';
+  import { Sheet } from '../lib/sheet';
   import type { Dim } from '../lib/schema';
 
   export let t: Strings;
@@ -30,6 +31,24 @@
     if (!pane) return;
     pane.focusRow(iri);
     afterExpanded(dim, () => pane.revealRow(iri));
+  }
+
+  // Opening one group collapses another, which can carry the new header off screen
+  // or leave its rows below the fold; once it has opened, bring the header up.
+  async function toggle(id: string): Promise<void> {
+    const opening = openDim !== id;
+    onToggleDim(id);
+    if (!opening) return;
+    await tick();
+    afterExpanded(id, () => {
+      const h = accEl?.querySelector<HTMLElement>(`[data-head="${id}"]`);
+      const sc = h?.closest('aside');
+      if (!h || !sc) return;
+      const top = h.getBoundingClientRect().top - sc.getBoundingClientRect().top;
+      const off = parseFloat(getComputedStyle(h).scrollMarginTop) || 0;
+      if (top < off || top > sc.clientHeight / 2)
+        h.scrollIntoView({ block: 'start', behavior: Sheet.scrollBehavior() });
+    });
   }
 
   function afterExpanded(id: string, cb: () => void): void {
@@ -68,7 +87,7 @@
           id={'acch-' + dim.id}
           aria-expanded={open}
           aria-controls={'accp-' + dim.id}
-          on:click={() => onToggleDim(dim.id)}
+          on:click={() => toggle(dim.id)}
         >
           <span class="dico"
             >{#if dim.icon}<Icon name={dim.icon} size={16} />{/if}</span
