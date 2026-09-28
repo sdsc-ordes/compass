@@ -263,8 +263,8 @@
     padding: 8px 12px 18px;
   }
   .frow {
-    min-height: 56px;
-    padding: 12px 6px;
+    min-height: 52px;
+    padding: 10px 6px;
     align-items: center;
     gap: 13px;
   }

@@ -391,7 +391,8 @@ aside.filters::-webkit-scrollbar-track {
     overflow: hidden;
   }
   .pane-filters {
-    padding: 0 0 calc(26px + var(--sbtm));
+    /* the footer below carries the safe-area inset */
+    padding: 0 0 8px;
     display: flex;
     flex-direction: column;
   }
@@ -399,6 +400,8 @@ aside.filters::-webkit-scrollbar-track {
   .sidefoot {
     margin: 0 18px;
     padding: 12px 0 calc(20px + var(--sbtm));
+    /* the last group's rule already closes the list */
+    border-top: 0;
   }
   .pane-filters > * {
     flex: none;
