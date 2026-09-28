@@ -133,38 +133,25 @@ export class Sheet {
       dy = 0,
       t0 = 0;
 
-    const onDown = (e: PointerEvent) => {
-      if (!this.mobile) return;
+    // The drag itself, shared by the grab (pointer) and the content (touch).
+    const begin = (y: number) => {
       const offsets = this.measure();
-      pid = e.pointerId;
-      y0 = e.clientY;
+      y0 = y;
       dy = 0;
       t0 = performance.now();
       off0 = offsets[this.state] !== undefined ? offsets[this.state] : offsets.dock;
       sh.classList.add('dragging');
-      try {
-        grab.setPointerCapture(pid);
-      } catch {
-        /* not captureable, drag still tracks */
-      }
     };
-    const onMove = (e: PointerEvent) => {
-      if (pid === null || e.pointerId !== pid || !this.offsets) return;
-      dy = e.clientY - y0;
+    const track = (y: number) => {
+      if (!this.offsets) return;
+      dy = y - y0;
       const floor = this.h.isDetail() ? 150 : this.offsets.dock + 40;
       sh.style.transform = 'translateY(' + Math.max(-28, Math.min(floor, off0 + dy)) + 'px)';
     };
-    const end = (e?: PointerEvent) => {
-      if (pid === null || (e && e.pointerId !== undefined && e.pointerId !== pid)) return;
-      try {
-        if (pid !== null) grab.releasePointerCapture(pid);
-      } catch {
-        /* already released */
-      }
-      pid = null;
+    const settle = (tap: boolean) => {
       sh.classList.remove('dragging');
       const v = dy / Math.max(1, performance.now() - t0);
-      if (Math.abs(dy) < 6) {
+      if (tap && Math.abs(dy) < 6) {
         this.toggle();
         return;
       }
@@ -185,6 +172,67 @@ export class Sheet {
       });
       this.to(best);
     };
+
+    const onDown = (e: PointerEvent) => {
+      if (!this.mobile) return;
+      pid = e.pointerId;
+      begin(e.clientY);
+      try {
+        grab.setPointerCapture(pid);
+      } catch {
+        /* not captureable, drag still tracks */
+      }
+    };
+    const onMove = (e: PointerEvent) => {
+      if (pid === null || e.pointerId !== pid) return;
+      track(e.clientY);
+    };
+    const end = (e?: PointerEvent) => {
+      if (pid === null || (e && e.pointerId !== undefined && e.pointerId !== pid)) return;
+      try {
+        if (pid !== null) grab.releasePointerCapture(pid);
+      } catch {
+        /* already released */
+      }
+      pid = null;
+      settle(true);
+    };
+
+    // The content takes over from native scrolling only for a pull down from
+    // the top, or any pull up while docked (nothing to scroll there). Decided
+    // past a small threshold, so taps on buttons and links still land.
+    let ty: number | null = null,
+      tdrag = false;
+    const onTouchStart = (e: TouchEvent) => {
+      const el = e.target as Element | null;
+      ty =
+        this.mobile && pid === null && e.touches.length === 1 && !el?.closest?.('.sheet-grab')
+          ? e.touches[0].clientY
+          : null;
+      tdrag = false;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (ty === null) return;
+      const y = e.touches[0].clientY;
+      if (!tdrag) {
+        const d = y - ty;
+        if (Math.abs(d) < 8) return;
+        if (!((d > 0 && sh.scrollTop <= 0) || (d < 0 && this.state === 'dock'))) {
+          ty = null;
+          return;
+        }
+        tdrag = true;
+        begin(ty);
+      }
+      if (e.cancelable) e.preventDefault();
+      track(y);
+    };
+    const onTouchEnd = () => {
+      if (ty === null) return;
+      ty = null;
+      if (tdrag) settle(false);
+    };
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -223,6 +271,10 @@ export class Sheet {
     grab.addEventListener('keydown', onKey);
     bd.addEventListener('click', onBd);
     sh.addEventListener('focusin', onFocusIn);
+    sh.addEventListener('touchstart', onTouchStart, { passive: true });
+    sh.addEventListener('touchmove', onTouchMove, { passive: false });
+    sh.addEventListener('touchend', onTouchEnd);
+    sh.addEventListener('touchcancel', onTouchEnd);
     this.teardown.push(() => {
       grab.removeEventListener('pointerdown', onDown);
       grab.removeEventListener('pointermove', onMove);
@@ -231,6 +283,10 @@ export class Sheet {
       grab.removeEventListener('keydown', onKey);
       bd.removeEventListener('click', onBd);
       sh.removeEventListener('focusin', onFocusIn);
+      sh.removeEventListener('touchstart', onTouchStart);
+      sh.removeEventListener('touchmove', onTouchMove);
+      sh.removeEventListener('touchend', onTouchEnd);
+      sh.removeEventListener('touchcancel', onTouchEnd);
     });
 
     let gt: ReturnType<typeof setTimeout> | null = null;
