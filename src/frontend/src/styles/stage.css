@@ -147,15 +147,25 @@
     min-height: 0;
     touch-action: none;
   }
+  /* Bottom-left beside the zoom row, clear of the chips: one source a line,
+     centred on the 44px buttons and narrower than what they leave free. The
+     scrim keeps it legible over the deep water it now sits on. */
   .attrib {
     left: calc(14px + env(safe-area-inset-left, 0px));
-    top: calc(14px + env(safe-area-inset-top, 0px));
-    bottom: auto;
-    max-width: 44vw;
+    bottom: 19px;
+    max-width: calc(100% - 250px);
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(var(--stage-scrim), 0.78);
     font-size: 9.5px;
+    line-height: 1.5;
   }
-  .stage:has(.chipbar li) .attrib {
-    top: calc(52px + env(safe-area-inset-top, 0px));
+  .attribsep {
+    display: none;
+  }
+  .attriblink {
+    display: block;
+    width: fit-content;
   }
   /* Active filters as one scrolling row of chips over the map; the grab row's
      Clear is the one clear-all. The 7px padding holds the ×'s 44px target. */

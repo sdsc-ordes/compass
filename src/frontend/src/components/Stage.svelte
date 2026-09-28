@@ -742,7 +742,7 @@
   </div>
   <div class="plate plate-error" class:show={!!fault} bind:this={errEl}>{fault ?? ''}</div>
   <div class="attrib" bind:this={attribEl}>
-    {t.attribution}{#if depth && depthOn}<span aria-hidden="true"> · </span><a
+    {t.attribution}{#if depth && depthOn}<span class="attribsep" aria-hidden="true"> · </span><a
         class="attriblink"
         href={GEBCO_GRID}
         target="_blank"
