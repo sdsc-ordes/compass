@@ -61,12 +61,17 @@ export class Sheet {
     return this.state === (this.h.isDetail() ? 'half' : 'dock');
   }
 
-  // Centres the pin in the map that half leaves above it.
+  // Centres the pin in the map that half leaves above it, below the filter chips.
   lift(): number {
     if (!this.mobile) return 0;
-    const H = this.h.stage.clientHeight;
+    const { stage } = this.h;
+    const H = stage.clientHeight;
     const box = this.h.mapc.clientHeight || window.innerHeight;
-    return H / 2 - Math.min(H, box - Math.round(box * SHEET_HALF)) / 2;
+    const bar = stage.querySelector('.chipbar:has(li)');
+    const top = bar
+      ? bar.getBoundingClientRect().bottom - stage.getBoundingClientRect().top
+      : 0;
+    return H / 2 - (top + Math.min(H, box - Math.round(box * SHEET_HALF))) / 2;
   }
 
   measure(): Record<SheetState, number> {
