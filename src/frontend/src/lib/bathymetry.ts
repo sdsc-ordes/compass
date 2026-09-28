@@ -11,7 +11,6 @@ import type { Pal } from './palette';
 // Globe: rotation is the one transform that is not affine, so it resamples per
 // frame from the equirectangular raster.
 const FLAT = 'bathy/flat.webp';
-const FULL_W = 8192; // FLAT_W in scripts/build-bathymetry.mjs
 // The same, narrower, for a stage drawing the sphere at no more device pixels
 // than this: a phone starts on 0.3 MB rather than 4.5 (140 MB decoded), and only
 // zooming past it fetches the full one. Save-Data stays on it.
@@ -20,8 +19,8 @@ const SMALL_W = 2048;
 const EQUI = 'bathy/equirect.webp';
 const DETAIL = 'bathy/d';
 
-// 2x the full base, cut into tiles because WebP caps a side at 16383.
-const DETAIL_SCALE = 2;
+// The z5 source width, cut into tiles because WebP caps a side at 16383.
+const DETAIL_W = 16384; // DETAIL_W in scripts/build-bathymetry.mjs
 const DETAIL_TILE = 2048;
 
 // Never decoded, only drawImage'd, so each is a GPU texture rather than 16 MB of
@@ -81,6 +80,9 @@ export class Bathymetry {
   private flatRef: [number, number][] | null = null;
   private mip: HTMLCanvasElement | null = null;
   private mipW = 0;
+  // The full base's width, off the image since BATHY_FLAT_W can rebake it;
+  // detail tiles wait for it.
+  private fullW = Infinity;
 
   private equi: Grid | null = null;
   private asked = { small: false, full: false, equi: false };
@@ -196,7 +198,7 @@ export class Bathymetry {
     ctx.drawImage(this.level(img, dw), t.dx, t.dy, dw, dh);
     // Always underneath: a tile still in flight, or one the bake skipped, just
     // leaves the base showing rather than a hole.
-    if (dw > FULL_W) this.detail(ctx, t, img.width, img.height, W, H);
+    if (dw > this.fullW) this.detail(ctx, t, img.width, img.height, W, H);
   }
 
   // Same similarity, less gain: the base maps basePx -> g*basePx + d, so a level
@@ -209,7 +211,7 @@ export class Bathymetry {
     W: number,
     H: number,
   ): void {
-    const k = (FULL_W * DETAIL_SCALE) / baseW;
+    const k = DETAIL_W / baseW;
     const g = t.g / k;
     const span = g * DETAIL_TILE;
     const cols = Math.ceil((baseW * k) / DETAIL_TILE);
@@ -532,7 +534,11 @@ export class Bathymetry {
       this.mip = null;
       this.mipW = 0;
     };
-    if (full) this.load(FLAT, 'full', done);
+    if (full)
+      this.load(FLAT, 'full', (img) => {
+        this.fullW = img.width;
+        done(img);
+      });
     else if (!this.flatImg) this.load(FLAT_SMALL, 'small', done);
     return this.flatImg;
   }

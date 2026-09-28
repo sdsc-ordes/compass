@@ -42,7 +42,8 @@ const EQUI_H = 2048;
 
 // Detail level: 2x the base, which is exactly the z5 source width (32 x 512), so
 // it adds real data rather than inventing it. Tiled because WebP caps a side at
-// 16383, and its mosaic runs 1:1 for the same reason the base one does.
+// 16383, and its mosaic runs 1:1 for the same reason the base one does. Must
+// match DETAIL_W in src/lib/bathymetry.ts.
 const DETAIL_W = 16384;
 const DETAIL_TILE = 2048;
 
