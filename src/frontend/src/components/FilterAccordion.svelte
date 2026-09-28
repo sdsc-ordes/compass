@@ -14,7 +14,7 @@
   export let facets: Record<string, Record<string, number>> = {};
   export let juston: string | null = null;
   export let onToggleDim: (id: string) => void;
-  export let onToggleOption: (dim: string, iri: string) => void;
+  export let onToggleOption: (dim: string, iri: string, el?: HTMLElement) => void;
 
   let accEl: HTMLElement | null = null;
   let rows: Record<string, FilterRows | null> = {};

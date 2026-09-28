@@ -22,8 +22,8 @@
   export let juston: string | null = null;
 
   export let onToggleDim: (id: string) => void;
-  export let onToggleOption: (dim: string, iri: string) => void;
-  export let onPickType: (iri: string | null) => void;
+  export let onToggleOption: (dim: string, iri: string, el?: HTMLElement) => void;
+  export let onPickType: (iri: string | null, el?: HTMLElement) => void;
   export let onReset: () => void;
   export let onBack: () => void;
   export let onCloseDetail: () => void;

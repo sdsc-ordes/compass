@@ -174,22 +174,25 @@
 
   $: stories.schedule(mounted, apiurl, lang, storyTagIris);
 
-  function toggleOption(dim: string, iri: string): void {
+  function toggleOption(dim: string, iri: string, el?: HTMLElement): void {
     const s = sel[dim];
     if (s.has(iri)) s.delete(iri);
     else s.add(iri);
     sel = { ...sel };
+    sheet?.showMap(el);
   }
 
   function reset(): void {
     sel = emptySel();
+    sheet?.showMap();
   }
 
-  function pickType(iri: string | null): void {
+  function pickType(iri: string | null, el?: HTMLElement): void {
     const held = sel[TYPE_DIM];
     const same = iri !== null && held.size === 1 && held.has(iri);
     sel[TYPE_DIM] = new Set(iri === null || same ? [] : [iri]);
     sel = { ...sel };
+    sheet?.showMap(el);
   }
 
   function toggleDim(id: string): void {

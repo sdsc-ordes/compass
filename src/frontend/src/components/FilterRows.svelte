@@ -9,7 +9,7 @@
   export let sel: Record<string, Set<string>> = {};
   export let facets: Record<string, Record<string, number>> = {};
   export let juston: string | null = null;
-  export let onToggleOption: (dim: string, iri: string) => void;
+  export let onToggleOption: (dim: string, iri: string, el?: HTMLElement) => void;
 
   let chipsEl: HTMLElement | null = null;
 
@@ -54,7 +54,7 @@
       data-key={opt.value}
       data-empty={n === 0}
       aria-pressed={on}
-      on:click={() => onToggleOption(dim, opt.value)}
+      on:click={(e) => onToggleOption(dim, opt.value, e.currentTarget)}
     >
       <span class="mk"></span>
       <span class="t">

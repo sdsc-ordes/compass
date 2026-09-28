@@ -7,7 +7,7 @@
   export let sel: Record<string, Set<string>> = {};
   export let facets: Record<string, Record<string, number>> = {};
   export let juston: string | null = null;
-  export let onPickType: (iri: string | null) => void;
+  export let onPickType: (iri: string | null, el?: HTMLElement) => void;
 
   let pillsEl: HTMLElement | null = null;
 
@@ -32,7 +32,7 @@
       type="button"
       class="tpill tpill-all"
       aria-pressed={allOn}
-      on:click={() => onPickType(null)}>{t.allTypes}</button
+      on:click={(e) => onPickType(null, e.currentTarget)}>{t.allTypes}</button
     >
     {#each dim.options as opt (opt.value)}
       {@const n = countOf(facets, dim.id, opt.value)}
@@ -45,7 +45,7 @@
         data-key={opt.value}
         data-empty={n === 0}
         aria-pressed={on}
-        on:click={() => dim && onPickType(opt.value)}
+        on:click={(e) => dim && onPickType(opt.value, e.currentTarget)}
       >
         <span class="tn" aria-hidden="true">{n ?? ''}</span>
         <span class="tl">{short}</span>

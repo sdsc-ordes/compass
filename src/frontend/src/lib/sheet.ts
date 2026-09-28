@@ -358,6 +358,28 @@ export class Sheet {
     if (this.mobile && this.state === 'dock') this.to('half');
   }
 
+  // A filter picked from the full sheet drops it to half, so the pins it
+  // changed show, and keeps the tapped control in the part still seen.
+  // Scrolled two frames on, after the active-pill row's own scroll fix-up.
+  showMap(el?: HTMLElement | null): void {
+    if (!this.mobile || this.state !== 'full') return;
+    this.to('half');
+    if (!el) return;
+    const sh = this.h.sidebar;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (this.state !== 'half' || !el.isConnected) return;
+        const seen = sh.offsetHeight - (this.offsets ?? this.measure()).half;
+        const head = this.h.grab.offsetHeight;
+        const r = el.getBoundingClientRect();
+        const top = r.top - sh.getBoundingClientRect().top;
+        if (top >= head && top + r.height <= seen) return;
+        const by = top + r.height / 2 - (head + seen) / 2;
+        sh.scrollBy({ top: by, behavior: Sheet.scrollBehavior() });
+      }),
+    );
+  }
+
   static scrollBehavior(): ScrollBehavior {
     return REDUCED.matches ? 'auto' : 'smooth';
   }
