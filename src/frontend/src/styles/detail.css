@@ -283,12 +283,18 @@ aside.filters.detail .pane-detail {
     font-size: 30px;
     opacity: 0.9;
   }
-  /* The sheet now opens to full height, so the panel reads in the same order
-     the desktop rail does -- globe first, straight under the header -- instead
-     of the reflow that pushed the globe to the bottom to buy space. Only the
-     type scale and the touch targets still differ. */
+  /* Opened full, the panel reads in the same order the desktop rail does --
+     globe first, straight under the header. The peek drops the globe, which
+     the live map above it already shows, so the tag and title sit under the
+     header; the sheet measures its stop from the title. */
   aside.filters.detail .pane-detail {
     animation: none;
+  }
+  aside.filters[data-sheet='peek'] {
+    overflow: hidden;
+  }
+  aside.filters[data-sheet='peek'] .thumb {
+    display: none;
   }
   .pane-detail > button.etag {
     display: inline-flex;

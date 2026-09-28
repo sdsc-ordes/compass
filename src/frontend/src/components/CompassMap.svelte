@@ -262,8 +262,11 @@
   }
 
   async function onEntryOpened(): Promise<void> {
-    if (sheet?.mobile) sheet.to('detail');
+    // Set before the stage frames the pin, so it measures the peek; measured
+    // again once the new title has laid out.
+    if (sheet?.mobile) sheet.to('peek');
     await toTop();
+    sheet?.reseat();
     titleEl?.focus({ preventScroll: true });
   }
 
