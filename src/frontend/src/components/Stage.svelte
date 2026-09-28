@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { geoDistance } from 'd3-geo';
   import type { GeoProjection } from 'd3-geo';
   import { P } from '../lib/palette';
@@ -579,7 +579,8 @@
     setHover(null);
     if (p) {
       cancelCoach();
-      zoomToProject(p);
+      // After the flush, so lift() measures the new entry's title, not the last.
+      tick().then(() => selected?.id === p.id && zoomToProject(p));
     } else {
       cards.closeEntry();
       tween.stop();

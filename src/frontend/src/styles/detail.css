@@ -283,12 +283,25 @@ aside.filters.detail .pane-detail {
     font-size: 30px;
     opacity: 0.9;
   }
-  /* Opened full, the panel reads in the same order the desktop rail does --
-     globe first, straight under the header. The peek drops the globe, which
-     the live map above it already shows, so the tag and title sit under the
-     header; the sheet measures its stop from the title. */
+  /* Tag and title lead under the header, so the peek is those alone and the
+     sheet measures its stop from the title; the globe follows them when opened
+     full, and the peek drops it, the live map above already showing it. A
+     flex column so order can move the globe without a second copy of it. */
   aside.filters.detail .pane-detail {
+    display: flex;
+    flex-direction: column;
     animation: none;
+  }
+  .pane-detail > .thumb {
+    order: 1;
+    margin: 20px auto 12px;
+  }
+  .pane-detail > h2 ~ * {
+    order: 2;
+  }
+  /* flex margins do not collapse into the header's */
+  .pane-detail > .etag {
+    margin-top: 4px;
   }
   aside.filters[data-sheet='peek'] {
     overflow: hidden;
@@ -305,6 +318,7 @@ aside.filters.detail .pane-detail {
   .pane-detail .etag + h2 {
     font-size: 22px;
     line-height: 28px;
+    overflow-wrap: anywhere;
   }
   .pane-detail .where {
     font-size: 14px;

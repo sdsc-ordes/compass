@@ -23,9 +23,9 @@ export function onMobileChange(cb: (mobile: boolean) => void): () => void {
 }
 
 const SHEET_HALF = 0.58;
-// A peek before the pane has laid out, and the most a long title may take.
+// A peek before the pane has laid out, and the map a long title must leave.
 const PEEK = 0.36;
-const PEEK_MAX = 0.5;
+const PEEK_MAP = 160;
 // room under the title, so the peek does not end on its descenders
 const PEEK_PAD = 18;
 // the floor under the map a peek leaves, so the pin has somewhere to sit
@@ -64,14 +64,13 @@ export class Sheet {
   }
 
   // The header, type tag and title, measured from the pane so a long title
-  // gets its lines. The stage asks while the pane is still being swapped in,
-  // so an unlaid-out title falls back to a share of the map.
+  // gets all its lines. An unlaid-out title falls back to a share of the map.
   private peekH(H: number): number {
     const sh = this.h.sidebar;
     const r = sh.querySelector('.pane-detail h2')?.getBoundingClientRect();
     if (!r?.height) return Math.round(H * PEEK);
     const h = r.bottom - sh.getBoundingClientRect().top + sh.scrollTop + PEEK_PAD;
-    return Math.round(Math.min(H * PEEK_MAX, h));
+    return Math.round(Math.min(Math.max(H * PEEK, H - PEEK_MAP), h));
   }
 
   // Centres the pin in the map the peek leaves above it.
