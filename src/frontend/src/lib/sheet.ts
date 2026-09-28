@@ -3,7 +3,7 @@ import { REDUCED } from './projection';
 
 export type SheetState = 'dock' | 'half' | 'full';
 
-export const MOBILE_QUERY = '(max-width:860px)';
+const MOBILE_QUERY = '(max-width:860px)';
 
 const MOBILE: MediaQueryList =
   typeof window === 'undefined'
@@ -16,13 +16,21 @@ const MOBILE: MediaQueryList =
 
 export const isMobile = (): boolean => MOBILE.matches;
 
-export function onMobileChange(cb: (mobile: boolean) => void): () => void {
+function onMobileChange(cb: (mobile: boolean) => void): () => void {
   const handler = () => cb(MOBILE.matches);
   MOBILE.addEventListener('change', handler);
   return () => MOBILE.removeEventListener('change', handler);
 }
 
 const SHEET_HALF = 0.58;
+
+// Where the map's floating filter chips end, from the stage's top; 0 when none show.
+export function chipsBottom(stage: HTMLElement): number {
+  const bar = stage.querySelector<HTMLElement>('.chipbar');
+  return bar?.offsetHeight
+    ? bar.getBoundingClientRect().bottom - stage.getBoundingClientRect().top
+    : 0;
+}
 
 export interface SheetHost {
   mapc: HTMLElement;
@@ -64,14 +72,16 @@ export class Sheet {
   // Centres the pin in the map that half leaves above it, below the filter chips.
   lift(): number {
     if (!this.mobile) return 0;
-    const { stage } = this.h;
+    const { stage, mapc } = this.h;
     const H = stage.clientHeight;
-    const box = this.h.mapc.clientHeight || window.innerHeight;
-    const bar = stage.querySelector('.chipbar:has(li)');
-    const top = bar
-      ? bar.getBoundingClientRect().bottom - stage.getBoundingClientRect().top
-      : 0;
-    return H / 2 - (top + Math.min(H, box - Math.round(box * SHEET_HALF))) / 2;
+    const box = mapc.clientHeight || window.innerHeight;
+    const halfTop = Math.min(H, box - Math.round(box * SHEET_HALF));
+    return H / 2 - (chipsBottom(stage) + halfTop) / 2;
+  }
+
+  // How much of the sheet shows at a stop, from its top.
+  private seen(state: SheetState): number {
+    return this.h.sidebar.offsetHeight - (this.offsets ?? this.measure())[state];
   }
 
   measure(): Record<SheetState, number> {
@@ -104,11 +114,10 @@ export class Sheet {
       return;
     }
     const stops = this.stops();
-    if (stops.indexOf(state) < 0) state = stops[0];
-    const offsets = this.measure();
+    if (!stops.includes(state)) state = stops[0];
     this.state = state;
     sh.dataset.sheet = state;
-    sh.style.transform = 'translateY(' + offsets[state] + 'px)';
+    this.slide(this.measure()[state]);
     if (this.low()) sh.scrollTop = 0;
     // 'half' leaves the map live above it, so filter changes show on the pins
     // and another pin can be picked.
@@ -122,8 +131,7 @@ export class Sheet {
   }
 
   toggle(): void {
-    if (this.state === 'full') this.to(this.stops()[0]);
-    else this.to('full');
+    this.to(this.state === 'full' ? this.stops()[0] : 'full');
   }
 
   wire(): void {
@@ -136,18 +144,17 @@ export class Sheet {
 
     // The drag itself, shared by the grab (pointer) and the content (touch).
     const begin = (y: number) => {
-      const offsets = this.measure();
       y0 = y;
       dy = 0;
       t0 = performance.now();
-      off0 = offsets[this.state] !== undefined ? offsets[this.state] : offsets.dock;
+      off0 = this.measure()[this.state];
       sh.classList.add('dragging');
     };
     const track = (y: number) => {
       if (!this.offsets) return;
       dy = y - y0;
       const floor = this.h.isDetail() ? this.offsets.half + 150 : this.offsets.dock + 40;
-      sh.style.transform = 'translateY(' + Math.max(-28, Math.min(floor, off0 + dy)) + 'px)';
+      this.slide(Math.max(-28, Math.min(floor, off0 + dy)));
     };
     const settle = (tap: boolean) => {
       sh.classList.remove('dragging');
@@ -166,16 +173,8 @@ export class Sheet {
       }
       const target = off0 + dy + (Math.abs(v) > 0.5 ? v * 170 : 0);
       const offsets = this.offsets ?? this.measure();
-      let best: SheetState = this.stops()[0],
-        bestD = Infinity;
-      this.stops().forEach((k) => {
-        const d = Math.abs(offsets[k] - target);
-        if (d < bestD) {
-          bestD = d;
-          best = k;
-        }
-      });
-      this.to(best);
+      const d = (k: SheetState) => Math.abs(offsets[k] - target);
+      this.to(this.stops().reduce((a, b) => (d(b) < d(a) ? b : a)));
     };
 
     const onDown = (e: PointerEvent) => {
@@ -266,8 +265,8 @@ export class Sheet {
       if (!this.mobile || !this.low()) return;
       const el = e.target as HTMLElement | null;
       if (typeof el?.getBoundingClientRect !== 'function') return;
-      const seen = sh.offsetHeight - (this.offsets ?? this.measure())[this.state];
-      if (el.getBoundingClientRect().bottom - sh.getBoundingClientRect().top <= seen) return;
+      const top = sh.getBoundingClientRect().top;
+      if (el.getBoundingClientRect().bottom - top <= this.seen(this.state)) return;
       sh.scrollTop = 0;
       this.to(this.h.isDetail() ? 'full' : 'half');
     };
@@ -339,10 +338,13 @@ export class Sheet {
     this.teardown.push(onFontsReady(() => this.to(this.state)));
   }
 
-  reseat(): void {
+  private reseat(): void {
     if (!this.mobile) return;
-    const offsets = this.measure();
-    this.h.sidebar.style.transform = 'translateY(' + offsets[this.state] + 'px)';
+    this.slide(this.measure()[this.state]);
+  }
+
+  private slide(px: number): void {
+    this.h.sidebar.style.transform = `translateY(${px}px)`;
   }
 
   onSectionOpened(): void {
@@ -351,7 +353,7 @@ export class Sheet {
 
   // A filter picked from the full sheet drops it to half, so the pins it
   // changed show, and keeps the tapped control in the part still seen.
-  // Scrolled two frames on, after the active-pill row's own scroll fix-up.
+  // Scrolled two frames on, once the sheet has re-laid out at half.
   showMap(el?: HTMLElement | null): void {
     if (!this.mobile || this.state !== 'full') return;
     this.to('half');
@@ -360,7 +362,7 @@ export class Sheet {
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         if (this.state !== 'half' || !el.isConnected) return;
-        const seen = sh.offsetHeight - (this.offsets ?? this.measure()).half;
+        const seen = this.seen('half');
         const head = this.h.grab.offsetHeight;
         const r = el.getBoundingClientRect();
         const top = r.top - sh.getBoundingClientRect().top;
