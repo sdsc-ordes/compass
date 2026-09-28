@@ -168,13 +168,14 @@
     width: fit-content;
   }
   /* Active filters as one scrolling row of chips over the map; the grab row's
-     Clear is the one clear-all. The 7px padding holds the ×'s 44px target. */
+     Clear is the one clear-all. The 7px padding holds the ×'s 44px target.
+     10% of the stage down, so iOS Safari's top chrome doesn't bury them. */
   .chipbar:has(li) {
     display: block;
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(7px + env(safe-area-inset-top, 0px));
+    top: calc(10% + env(safe-area-inset-top, 0px));
     z-index: 3;
   }
   .chipbar .apills {
