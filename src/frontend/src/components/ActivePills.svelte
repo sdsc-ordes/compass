@@ -85,12 +85,22 @@
 
   $: if (rowEl) void (items, tick().then(fit));
 
-  // Refit on width only.
+  // When a pill's own × last changed the row; that change is not scrolled away from under it.
+  let ownAt = 0;
+
+  // Refit on width only. On mobile the row grows and shrinks with its pills, so the
+  // sheet scrolls by the difference and the row just tapped below stays put.
   function watch(el: HTMLElement): { destroy: () => void } {
     let w = 0;
+    let h = -1;
     const ro = new ResizeObserver(() => {
       if (el.clientWidth !== w) void fit();
       w = el.clientWidth;
+      const sc = el.closest('aside');
+      const cs = getComputedStyle(el);
+      const outer = el.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+      if (h >= 0 && sc && performance.now() - ownAt > 500) sc.scrollTop += outer - h;
+      h = outer;
     });
     ro.observe(el);
     document.fonts?.ready.then(fit);
@@ -102,6 +112,7 @@
     const li = (e.currentTarget as HTMLElement).closest('li')!;
     const acc = rowEl?.nextElementSibling;
     hold = e.detail > 0 && ptr === 'mouse';
+    ownAt = performance.now();
     const q = '.apill:not(.amore,.gone,[hidden])';
     const pills = [...rowEl!.querySelectorAll<HTMLElement>(q)];
     const i = pills.indexOf(li);

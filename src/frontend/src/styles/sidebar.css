@@ -377,6 +377,7 @@ aside.filters::-webkit-scrollbar-track {
     box-shadow: 0 -8px 34px rgba(var(--astronaut-rgb), 0.22);
     overflow-y: auto;
     overscroll-behavior: contain;
+    overflow-anchor: none;
     -webkit-overflow-scrolling: touch;
     scrollbar-gutter: auto;
     transform: translateY(calc(100% - 120px));
@@ -454,9 +455,16 @@ aside.filters::-webkit-scrollbar-track {
     position: absolute;
     inset: -6px 0;
   }
+  /* Sized to its pills rather than two reserved rows; ActivePills scrolls the sheet by
+     the change itself, so the browser's own anchoring is off to avoid doing it twice. */
   .apills {
     --agap: 14px;
+    height: auto;
+    max-height: calc(2 * var(--ah) + var(--agap));
     margin: 4px 18px 12px;
+  }
+  .apills:not(:has(li)) {
+    margin: 0;
   }
   .apill::after {
     content: none;
