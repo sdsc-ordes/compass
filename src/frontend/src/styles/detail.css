@@ -283,10 +283,9 @@ aside.filters.detail .pane-detail {
     font-size: 30px;
     opacity: 0.9;
   }
-  /* Tag and title lead under the header, so the peek is those alone and the
-     sheet measures its stop from the title; the globe follows them when opened
-     full, and the peek drops it, the live map above already showing it. A
-     flex column so order can move the globe without a second copy of it. */
+  /* Tag, title and description lead under the header, so half height opens
+     on what the entry is; the globe, the tags and the links follow below the
+     fold. A flex column so order can move them without a second copy. */
   aside.filters.detail .pane-detail {
     display: flex;
     flex-direction: column;
@@ -294,20 +293,18 @@ aside.filters.detail .pane-detail {
   }
   .pane-detail > .thumb {
     order: 1;
-    margin: 20px auto 12px;
+    margin: 24px auto 0;
   }
-  .pane-detail > h2 ~ * {
+  .pane-detail > .ptags {
     order: 2;
+  }
+  .pane-detail > .storiescall,
+  .pane-detail > .ptags ~ * {
+    order: 3;
   }
   /* flex margins do not collapse into the header's */
   .pane-detail > .etag {
     margin-top: 4px;
-  }
-  aside.filters[data-sheet='peek'] {
-    overflow: hidden;
-  }
-  aside.filters[data-sheet='peek'] .thumb {
-    display: none;
   }
   .pane-detail > button.etag {
     display: inline-flex;

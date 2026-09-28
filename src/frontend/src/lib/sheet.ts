@@ -1,7 +1,7 @@
 import { onFontsReady } from './fonts';
 import { REDUCED } from './projection';
 
-export type SheetState = 'dock' | 'half' | 'full' | 'peek' | 'detail';
+export type SheetState = 'dock' | 'half' | 'full';
 
 export const MOBILE_QUERY = '(max-width:860px)';
 
@@ -23,13 +23,6 @@ export function onMobileChange(cb: (mobile: boolean) => void): () => void {
 }
 
 const SHEET_HALF = 0.58;
-// A peek before the pane has laid out, and the map a long title must leave.
-const PEEK = 0.36;
-const PEEK_MAP = 160;
-// room under the title, so the peek does not end on its descenders
-const PEEK_PAD = 18;
-// the floor under the map a peek leaves, so the pin has somewhere to sit
-const DETAIL_STRIP = 90;
 
 export interface SheetHost {
   mapc: HTMLElement;
@@ -57,29 +50,23 @@ export class Sheet {
     return isMobile();
   }
 
-  // An entry opens to a peek over the live map and up to the full pane;
-  // pulling down from the peek dismisses it.
+  // An entry opens to half over the live map and up to the full pane;
+  // pulling down from half dismisses it.
   private stops(): SheetState[] {
-    return this.h.isDetail() ? ['peek', 'detail'] : ['dock', 'half', 'full'];
+    return this.h.isDetail() ? ['half', 'full'] : ['dock', 'half', 'full'];
   }
 
-  // The header, type tag and title, measured from the pane so a long title
-  // gets all its lines. An unlaid-out title falls back to a share of the map.
-  private peekH(H: number): number {
-    const sh = this.h.sidebar;
-    const r = sh.querySelector('.pane-detail h2')?.getBoundingClientRect();
-    if (!r?.height) return Math.round(H * PEEK);
-    const h = r.bottom - sh.getBoundingClientRect().top + sh.scrollTop + PEEK_PAD;
-    return Math.round(Math.min(Math.max(H * PEEK, H - PEEK_MAP), h));
+  // The resting stop, where the content drags the sheet rather than scrolls.
+  private low(): boolean {
+    return this.state === (this.h.isDetail() ? 'half' : 'dock');
   }
 
-  // Centres the pin in the map the peek leaves above it.
+  // Centres the pin in the map that half leaves above it.
   lift(): number {
     if (!this.mobile) return 0;
     const H = this.h.stage.clientHeight;
     const box = this.h.mapc.clientHeight || window.innerHeight;
-    const strip = Math.max(DETAIL_STRIP, Math.min(H, box - this.peekH(box)));
-    return H / 2 - strip / 2;
+    return H / 2 - Math.min(H, box - Math.round(box * SHEET_HALF)) / 2;
   }
 
   measure(): Record<SheetState, number> {
@@ -93,10 +80,8 @@ export class Sheet {
     mapc.style.setProperty('--dock', dock + 'px');
     mapc.style.setProperty('--grabh', grabH + 'px');
     this.offsets = {
-      full: 0,
       // all the way up, the same panel the desktop rail shows
-      detail: 0,
-      peek: Math.max(0, sheetH - this.peekH(H)),
+      full: 0,
       half: Math.max(0, sheetH - Math.round(H * SHEET_HALF)),
       dock: Math.max(0, sheetH - dock),
     };
@@ -114,26 +99,26 @@ export class Sheet {
       return;
     }
     const stops = this.stops();
-    if (stops.indexOf(state) < 0) state = this.h.isDetail() ? 'peek' : 'dock';
+    if (stops.indexOf(state) < 0) state = stops[0];
     const offsets = this.measure();
     this.state = state;
     sh.dataset.sheet = state;
     sh.style.transform = 'translateY(' + offsets[state] + 'px)';
-    if (state === 'dock' || state === 'peek') sh.scrollTop = 0;
-    // 'half' and 'peek' leave the map live above them, so filter changes show
-    // on the pins and another pin can be picked.
-    const shaded = state === 'full' || state === 'detail';
+    if (this.low()) sh.scrollTop = 0;
+    // 'half' leaves the map live above it, so filter changes show on the pins
+    // and another pin can be picked.
+    const shaded = state === 'full';
     bd.classList.toggle('on', shaded);
     bd.setAttribute('aria-hidden', String(!shaded));
-    grab.setAttribute('aria-expanded', String(state !== 'dock' && state !== 'peek'));
+    grab.setAttribute('aria-expanded', String(!this.low()));
     if (shaded) this.armAt = performance.now() + 400;
     if (this.paintTimer) clearTimeout(this.paintTimer);
     this.paintTimer = setTimeout(() => this.h.queue(true), 340);
   }
 
   toggle(): void {
-    if (this.h.isDetail()) this.to(this.state === 'detail' ? 'peek' : 'detail');
-    else this.to(this.state === 'full' ? 'dock' : 'full');
+    if (this.state === 'full') this.to(this.stops()[0]);
+    else this.to('full');
   }
 
   wire(): void {
@@ -156,7 +141,7 @@ export class Sheet {
     const track = (y: number) => {
       if (!this.offsets) return;
       dy = y - y0;
-      const floor = this.h.isDetail() ? this.offsets.peek + 150 : this.offsets.dock + 40;
+      const floor = this.h.isDetail() ? this.offsets.half + 150 : this.offsets.dock + 40;
       sh.style.transform = 'translateY(' + Math.max(-28, Math.min(floor, off0 + dy)) + 'px)';
     };
     const settle = (tap: boolean) => {
@@ -166,12 +151,12 @@ export class Sheet {
         this.toggle();
         return;
       }
-      // An entry steps one stop per swipe, and off the bottom from the peek.
+      // An entry steps one stop per swipe, and off the bottom from half.
       if (this.h.isDetail()) {
         if (dy > 60 || v > 0.45) {
-          if (this.state === 'peek') this.h.dismiss();
-          else this.to('peek');
-        } else this.to(dy < -60 || v < -0.45 ? 'detail' : this.state);
+          if (this.state === 'half') this.h.dismiss();
+          else this.to('half');
+        } else this.to(dy < -60 || v < -0.45 ? 'full' : this.state);
         return;
       }
       const target = off0 + dy + (Math.abs(v) > 0.5 ? v * 170 : 0);
@@ -214,8 +199,9 @@ export class Sheet {
     };
 
     // The content takes over from native scrolling only for a pull down from
-    // the top, or any pull up while docked or peeking (nothing to scroll there). Decided
-    // past a small threshold, so taps on buttons and links still land.
+    // the top, or any pull up from the resting stop, which lifts the sheet
+    // first. Decided past a small threshold, so taps on buttons and links still
+    // land.
     let ty: number | null = null,
       tdrag = false;
     const onTouchStart = (e: TouchEvent) => {
@@ -232,8 +218,7 @@ export class Sheet {
       if (!tdrag) {
         const d = y - ty;
         if (Math.abs(d) < 8) return;
-        const low = this.state === 'dock' || this.state === 'peek';
-        if (!((d > 0 && sh.scrollTop <= 0) || (d < 0 && low))) {
+        if (!((d > 0 && sh.scrollTop <= 0) || (d < 0 && this.low()))) {
           ty = null;
           return;
         }
@@ -255,11 +240,10 @@ export class Sheet {
         this.toggle();
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        this.to(this.h.isDetail() ? 'detail' : 'full');
+        this.to('full');
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (this.state === 'peek') this.h.dismiss();
-        else if (this.state === 'detail') this.to('peek');
+        if (this.h.isDetail() && this.state === 'half') this.h.dismiss();
         else this.to(this.state === 'full' ? 'half' : 'dock');
       } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -274,13 +258,13 @@ export class Sheet {
     // Against the stop rather than the screen: the sheet may still be sliding
     // there, as it is when an entry's title takes focus.
     const onFocusIn = (e: FocusEvent) => {
-      if (!this.mobile || (this.state !== 'dock' && this.state !== 'peek')) return;
+      if (!this.mobile || !this.low()) return;
       const el = e.target as HTMLElement | null;
       if (typeof el?.getBoundingClientRect !== 'function') return;
       const seen = sh.offsetHeight - (this.offsets ?? this.measure())[this.state];
       if (el.getBoundingClientRect().bottom - sh.getBoundingClientRect().top <= seen) return;
       sh.scrollTop = 0;
-      this.to(this.state === 'peek' ? 'detail' : 'half');
+      this.to(this.h.isDetail() ? 'full' : 'half');
     };
 
     grab.addEventListener('pointerdown', onDown);
@@ -333,7 +317,7 @@ export class Sheet {
       rt = setTimeout(() => this.to(this.state), 120);
     };
     window.addEventListener('resize', onResize);
-    const unmobile = onMobileChange(() => this.to(this.h.isDetail() ? 'peek' : 'dock'));
+    const unmobile = onMobileChange(() => this.to(this.stops()[0]));
     this.teardown.push(() => {
       window.removeEventListener('resize', onResize);
       unmobile();

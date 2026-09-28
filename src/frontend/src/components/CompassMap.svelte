@@ -250,7 +250,7 @@
   $: if (selectedId !== lastSelectedId) {
     const had = lastSelectedId;
     lastSelectedId = selectedId;
-    if (selectedId) onEntryOpened();
+    if (selectedId) onEntryOpened(!!had);
     else if (had) onEntryClosed();
   }
 
@@ -264,12 +264,10 @@
     if (sidebarEl) sidebarEl.scrollTop = 0;
   }
 
-  async function onEntryOpened(): Promise<void> {
-    // Set before the stage frames the pin, so it measures the peek; measured
-    // again once the new title has laid out.
-    if (sheet?.mobile) sheet.to('peek');
+  // A swap from one entry to another keeps the stop the sheet is at.
+  async function onEntryOpened(swap: boolean): Promise<void> {
+    if (sheet?.mobile && !swap) sheet.to('half');
     await toTop();
-    sheet?.reseat();
     titleEl?.focus({ preventScroll: true });
   }
 

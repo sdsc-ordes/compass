@@ -64,7 +64,7 @@ export const i18n = {
     stageAria:
       'World map. Arrow keys pan, plus and minus zoom, 0 resets. Tab reaches each entry.',
     sheetHow:
-      'Tap or press Enter to switch an entry between peek and full, or the filters between docked and full. Swipe up or press the up arrow to expand, swipe down or press the down arrow to step back or close, and press Escape to close.',
+      'Tap or press Enter to switch an entry between half and full height, or the filters between docked and full. Swipe up or press the up arrow to expand, swipe down or press the down arrow to step back or close, and press Escape to close.',
     filterByTag: 'Filter by {label}',
     filterByType: 'filter by this type',
     activeFilters: 'Active filters',
@@ -147,7 +147,7 @@ export const i18n = {
     stageAria:
       'Weltkarte. Pfeiltasten verschieben, Plus und Minus zoomen, 0 setzt zurück. Tab erreicht jeden Eintrag.',
     sheetHow:
-      'Tippen oder Enter wechselt einen Eintrag zwischen Vorschau und voller Höhe, die Filter zwischen angedockt und voller Höhe. Nach oben wischen oder Pfeil nach oben vergrössert, nach unten wischen oder Pfeil nach unten geht einen Schritt zurück oder schliesst, Escape schliesst.',
+      'Tippen oder Enter wechselt einen Eintrag zwischen halber und voller Höhe, die Filter zwischen angedockt und voller Höhe. Nach oben wischen oder Pfeil nach oben vergrössert, nach unten wischen oder Pfeil nach unten geht einen Schritt zurück oder schliesst, Escape schliesst.',
     filterByTag: 'Nach {label} filtern',
     filterByType: 'nach dieser Art filtern',
     activeFilters: 'Aktive Filter',
