@@ -56,7 +56,8 @@
     // the row is positioned, so offsets are relative to it
     const end = (i: number): number => lis[i].offsetLeft + lis[i].offsetWidth;
     let k = lis.filter((p) => p.offsetTop <= r2).length;
-    const tail = gap + reset.offsetWidth;
+    // reset is hidden on mobile, where the sheet's grab row carries Clear
+    const tail = reset.offsetWidth ? gap + reset.offsetWidth : 0;
     if (k < lis.length || (r2 < Infinity && end(k - 1) + tail > w)) {
       const room = (k < lis.length ? w - gap - more.offsetWidth : w) - tail;
       while (k > 1 && lis[k - 1].offsetTop === r2 && end(k - 1) > room) {

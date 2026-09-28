@@ -469,12 +469,8 @@ aside.filters::-webkit-scrollbar-track {
     position: absolute;
     inset: -11px -6px;
   }
-  .reset {
-    position: relative;
-  }
-  .reset::after {
-    content: '';
-    position: absolute;
-    inset: -11px -6px;
+  /* the grab row's Clear is the sheet's one clear-all: it stays in view at every stop */
+  .areset {
+    display: none;
   }
 }
