@@ -11,7 +11,7 @@ import type { Pal } from './palette';
 // Globe: rotation is the one transform that is not affine, so it resamples per
 // frame from the equirectangular raster.
 const FLAT = 'bathy/flat.webp';
-const FULL_W = 8192;
+const FULL_W = 8192; // FLAT_W in scripts/build-bathymetry.mjs
 // The same, narrower, for a stage drawing the sphere at no more device pixels
 // than this: a phone starts on 0.3 MB rather than 4.5 (140 MB decoded), and only
 // zooming past it fetches the full one. Save-Data stays on it.

@@ -42,6 +42,7 @@
   import StageChrome from './StageChrome.svelte';
   import Coach from './Coach.svelte';
   import { fmt, type Strings } from '../lib/i18n';
+  import { chipsBottom, isMobile } from '../lib/sheet';
 
   export let t: Strings;
   export let projs: Proj[] = [];
@@ -50,7 +51,6 @@
   export let onTheme: (night: boolean) => void = () => {};
   export let lift: () => number = () => 0;
   export let sheetEl: HTMLElement | null = null;
-  export let isMobile: () => boolean = () => false;
   export let settledWidth: () => number = () => 0;
   export let loading = false;
   export let error: string | null = null;
@@ -126,7 +126,7 @@
 
   const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
 
-  // On by default, so every visitor pays for the raster up front.
+  // On by default; a small stage starts on the light raster (bathymetry.ts).
   let depth = true;
   let depthReady = true;
   let depthOn = false;
@@ -345,12 +345,9 @@
     if (!isMobile() || S.view !== 'flat' || !projs.length) return to;
     const W = stage.clientWidth,
       H = stage.clientHeight;
-    const sr = stage.getBoundingClientRect();
-    const top = chipsEl?.querySelector('li')
-      ? chipsEl.getBoundingClientRect().bottom - sr.top
-      : 0;
+    const top = chipsBottom(stage);
     const sb = sheetEl?.getBoundingClientRect();
-    const bot = sb?.height ? Math.min(H, sb.top - sr.top) : H;
+    const bot = sb?.height ? Math.min(H, sb.top - stage.getBoundingClientRect().top) : H;
     // k = 1 positions; any other flat camera is tx/ty plus k times these
     const pr = proj({ ...S, k: 1, tx: 0, ty: 0 }, W, H);
     let x0 = Infinity,

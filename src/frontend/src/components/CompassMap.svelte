@@ -372,7 +372,6 @@
     onLang={(l) => (lang = l)}
     lift={() => sheet?.lift() ?? 0}
     sheetEl={sidebarEl}
-    {isMobile}
     settledWidth={settledStageWidth}
   >
     <ActivePills bar {t} {dims} {sel} onToggleOption={toggleOption} onReset={reset} />
