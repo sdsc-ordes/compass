@@ -267,8 +267,8 @@ The widget contacts nothing but its own origin, so embedding it leaks no
 visitor data. The basemap is drawn from a Natural Earth topology served beside
 the bundle from `tileurl` (`src/frontend/public/basemap/atlas.json`, rebuilt
 with `just map::atlas`), not from a tile service, and its place names are
-bundled with it rather than drawn from a glyph server. Cluster tallies and the OceanCare star are drawn on a
-canvas at runtime for the same reason.
+bundled into the widget rather than drawn from a glyph server. Cluster tallies
+and the OceanCare star are drawn on a canvas at runtime for the same reason.
 
 The bathymetry ships as baked rasters in `src/frontend/bathy/`, baked from the
 GEBCO pyramid — `src/frontend/src/lib/bathymetry.ts`. A visitor downloads a
