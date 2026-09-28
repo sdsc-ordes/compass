@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy, tick } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { geoDistance } from 'd3-geo';
   import type { GeoProjection } from 'd3-geo';
   import { P } from '../lib/palette';
@@ -15,6 +15,7 @@
     frameFor,
     Tweener,
     REDUCED,
+    easeStandard,
     K_MIN,
     K_MAX,
     type ViewState,
@@ -504,30 +505,40 @@
   }
 
   const ENTRY_MS = 520;
+  // A phone pans at the zoom it is at, slower, on a map app's glide.
+  const PAN_MS = 700;
 
   function zoomToProject(p: Proj): void {
     const W = settledWidth() || stage.clientWidth,
       H = stage.clientHeight;
+    const up = lift();
     const frame = (k: number) => {
-      if (S.view === 'globe') return { k, rot: [-p.c[0], -p.c[1]] as [number, number] };
+      if (S.view === 'globe') {
+        // turned past the pin by the arc that spans `up` px on the rim
+        const R = proj({ ...S, k }, W, H).scale();
+        const d = (Math.asin(Math.min(1, up / R)) * 180) / Math.PI;
+        return { k, rot: [-p.c[0], d - p.c[1]] as [number, number] };
+      }
       const o = flatOffsetFor(S, W, H, p.c, k);
-      return { k, tx: o.tx, ty: o.ty - lift() };
+      return { k, tx: o.tx, ty: o.ty - up };
     };
     const at = (v: typeof to) => proj({ ...S, ...v }, W, H);
-    let to = frame(Math.max(S.k, DETAIL_K));
+    const phone = isMobile();
+    let to = frame(phone ? S.k : Math.max(S.k, DETAIL_K));
     // Still clustered there (e.g. opened from a link): go to max zoom, where it fans,
     // and frame the pin's fanned spot rather than its coordinate.
-    if (fanSpot(at(to), projs, p, W, H, isMobile())) {
+    if (fanSpot(at(to), projs, p, W, H, phone)) {
       to = frame(S.kMax);
       const aim = at(to)(p.c);
       for (let i = 0; i < 2 && aim && to.tx !== undefined && to.ty !== undefined; i++) {
-        const f = fanSpot(at(to), projs, p, W, H, isMobile());
+        const f = fanSpot(at(to), projs, p, W, H, phone);
         if (!f) break;
         to.tx += aim[0] - f[0];
         to.ty += aim[1] - f[1];
       }
     }
-    tween.to(to, ENTRY_MS);
+    if (phone) tween.to(to, PAN_MS, undefined, easeStandard);
+    else tween.to(to, ENTRY_MS);
   }
 
   function flyTo(p: Proj): void {
@@ -580,8 +591,7 @@
     setHover(null);
     if (p) {
       cancelCoach();
-      // After the flush, so lift() measures the new entry's title, not the last.
-      tick().then(() => selected?.id === p.id && zoomToProject(p));
+      zoomToProject(p);
     } else {
       cards.closeEntry();
       tween.stop();

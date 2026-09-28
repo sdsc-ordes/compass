@@ -172,6 +172,20 @@ export const REDUCED =
 
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+// cubic-bezier(0.4, 0, 0.2, 1), the curve map apps glide a camera on: a brief
+// lean-in, then a long settle. Its x(u) inverted by Newton, then y(u).
+export function easeStandard(t: number): number {
+  const bz = (u: number, a: number, b: number) =>
+    3 * (1 - u) * (1 - u) * u * a + 3 * (1 - u) * u * u * b + u * u * u;
+  let u = t;
+  for (let i = 0; i < 6; i++) {
+    const dx = 1.2 * (1 - u) * (1 - u) - 1.2 * (1 - u) * u + 2.4 * u * u;
+    if (dx < 1e-6) break;
+    u = Math.max(0, Math.min(1, u - (bz(u, 0.4, 0.2) - t) / dx));
+  }
+  return bz(u, 0, 1);
+}
+
 const shortWay = (a: number, b: number) => a + ((((b - a) % 360) + 540) % 360) - 180;
 
 export interface TweenTo {
@@ -201,7 +215,7 @@ export class Tweener {
     }
   }
 
-  to(to: TweenTo, ms: number, done?: () => void): void {
+  to(to: TweenTo, ms: number, done?: () => void, ease = easeInOut): void {
     this.stop();
     const S = this.S;
     if (REDUCED.matches || !ms) {
@@ -218,7 +232,7 @@ export class Tweener {
     const step = (now: number) => {
       // rAF's timestamp can predate t0; a negative t would run the tween backwards.
       const t = Math.max(0, Math.min(1, (now - t0) / ms)),
-        e = easeInOut(t);
+        e = ease(t);
       const mix = (a: number, b: number) => a + (b - a) * e;
       if (to.k !== undefined) S.k = mix(from.k, to.k);
       if (to.tx !== undefined) S.tx = mix(from.tx, to.tx);
