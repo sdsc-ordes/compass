@@ -68,8 +68,9 @@ Text comes from two places, and which one depends on what it describes.
 
 - **Interface strings** — buttons, captions, prompts, errors, screen-reader
   text — live in `src/lib/i18n.ts`, one `en` and one `de` object with the same
-  keys. Edit the value in both and keep the keys matching. `{n}`-style placeholders are filled by
-  `fmt`, and `…One` keys are the singular. Needs a rebuild.
+  keys. Edit the value in both and keep the keys matching. `{n}`-style
+  placeholders are filled by `fmt`, and `…One` keys are the singular. Needs a
+  rebuild.
 - **Everything about the data** — filter group names, option labels, pin
   names, descriptions, locations — comes from the `_en` / `_de` column pairs in
   the use case's `source-data.ods`. Edit the cell, then `just data::generate`
