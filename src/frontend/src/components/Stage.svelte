@@ -178,7 +178,7 @@
   }
 
   function renderAll(): void {
-    if (!atlas || !stage) return;
+    if (!stage) return;
     const W = stage.clientWidth,
       H = stage.clientHeight;
     if (!W || !H) {
@@ -187,6 +187,16 @@
       return;
     }
     fitKMax(W, H);
+    // The raster needn't wait for the topology: ask for it now, paint it with the land.
+    if (!atlas) {
+      if (depth)
+        bathy.prefetch(
+          proj(S, W, H),
+          S.view === 'globe',
+          Math.min(2, window.devicePixelRatio || 1),
+        );
+      return;
+    }
     if (!interact || !nudgeBasemap(basemap.refs(), S, W, H))
       renderBasemap(basemap.refs(), S, W, H, atlas);
     const pr = paintCanvas(W, H);

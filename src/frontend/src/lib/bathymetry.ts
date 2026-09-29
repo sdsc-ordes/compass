@@ -141,6 +141,12 @@ export class Bathymetry {
     ctx.restore();
   }
 
+  // Sends for what paint() would draw, without drawing it.
+  prefetch(pr: GeoProjection, globe: boolean, dpr: number): void {
+    if (globe) this.equirect();
+    else this.flat(pr.scale() * NE_SPAN * dpr);
+  }
+
   clear(): void {
     this.snap = null;
     this.dragBuf = null;
