@@ -1,0 +1,114 @@
+.sheet-grab,
+.sheet-backdrop {
+  display: none;
+}
+.mapc.night .sheet-backdrop {
+  background: rgba(2, 10, 18, 0.52);
+}
+
+@media (max-width: 860px) {
+  .sheet-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: rgba(8, 24, 39, 0.34);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    /* a drag on the shade would scroll the host page */
+    touch-action: none;
+  }
+  .sheet-backdrop.on {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sheet-grab {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 8px 18px 10px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  .sheet-grab:focus-visible {
+    outline: 3px solid var(--cerulean);
+    outline-offset: -3px;
+  }
+  .grabbar {
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: 0 auto 8px;
+    border-radius: 5px;
+    background: var(--land-hi);
+  }
+  /* title and badge left; the result count and Clear right, on one baseline */
+  .grabrow {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 22px;
+  }
+  .grabtitle {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 16px;
+    line-height: 22px;
+    color: var(--astronaut);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .grabrow .nbadge {
+    flex: none;
+    align-self: center;
+  }
+  .grabcount {
+    flex: 0 4 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: auto;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--tundora);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  /* the .reset link, sized to the row; ::after widens the target to 44px */
+  .grabclear {
+    flex: none;
+    position: relative;
+    margin-left: 10px;
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .grabclear::after {
+    content: '';
+    position: absolute;
+    inset: -13px -8px;
+  }
+  .grabclear:focus-visible {
+    outline: 2px solid var(--cerulean);
+    outline-offset: 3px;
+  }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  aside.filters,
+  .sheet-backdrop {
+    transition: none;
+  }
+}

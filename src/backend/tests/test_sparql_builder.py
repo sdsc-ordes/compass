@@ -5,14 +5,14 @@ actually returns all expected entities from the real ontology.
 """
 
 import pytest
+from rdflib.namespace import XSD
 from starlette.datastructures import QueryParams
 
-from app.namespaces import COMPASS
+from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, FILTERABLE_PIN_CLASSES
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import (
-    PIN_CLASSES,
+    _build_where_clauses,
     _pin_branch,
-    _region_branch,
     _shared_optionals,
     build_facet_query,
     build_optional,
@@ -20,6 +20,9 @@ from app.sparql_builder import (
     sparql_for_instances,
     to_prefixed,
 )
+
+# A tag dimension backed by a real predicate, for the clause-level tests.
+_FILTER_MAP = {"species": "compass:species", "topic": "compass:topic"}
 
 
 def _ep(**kwargs) -> EntityShape:
@@ -63,10 +66,25 @@ class TestBuildOptional:
         assert "skos:prefLabel" in result
         assert "rdfs:label" in result
 
-    def test_boolean(self):
+    def test_multi_folds_in_a_subquery(self):
+        # Folded per pin, so several lists never join into their cross product.
         spec = _ep(
-            id="managedByOceanCare",
-            path_iri=str(COMPASS.managedByOceanCare),
+            id="workArea",
+            path_iri=str(COMPASS.workArea),
+            category="iri_with_label",
+            is_multi=True,
+        )
+        result = build_optional(spec, "en")
+        assert "SELECT ?s (GROUP_CONCAT(DISTINCT CONCAT(STR(?workAreaNode)" in result
+        assert "AS ?workAreaAgg)" in result
+        assert "GROUP BY ?s" in result
+
+    def test_boolean(self):
+        # No boolean property is declared today; the projection still supports
+        # one, so the clause it would build is asserted against a stand-in.
+        spec = _ep(
+            id="someFlag",
+            path_iri=str(COMPASS.someFlag),
             category="boolean",
         )
         result = build_optional(spec, "en")
@@ -77,9 +95,7 @@ class TestBuildOptional:
 class TestBuildSelectExpr:
     def test_multi_iri(self):
         spec = _ep(id="workArea", category="iri_with_label", is_multi=True)
-        result = build_select_expr(spec)
-        assert "GROUP_CONCAT" in result
-        assert "workAreaNode" in result
+        assert build_select_expr(spec) == "(SAMPLE(?workAreaAgg) AS ?workAreaRaw)"
 
     def test_single_iri(self):
         spec = _ep(id="funding", category="iri_with_label", is_multi=False)
@@ -88,8 +104,7 @@ class TestBuildSelectExpr:
 
     def test_multi_literal(self):
         spec = _ep(id="country", category="lang_literal", is_multi=True)
-        result = build_select_expr(spec)
-        assert "GROUP_CONCAT" in result
+        assert build_select_expr(spec) == "(SAMPLE(?countryAgg) AS ?countryRaw)"
 
     def test_single_literal(self):
         spec = _ep(id="staffSize", category="simple_literal", is_multi=False)
@@ -98,14 +113,21 @@ class TestBuildSelectExpr:
 
 
 class TestPinBranch:
-    """The pin branch must offer every class that can carry coordinates."""
+    """The filtered branch offers every filterable pin class; always-on classes
+    join only through their own branch."""
 
-    @pytest.mark.parametrize("entity_class", PIN_CLASSES)
+    @pytest.mark.parametrize("entity_class", FILTERABLE_PIN_CLASSES)
     def test_branch_offers_class(self, entity_class):
         assert f"compass:{entity_class}" in _pin_branch([])
 
-    def test_branch_excludes_regions(self):
-        """Regions are derived, so they must never be a pin alternative."""
+    @pytest.mark.parametrize("entity_class", ALWAYS_ON_CLASSES)
+    def test_always_on_class_only_in_its_own_branch(self, entity_class):
+        term = f"?s a compass:{entity_class} ."
+        assert term not in _pin_branch([])
+        assert _pin_branch([], with_always_on=True).count(term) == 1
+
+    def test_branch_excludes_tag_vocabularies(self):
+        """Only entity classes carry coordinates, so only they may be pins."""
         assert "compass:CountryArea" not in _pin_branch([])
 
     def test_shared_optionals_bind_geometry_and_name(self):
@@ -115,39 +137,154 @@ class TestPinBranch:
         assert "compass:name" in optionals
 
 
-class TestRegionBranch:
-    """A region reaches the map only through a pin that points at it."""
+def _clauses(query: str) -> list[str]:
+    """Filter clauses for a query string, against a two-tag filter map."""
+    return _build_where_clauses(QueryParams(query), _FILTER_MAP, {}, {})
 
-    def test_requires_a_referring_pin(self):
-        branch = _region_branch([])
-        assert "FILTER EXISTS" in branch
-        assert "?pin compass:countryArea ?s ." in branch
 
-    def test_filters_apply_to_the_referring_pin(self):
-        """A region carries no tags, so the filters must constrain the pin."""
-        branch = _region_branch(["?pin compass:topic compass:Shipping ."])
-        assert "?pin compass:topic compass:Shipping ." in branch
-        assert "?s compass:topic" not in branch
+class TestWithinDimensionIsConjunctive:
+    """Two picks in one dimension mean "both", not "either"."""
+
+    def test_two_values_each_become_a_required_pattern(self):
+        clauses = _clauses(f"species={COMPASS.Dolphins}&species={COMPASS.Whales}")
+        assert clauses == [
+            f"?s compass:species <{COMPASS.Dolphins}> .",
+            f"?s compass:species <{COMPASS.Whales}> .",
+        ]
+        assert not any("UNION" in c for c in clauses)
+
+    def test_a_single_value_is_unchanged(self):
+        assert _clauses(f"species={COMPASS.Dolphins}") == [
+            f"?s compass:species <{COMPASS.Dolphins}> ."
+        ]
+
+    def test_two_dimensions_still_and(self):
+        clauses = _clauses(f"species={COMPASS.Dolphins}&topic={COMPASS.Shipping}")
+        assert clauses == [
+            f"?s compass:species <{COMPASS.Dolphins}> .",
+            f"?s compass:topic <{COMPASS.Shipping}> .",
+        ]
+
+    def test_literal_values_get_one_variable_each(self):
+        """One variable cannot equal two literals, so reuse would match nothing."""
+        clauses = _clauses("topic=Shipping&topic=Hunting")
+        assert clauses == [
+            '?s compass:topic ?topicVal0 . FILTER(str(?topicVal0) = "Shipping")',
+            '?s compass:topic ?topicVal1 . FILTER(str(?topicVal1) = "Hunting")',
+        ]
+
+    def test_a_repeated_value_constrains_nothing_twice(self):
+        assert _clauses(f"species={COMPASS.Whales}&species={COMPASS.Whales}") == [
+            f"?s compass:species <{COMPASS.Whales}> ."
+        ]
+
+    def test_entity_type_stays_disjunctive(self):
+        """An entity has exactly one class, so two picks can only mean "either"."""
+        clauses = _build_where_clauses(
+            QueryParams(f"entityType={COMPASS.Programme}&entityType={COMPASS.Network}"),
+            {},
+            {},
+            {},
+        )
+        assert clauses == [f"FILTER(?type IN (<{COMPASS.Programme}>, <{COMPASS.Network}>))"]
+
+    def test_range_and_date_are_single_valued_and_untouched(self):
+        """Thresholds take one value, so conjunction within them cannot arise."""
+        clauses = _build_where_clauses(
+            QueryParams("year=1990&start=2020-01-01"),
+            {},
+            {"year": ("compass:year", str(XSD.gYear))},
+            {"start": "compass:start"},
+        )
+        assert clauses == [
+            "OPTIONAL { ?s compass:year ?yearVal . } "
+            'FILTER(!BOUND(?yearVal) || ?yearVal >= "1990"^^xsd:gYear)',
+            "OPTIONAL { ?s compass:start ?startVal . } "
+            'FILTER(!BOUND(?startVal) || ?startVal >= "2020-01-01"^^xsd:date)',
+        ]
+
+
+class TestConjunctionAgainstTheStore:
+    """The intersection claim, checked against the real ontology."""
+
+    def _pins(self, store, property_specs, query: str) -> set[str]:
+        sparql = sparql_for_instances(property_specs, "en", QueryParams(query))
+        return {
+            row["s"]
+            for row in store.query(sparql)
+            if row["type"] != str(COMPASS.CountryArea)
+        }
+
+    def test_two_values_return_the_intersection(self, store, property_specs):
+        both_tags = f"species={COMPASS.Dolphins}&species={COMPASS.Whales}"
+        dolphins = self._pins(store, property_specs, f"species={COMPASS.Dolphins}")
+        whales = self._pins(store, property_specs, f"species={COMPASS.Whales}")
+        both = self._pins(store, property_specs, both_tags)
+
+        assert both, "the fixture must hold entities carrying both tags"
+        assert both == dolphins & whales
+        assert both < dolphins and both < whales, "AND must narrow, not widen"
+
+
+class TestFacetQueryUnderAnd:
+    """A facet count means "results if I also pick this"."""
+
+    def test_a_conjunctive_dimension_keeps_its_own_selection(self, property_specs):
+        sparql = build_facet_query(
+            property_specs, "en", QueryParams(f"species={COMPASS.Dolphins}"), "species"
+        )
+        assert f"?s compass:species <{COMPASS.Dolphins}> ." in sparql
+
+    def test_entity_type_still_drops_its_own_selection(self, property_specs):
+        """Disjunctive, so keeping it would zero every class the user did not pick."""
+        sparql = build_facet_query(
+            property_specs,
+            "en",
+            QueryParams(f"entityType={COMPASS.Programme}"),
+            "entityType",
+        )
+        assert "FILTER(?type IN" not in sparql
+
+    def test_other_dimensions_still_constrain_a_count(self, property_specs):
+        sparql = build_facet_query(
+            property_specs, "en", QueryParams(f"topic={COMPASS.Shipping}"), "species"
+        )
+        assert f"?s compass:topic <{COMPASS.Shipping}> ." in sparql
+
+    def test_a_count_is_what_picking_that_value_would_return(self, store, property_specs):
+        """The sibling count under one pick equals the two-pick result count."""
+        facets = build_facet_query(
+            property_specs, "en", QueryParams(f"species={COMPASS.Dolphins}"), "species"
+        )
+        counts = {row["val"]: int(row["n"]) for row in store.query(facets)}
+
+        entities = sparql_for_instances(
+            property_specs,
+            "en",
+            QueryParams(f"species={COMPASS.Dolphins}&species={COMPASS.Whales}"),
+        )
+        # The facets never count always-on pins.
+        always_on = {str(COMPASS[name]) for name in ALWAYS_ON_CLASSES}
+        pins = [row for row in store.query(entities) if str(row["type"]) not in always_on]
+        assert counts[str(COMPASS.Whales)] == len(pins)
 
 
 class TestFilterSubjects:
-    """Both copies of a filter must constrain their own subject."""
+    """Every clause constrains the one subject the query has."""
 
-    def test_entities_query_filters_pins_and_referring_pins(self, property_specs):
+    def test_entities_query_filters_the_pin(self, property_specs):
         sparql = sparql_for_instances(
             property_specs, "en", QueryParams(f"countryArea={COMPASS.Greece}")
         )
         assert f"?s compass:countryArea <{COMPASS.Greece}> ." in sparql
-        assert f"?pin compass:countryArea <{COMPASS.Greece}> ." in sparql
 
-    def test_entity_type_reaches_regions_through_their_pins(self):
+    def test_entity_type_filters_the_bound_class(self):
         sparql = sparql_for_instances(
-            [], "en", QueryParams(f"entityType={COMPASS.Project}")
+            [], "en", QueryParams(f"entityType={COMPASS.Network}")
         )
-        assert f"FILTER(?type IN (<{COMPASS.Project}>))" in sparql
-        assert f"?pin a ?pinType . FILTER(?pinType IN (<{COMPASS.Project}>))" in sparql
+        assert f"FILTER(?type IN (<{COMPASS.Network}>))" in sparql
 
-    def test_facet_query_counts_pins_only(self, property_specs):
+    def test_no_query_mentions_a_tag_vocabulary_as_a_subject(self, property_specs):
         sparql = build_facet_query(property_specs, "en", QueryParams(""), "topic")
         assert "compass:CountryArea" not in sparql
 

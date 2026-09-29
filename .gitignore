@@ -7,7 +7,7 @@
 node_modules/
 src/frontend/node_modules/
 src/frontend/dist/
-share/compass-map.js
+tools/tiles
 
 # Python / backend
 .venv/
@@ -45,3 +45,7 @@ AGENTS.md
 CLAUDE.md
 .claude/skills
 src/frontend/tiles/
+# The baked bathymetry pair is committed, so a fresh clone has a working map.
+# Its detail level is not: ~20 MB of binary that only deep zoom reads, and git
+# cannot delta-compress it. Build it before deploying -- see tools/just/map.just.
+src/frontend/bathy/d/

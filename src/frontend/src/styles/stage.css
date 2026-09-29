@@ -1,0 +1,207 @@
+.stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+  touch-action: none;
+}
+.stage:focus {
+  outline: none;
+}
+.stage:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: -3px;
+}
+.mapc.night .stage:focus-visible {
+  outline-color: var(--iso);
+}
+.pinnav {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.pinnav button {
+  position: absolute;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+/* NIGHT_INK in palette.ts, which paints the same colour onto the canvas. CSS
+   cannot import it, so the two are kept in step by hand. */
+.mapc.night .stage {
+  background: #081827;
+}
+#water {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+}
+#basemap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 1;
+}
+#basemap .bm-grat,
+#basemap .bm-borders,
+#basemap .bm-rim {
+  fill: none;
+}
+/* A gesture scales the world group rather than re-projecting it, and a scaled
+   coastline should not come with a scaled coastline stroke. No-op at rest:
+   the group carries no transform once the paths are rebuilt. */
+#bworld path {
+  vector-effect: non-scaling-stroke;
+}
+#cv {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 2;
+  background: transparent;
+}
+.ov {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+#water,
+#basemap,
+#cv,
+.ov {
+  transition: opacity 0.18s ease;
+}
+.stage.swapping #water,
+.stage.swapping #basemap,
+.stage.swapping #cv,
+.stage.swapping .ov {
+  opacity: 0;
+  transition: opacity 0.13s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  #water,
+  #basemap,
+  #cv,
+  .ov {
+    transition: none;
+  }
+}
+
+.ov .lbl {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1.1;
+  font-family: Cabin, system-ui, sans-serif;
+}
+
+.attrib {
+  position: absolute;
+  left: 20px;
+  bottom: 16px;
+  font-size: 10px;
+  line-height: 1.5;
+  max-width: 280px;
+  color: var(--stage-dim);
+  z-index: 2;
+}
+.chipbar {
+  display: none;
+}
+.attriblink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.attriblink:hover {
+  color: var(--stage-ink);
+}
+.attriblink:focus-visible {
+  outline: 2px solid var(--stage-ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 860px) {
+  .stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: var(--dock);
+    min-height: 0;
+    touch-action: none;
+  }
+  /* Bottom-left beside the zoom row, clear of the chips: one source a line,
+     centred on the 44px buttons and narrower than what they leave free. The
+     scrim keeps it legible over the deep water it now sits on. */
+  .attrib {
+    left: calc(14px + env(safe-area-inset-left, 0px));
+    bottom: 19px;
+    max-width: calc(100% - 250px);
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(var(--stage-scrim), 0.78);
+    font-size: 9.5px;
+    line-height: 1.5;
+  }
+  .attribsep {
+    display: none;
+  }
+  .attriblink {
+    display: block;
+    width: fit-content;
+  }
+  /* Active filters as one scrolling row of chips over the map; the grab row's
+     Clear is the one clear-all. The 7px padding holds the ×'s 44px target.
+     10% of the stage down, so iOS Safari's top chrome doesn't bury them. */
+  .chipbar:has(li) {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(10% + env(safe-area-inset-top, 0px));
+    z-index: 3;
+  }
+  .chipbar .apills {
+    height: auto;
+    margin: 0;
+    padding: 7px calc(14px + env(safe-area-inset-right, 0px)) 7px
+      calc(14px + env(safe-area-inset-left, 0px));
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      #000 14px,
+      #000 calc(100% - 14px),
+      transparent
+    );
+  }
+  .chipbar .apills::-webkit-scrollbar {
+    display: none;
+  }
+  .chipbar .apills .tpill.apill {
+    flex: none;
+    max-width: min(260px, 72vw);
+    box-shadow: 0 2px 8px rgba(var(--astronaut-rgb), 0.14);
+  }
+}

@@ -1,0 +1,482 @@
+aside.filters {
+  width: var(--rail);
+  border-right: 1px solid var(--land-hi);
+  padding: 22px 26px 30px;
+  background: #fff;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-width: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.34s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  aside.filters {
+    transition: none;
+  }
+}
+aside.filters::-webkit-scrollbar {
+  width: 9px;
+}
+aside.filters::-webkit-scrollbar-thumb {
+  background: rgba(var(--astronaut-rgb), 0.24);
+}
+aside.filters::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Outside both panes, so the credit stays put when the detail view takes over. */
+.sidefoot {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--land-hi);
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--tundora);
+}
+/* Inherits the footer's ink on purpose: Burnt Sienna is the donate CTA's colour
+   in the design system and is not spent on decoration elsewhere. */
+.sidefoot .heart {
+  margin: 0 0.28em;
+  font-size: 1.05em;
+  line-height: 1;
+}
+.sidefoot a {
+  color: var(--astronaut);
+  font-weight: 700;
+  text-decoration: none;
+}
+.sidefoot a:hover {
+  color: var(--cerulean);
+  text-decoration: underline;
+}
+.sidefoot a:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+
+.tallybox {
+  position: relative;
+  background: var(--sea);
+  margin: 0;
+  padding: 20px 18px;
+  text-align: center;
+  color: var(--astronaut);
+}
+.tallybox .big {
+  margin: 0;
+  font-size: 46px;
+  line-height: 42px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tallybox .lbl {
+  margin: 6px 0 0;
+  font-size: 16px;
+  line-height: 20px;
+  font-weight: 700;
+}
+.tallybox .lbl.ask {
+  font-weight: 400;
+  color: var(--tundora);
+  text-wrap: pretty;
+}
+/* The lead sits on its own line and carries the weight the rest of the prompt
+   gives up. A block rather than a <br> so the copy stays two sentences for a
+   translator, and so text-wrap: pretty balances each one on its own. */
+.tallybox .lbl.ask .asklead {
+  display: block;
+  font-weight: 700;
+}
+.storiesgo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--astronaut);
+  font-family: Cabin, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+.storiesgo .sb-lb {
+  border-bottom: 2px solid var(--sienna);
+  padding-bottom: 2px;
+}
+.storiesgo:hover {
+  color: var(--sienna-ink);
+}
+.storiesgo:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: 3px;
+}
+.tallyband .sub {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--tundora);
+  font-variant-numeric: tabular-nums;
+}
+.tallyband {
+  margin: 0 0 18px;
+}
+
+.tallybox.waiting {
+  min-height: 106px;
+}
+.tallybox .spinner {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  margin-left: calc(var(--spin-size, 26px) / -2);
+}
+.tallybox.settling .big,
+.tallybox.settling .lbl {
+  opacity: 0.32;
+}
+
+.tpills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 18px 18px;
+}
+.tpill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  background: none;
+  border: 1px solid var(--chrome);
+  border-radius: 60px;
+  padding: 5px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--astronaut);
+  white-space: nowrap;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+.tpill-all {
+  font-weight: 700;
+}
+.tpill .tn {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tpill:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+  color: var(--cerulean);
+}
+.tpill[aria-pressed='true'] {
+  background: var(--astronaut);
+  border-color: var(--astronaut);
+  color: #fff;
+}
+.tpill[aria-pressed='true']:hover {
+  background: var(--cerulean);
+  border-color: var(--cerulean);
+  color: #fff;
+}
+.tpill:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+.tpill[data-empty='true']:not([aria-pressed='true']) {
+  border-color: var(--land-hi);
+  color: var(--stage-dim);
+}
+.tpill.juston {
+  box-shadow: inset 0 0 0 3px var(--cerulean);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tpill {
+    transition: none;
+  }
+}
+
+/* Active selections: a chosen .tpill with a ×, on up to two rows; the rest go under "+N". */
+.apills {
+  /* pill: 22px × + 3px padding + 1px border, each side; two rows always reserved */
+  --ah: calc(22px + 2 * (3px + 1px));
+  --agap: 8px;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--agap) 8px;
+  height: calc(2 * var(--ah) + var(--agap));
+  margin: 0 18px 14px;
+  padding: 0;
+  list-style: none;
+}
+.tpill.apill {
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 4px 3px 12px;
+  background: var(--astronaut);
+  border-color: var(--astronaut);
+  color: #fff;
+}
+.tpill.apill:has(.ax:hover) {
+  background: var(--cerulean);
+  border-color: var(--cerulean);
+}
+/* hidden beats .tpill's display; a removed pill keeps its slot until the pointer leaves */
+.apills [hidden] {
+  display: none;
+}
+.apill.gone {
+  visibility: hidden;
+}
+/* a pill wider than the row ellipsizes rather than overflow */
+.apills:not(.measuring) .apill {
+  flex-shrink: 1;
+  min-width: 0;
+}
+.apill .al {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.apill .ax {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 60px;
+  background: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+}
+.apill .ax:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+.tpill.amore {
+  position: static;
+  align-items: center;
+  padding: 3px 12px;
+  background: none;
+  border-color: var(--chrome);
+  color: var(--astronaut);
+  font-weight: 700;
+  cursor: default;
+}
+.tpill.amore:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+  color: var(--cerulean);
+}
+.amore .atip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 6;
+  max-width: 100%;
+  padding: 8px 12px;
+  background: var(--card-surface);
+  border: 1px solid var(--card-edge);
+  box-shadow: var(--card-shadow);
+  color: var(--card-ink);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+  white-space: normal;
+  clip-path: inset(50%);
+  opacity: 0;
+}
+.amore:hover .atip,
+.amore:focus .atip {
+  clip-path: none;
+  opacity: 1;
+}
+
+.areset {
+  display: flex;
+  align-items: center;
+  min-height: var(--ah);
+}
+.reset {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--astronaut);
+  border-bottom: 2px solid var(--cerulean);
+}
+.storiesbtn {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: var(--astronaut);
+  font-family: Cabin, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.16s ease;
+}
+.storiesbtn .sb-lb {
+  border-bottom: 2px solid var(--cerulean);
+  padding-bottom: 2px;
+}
+.storiesbtn:hover {
+  color: var(--cerulean);
+}
+.storiesbtn:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 3px;
+}
+.storiesbtn.ghost {
+  font-weight: 500;
+}
+.pane-detail .storiesbtn {
+  margin: 24px 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .storiesbtn,
+  .storiesgo {
+    transition: none;
+  }
+}
+.reset:hover {
+  color: var(--cerulean);
+}
+
+@media (max-width: 860px) {
+  aside.filters {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: auto;
+    height: auto;
+    max-height: 90dvh;
+    padding: 0;
+    border-right: 0;
+    border-top: 1px solid var(--land-hi);
+    border-radius: 18px 18px 0 0;
+    background: #fff;
+    box-shadow: 0 -8px 34px rgba(var(--astronaut-rgb), 0.22);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    overflow-anchor: none;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: auto;
+    transform: translateY(calc(100% - 120px));
+    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0.3, 1);
+    will-change: transform;
+  }
+  aside.filters.dragging {
+    transition: none;
+  }
+  aside.filters[data-sheet='dock'] {
+    overflow: hidden;
+  }
+  .pane-filters {
+    /* the footer below carries the safe-area inset */
+    padding: 0 0 8px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* The sheet moves padding onto the panes, so the footer has to carry its own. */
+  .sidefoot {
+    margin: 0 18px;
+    padding: 12px 0 calc(20px + var(--sbtm));
+    /* the last group's rule already closes the list */
+    border-top: 0;
+  }
+  .pane-filters > * {
+    flex: none;
+  }
+  /* One unit, flush left with the rest of the sheet: a bold line (the prompt's
+     lead, or the stories count) and the link under it. The result count is the
+     grab row's, so .sub gives up its line. */
+  .tallyband {
+    order: -1;
+    margin: 0;
+    padding: 2px 18px calc(14px + var(--sbtm));
+  }
+  .tallybox {
+    background: none;
+    padding: 0;
+    text-align: left;
+  }
+  .tallybox.lead {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: baseline;
+    column-gap: 0.22em;
+  }
+  .tallybox .big,
+  .tallybox .lbl {
+    margin: 0;
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .tallybox .lbl.ask .asklead {
+    color: var(--astronaut);
+  }
+  .tallyband .sub,
+  .tallybox .spinner {
+    display: none;
+  }
+  .tallybox.waiting {
+    min-height: 0;
+  }
+  /* ::after widens the target to 44px without spending the height */
+  .storiesgo {
+    grid-column: 1 / -1;
+    position: relative;
+    margin-top: 8px;
+  }
+  .storiesgo::after {
+    content: '';
+    position: absolute;
+    inset: -10px -8px;
+  }
+  .tpills {
+    column-gap: 8px;
+    row-gap: 12px;
+    margin: 0 18px 16px;
+  }
+  .tpill {
+    position: relative;
+  }
+  .tpill::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
+  }
+  /* the chips float over the map instead (.chipbar) */
+  .pane-filters .apills {
+    display: none;
+  }
+  .apill::after {
+    content: none;
+  }
+  .apill .ax {
+    position: relative;
+  }
+  .apill .ax::after {
+    content: '';
+    position: absolute;
+    inset: -11px -6px;
+  }
+}

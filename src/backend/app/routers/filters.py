@@ -12,6 +12,12 @@ router = APIRouter()
 @router.get(
     "",
     response_model=list[FilterWidget],
+    # An option's `description` is its skos:definition, and most concepts define
+    # none. Without this every one of them would carry `"description": null`,
+    # against the contract the panel relies on: the key is absent, or it is a
+    # string. It drops the widget's unset `options`/`min`/`max` too, which the
+    # TypeScript side already declares optional.
+    response_model_exclude_none=True,
     summary="List filter-panel widgets",
     description="Returns filter panel widgets derived from SHACL shapes.",
 )

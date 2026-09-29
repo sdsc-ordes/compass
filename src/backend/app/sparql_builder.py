@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
-from app.namespaces import FIELD_SEP, ITEM_SEP, PREFIX_MAP, SPARQL_PREFIXES
+from app.namespaces import (
+    ALWAYS_ON_CLASSES,
+    FIELD_SEP,
+    FILTERABLE_PIN_CLASSES,
+    ITEM_SEP,
+    PREFIX_MAP,
+    SPARQL_PREFIXES,
+)
 from app.shacl_to_entities import EntityShape
 from app.sparql_terms import iri_term, is_iri, string_literal
 
@@ -49,6 +55,8 @@ def _is_iri_value(value: str) -> bool:
 def build_optional(spec: EntityShape, lang: str) -> str:
     """Build the OPTIONAL clause that binds one EntityShape property.
 
+    A multi-valued property is aggregated in its own subquery, one row per pin.
+
     Args:
         spec: Property descriptor from SHACL.
         lang: Preferred language for labels / langString filters.
@@ -61,25 +69,46 @@ def build_optional(spec: EntityShape, lang: str) -> str:
     cat = spec.category
 
     if cat == "lang_literal":
-        return f'OPTIONAL {{ ?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}") }}'
-    if cat in ("simple_literal", "uri_literal", "boolean"):
-        return f"OPTIONAL {{ ?s {path} ?{sid} . }}"
-    if cat == "iri_with_label":
-        return (
-            f"OPTIONAL {{\n"
-            f"            ?s {path} ?{sid}Node .\n"
+        body = f'?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}")'
+    elif cat in ("simple_literal", "uri_literal", "boolean"):
+        body = f"?s {path} ?{sid} ."
+    elif cat == "iri_with_label":
+        body = (
+            f"?s {path} ?{sid}Node .\n"
             f"            OPTIONAL {{ ?{sid}Node skos:prefLabel ?{sid}Skos . "
             f'FILTER(lang(?{sid}Skos) = "{lang}") }}\n'
             f"            OPTIONAL {{ ?{sid}Node rdfs:label ?{sid}Rdfs . "
             f'FILTER(lang(?{sid}Rdfs) = "{lang}") }}\n'
-            f"            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)\n"
-            f"        }}"
+            f"            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)"
         )
-    return ""
+    else:
+        return ""
+    if not spec.is_multi:
+        return f"OPTIONAL {{\n            {body}\n        }}"
+    # A multi-valued property is folded to one row per pin in its own subquery.
+    # Side by side in the outer WHERE, the lists would join into their cross
+    # product first: a pin with every tag ran to tens of thousands of rows.
+    return (
+        f"OPTIONAL {{\n"
+        f"            SELECT ?s {_concat(spec)}\n"
+        f"            WHERE {{\n            {body}\n            }}\n"
+        f"            GROUP BY ?s\n"
+        f"        }}"
+    )
+
+
+def _concat(spec: EntityShape) -> str:
+    """The GROUP_CONCAT folding a multi-valued property into ``?<id>Agg``."""
+    sid = spec.id
+    if spec.category == "iri_with_label":
+        item = f'CONCAT(STR(?{sid}Node), "{FIELD_SEP}", COALESCE(?{sid}Lab, ""))'
+    else:
+        item = f"?{sid}"
+    return f'(GROUP_CONCAT(DISTINCT {item}; separator="{ITEM_SEP}") AS ?{sid}Agg)'
 
 
 def build_select_expr(spec: EntityShape) -> str:
-    """GROUP_CONCAT for multi-valued properties, SAMPLE for single-valued ones.
+    """SAMPLE of each property, or of its subquery's GROUP_CONCAT when multi-valued.
 
     Args:
         spec: Property descriptor from SHACL.
@@ -91,147 +120,111 @@ def build_select_expr(spec: EntityShape) -> str:
     cat = spec.category
     is_multi = spec.is_multi
 
+    if is_multi:
+        # Already folded by the subquery in build_optional.
+        return f"(SAMPLE(?{sid}Agg) AS ?{sid}Raw)"
     if cat == "iri_with_label":
-        if is_multi:
-            return (
-                f'(GROUP_CONCAT(DISTINCT CONCAT(STR(?{sid}Node), "{FIELD_SEP}", '
-                f'COALESCE(?{sid}Lab, "")); separator="{ITEM_SEP}") AS ?{sid}Raw)'
-            )
         return (
             f"(SAMPLE(?{sid}Node) AS ?{sid}Iri)\n"
             f"           (SAMPLE(?{sid}Lab) AS ?{sid}Label)"
         )
-    if is_multi:
-        return f'(GROUP_CONCAT(DISTINCT ?{sid}; separator="{ITEM_SEP}") AS ?{sid}Raw)'
     return f"(SAMPLE(?{sid}) AS ?{sid}Result)"
 
 
-PIN_CLASSES = ("InternationalForum", "Network", "Project", "PartnerOrganization")
+# The synthetic dimension over rdf:type. shacl_to_filters builds its widget and
+# _build_where_clauses filters on it; neither reaches it through a property shape.
+ENTITY_TYPE_ID = "entityType"
 
 
-@dataclass(frozen=True)
-class Subject:
-    """Which variable a set of filter clauses constrains.
-
-    Filters read the same for a pin the map draws and for the pin that puts a
-    region on the map, but they cannot share variable names: the region branch
-    nests its copy inside FILTER EXISTS, where the outer ``?type`` is already
-    bound to ``compass:CountryArea``.
-
-    Attributes:
-        var: Subject variable (e.g. ``?s`` or ``?pin``).
-        type_var: Variable holding the entity class IRI.
-        suffix: Keeps helper variables distinct across the two copies.
-        declare_type: Bind ``type_var`` here rather than relying on an outer BIND.
-    """
-
-    var: str
-    type_var: str
-    suffix: str
-    declare_type: bool
+# The one subject every clause constrains: the pin the map draws.
+PIN_VAR = "?s"
+TYPE_VAR = "?type"
 
 
-PIN = Subject(var="?s", type_var="?type", suffix="", declare_type=False)
-REGION_PIN = Subject(var="?pin", type_var="?pinType", suffix="Pin", declare_type=True)
-
-
-def _pin_branch(where_clauses: list[str], indent: str = "        ") -> str:
-    """Build the UNION of the four entity classes that carry coordinates.
+def _class_union(names: tuple[str, ...], indent: str) -> str:
+    """Build the UNION of class branches, each binding ``?type`` to its class.
 
     Args:
-        where_clauses: Extra FILTER / pattern lines applied to each pin.
+        names: Local names of the entity classes to match.
         indent: Leading whitespace for generated lines.
+
+    Returns:
+        SPARQL group pattern alternatives, without a trailing newline.
+    """
+    return f"\n{indent}UNION ".join(
+        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}" for name in names
+    )
+
+
+def _pin_branch(
+    where_clauses: list[str], indent: str = "        ", *, with_always_on: bool = False
+) -> str:
+    """Build the UNION of the entity classes that carry coordinates.
+
+    Args:
+        where_clauses: Extra FILTER / pattern lines applied to each filtered pin.
+        indent: Leading whitespace for generated lines.
+        with_always_on: Also emit ``ALWAYS_ON_CLASSES``, outside the filtered
+            group so no clause reaches them. Off for facet counts, which never
+            count them.
 
     Returns:
         SPARQL WHERE fragment for map pins.
     """
-    branches = f"\n{indent}UNION ".join(
-        f"{{ ?s a compass:{name} . BIND(compass:{name} AS ?type) }}" for name in PIN_CLASSES
-    )
-    body = f"{indent}{branches}\n"
+    inner = indent + "    " if with_always_on else indent
+    body = f"{inner}{_class_union(FILTERABLE_PIN_CLASSES, inner)}\n"
     if where_clauses:
-        body += indent + f"\n{indent}".join(where_clauses) + "\n"
-    return body
-
-
-def _region_branch(where_clauses: list[str], indent: str = "        ") -> str:
-    """Build the Country/Area branch reachable only through a matching pin.
-
-    A region is a shaded polygon rather than a result, and it carries no tags of
-    its own: it reaches the map because some pin passing the same filters
-    records it, so shading always means "matching pins are in here".
-
-    Args:
-        where_clauses: Filter clauses applied to the nested ``?pin``.
-        indent: Leading whitespace for generated lines.
-
-    Returns:
-        SPARQL WHERE fragment for shaded regions.
-    """
-    inner = f"{indent}    ?pin compass:countryArea ?s .\n"
-    if where_clauses:
-        inner += indent + "    " + f"\n{indent}    ".join(where_clauses) + "\n"
+        body += inner + f"\n{inner}".join(where_clauses) + "\n"
+    if not with_always_on:
+        return body
     return (
-        f"{indent}?s a compass:CountryArea .\n"
-        f"{indent}BIND(compass:CountryArea AS ?type)\n"
-        f"{indent}FILTER EXISTS {{\n{inner}{indent}}}\n"
+        f"{indent}{{\n"
+        + body
+        + f"{indent}}} UNION {{\n"
+        + f"{inner}{_class_union(ALWAYS_ON_CLASSES, inner)}\n"
+        + f"{indent}}}\n"
     )
 
 
 def _shared_optionals(lang: str) -> str:
-    """Geometry and label binding, applied to pins and regions alike.
+    """Geometry and label binding for every pin.
 
-    Regions have no coordinates and label themselves with skos:prefLabel, so
-    geometry is OPTIONAL and the label is COALESCEd across both properties.
+    Coordinates stay OPTIONAL so a pin missing them reaches the decoder, which
+    logs it, rather than dropping out of the query unremarked. A pin with no
+    name in the requested language drops out, exactly as it would on the map.
 
     Args:
         lang: Preferred language tag.
 
     Returns:
-        SPARQL OPTIONAL / BIND / FILTER block.
+        SPARQL OPTIONAL / FILTER block.
     """
     return f"""        OPTIONAL {{ ?s geo:lat ?lat . }}
         OPTIONAL {{ ?s geo:long ?long . }}
-        OPTIONAL {{ ?s compass:name ?nameLabel . FILTER(lang(?nameLabel) = "{lang}") }}
-        OPTIONAL {{ ?s skos:prefLabel ?prefLabel . FILTER(lang(?prefLabel) = "{lang}") }}
-        BIND(COALESCE(?nameLabel, ?prefLabel) AS ?label)
-        FILTER(BOUND(?label))
+        ?s compass:name ?label . FILTER(lang(?label) = "{lang}")
         OPTIONAL {{ ?type rdfs:label ?typeLabel . FILTER(lang(?typeLabel) = "{lang}") }}
 """
 
 
-def _special_optionals() -> str:
-    """Return OPTIONAL patterns for properties not declared on entity NodeShapes.
+def _distinct(values: list[str]) -> list[str]:
+    """Drop empties and repeats from a dimension's selected values, in order.
 
-    Returns:
-        SPARQL fragment fetching ``compass:wpEntityTagId``.
-    """
-    return """
-        OPTIONAL { ?s compass:wpEntityTagId ?wpEntityTagId . }
-"""
-
-
-def _special_selects() -> str:
-    """Return SELECT projections for special (non-SHACL) properties.
-
-    Returns:
-        SPARQL SELECT fragment for ``wpEntityTagId``.
-    """
-    return "           (SAMPLE(?wpEntityTagId) AS ?wpEntityTagId)\n"
-
-
-def _union_or_single(parts: list[str]) -> str:
-    """Join alternative graph patterns with UNION, or return the sole pattern.
+    A repeated value would compile to a second identical required pattern,
+    which constrains nothing and only makes the query longer.
 
     Args:
-        parts: Individual pattern strings.
+        values: Raw query-parameter values for one dimension.
 
     Returns:
-        A single pattern or a braced UNION of several.
+        The non-empty values, first occurrence order preserved.
     """
-    if len(parts) > 1:
-        return "{ " + " } UNION { ".join(parts) + " }"
-    return parts[0]
+    seen: set[str] = set()
+    out: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            out.append(value)
+    return out
 
 
 def _build_where_clauses(
@@ -239,46 +232,59 @@ def _build_where_clauses(
     filter_map: dict[str, str],
     range_filters: RangeFilters,
     date_filters: dict[str, str],
-    subject: Subject = PIN,
+    *,
     exclude_key: str | None = None,
 ) -> list[str]:
     """Translate HTTP query params into SPARQL WHERE fragments.
 
-    ``exclude_key`` drops that dimension's own constraints, so facet counts for a
-    dimension are not shrunk by the selection within it (drill-down faceting).
+    Values picked within one tag dimension are conjunctive: each becomes its own
+    required triple pattern, so picking a second value narrows the selection.
+    Dimensions are conjunctive with each other for the same reason -- every
+    clause lands in the same group. ``entityType`` is the exception and stays
+    disjunctive: an entity has exactly one class, so requiring two would return
+    nothing (see the ``FILTER(... IN ...)`` branch below).
+
+    ``exclude_key`` drops that dimension's own constraints. It is the drill-down
+    device for a disjunctive dimension, whose unpicked values would otherwise all
+    count zero; a conjunctive dimension wants its own selection kept, so
+    ``build_facet_query`` passes this only for ``entityType``.
 
     Args:
         query_params: Starlette/FastAPI query parameter multi-dict.
         filter_map: Multiselect/toggle property id → prefixed predicate.
         range_filters: Slider property id → (predicate, datatype).
         date_filters: Datepicker property id → prefixed predicate.
-        subject: Variable naming for pin vs region-pin copies.
-        exclude_key: Dimension id to ignore (faceting).
+        exclude_key: Dimension id to ignore (disjunctive-dimension faceting).
 
     Returns:
         List of SPARQL pattern / FILTER lines.
     """
     where_clauses = []
-    subj = subject.var
+    subj = PIN_VAR
 
     for key, val in query_params.items():
         if key in ("lang", exclude_key) or not val:
             continue
         values = query_params.getlist(key)
-        var = f"?{key}{subject.suffix}Val"
+        var = f"?{key}Val"
 
         if key in filter_map:
             prop = filter_map[key]
-            parts = []
-            for v in values:
+            # Every picked value is its own required pattern, so a second pick
+            # narrows the selection instead of widening it: "dolphins AND
+            # whales" means the entities that carry both tags. The literal
+            # branch needs a fresh variable per value -- one variable cannot
+            # equal two different literals at once, and reusing it would match
+            # nothing.
+            for index, v in enumerate(_distinct(values)):
                 if _is_iri_value(v):
-                    parts.append(f"{subj} {prop} {iri_term(v)} .")
+                    where_clauses.append(f"{subj} {prop} {iri_term(v)} .")
                 else:
-                    parts.append(
-                        f"{subj} {prop} {var} . FILTER(str({var}) = {string_literal(v)})"
+                    val_var = f"{var}{index}"
+                    where_clauses.append(
+                        f"{subj} {prop} {val_var} . "
+                        f"FILTER(str({val_var}) = {string_literal(v)})"
                     )
-            if parts:
-                where_clauses.append(_union_or_single(parts))
 
         elif key in date_filters:
             try:
@@ -291,16 +297,14 @@ def _build_where_clauses(
                 f"FILTER(!BOUND({var}) || {var} >= {string_literal(val)}^^xsd:date)"
             )
 
-        elif key == "entityType":
+        elif key == ENTITY_TYPE_ID:
             iri_list = ", ".join(iri_term(v) for v in values if _is_iri_value(v))
             if iri_list:
-                # A region has no type of its own to filter, so the legend
-                # reaches it through the pins: hide every Project and a region
-                # holding only projects stops being shaded.
-                clause = f"FILTER({subject.type_var} IN ({iri_list}))"
-                if subject.declare_type:
-                    clause = f"{subj} a {subject.type_var} . {clause}"
-                where_clauses.append(clause)
+                # Disjunctive on purpose, unlike the tag dimensions above: an
+                # entity has exactly one rdf:type, so requiring two picked
+                # classes at once would empty the map. Picking Programme and
+                # Network means "either".
+                where_clauses.append(f"FILTER({TYPE_VAR} IN ({iri_list}))")
 
         elif key in range_filters:
             prop, datatype = range_filters[key]
@@ -353,8 +357,16 @@ def build_facet_query(
 ) -> str:
     """Count entities per value of one tag dimension.
 
-    Regions are background context rather than results (see the map's result
-    badge, which counts point features only), so only the pin branch is counted.
+    A count reads "how many results if I also pick this". For a conjunctive tag
+    dimension that means the dimension's own selection stays in the query: a
+    second pick genuinely does shrink what is left reachable beside it, and the
+    count for an already-picked value is simply the current result total. Values
+    that would empty the map drop out of the results entirely, which is what the
+    panel dims.
+
+    ``entityType`` is the one disjunctive dimension, so it keeps the old
+    drill-down: its own picks are excluded, or every class the user has not
+    picked would count zero and look unpickable.
 
     Args:
         specs: EntityShape list for the ontology.
@@ -366,28 +378,37 @@ def build_facet_query(
         Complete SPARQL SELECT counting ``?val``.
     """
     filter_map, range_filters, date_filters = _categorize_specs(specs)
-    target_path = filter_map[target_id]
 
+    exclude_key = target_id if target_id == ENTITY_TYPE_ID else None
     where_clauses = _build_where_clauses(
-        query_params, filter_map, range_filters, date_filters, exclude_key=target_id
+        query_params, filter_map, range_filters, date_filters, exclude_key=exclude_key
     )
 
     sparql_where = _pin_branch(where_clauses)
-    sparql_where += f"        ?s {target_path} ?val .\n"
+    # entityType has no property shape and so no path in filter_map: it is the
+    # class that _pin_branch has already BOUND to ?type in every branch, so the
+    # count groups by that variable rather than by a triple's object. Aliasing it
+    # to ?val keeps one result shape for the caller; ?val cannot be aliased to
+    # itself, which is why the ordinary path selects it bare.
+    if target_id == ENTITY_TYPE_ID:
+        selected, grouped = f"({TYPE_VAR} AS ?val)", TYPE_VAR
+    else:
+        selected, grouped = "?val", "?val"
+        sparql_where += f"        ?s {filter_map[target_id]} ?val .\n"
     sparql_where += _shared_optionals(lang)
 
     return (
         SPARQL_PREFIXES
-        + "    SELECT ?val (COUNT(DISTINCT ?s) AS ?n)\n"
+        + f"    SELECT {selected} (COUNT(DISTINCT ?s) AS ?n)\n"
         + "    WHERE {\n"
         + sparql_where
         + "    }\n"
-        + "    GROUP BY ?val\n"
+        + f"    GROUP BY {grouped}\n"
     )
 
 
 def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any) -> str:
-    """Compile the main entity SELECT (pins UNION regions) for the map.
+    """Compile the main entity SELECT for the map.
 
     Args:
         specs: EntityShape list for the ontology.
@@ -404,19 +425,10 @@ def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any)
     pin_clauses = _build_where_clauses(
         query_params, filter_map, range_filters, date_filters
     )
-    region_clauses = _build_where_clauses(
-        query_params, filter_map, range_filters, date_filters, subject=REGION_PIN
-    )
 
-    sparql_where = (
-        "        {\n"
-        + _pin_branch(pin_clauses, "            ")
-        + "        } UNION {\n"
-        + _region_branch(region_clauses, "            ")
-        + "        }\n"
-    )
+    sparql_where = _pin_branch(pin_clauses, with_always_on=True)
     sparql_where += _shared_optionals(lang)
-    sparql_where += "        " + auto_optionals + "\n" + _special_optionals()
+    sparql_where += "        " + auto_optionals + "\n"
 
     return (
         SPARQL_PREFIXES
@@ -425,7 +437,6 @@ def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any)
         + "           "
         + auto_selects
         + "\n"
-        + _special_selects()
         + "    WHERE {\n"
         + sparql_where
         + "    }\n"

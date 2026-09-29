@@ -1,13 +1,3 @@
-// Collects the licence text of every dependency that ends up in the widget
-// bundle into THIRD-PARTY-NOTICES.md.
-//
-//   node scripts/build-notices.mjs
-//
-// MIT, ISC and BSD-3-Clause all require their copyright notice to accompany
-// the distribution. The widget is a single minified file, so the notices need
-// somewhere to live; esbuild's legalComments keeps whatever banners the
-// packages carry inside the bundle, and this file is the readable companion.
-
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -22,9 +12,6 @@ const LICENCE_FILES = [
   'LICENSE-MIT',
 ];
 
-// Compilers whose *runtime* is emitted into the bundle even though the package
-// itself is a devDependency. Svelte is the case that matters: components
-// compile to code that carries its internals.
 const RUNTIME_FROM_DEV = ['svelte'];
 
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
@@ -39,7 +26,6 @@ function licenceText(name) {
     const path = join(dir, candidate);
     if (existsSync(path)) return readFileSync(path, 'utf8').trim();
   }
-  // Some packages inline the licence in the readme or only declare an SPDX id.
   const found = readdirSync(dir).find((f) => /^licen[cs]e/i.test(f));
   return found ? readFileSync(join(dir, found), 'utf8').trim() : null;
 }
@@ -69,11 +55,19 @@ const out =
   '## Map data\n\n' +
   '- Land, borders, lakes and rivers: **Natural Earth**, public domain\n' +
   '  (<https://www.naturalearthdata.com>). Credit is requested, not required.\n' +
-  '- Bathymetry imagery: reproduced from the **GEBCO_2026 Grid**, GEBCO\n' +
-  '  Compilation Group (<https://www.gebco.net>). Free to use with attribution.\n' +
-  '  GEBCO state the imagery is not to be used for navigation or any purpose\n' +
-  "  relating to safety at sea. Both notices appear in the map's attribution\n" +
-  '  control at runtime.\n\n' +
+  '- Bathymetry imagery: reproduced from the **GEBCO_2026 Grid**, served by\n' +
+  '  GEBCO as a Web Map Service. GEBCO ask to be cited as: GEBCO Bathymetric\n' +
+  '  Compilation Group 2026 (2026). The GEBCO_2026 Grid - a continuous terrain\n' +
+  '  model for oceans and land at 15 arc-second intervals. NERC EDS British\n' +
+  '  Oceanographic Data Centre NOC.\n' +
+  '  doi:10.5285/4f68d5c7-45eb-f999-e063-7086abc036fa\n' +
+  '- The grid is public domain and free to use, commercial use included, on\n' +
+  '  three conditions: acknowledge the source; do not imply that GEBCO, the IHO\n' +
+  '  or the IOC endorses this application; and do not use it for navigation or\n' +
+  '  any other purpose involving safety at sea. Full terms:\n' +
+  '  <https://www.gebco.net/data-products/gridded-bathymetry/terms-of-use>\n' +
+  "- Both sources are credited in the map's attribution control at runtime, where\n" +
+  '  GEBCO_2026 links to the grid page carrying the citation above.\n\n' +
   sections.join('\n\n') +
   '\n';
 

@@ -11,7 +11,7 @@ from collections.abc import Iterator
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from rdflib import RDF, SH, Graph, URIRef
+from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib import Literal as RDFLiteral
 from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
@@ -36,6 +36,7 @@ DISPLAY_ONLY = {
     COMPASS.location,
     SKOS.altLabel,
     COMPASS.relatedOrganization,
+    COMPASS.wpEntityTagId,
 }
 
 _FILTER_BY_CATEGORY: dict[str, FilterType] = {
@@ -73,8 +74,29 @@ class EntityShape(BaseModel):
     )
 
 
+def targets_map_entity(g: Graph, node_shape: Node) -> bool:
+    """Report whether *node_shape* constrains a class drawn on the map.
+
+    The ontology declares that boundary: map entity classes are subclasses of
+    ``compass:MapEntity``. Shapes targeting anything else -- the SKOS tag
+    vocabularies, for instance -- validate generated Turtle only and must not
+    reach the filter panel or the SPARQL projection.
+
+    Args:
+        g: Merged ontology graph (shapes + data + vocab).
+        node_shape: Shape to classify.
+
+    Returns:
+        ``True`` when any ``sh:targetClass`` is a ``compass:MapEntity`` subclass.
+    """
+    return any(
+        (target, RDFS.subClassOf, COMPASS.MapEntity) in g
+        for target in g.objects(node_shape, SH.targetClass)
+    )
+
+
 def get_shacl_property(g: Graph) -> Iterator[URIRef]:
-    """Yield every sh:property IRI of every NodeShape that has a sh:targetClass.
+    """Yield every sh:property IRI of every NodeShape targeting a map entity class.
 
     Args:
         g: Merged ontology graph (shapes + data + vocab).
@@ -84,10 +106,38 @@ def get_shacl_property(g: Graph) -> Iterator[URIRef]:
     """
     seen: set = set()
     for node_shape in g.subjects(SH.targetClass, None):
+        if not targets_map_entity(g, node_shape):
+            continue
         for p in g.objects(node_shape, SH.property):
             if isinstance(p, URIRef) and p not in seen:
                 seen.add(p)
                 yield p
+
+
+def get_shacl_definition(g: Graph, subject: URIRef, lang: str) -> str:
+    """Return a concept's ``skos:definition`` in *lang*, or "" when it has none.
+
+    The same language order as :func:`get_shacl_label` -- requested language,
+    then English -- but with no fallback to an arbitrary literal and nothing
+    synthesised from the IRI: a definition in a language nobody asked for is
+    worse than none, and the caller omits the field rather than sending "".
+
+    Args:
+        g: Ontology graph.
+        subject: Concept whose definition is sought.
+        lang: BCP 47 language tag.
+
+    Returns:
+        The definition, or an empty string when none is defined in either language.
+    """
+    definitions = [
+        d for d in g.objects(subject, SKOS.definition) if isinstance(d, RDFLiteral)
+    ]
+    for wanted in (lang, "en"):
+        for definition in definitions:
+            if definition.language == wanted and str(definition).strip():
+                return str(definition)
+    return ""
 
 
 def get_shacl_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:

@@ -1,0 +1,286 @@
+.acc {
+  border-top: 1px solid var(--land-hi);
+}
+.asec {
+  border-bottom: 1px solid var(--land-hi);
+}
+.acc h2 {
+  margin: 0;
+  font: inherit;
+}
+.ahbtn {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 13px 8px;
+  background: none;
+  border: 0;
+  text-align: left;
+  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  color: var(--astronaut);
+  transition: color 0.18s ease;
+}
+/* No fill: the header is flush with the page and its type alone says it is a
+   heading, so hover only turns the label cerulean -- what every other text action
+   in the panel does. --sea is left to the rows, for hover and for chosen. */
+.ahbtn:hover {
+  color: var(--cerulean);
+}
+.asec.open .ahbtn {
+  box-shadow: inset 0 -3px 0 var(--cerulean);
+}
+.ahbtn:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: -3px;
+}
+.acc .lb {
+  min-width: 0;
+  text-wrap: pretty;
+}
+/* A count of chosen options: on the sheet's grab row, and on a group's header so a
+   collapsed group still says it is filtering. */
+.nbadge {
+  display: inline-block;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 60px;
+  background: var(--astronaut);
+  color: #fff;
+  font-family: Cabin, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  letter-spacing: 0;
+  text-align: center;
+  vertical-align: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.acc .lb .nbadge {
+  margin-left: 8px;
+}
+/* Leads the panel rather than the header: collapsed, the accordion is a column
+   of titles, and the prose arrives when the group is opened and the
+   reader has asked for it. */
+.acc .dsc {
+  margin: 0;
+  padding: 11px 8px 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--tundora);
+  text-wrap: pretty;
+}
+.acc .dico {
+  display: flex;
+  justify-self: center;
+}
+.acc .chev {
+  display: flex;
+  color: var(--astronaut);
+  transform: rotate(180deg);
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+.ahbtn:hover .chev {
+  color: var(--cerulean);
+}
+.asec.open .chev {
+  transform: none;
+  color: var(--cerulean);
+}
+
+.apanel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.24s cubic-bezier(0.32, 0.72, 0.3, 1);
+}
+.asec.open .apanel {
+  grid-template-rows: 1fr;
+}
+/* No fill and no rule: an open group's contents are simply indented by the width
+   of the header's icon column, which nests them under their group. It does not
+   line them up with anything -- the header's label starts further in again, past
+   the grid gap -- so this is nesting, not alignment. */
+/* Positioned, so the rows' absolute .sr text is clipped with the panel instead of
+   stretching the sheet's scroll past its end. */
+.apanel > .ainner {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  margin-left: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apanel,
+  .acc .chev,
+  .ahbtn {
+    transition: none;
+  }
+}
+
+.dimmeta {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px 3px;
+  min-height: 33px;
+}
+/* Sentence case, and not Condensed: the group title is the one heading inside a
+   group, and this said the same thing in the same voice one size down. */
+.dimmeta .c {
+  font-size: 12px;
+  line-height: 14px;
+  color: var(--tundora);
+  font-variant-numeric: tabular-nums;
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 20px;
+}
+.frow {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 3.5ch;
+  align-items: start;
+  gap: 11px;
+  background: none;
+  border: 0;
+  padding: 9px 8px;
+  text-align: left;
+  color: var(--tundora);
+  transition:
+    background 0.14s,
+    color 0.14s;
+}
+.frow:hover {
+  background: var(--sea);
+}
+.frow .mk {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  flex: none;
+  border: 2px solid var(--chrome);
+  position: relative;
+}
+.frow[aria-pressed='true'] {
+  background: var(--sea);
+}
+.frow[aria-pressed='true'] .mk {
+  border-color: var(--cerulean);
+  background: var(--cerulean);
+}
+.frow[aria-pressed='true'] .mk::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: 0;
+  border-left: 0;
+  transform: rotate(40deg);
+}
+.frow .t {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.frow .t b {
+  font-size: 15px;
+  line-height: 19px;
+  font-weight: 600;
+  color: var(--tundora);
+}
+.frow .t i {
+  font-style: normal;
+  font-size: 12.5px;
+  line-height: 17px;
+  color: var(--tundora);
+  text-wrap: pretty;
+}
+.frow .n {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cerulean);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  margin-top: 3px;
+}
+/* This was cerulean until the panel went onto one scale. A bare cerulean numeral
+   means a quantity -- the row count -- so a chosen row promotes to astronaut, the
+   heading ink, and steps up out of body copy. */
+.frow[aria-pressed='true'] .t b {
+  color: var(--astronaut);
+}
+.frow[aria-pressed='true'] .n {
+  color: var(--astronaut);
+}
+/* A zero-result row is still selectable, so its text keeps 4.5:1 and drops to
+   --tundora: it reads as unavailable by losing the astronaut and cerulean an
+   active row carries, not by fading toward the background. */
+.frow[data-empty='true'] .t b {
+  color: var(--tundora);
+}
+.frow[data-empty='true'] .n {
+  color: var(--tundora);
+}
+.frow[data-empty='true'] .mk {
+  border-color: var(--chrome);
+}
+.frow:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: -3px;
+}
+.frow.juston {
+  box-shadow: inset 0 0 0 3px var(--cerulean);
+}
+
+@media (max-width: 860px) {
+  /* clears the sheet's sticky grab row when a header is scrolled to */
+  .ahbtn {
+    scroll-margin-top: var(--grabh, 52px);
+    min-height: 56px;
+    padding: 15px 18px;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    gap: 13px;
+  }
+  /* the header's badge says what is chosen; the option count is not worth the row */
+  .dimmeta {
+    display: none;
+  }
+  .chips {
+    padding: 8px 12px 18px;
+  }
+  .frow {
+    min-height: 52px;
+    padding: 10px 6px;
+    align-items: center;
+    gap: 13px;
+  }
+  .frow .mk {
+    width: 20px;
+    height: 20px;
+    margin-top: 0;
+  }
+  .frow[aria-pressed='true'] .mk::after {
+    left: 4px;
+    top: 1px;
+  }
+  .frow .t b {
+    font-size: 16px;
+  }
+  .frow .n {
+    margin-top: 0;
+  }
+}

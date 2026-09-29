@@ -5,7 +5,7 @@ from starlette.datastructures import QueryParams
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import sparql_for_instances
 from app.sparql_to_geojson_translator import (
-    _parse_special_properties,
+    _derived_properties,
     extract_property,
     instances_to_geojson,
 )
@@ -23,19 +23,21 @@ def _ep(**kwargs) -> EntityShape:
     return EntityShape(**defaults)
 
 
-class TestParseSpecialProperties:
+class TestDerivedProperties:
+    """storiesUrl is derived from the decoded wpEntityTagId property."""
+
     def test_builds_the_english_stories_url(self):
-        props = _parse_special_properties({"wpEntityTagId": "921"}, "en")
+        props = _derived_properties({"wpEntityTagId": "921"}, "en")
         assert props["storiesUrl"].endswith("?tag=921")
         assert "/en/" in props["storiesUrl"]
 
     def test_builds_the_german_stories_url(self):
-        props = _parse_special_properties({"wpEntityTagId": "921"}, "de")
+        props = _derived_properties({"wpEntityTagId": "921"}, "de")
         assert props["storiesUrl"].endswith("?tag=921")
         assert "/de/" in props["storiesUrl"]
 
     def test_no_tag_id_means_no_url(self):
-        assert _parse_special_properties({}, "en")["storiesUrl"] == ""
+        assert _derived_properties({}, "en")["storiesUrl"] == ""
 
 
 class TestExtractProperty:
@@ -83,28 +85,20 @@ class TestResultsToGeojsonIntegration:
             assert "label" in props
             assert "type" in props
             assert "typeIri" in props
-            if props.get("is_region"):
-                assert feature["geometry"] is None
-                assert props.get("regionKey")
-                continue
             assert feature["geometry"]["type"] == "Point"
             coords = feature["geometry"]["coordinates"]
             assert -180 <= coords[0] <= 180, f"Invalid longitude: {coords[0]}"
             assert -90 <= coords[1] <= 90, f"Invalid latitude: {coords[1]}"
 
-    def test_regions_are_exactly_those_a_pin_refers_to(self, store, property_specs):
-        referenced = store.query("""
-            PREFIX compass: <http://example.org/ocean-org/ontology#>
-            SELECT DISTINCT ?region WHERE { ?pin compass:countryArea ?region . }
-        """)
-        expected = {str(row["region"]).rsplit("#", 1)[-1] for row in referenced}
+    def test_only_entities_with_coordinates_come_back(self, store, property_specs):
+        """A tag vocabulary is never a feature.
 
+        Country/Area concepts used to arrive as geometry-less "region" features
+        for a layer the widget never drew; nothing but a pin belongs here now.
+        """
         sparql = sparql_for_instances(property_specs, "en", QueryParams(""))
         geojson = instances_to_geojson(store.query(sparql), property_specs)
-        regions = [f for f in geojson["features"] if f["properties"].get("is_region")]
-
-        assert expected, "the ontology records no pin-to-region link at all"
-        assert {r["properties"]["regionKey"] for r in regions} == expected
-        for region in regions:
-            assert region["geometry"] is None
-            assert region["properties"]["typeIri"].endswith("CountryArea")
+        assert geojson["features"]
+        assert not [
+            f for f in geojson["features"] if f["properties"]["typeIri"].endswith("Area")
+        ]

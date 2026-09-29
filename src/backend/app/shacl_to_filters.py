@@ -8,13 +8,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from rdflib import RDF, RDFS, SH, Graph, URIRef
 from rdflib import Literal as RDFLiteral
 from rdflib.collection import Collection
-from rdflib.namespace import XSD
+from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
 
-from app.namespaces import COMPASS
+from app.namespaces import COMPASS, FILTERABLE_PIN_CLASSES
 from app.shacl_to_entities import (
     BUILTIN_PATHS,
     DISPLAY_ONLY,
+    get_shacl_definition,
     get_shacl_label,
     get_shacl_property,
 )
@@ -31,6 +32,13 @@ class FilterOption(BaseModel):
 
     value: str = Field(description="Wire value sent as a query parameter (often an IRI).")
     label: str = Field(description="Human-readable label shown in the filter panel.")
+    description: str | None = Field(
+        default=None,
+        description=(
+            "The concept's skos:definition, printed under the option's name. "
+            "Absent -- never empty -- when the concept defines none."
+        ),
+    )
 
 
 class FilterWidget(BaseModel):
@@ -41,6 +49,13 @@ class FilterWidget(BaseModel):
     id: str = Field(description="Stable dimension id (local name of the property path).")
     path: str = Field(description="Full IRI of the filtered property (or rdf:type).")
     label: str = Field(description="Section title shown in the filter panel.")
+    description: str | None = Field(
+        default=None,
+        description=(
+            "The concept scheme's skos:definition, printed under the section title. "
+            "Absent -- never empty -- when the dimension has no scheme behind it."
+        ),
+    )
     type: FilterWidgetType = Field(description="Widget kind rendered by the frontend.")
     order: int = Field(default=0, description="Optional sort hint (currently unused).")
     options: list[FilterOption] | None = Field(
@@ -100,6 +115,7 @@ def get_filters_from_shacl(g: Graph, lang: str = "en") -> list[FilterWidget]:
                 id=local_name,
                 path=path_str,
                 label=get_shacl_label(g, property, SH.name, lang),
+                description=_scheme_description(g, target_class, lang),
                 type=widget,
                 order=0,
                 options=options,
@@ -152,27 +168,17 @@ def _multiselect_options(
     options: list[FilterOption] = []
     if target_class:
         for s in g.subjects(RDF.type, target_class):
-            options.append(
-                FilterOption(value=str(s), label=get_shacl_label(g, s, RDFS.label, lang))
-            )
+            options.append(_iri_option(g, s, lang))
     elif sh_in_list:
         for member in Collection(g, sh_in_list[0]):
-            options.append(
-                FilterOption(
-                    value=str(member),
-                    label=get_shacl_label(g, member, RDFS.label, lang),
-                )
-            )
+            options.append(_iri_option(g, member, lang))
     else:
         seen: dict[str, FilterOption] = {}
         for val in g.objects(None, path):
             if isinstance(val, URIRef):
                 key = str(val)
                 if key not in seen:
-                    seen[key] = FilterOption(
-                        value=key,
-                        label=get_shacl_label(g, val, RDFS.label, lang),
-                    )
+                    seen[key] = _iri_option(g, val, lang)
             elif isinstance(val, RDFLiteral) and (
                 val.language == lang or val.language is None
             ):
@@ -181,6 +187,59 @@ def _multiselect_options(
                     seen[key] = FilterOption(value=key, label=key)
         options = list(seen.values())
     return sorted(options, key=lambda x: x.label)
+
+
+def _iri_option(g: Graph, term: URIRef, lang: str) -> FilterOption:
+    """One option for a concept, carrying its definition only when it has one.
+
+    Args:
+        g: Ontology graph.
+        term: Concept IRI the option selects.
+        lang: Preferred language for label and definition.
+
+    Returns:
+        The option, with ``description`` left unset when the concept defines none.
+    """
+    definition = get_shacl_definition(g, term, lang)
+    return FilterOption(
+        value=str(term),
+        label=get_shacl_label(g, term, RDFS.label, lang),
+        description=definition or None,
+    )
+
+
+def _scheme_description(g: Graph, target_class: Node | None, lang: str) -> str | None:
+    """The definition of the concept scheme a dimension draws its options from.
+
+    The shape's own ``sh:description`` says much the same thing and is one lookup
+    away, but it is hand-written in shapes.ttl and English-only, while the scheme
+    definition is bilingual and comes from the spreadsheet the client edits --
+    so the panel prints the wording OceanCare can change without us.
+
+    The scheme is reached through the graph rather than by spelling
+    ``sh:class`` + "Scheme": the naming convention holds today only because one
+    generator writes both, and a vocabulary hand-authored against the same shapes
+    would silently lose its subtitles.
+
+    Args:
+        g: Ontology graph.
+        target_class: ``sh:class`` constraint, or ``None``.
+        lang: Preferred definition language.
+
+    Returns:
+        The definition, or ``None`` for a dimension whose class has no instances,
+        whose concepts sit in no scheme, or whose scheme defines nothing --
+        ``entityType`` and the relations to entity classes among them.
+    """
+    if target_class is None:
+        return None
+    for concept in g.subjects(RDF.type, target_class):
+        for scheme in g.objects(concept, SKOS.inScheme):
+            if isinstance(scheme, URIRef):
+                definition = get_shacl_definition(g, scheme, lang)
+                if definition:
+                    return definition
+    return None
 
 
 def _numeric_values(g: Graph, path: Node) -> list[float]:
@@ -243,7 +302,10 @@ def _datepicker_bounds(g: Graph, path: Node) -> dict[str, str]:
 
 
 def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
-    """Build the entity-type multiselect for the four Compass pin classes.
+    """Build the entity-type multiselect over the filterable pin classes.
+
+    ``ALWAYS_ON_CLASSES`` is absent by construction: a class whose pin stays on
+    the map through a type selection has nothing to offer a filter on type.
 
     Args:
         g: Ontology graph (for class labels).
@@ -252,12 +314,7 @@ def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
     Returns:
         Synthetic ``entityType`` widget over ``rdf:type``.
     """
-    type_classes = [
-        COMPASS.InternationalForum,
-        COMPASS.Network,
-        COMPASS.PartnerOrganization,
-        COMPASS.Project,
-    ]
+    type_classes = [COMPASS[name] for name in sorted(FILTERABLE_PIN_CLASSES)]
     return FilterWidget(
         id="entityType",
         path=str(RDF.type),

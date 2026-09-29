@@ -2,6 +2,123 @@
 
 ## Unreleased
 
+### Taxonomy realigned with the editorial spreadsheet
+
+- **Breaking.** Fold the Conservation and Pollution schemes into Topics: their
+  six concepts become topics and `compass:conservation` / `compass:pollution`
+  are gone. The workbook's taxonomy has four sections, not six.
+- Move Events, Research Expeditions and Petitions from Work Areas to Topics.
+- Rename the sections to the spreadsheet's own wording: Work Areas, Topics,
+  Countries / Regions, International Fora, Programmes.
+- Order the filter panel the way the workbook reads — Work Areas, Topics,
+  Programmes, Species, Countries / Regions — instead of leading with Species.
+- Print the entity-type pills in the plural whatever the count. Switching to the
+  singular at one result made the same control read as a different one.
+
+### Programmes are a vocabulary, not pins
+
+- **Breaking.** `compass:Programme` is a SKOS scheme rather than a
+  `compass:MapEntity`; the two programme pins leave the map and become tags, and
+  `compass:relatedProgramme` becomes `compass:programme`. A programme carried
+  the same name as the entity-type pill and as a filter section, and picking it
+  in the section hid its own pin.
+- Count programmes in the facets like any other tag, and resolve their story
+  counts: as concepts they carry `compass:wpTagId`, which is what the stories
+  router looks up. The relation carried `compass:wpEntityTagId`, so every
+  programme selection had reported zero stories.
+
+### OceanCare is its own entity class
+
+- Add `compass:HostOrganization` and move OceanCare to it, out of the partner
+  organizations. It is drawn whatever the filters say and offers no entity-type
+  button: it is the subject of the map rather than one of its results.
+- Tag it with every concept in the vocabulary, so no filter option matches
+  nothing and the map never empties under a selection.
+- **Breaking.** Remove `compass:managedByOceanCare`. It was projected into the
+  filter API as a toggle no panel rendered, and once programmes stopped being
+  pins it was true of exactly one entity — which its class already says.
+
+### Region layer removed
+
+- **Breaking.** Stop returning Country/Area features from `/api/v1/entities`.
+  The widget has drawn no region layer since the v4 rebuild and discarded every
+  one; they were 15% of each response. `is_region` and `regionKey` are gone from
+  the payload, with the `FILTER EXISTS` sub-query that built them.
+- **Breaking.** Remove `compass:isoCode` and the workbook's `iso_codes` column.
+  They were the boundary lookup for shaded polygons, unread since the same
+  rebuild deleted `build-regions.mjs`.
+
+### Entry panel
+
+- Print an entity's unabbreviated name, which the API had always sent as
+  `skos:altLabel` and the widget never showed.
+
+### Tooling and contribution
+
+- Add a `ci` workflow running lint, tests, the type and offline gates, and
+  `just data::check` on every pull request. Only the docs site was built before,
+  and only on pushes to `main`.
+- Split `just check::lint` into `lint-python` and `lint-frontend`, and add
+  `just check::ontology` so a workbook edit committed without its regenerated
+  Turtle fails the build.
+- Document in `CONTRIBUTING.md` that the shared agent guidelines are a separate
+  repository cloned into the gitignored `.agents/`.
+
+### Widget rebuilt on the v4 design
+
+- Replace `App.svelte`, `map/Map.svelte` and `shared/*` with `components/`,
+  `lib/` and `styles/`: a filter accordion with one section open at a time,
+  counted type pills as the panel's landing control, a detail pane, a coach
+  overlay and a mobile sheet.
+- Draw the basemap as SVG with `d3-geo` over the bundled Natural Earth topology
+  (`src/atlas.json`, `just map::atlas`), with pins on a canvas; drop
+  `maplibre-gl`, `lucide-svelte` and `qrcode`.
+- Keep the MapLibre-era bathymetry pipeline (`just map::tiles`, the dev-server
+  route and the nginx mount) for a later trial; the SVG stage does not draw it.
+- Take the map's data from the API rather than a bundled Oxigraph: `init(apiurl)`
+  fetches the filter widgets, and the widget no longer ships the ontology.
+- Take each entity's "read more" link from the API's `storiesUrl` instead of
+  building it from a WordPress tag id per language.
+- Drop the `?state=` restore path, whose endpoint went in the backend refactor.
+- Retire `share/index.html`; `tools/docker/index.html` is the one demo page.
+- Self-host Cabin and Cabin Condensed (`just map::fonts`) instead of loading
+  them from Google Fonts, which was the widget's last third-party request.
+- Call the story count at `/api/v1/stories/count` with `tags`, matching the
+  router; it was calling `/api/stories/count` with `tag` and silently counting
+  nothing.
+- Pin the vite dev server with `strictPort`, so it cannot drift out of the API's
+  CORS allowlist.
+
+### Frontend configuration
+
+- Read the repository-root `.env` from `vite.config.ts`, the same file Compose
+  and `settings.py` read: `COMPASS_DEV_PORT` sets the dev server's port and
+  `COMPASS_API_URL` (or `COMPASS_HTTP_PORT`) fills the dev page's `apiurl`. Both
+  default to what `settings.py` expects, so no `.env` is required.
+- Take the stories link's URL from the API instead of the two oceancare.org URLs
+  the widget hard-coded; a tagless request answers with the deployment's own.
+- Write `docs/compass/configuration-frontend.md`, including what remains
+  use-case specific in the widget and needs a rebuild.
+
+### Filter options carry a definition
+
+- Add `definition_en` / `definition_de` to the concepts sheet; a filled cell
+  becomes `skos:definition` and reaches the panel as an option's `description`.
+  The key is absent, never null, when a concept defines nothing.
+
+### Facets
+
+- Count entities per type: `/entities/facets` now returns an `entityType`
+  dimension, counted over the class `_pin_branch` binds.
+
+### Fixes
+
+- Write bathymetry tiles to `src/frontend/tiles/`, which is what compose mounts
+  and git ignores; `build-tiles.mjs` and the vite dev route wrote to
+  `src/frontend/tools/`.
+- Run `ruff` through `uv` in `check.just`: it is a dev dependency of the Python
+  projects, not a tool on `PATH` in the nix dev shell.
+
 ### Docs refactor
 
 - Split configuration docs into `configuration-ontology.md`,

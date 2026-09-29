@@ -1,0 +1,344 @@
+.pane-detail {
+  display: none;
+}
+aside.filters.detail .pane-filters {
+  display: none;
+}
+/* Forward goes in from the right, back from the left. Both animations hang off
+   the pane itself rather than a class someone toggles: a CSS animation restarts
+   by itself when an element goes from display:none to block, so the swap is the
+   whole trigger. A class added for the motion and dropped after it has to be
+   dropped at some arbitrary later moment, and that recalc tears down the layer
+   the pane was composited onto -- a flash once everything has already settled.
+   Only one pane is ever displayed, so neither can fade up from nothing either:
+   there is nothing behind it but bare sidebar. Both start mostly opaque. */
+aside.filters.detail .pane-detail {
+  display: block;
+  animation: panein 0.19s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.pane-filters {
+  animation: paneback 0.19s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes panein {
+  from {
+    opacity: 0.4;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes paneback {
+  from {
+    opacity: 0.4;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  aside.filters.detail .pane-detail,
+  .pane-filters {
+    animation: none;
+  }
+}
+
+.detailhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+.back:hover {
+  color: var(--cerulean);
+}
+.xclose {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 25px;
+  line-height: 1;
+  color: var(--astronaut);
+  opacity: 0.8;
+  transition:
+    color 0.16s ease,
+    opacity 0.16s ease;
+}
+.xclose:hover {
+  color: var(--cerulean);
+  opacity: 1;
+}
+.xclose:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .xclose {
+    transition: none;
+  }
+}
+.thumb {
+  display: block;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 20px;
+}
+.th-sea {
+  fill: var(--astronaut);
+}
+.th-land {
+  fill: var(--chrome);
+}
+.th-grat {
+  fill: none;
+  stroke: #fff;
+  stroke-opacity: 0.14;
+  stroke-width: 0.5px;
+}
+.th-rim {
+  fill: none;
+  stroke: var(--astronaut);
+  stroke-opacity: 0.35;
+  stroke-width: 1px;
+}
+.th-halo {
+  fill: #fff;
+  opacity: 0.55;
+}
+.th-dot {
+  fill: var(--sienna);
+}
+
+.pane-detail h2 {
+  margin: 18px 0 0;
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+.pane-detail .etag {
+  display: inline-block;
+  align-self: flex-start;
+  margin: 18px 0 0;
+  border: 0;
+  border-radius: 60px;
+  background: var(--astronaut);
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: #fff;
+  transition: background 0.16s ease;
+}
+.pane-detail button.etag:hover {
+  background: var(--cerulean);
+}
+.pane-detail button.etag:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: 2px;
+}
+.pane-detail .etag-flat {
+  background: none;
+  padding-left: 0;
+  padding-right: 0;
+  color: var(--astronaut);
+}
+.pane-detail .etag + h2 {
+  margin-top: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pane-detail .etag {
+    transition: none;
+  }
+}
+.pane-detail .where {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+.pane-detail p.txt {
+  font-size: 17px;
+  line-height: 26px;
+  color: var(--tundora);
+  margin: 20px 0 0;
+}
+/* The one outbound link a reader is likely to want, so it follows the prose it
+   follows from instead of waiting below the tag list, and it sits on the --sea
+   block the tally block already uses for the same errand. Not a filled slab:
+   the map is this panel's primary action and every text action in the sidebar
+   is a link. */
+.storiescall {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  background: var(--sea);
+}
+.pane-detail .storiescall .storiesbtn {
+  margin: 0;
+  font-size: 17px;
+  line-height: 24px;
+}
+.ptags {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 22px;
+}
+.ptagrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* the accordion's section heading, a step down: the panel names the schemes in
+   the same voice and the same order the filter list does */
+.ptaglabel {
+  margin: 0 0 7px;
+  font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12.5px;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  color: var(--tundora);
+}
+.ptag {
+  background: none;
+  border: 1px solid var(--land-hi);
+  border-radius: 60px;
+  padding: 5px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--astronaut);
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+.ptag:hover {
+  background: var(--sea);
+  border-color: var(--cerulean);
+  color: var(--cerulean);
+}
+.ptag:focus-visible {
+  outline: 2px solid var(--cerulean);
+  outline-offset: 2px;
+}
+.ptag:active {
+  background: var(--cerulean);
+  border-color: var(--cerulean);
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptag {
+    transition: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .pane-detail {
+    padding: 0 18px calc(26px + var(--sbtm));
+  }
+  .detailhead {
+    position: sticky;
+    top: var(--grabh);
+    z-index: 3;
+    justify-content: flex-start;
+    margin: 0 -18px 14px;
+    padding: 6px 12px 6px 4px;
+    background: #fff;
+    border-bottom: 1px solid var(--land-hi);
+    min-height: 60px;
+  }
+  /* One close, top left: back and close both dismiss the entry, and the map
+     is what the sheet goes back to. */
+  .back {
+    display: none;
+  }
+  .xclose {
+    width: 48px;
+    height: 48px;
+    font-size: 28px;
+    opacity: 0.9;
+  }
+  /* Tag, title and description lead under the header, so half height opens
+     on what the entry is; the globe, the tags and the links follow below the
+     fold. A flex column so order can move them without a second copy. */
+  aside.filters.detail .pane-detail {
+    display: flex;
+    flex-direction: column;
+    animation: none;
+  }
+  .pane-detail > .thumb {
+    order: 1;
+    margin: 24px auto 0;
+  }
+  .pane-detail > .ptags {
+    order: 2;
+  }
+  .pane-detail > .storiescall,
+  .pane-detail > .ptags ~ * {
+    order: 3;
+  }
+  /* flex margins do not collapse into the header's */
+  .pane-detail > .etag {
+    margin-top: 4px;
+  }
+  .pane-detail > button.etag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+  .pane-detail .etag + h2 {
+    font-size: 22px;
+    line-height: 28px;
+    overflow-wrap: anywhere;
+  }
+  .pane-detail .where {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .pane-detail p.txt {
+    font-size: 16px;
+    line-height: 25px;
+  }
+  .storiescall {
+    padding: 12px 14px;
+  }
+  .pane-detail .storiesbtn {
+    align-items: center;
+    min-height: 44px;
+  }
+  .pane-detail > .storiesbtn.ghost {
+    margin: 14px 0 0;
+  }
+  .ptag {
+    padding: 8px 14px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}

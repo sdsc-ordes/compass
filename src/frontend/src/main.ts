@@ -1,1 +1,1 @@
-import './App.svelte';
+import './components/CompassMap.svelte';

@@ -58,6 +58,9 @@ nav:
       - Ontology: configuration-ontology.md
       - Backend: configuration-backend.md
       - Frontend: configuration-frontend.md
+  - Frontend:
+      - The widget: frontend-widget.md
+      - The map: frontend-map.md
   - Backend:
       - Overview: backend/index.md
       - Design: backend/design.md

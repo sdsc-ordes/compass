@@ -1,0 +1,106 @@
+:host {
+  --astronaut: #2a4e71;
+  --cerulean: #0171b4;
+  --sienna: #ed6d52;
+  --tundora: #444444;
+  --land-hi: #d2dfe9;
+  --sea: #f4f8fb;
+  /* Sanctioned in the design system as the graticule blue, but only ever used
+     from the JS palette until now. Declared here for the focus ring and the
+     card's preview edge, which need a light blue that is not Cerulean. */
+  --iso: #7fa9c6;
+  --chrome: #6e8ca6;
+  --chrome-night: #5a7c97;
+  --sienna-ink: #c9482c;
+  /* Astronaut's channels, for the rgba() shadows and rules that need it with an
+     alpha. Same pattern as --stage-scrim. */
+  --astronaut-rgb: 42, 78, 113;
+  --stage-surface: #fff;
+  --stage-ink: var(--astronaut);
+  --stage-dim: #5a6b7d;
+  --stage-edge: var(--chrome);
+  --stage-accent: var(--astronaut);
+  --stage-tint: var(--sea);
+  --stage-scrim: 247, 250, 252;
+  /* The map cards run against the theme: a dark card over the light map, a light
+     card over the dark one, so a card always reads as sitting above the map
+     rather than as a hole in it. Card-scoped on purpose -- the control cluster
+     shares --stage-surface and stays with the theme. */
+  --card-surface: var(--astronaut);
+  --card-ink: #fff;
+  --card-label: #c8d6e3;
+  --card-edge: #3d6389;
+  --card-shadow: 0 10px 30px rgba(8, 24, 39, 0.34);
+  /* Cerulean is 1.7:1 on astronaut; --iso is 3.46:1 and keeps the edge visible. */
+  --card-prev-edge: var(--iso);
+  --rail: 420px;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+* {
+  box-sizing: border-box;
+}
+.ico {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  margin: 0;
+  padding: 0;
+  font-family: Cabin, system-ui, sans-serif;
+  color: var(--tundora);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.mapc {
+  height: 100%;
+  min-height: 600px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  position: relative;
+  overflow: clip;
+  background: #fff;
+}
+
+@media (max-width: 860px) {
+  :host {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  .mapc {
+    display: block;
+    position: relative;
+    grid-template-columns: none;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: clip;
+    --dock: 120px;
+    --grabh: 58px;
+    --sbtm: env(safe-area-inset-bottom, 0px);
+  }
+}

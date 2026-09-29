@@ -26,9 +26,27 @@ dev-up:
     just frontend &
     wait
 
+# Rewrite every source file in the project's style.
+format *args:
+    just check::format "$@"
+
+# Report style and correctness problems without changing anything.
+lint *args:
+    just check::lint "$@"
+
+# Run the backend, generator and widget test suites.
+test *args:
+    just check::tests "$@"
+
 # Bring up the stack with docker compose.
+# The image picks up src/frontend/bathy/ as it finds it. The committed pair is
+# always there; the d/ detail level is gitignored, so say so rather than ship a
+# softer map by accident -- building it is deliberate, not a deploy step.
+[doc("Bring up the stack with docker compose.")]
 [confirm("Bring up docker compose? [y/n]")]
 deploy:
+    @test -d "{{root_dir}}/src/frontend/bathy/d" \
+      || echo "note: no bathy/d -- deep zoom ships at base resolution. \`just map::bathymetry-detail\` builds it."
     cd "{{root_dir}}" && docker compose up --build
 
 # Lint, format, tests, and frontend type/offline checks.
@@ -39,7 +57,7 @@ mod check 'tools/just/check.just'
 [group('modules')]
 mod data 'tools/just/data.just'
 
-# Rebuild map regions, basemap geometry, and bathymetry tiles.
+# Rebuild map regions, basemap geometry, and bathymetry rasters.
 [group('modules')]
 mod map 'tools/just/map.just'
 

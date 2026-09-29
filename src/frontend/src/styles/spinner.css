@@ -1,0 +1,21 @@
+.spinner {
+  width: var(--spin-size, 26px);
+  height: var(--spin-size, 26px);
+  margin: 0 auto;
+  border: 3px solid var(--land-hi);
+  border-top-color: var(--cerulean);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-color: var(--land-hi);
+    opacity: 0.7;
+  }
+}

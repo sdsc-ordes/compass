@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import pyshacl
+from odf import teletype
 from odf.opendocument import load
 from odf.table import Table, TableCell, TableRow
 from odf.text import P
@@ -70,33 +71,29 @@ OUT_VOCAB = USE_CASE_DIR / "vocab.ttl"
 ONTOLOGY_NS = "http://example.org/ocean-org/ontology#"
 DATA_NS = "http://example.org/ocean-org/data#"
 
-# The six tag dimensions, in the order their sections appear in vocab.ttl.
-DIMENSIONS = ["WorkArea", "Conservation", "Topic", "Pollution", "Species", "CountryArea"]
+# The five tag dimensions, in the order their sections appear in vocab.ttl.
+DIMENSIONS = ["WorkArea", "Topic", "Programme", "Species", "CountryArea"]
 
 # The four entity classes, in the order their sections appear in compass.ttl.
 CLASSES = {
-    "InternationalForum": "International Forums",
+    "InternationalForum": "International Fora",
     "Network": "Networks",
     "PartnerOrganization": "Partner Organizations",
-    "Project": "Projects and Programmes",
+    "HostOrganization": "Host Organization",
 }
 
 # Which predicate a link becomes, keyed by what the link points at.
 TAG_PREDICATE = {
     "WorkArea": "compass:workArea",
-    "Conservation": "compass:conservation",
     "Topic": "compass:topic",
-    "Pollution": "compass:pollution",
+    "Programme": "compass:programme",
     "Species": "compass:species",
     "CountryArea": "compass:countryArea",
     "InternationalForum": "compass:forum",
-    "Project": "compass:relatedProject",
     "PartnerOrganization": "compass:relatedOrganization",
     "Network": "compass:relatedOrganization",
+    "HostOrganization": "compass:relatedOrganization",
 }
-
-# compass:managedByOceanCare is true for every Project plus these ids.
-MANAGED_BY_OCEANCARE = {"OceanCare"}
 
 SCHEME_COLUMNS = ["id", "name_en", "name_de", "definition_en", "definition_de"]
 CONCEPT_COLUMNS = [
@@ -104,8 +101,9 @@ CONCEPT_COLUMNS = [
     "dimension",
     "name_en",
     "name_de",
+    "definition_en",
+    "definition_de",
     "wp_tag_id",
-    "iso_codes",
     "notes",
 ]
 PIN_COLUMNS = [
@@ -139,17 +137,13 @@ PREDICATE_ORDER = [
     "compass:description",
     "schema:url",
     "schema:image",
-    "compass:isoCode",
-    "compass:managedByOceanCare",
     "compass:workArea",
-    "compass:conservation",
     "compass:topic",
-    "compass:pollution",
+    "compass:programme",
     "compass:species",
     "compass:countryArea",
     "compass:forum",
     "compass:relatedOrganization",
-    "compass:relatedProject",
     "compass:wpTagId",
     "compass:wpEntityTagId",
     "skos:hasTopConcept",
@@ -231,7 +225,9 @@ def _cell_text(cell) -> str:
         if stored is not None:
             # Trim the trailing .0 a spreadsheet adds to whole numbers.
             return stored[:-2] if stored.endswith(".0") else stored
-    return "\n".join(str(p) for p in cell.getElementsByType(P)).strip()
+    # teletype, not str(): a spreadsheet packs runs of spaces into <text:s/>
+    # elements that str() renders as nothing, silently joining words.
+    return "\n".join(teletype.extractText(p) for p in cell.getElementsByType(P)).strip()
 
 
 def _row_values(row, width: int) -> list[str]:
@@ -445,11 +441,13 @@ def concept_triples(row: Row, problems: Problems, fallbacks: Fallbacks) -> Tripl
     scheme = f"compass:{dimension}Scheme"
     triples: Triples = [("a", f"skos:Concept, compass:{dimension}")]
     triples += bilingual_triples(row, "name", "skos:prefLabel", fallbacks)
+    # One line under the option in the filter panel. An empty English cell emits
+    # no triple at all, so nothing downstream ever sees a blank definition -- and
+    # most cells are empty today, the workbook owner filling them in over time.
+    triples += bilingual_triples(row, "definition", "skos:definition", fallbacks)
     wp_tag_id = number(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
-    if row["iso_codes"]:
-        triples.append(("compass:isoCode", f'"{row["iso_codes"]}"'))
     triples += [("skos:inScheme", scheme), ("skos:topConceptOf", scheme)]
     return triples
 
@@ -482,8 +480,6 @@ def pin_triples(
     if wp_entity_tag_id:
         triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
-    managed = row["class"] == "Project" or row["id"] in MANAGED_BY_OCEANCARE
-    triples.append(("compass:managedByOceanCare", "true" if managed else "false"))
     triples += link_triples(parse_links(row, kinds, problems))
 
     latitude = number(row, "lat", problems, float)

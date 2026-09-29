@@ -2,21 +2,61 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Compass dev</title>
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/src/assets/www.oceancare.org-32x32.png"
+    />
+    <link rel="apple-touch-icon" href="/src/assets/www.oceancare.org-180x180.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/src/assets/www.oceancare.org-192x192.png"
+    />
     <style>
       html,
       body {
         margin: 0;
         height: 100%;
       }
+
       compass-map {
         display: block;
         height: 100vh;
+        height: 100dvh;
       }
     </style>
+    <!-- Matomo Tag Manager -->
+    <script>
+      var _mtm = (window._mtm = window._mtm || []);
+      _mtm.push({ 'mtm.startTime': new Date().getTime(), event: 'mtm.Start' });
+      (function () {
+        var d = document,
+          g = d.createElement('script'),
+          s = d.getElementsByTagName('script')[0];
+        g.async = true;
+        g.src = 'https://stats.oceancare.org/js/container_6zoKVnve.js';
+        s.parentNode.insertBefore(g, s);
+      })();
+    </script>
+    <!-- End Matomo Tag Manager -->
   </head>
+
   <body>
-    <compass-map apiurl="http://localhost:8780" tileurl="" lang="en"></compass-map>
+    <!-- Matomo Image Tracker-->
+    <noscript
+      ><img
+        referrerpolicy="no-referrer-when-downgrade"
+        src="https://stats.oceancare.org/matomo.php?idsite=5&amp;rec=1"
+        style="border: 0"
+        alt=""
+    /></noscript>
+    <!-- End Matomo -->
+    <compass-map apiurl="__COMPASS_API_URL__" tileurl="" lang="en"></compass-map>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

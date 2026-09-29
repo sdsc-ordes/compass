@@ -23,7 +23,7 @@ flowchart TB
   F["get_filters_from_shacl<br/>walk SHACL into FilterWidget"]
   N["get_shacl_property<br/>yield sh:property nodes"]
   L["get_shacl_label<br/>labels in lang"]
-  OUT["JSON FilterWidget list<br/>TagPanel / legend"]
+  OUT["JSON FilterWidget list<br/>filter accordion / type pills"]
 
   API --> FR --> G
   TTL -.-> G
@@ -63,7 +63,7 @@ flowchart TB
   INST["instances<br/>one dict per entity"]
   GEO["instances_to_geojson<br/>decode via EntityShape"]
   FC["FeatureCollection"]
-  MAP["Map / ListView / sidebar"]
+  MAP["Stage / sidebar / detail pane"]
 
   API --> ER --> EF
   EF -->|cache miss| EP --> G
@@ -90,19 +90,19 @@ flowchart TB
 
 For the map user, the relationship is simple: **filters ask; entities answer.**
 
-**Entities** are the **things on the map** (and in the list): a Project, Network,
-Partner, or Forum as a pin, or a Country/Area as a shaded region. Click one and
-the sidebar or list row shows name, type, and colored tag chips.
+**Entities** are the **things on the map**: a Network, Partner or Forum, each as
+a pin. Click one and the detail pane shows name, type, and colored tag chips.
 
-**Filters** are the **controls that narrow that set**: the filter panel (topics,
-species, regions, …) plus the map legend type toggles. Choosing chips changes
-which entities stay visible; the result-count badge is “how many entities match.”
+**Filters** are the **controls that narrow that set**: the filter panel (work
+areas, topics, programmes, species, countries / regions) plus the entity-type
+pills. Choosing chips changes which entities stay visible; the result-count
+badge is “how many entities match.”
 
 | | Filter (UI) | Entity (UI) |
 | --- | --- | --- |
-| Looks like | Sections of clickable chips / legend dots | Pins, regions, list rows, detail sidebar |
+| Looks like | Sections of clickable chips / type pills | Pins on the map, detail pane |
 | Role | “Show me only …” | “Here is one matching thing” |
-| Example | Chip **Pollution → Plastics** | Project pin whose properties include that tag |
+| Example | Chip **Topics → Plastic Pollution** | Partner pin whose properties include that tag |
 
 In the backend, those two faces are separate SHACL projections:
 

@@ -14,6 +14,7 @@ from app.config import (
     create_stories_frontend_url,
 )
 from app.main import app
+from app.namespaces import COMPASS
 from app.routers.stories import _resolve_tags_ids
 
 # ---------------------------------------------------------------------------
@@ -113,12 +114,18 @@ def test_stories_count_no_tags():
     assert data["url"] == STORIES_BASE_URL_EN
 
 
-def test_stories_count_unmapped_tag():
-    """Tags with no compass:wpTagId mapping return count=0 without an HTTP call."""
-    resp = client.get(
-        "/api/v1/stories/count",
-        params={"tags": "http://example.org/ocean-org/ontology#AdvocacyWork"},
+def test_stories_count_unmapped_tag(read_graph):
+    """An IRI with no compass:wpTagId returns count=0 without an HTTP call.
+
+    Every concept in the use case now carries a tag id, so the case is reached
+    with an IRI that is not in the graph at all -- a stale or unknown tag from
+    the frontend, which is the situation this branch exists for.
+    """
+    unknown = COMPASS.NoSuchConcept
+    assert not list(read_graph.predicate_objects(unknown)), (
+        f"{unknown} is in the graph; pick an IRI the ontology does not define."
     )
+    resp = client.get("/api/v1/stories/count", params={"tags": str(unknown)})
     assert resp.status_code == 200
     data = resp.json()
     assert data["count"] == 0
