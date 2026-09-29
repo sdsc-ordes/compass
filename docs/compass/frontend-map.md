@@ -1,8 +1,10 @@
 # The Map
 
-Two views of one dataset: a flat **Natural Earth 1** projection (the default) and
-an orthographic **globe**. Both are drawn by `d3-geo` — SVG for land, borders and
-labels, canvas for the pins and the depth raster. There is no MapLibre: the design
+Two views of one dataset: a flat **Equal Earth** projection (the default) and
+an orthographic **globe**. Equal Earth is equal-area, so regions compare fairly by
+size, while keeping familiar shapes (Šavrič, Patterson & Jenny, 2018). Both are
+drawn by `d3-geo` — SVG for land, borders and labels, canvas for the pins and the
+depth raster. There is no MapLibre: the design
 needed full control of every mark — how countries are filled, outlined and
 labelled, for example — and the price is hand-rolled gestures,
 hit-testing and fanning in `src/lib/projection.ts` and `src/lib/pins.ts`.
@@ -39,12 +41,12 @@ reprojects it. The bake needs z5; a shallower fetch is not enough.
 
 **Two rasters, because there are two kinds of motion.** Flat pan and zoom are an
 exact similarity transform of a fixed image, so `flat.webp` is pre-projected into
-Natural Earth 1 and every frame is a single `drawImage`. Rotation is the one
+Equal Earth and every frame is a single `drawImage`. Rotation is the one
 transform that is not affine, so the globe resamples per frame from
 `equirect.webp` (plate carrée) under a frame budget.
 
 **A small base for phones.** `flat-small.webp` is the same image at 2048 px
-(0.3 MB against 4.5). A stage drawing the sphere at no more device pixels than
+(0.3 MB against 4.4). A stage drawing the sphere at no more device pixels than
 that starts on it and fetches the full base only once zoomed past it; Save-Data
 stays on it. `SMALL_W` in `src/lib/bathymetry.ts` must match the bake's
 `FLAT_SMALL_W`.

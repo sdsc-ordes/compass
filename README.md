@@ -274,7 +274,7 @@ The bathymetry ships as baked rasters in `src/frontend/bathy/`, baked from the
 GEBCO pyramid — `src/frontend/src/lib/bathymetry.ts`. A visitor downloads a
 fraction of what the folder holds.
 
-`flat.webp` (4.7 MB) is the world already drawn in Natural Earth 1. Because that
+`flat.webp` (4.4 MB) is the world already drawn in Equal Earth. Because that
 projection only ever varies by scale and translate, every pan and zoom is an
 exact similarity transform of that one image, so the flat view is a single
 `drawImage` with no per-pixel work. `equirect.webp` (1.5 MB) is only fetched if
@@ -283,8 +283,8 @@ raster still has to be resampled per frame.
 
 Those two are committed, so a fresh clone has a working map.
 
-`d/` holds a 2x Natural Earth level (16384 px wide, the native resolution of the
-GEBCO pyramid) cut into 38 tiles of 2048 px. It is fetched only once the flat
+`d/` holds a 2x Equal Earth level (16384 px wide, the native resolution of the
+GEBCO pyramid) cut into 32 tiles of 2048 px. It is fetched only once the flat
 view is upscaling `flat.webp` past 1:1, from around zoom 4, and only for the
 tiles the viewport covers — four to six of them, so about 2–3 MB, and nothing at
 all for a visitor who never zooms in. They are drawn over the base, never
