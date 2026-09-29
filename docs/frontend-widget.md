@@ -104,5 +104,5 @@ just test                       # vitest, with the backend and generator suites
 `npm run build` in `src/frontend` produces the bundle. The offline gate is not a
 formality: the widget runs on someone else's page, which must not leak its
 visitors to third-party hosts, so fonts, atlas and imagery are all self-hosted
-and a stray CDN reference fails the check. It runs ahead of `just frontend`, so
-it is hard to miss locally — there is no frontend CI job yet.
+and a stray CDN reference fails the check. It runs ahead of `just frontend` and
+in CI's Widget job.

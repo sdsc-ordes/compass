@@ -15,16 +15,16 @@ element's attributes, the API it is pointed at, and a rebuild.
 | Attribute | Default | Meaning |
 | --- | --- | --- |
 | `apiurl` | `''` (this page's origin) | Where the API lives. Every query, facet count and story count goes here. |
-| `tileurl` | `''` (this page's origin) | Where `/bathy/` serves the baked GEBCO depth rasters, including the `/bathy/d/` detail tiles the flat view loads at deep zoom. Not always the same host as `apiurl` — the dev stack runs the API on its own port and the rasters on vite's. |
+| `tileurl` | `''` (this page's origin) | Where `/basemap/` serves the atlas and `/bathy/` the baked GEBCO depth rasters, including the `/bathy/d/` detail tiles the flat view loads at deep zoom. Not always the same host as `apiurl` — the dev stack runs the API on its own port and the rasters on vite's. |
 | `lang` | `en` | `en` or `de`. A `?lang=` query parameter overrides it. |
 
 Served behind the project's nginx image, `apiurl` and `tileurl` can both stay
-empty: nginx proxies `/api` and serves `/bathy/` on the same origin, which is
+empty: nginx proxies `/api` and serves `/basemap/` and `/bathy/` on the same origin, which is
 also why the deployed widget needs no CORS. `tools/docker/index.html` sets both
 to `location.origin` explicitly, because the origin is only known at runtime.
 
-Embedded on another origin, `tileurl` has to name the host that has `/bathy/`,
-and that host has to answer with `Access-Control-Allow-Origin` — the widget
+Embedded on another origin, `tileurl` has to name the host that has `/basemap/`
+and `/bathy/`, and that host has to answer with `Access-Control-Allow-Origin` — the widget
 reads the globe raster back off a canvas to reproject it, and a tainted canvas cannot
 be read. The project's nginx config sends that header. Point `tileurl` at a host
 that does not, and the layer quietly stays off rather than failing.
@@ -66,9 +66,8 @@ that is not OceanCare's has to change them and rebuild:
 
 | What | Where |
 | --- | --- |
-| Ontology and instance namespaces | `src/engine/namespaces.ts` (`COMPASS_NS`, `DATA_NS`) |
-| The classes drawn as pins | `src/engine/namespaces.ts` (`ENTITY_CLASS`) |
-| The entity drawn as a star rather than a dot | `src/engine/namespaces.ts` (`FEATURED_IRI`) |
+| The class drawn with a logo, on top of the other pins | `src/lib/pins.ts` (`isHost`), logo in `src/assets/` |
+| The short type names on the pills | `src/lib/i18n.ts` (`typeShort`) |
 | Which dimensions the panel draws, and in what order | `src/lib/schema.ts` (`DIM_IDS`) |
 | The icon on each filter section | `src/lib/schema.ts` (`DIM_ICONS`) |
 | Palette and type scale | `src/lib/palette.ts`, `src/styles/` |

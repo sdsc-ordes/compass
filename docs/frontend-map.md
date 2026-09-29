@@ -77,7 +77,7 @@ the deployed map stays at base resolution.
 
 ```bash
 just map::tiles              # ~53 MB from GEBCO, network, cached between runs
-just map::bathymetry         # rebake the committed pair (no network)
+just map::bathymetry         # rebake the committed rasters (no network)
 just map::bathymetry-detail  # the same, plus d/ — before a deploy
 ```
 
@@ -101,8 +101,8 @@ what lets nginx cache them `immutable`; keep the suffix on any new fetched asset
 
 ### Credit is a licence condition
 
-GEBCO's terms require acknowledging the source. The sidebar credit links the grid
-page and `src/frontend/THIRD-PARTY-NOTICES.md` carries the citation and the three
+GEBCO's terms require acknowledging the source. The map's attribution links the
+grid page and `src/frontend/THIRD-PARTY-NOTICES.md` carries the citation and the three
 conditions. Do not drop either.
 
 ## Basemap and labels
