@@ -66,6 +66,19 @@ class TestBuildOptional:
         assert "skos:prefLabel" in result
         assert "rdfs:label" in result
 
+    def test_multi_folds_in_a_subquery(self):
+        # Folded per pin, so several lists never join into their cross product.
+        spec = _ep(
+            id="workArea",
+            path_iri=str(COMPASS.workArea),
+            category="iri_with_label",
+            is_multi=True,
+        )
+        result = build_optional(spec, "en")
+        assert "SELECT ?s (GROUP_CONCAT(DISTINCT CONCAT(STR(?workAreaNode)" in result
+        assert "AS ?workAreaAgg)" in result
+        assert "GROUP BY ?s" in result
+
     def test_boolean(self):
         # No boolean property is declared today; the projection still supports
         # one, so the clause it would build is asserted against a stand-in.
@@ -82,9 +95,7 @@ class TestBuildOptional:
 class TestBuildSelectExpr:
     def test_multi_iri(self):
         spec = _ep(id="workArea", category="iri_with_label", is_multi=True)
-        result = build_select_expr(spec)
-        assert "GROUP_CONCAT" in result
-        assert "workAreaNode" in result
+        assert build_select_expr(spec) == "(SAMPLE(?workAreaAgg) AS ?workAreaRaw)"
 
     def test_single_iri(self):
         spec = _ep(id="funding", category="iri_with_label", is_multi=False)
@@ -93,8 +104,7 @@ class TestBuildSelectExpr:
 
     def test_multi_literal(self):
         spec = _ep(id="country", category="lang_literal", is_multi=True)
-        result = build_select_expr(spec)
-        assert "GROUP_CONCAT" in result
+        assert build_select_expr(spec) == "(SAMPLE(?countryAgg) AS ?countryRaw)"
 
     def test_single_literal(self):
         spec = _ep(id="staffSize", category="simple_literal", is_multi=False)
