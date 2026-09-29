@@ -50,6 +50,9 @@ plugins:
 nav:
   - Overview: index.md
   - Design: design.md
+  - Frontend:
+      - The widget: frontend-widget.md
+      - The map: frontend-map.md
   - Configuration:
       - Ontology: configuration-ontology.md
       - Backend: configuration-backend.md
