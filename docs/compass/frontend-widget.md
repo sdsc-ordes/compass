@@ -62,6 +62,20 @@ One component tree, two layouts, split at 860 px (`isMobile` in
 The URL carries the filters, or `?pin=` in their place when an entry is open, so
 either can be shared.
 
+## Changing the texts
+
+Text comes from two places, and which one depends on what it describes.
+
+- **Interface strings** — buttons, captions, prompts, errors, screen-reader
+  text — live in `src/lib/i18n.ts`, one `en` and one `de` object with the same
+  keys. Edit the value in both and keep the keys matching. `{n}`-style placeholders are filled by
+  `fmt`, and `…One` keys are the singular. Needs a rebuild.
+- **Everything about the data** — filter group names, option labels, pin
+  names, descriptions, locations — comes from the `_en` / `_de` column pairs in
+  the use case's `source-data.ods`. Edit the cell, then `just data::generate`
+  and reload; no frontend rebuild. An empty `_de` cell falls back to the English
+  text, and the generator reports how many did.
+
 ## Design
 
 The UI follows the OceanCare website's design system: Cabin, five colours, square
