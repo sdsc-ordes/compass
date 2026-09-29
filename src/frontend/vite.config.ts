@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +9,24 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const bathyDir = path.join(root, 'bathy');
 
 const repoRoot = path.resolve(root, '..', '..');
+
+// A rebake keeps the file names, so the bundle fetches them as ?v=<this>: a
+// hash of every raster and the atlas, which lets nginx cache them immutable.
+// Taken from what is on disk at build, d/ included when it has been baked.
+function assetVersion(): string {
+  const files = (dir: string): string[] =>
+    fs.existsSync(dir)
+      ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+          const p = path.join(dir, e.name);
+          return e.isDirectory() ? files(p) : [p];
+        })
+      : [];
+  const hash = crypto.createHash('sha256');
+  for (const f of [...files(bathyDir), path.join(root, 'public/basemap/atlas.json')].sort()) {
+    hash.update(path.relative(root, f)).update(fs.readFileSync(f));
+  }
+  return hash.digest('hex').slice(0, 10);
+}
 
 // Substitutes __VAR__ in the dev-only index.html. Deliberately not Vite's own
 // %VAR% syntax: envPrefix below makes Vite's built-in env hook claim those, and
@@ -78,6 +97,7 @@ export default defineConfig(({ mode }) => {
   return {
     envDir: repoRoot,
     envPrefix: 'COMPASS_',
+    define: { __ASSET_V__: JSON.stringify(assetVersion()) },
     server: {
       port: devPort,
       strictPort: true,

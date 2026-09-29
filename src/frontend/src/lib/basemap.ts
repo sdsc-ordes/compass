@@ -37,7 +37,7 @@ export interface BasemapRefs {
 
 // The topology is most of the widget's weight, so it is fetched beside the
 // bundle, from the same host as the rasters, rather than parsed as part of it.
-const ATLAS = 'basemap/atlas.json';
+const ATLAS = `basemap/atlas.json?v=${__ASSET_V__}`;
 
 export const atlas = writable<Atlas | null>(null);
 

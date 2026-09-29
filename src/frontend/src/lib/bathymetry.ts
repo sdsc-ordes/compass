@@ -10,13 +10,13 @@ import type { Pal } from './palette';
 //
 // Globe: rotation is the one transform that is not affine, so it resamples per
 // frame from the equirectangular raster.
-const FLAT = 'bathy/flat.webp';
+const FLAT = `bathy/flat.webp?v=${__ASSET_V__}`;
 // The same, narrower, for a stage drawing the sphere at no more device pixels
 // than this: a phone starts on 0.3 MB rather than 4.5 (140 MB decoded), and only
 // zooming past it fetches the full one. Save-Data stays on it.
-const FLAT_SMALL = 'bathy/flat-small.webp';
+const FLAT_SMALL = `bathy/flat-small.webp?v=${__ASSET_V__}`;
 const SMALL_W = 2048;
-const EQUI = 'bathy/equirect.webp';
+const EQUI = `bathy/equirect.webp?v=${__ASSET_V__}`;
 const DETAIL = 'bathy/d';
 
 // The z5 source width, cut into tiles because WebP caps a side at 16383.
@@ -254,7 +254,7 @@ export class Bathymetry {
     // 404 is the normal answer for a tile wholly outside the sphere, so the null
     // stands and nothing asks again.
     img.onerror = () => {};
-    img.src = `${this.base}/${DETAIL}/${key}.webp`;
+    img.src = `${this.base}/${DETAIL}/${key}.webp?v=${__ASSET_V__}`;
     return null;
   }
 
