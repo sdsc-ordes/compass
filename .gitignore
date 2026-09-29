@@ -12,7 +12,7 @@ tools/tiles
 # Python / backend
 .venv/
 src/backend/.venv/
-src/backend/site/
+site/
 __pycache__/
 *.py[cod]
 *.pyo
