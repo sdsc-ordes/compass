@@ -55,6 +55,8 @@ def _is_iri_value(value: str) -> bool:
 def build_optional(spec: EntityShape, lang: str) -> str:
     """Build the OPTIONAL clause that binds one EntityShape property.
 
+    A multi-valued property is aggregated in its own subquery, one row per pin.
+
     Args:
         spec: Property descriptor from SHACL.
         lang: Preferred language for labels / langString filters.
@@ -67,25 +69,46 @@ def build_optional(spec: EntityShape, lang: str) -> str:
     cat = spec.category
 
     if cat == "lang_literal":
-        return f'OPTIONAL {{ ?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}") }}'
-    if cat in ("simple_literal", "uri_literal", "boolean"):
-        return f"OPTIONAL {{ ?s {path} ?{sid} . }}"
-    if cat == "iri_with_label":
-        return (
-            f"OPTIONAL {{\n"
-            f"            ?s {path} ?{sid}Node .\n"
+        body = f'?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}")'
+    elif cat in ("simple_literal", "uri_literal", "boolean"):
+        body = f"?s {path} ?{sid} ."
+    elif cat == "iri_with_label":
+        body = (
+            f"?s {path} ?{sid}Node .\n"
             f"            OPTIONAL {{ ?{sid}Node skos:prefLabel ?{sid}Skos . "
             f'FILTER(lang(?{sid}Skos) = "{lang}") }}\n'
             f"            OPTIONAL {{ ?{sid}Node rdfs:label ?{sid}Rdfs . "
             f'FILTER(lang(?{sid}Rdfs) = "{lang}") }}\n'
-            f"            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)\n"
-            f"        }}"
+            f"            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)"
         )
-    return ""
+    else:
+        return ""
+    if not spec.is_multi:
+        return f"OPTIONAL {{\n            {body}\n        }}"
+    # A multi-valued property is folded to one row per pin in its own subquery.
+    # Side by side in the outer WHERE, the lists would join into their cross
+    # product first: a pin with every tag ran to tens of thousands of rows.
+    return (
+        f"OPTIONAL {{\n"
+        f"            SELECT ?s {_concat(spec)}\n"
+        f"            WHERE {{\n            {body}\n            }}\n"
+        f"            GROUP BY ?s\n"
+        f"        }}"
+    )
+
+
+def _concat(spec: EntityShape) -> str:
+    """The GROUP_CONCAT folding a multi-valued property into ``?<id>Agg``."""
+    sid = spec.id
+    if spec.category == "iri_with_label":
+        item = f'CONCAT(STR(?{sid}Node), "{FIELD_SEP}", COALESCE(?{sid}Lab, ""))'
+    else:
+        item = f"?{sid}"
+    return f'(GROUP_CONCAT(DISTINCT {item}; separator="{ITEM_SEP}") AS ?{sid}Agg)'
 
 
 def build_select_expr(spec: EntityShape) -> str:
-    """GROUP_CONCAT for multi-valued properties, SAMPLE for single-valued ones.
+    """SAMPLE of each property, or of its subquery's GROUP_CONCAT when multi-valued.
 
     Args:
         spec: Property descriptor from SHACL.
@@ -97,18 +120,14 @@ def build_select_expr(spec: EntityShape) -> str:
     cat = spec.category
     is_multi = spec.is_multi
 
+    if is_multi:
+        # Already folded by the subquery in build_optional.
+        return f"(SAMPLE(?{sid}Agg) AS ?{sid}Raw)"
     if cat == "iri_with_label":
-        if is_multi:
-            return (
-                f'(GROUP_CONCAT(DISTINCT CONCAT(STR(?{sid}Node), "{FIELD_SEP}", '
-                f'COALESCE(?{sid}Lab, "")); separator="{ITEM_SEP}") AS ?{sid}Raw)'
-            )
         return (
             f"(SAMPLE(?{sid}Node) AS ?{sid}Iri)\n"
             f"           (SAMPLE(?{sid}Lab) AS ?{sid}Label)"
         )
-    if is_multi:
-        return f'(GROUP_CONCAT(DISTINCT ?{sid}; separator="{ITEM_SEP}") AS ?{sid}Raw)'
     return f"(SAMPLE(?{sid}) AS ?{sid}Result)"
 
 
