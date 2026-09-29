@@ -45,6 +45,20 @@ describe('Stories', () => {
     expect(pending).toEqual([true]);
   });
 
+  it('sends the first query at once and debounces the rest', async () => {
+    const { stub, settle } = deferredFetch();
+    const s = make(stub as unknown as typeof fetch);
+    s.schedule(true, 'http://api', 'en', ['a']);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stub).toHaveBeenCalledTimes(1);
+    settle(0, answer(1));
+    s.schedule(true, 'http://api', 'en', ['b']);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stub).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(stub).toHaveBeenCalledTimes(2);
+  });
+
   it('lowers pending once the answer lands', async () => {
     const { stub, settle } = deferredFetch();
     const s = make(stub as unknown as typeof fetch);

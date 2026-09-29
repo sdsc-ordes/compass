@@ -7,6 +7,8 @@ export class Stories {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private seq = 0;
   private key: string | null = null;
+  // Only follow-ups are debounced: the first is the page loading, not a click.
+  private first = true;
 
   constructor(
     private onCount: (c: StoryCount | null) => void,
@@ -27,7 +29,9 @@ export class Stories {
       return;
     }
     this.onPending(true);
-    this.timer = setTimeout(() => this.fetch(apiurl, lang, iris), this.delayMs);
+    const wait = this.first ? 0 : this.delayMs;
+    this.first = false;
+    this.timer = setTimeout(() => this.fetch(apiurl, lang, iris), wait);
   }
 
   cancel(): void {
