@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## 1.0.0 — 2026-09-29
 
 ### Taxonomy realigned with the editorial spreadsheet
 
