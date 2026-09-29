@@ -767,15 +767,6 @@
   <canvas id="cv" bind:this={cv} aria-hidden="true"></canvas>
   <div class="ov" bind:this={ov} aria-hidden="true"></div>
 
-  <PinNav
-    {projs}
-    onFocus={onTwinFocus}
-    onBlur={(d) => {
-      if (hovered?.id === d.id) setHover(null);
-    }}
-    onSelect={(d) => onSelect(d)}
-  />
-
   <MapCard
     kind="projcard"
     bind:el={cardEl}
@@ -841,5 +832,15 @@
       cancelCoach();
     }}
     onReset={resetView}
+  />
+
+  <!-- last, so the tab order reaches the map controls before every pin -->
+  <PinNav
+    {projs}
+    onFocus={onTwinFocus}
+    onBlur={(d) => {
+      if (hovered?.id === d.id) setHover(null);
+    }}
+    onSelect={(d) => onSelect(d)}
   />
 </div>
