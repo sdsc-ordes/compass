@@ -95,6 +95,10 @@ back off a canvas to reproject it, and a tainted canvas cannot be read. If the
 rasters are missing or blocked the map falls back to a flat sea and hides the
 depth switch rather than failing.
 
+A rebake keeps the file names, so the bundle fetches the rasters and the atlas as
+`?v=<hash>`, a hash of their contents taken in `vite.config.ts` at build. That is
+what lets nginx cache them `immutable`; keep the suffix on any new fetched asset.
+
 ### Credit is a licence condition
 
 GEBCO's terms require acknowledging the source. The sidebar credit links the grid
