@@ -11,7 +11,7 @@
   import { isHost } from '../lib/pins';
   import { Stories, type StoryCount } from '../lib/stories';
   import type { Proj } from '../lib/types';
-  import { getEntities, getFacets, init, type Feature } from '../engine';
+  import { getEntities, getFacets, init, prefetch, type Feature } from '../engine';
   import { injectFonts } from '../lib/fonts';
   import {
     decodeFilters,
@@ -125,6 +125,9 @@
     lastFilterKey = key;
     loading = true;
     error = null;
+    // Both at once; the counts still land after the map has had its frame.
+    const counting = getFacets(l, f);
+    counting.catch(() => {}); // reported below, unless the entities fail first
     try {
       const data = await getEntities(l, f);
       if (seq !== loadSeq) return;
@@ -143,7 +146,7 @@
       loading = false;
 
       await nextTick();
-      const counts = await getFacets(l, f);
+      const counts = await counting;
       if (seq !== loadSeq) return;
       facets = counts;
     } catch (e) {
@@ -285,13 +288,16 @@
     const params = new URLSearchParams(window.location.search);
     lang = langFromQuery(params) ?? lang;
 
+    pendingPin = params.get('pin');
+    const schema = init(apiurl);
+    // Filters in the URL need the schema to decode; an unfiltered start does not.
+    if (pendingPin || !DIM_IDS.some((id) => params.has(id))) prefetch(lang, {});
     try {
-      await init(apiurl);
+      await schema;
     } catch (e) {
       console.error('[Compass] Failed to load the filter schema:', e);
       error = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
     }
-    pendingPin = params.get('pin');
     // A pin link opens unfiltered, so the pin is always among the results.
     if (!pendingPin) applyFilters(decodeFilters(params, buildDims(lang)));
 
