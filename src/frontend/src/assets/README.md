@@ -15,5 +15,6 @@ one to ship here was 26.6 KB on disk and 29.4 KB gzipped in the bundle. Prefer S
 for anything that lands here next: a flat-colour mark is a couple of KB, sharper at
 any DPI, and gzips properly.
 
-Inlined: `www.oceancare.org-192x192.png`, the OceanCare map pin (21.7 KB). The
-32 and 180 px icons are dev-page favicons only and never reach the bundle.
+Inlined: `www.oceancare.org-64x64.png`, the OceanCare map pin (2.7 KB, a 64-colour
+palette PNG). The pin draws it at most ~21 CSS px on a canvas capped at 2x, so 64 has room. The 32,
+180 and 192 px icons are dev-page favicons only and never reach the bundle.

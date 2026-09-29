@@ -2,7 +2,7 @@ import { geoDistance } from 'd3-geo';
 import type { GeoProjection } from 'd3-geo';
 import { ASTRONAUT, NIGHT_INK, type Pal } from './palette';
 import { frontCentre, REDUCED, type ViewState } from './projection';
-import logoUrl from '../assets/www.oceancare.org-192x192.png';
+import logoUrl from '../assets/www.oceancare.org-64x64.png';
 import { isCluster, type Cluster, type PinBox, type PinTarget, type Proj } from './types';
 
 const PIN_EDGE = ASTRONAUT;
