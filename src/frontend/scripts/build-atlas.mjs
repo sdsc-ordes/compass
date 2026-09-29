@@ -23,6 +23,42 @@ const [topo, cty, sea] = await Promise.all([get(ATLAS), get(CTY), get(SEA)]);
 
 if (!topo?.objects?.countries) throw new Error('no objects.countries in the topology');
 
+// world-atlas quantizes to 1e5 steps a side. A fifth of that, 0.018 deg of
+// longitude, is still finer than a pixel of bathy/d at full zoom, and a quarter
+// less to download.
+const COARSEN = 5;
+
+// Only the countries are read (merged to land, meshed to borders): the rest goes.
+function slim(topo) {
+  const arcs = topo.arcs.map((arc) => {
+    let x = 0;
+    let y = 0;
+    const pts = arc.map(([dx, dy]) => [
+      Math.round((x += dx) / COARSEN),
+      Math.round((y += dy) / COARSEN),
+    ]);
+    // Drop repeats but keep both ends: neighbouring arcs share them.
+    const kept = pts.filter(
+      (p, i) =>
+        i === 0 || i === pts.length - 1 || p[0] !== pts[i - 1][0] || p[1] !== pts[i - 1][1],
+    );
+    return kept.map((p, i) => (i ? [p[0] - kept[i - 1][0], p[1] - kept[i - 1][1]] : p));
+  });
+  const { scale, translate } = topo.transform;
+  return {
+    type: 'Topology',
+    bbox: topo.bbox,
+    transform: { scale: scale.map((s) => s * COARSEN), translate },
+    objects: {
+      countries: {
+        type: 'GeometryCollection',
+        geometries: topo.objects.countries.geometries.map(({ type, arcs }) => ({ type, arcs })),
+      },
+    },
+    arcs,
+  };
+}
+
 const here = dirname(fileURLToPath(import.meta.url));
 const round = (n) => Math.round(n * 100) / 100;
 
@@ -52,7 +88,7 @@ const labels = {
     .sort((a, b) => a.k - b.k),
 };
 
-writeFileSync(join(here, '..', 'public', 'basemap', 'atlas.json'), JSON.stringify(topo));
+writeFileSync(join(here, '..', 'public', 'basemap', 'atlas.json'), JSON.stringify(slim(topo)));
 writeFileSync(join(here, '..', 'src', 'atlas-labels.json'), JSON.stringify(labels));
 console.log(
   `wrote ${topo.objects.countries.geometries.length} countries, ` +
