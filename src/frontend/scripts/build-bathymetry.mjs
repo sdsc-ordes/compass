@@ -1,7 +1,7 @@
 // Bakes the GEBCO tile pyramid (see build-tiles.mjs) into the rasters the widget
 // actually loads at runtime:
 //
-//   bathy/flat.webp      world pre-projected into Natural Earth 1, drawn with a
+//   bathy/flat.webp      world pre-projected into Equal Earth, drawn with a
 //                        single drawImage because flat pan/zoom is an exact
 //                        similarity transform of a fixed image.
 //   bathy/flat-small.webp  the same, narrower, for screens too small to use the
@@ -9,7 +9,7 @@
 //   bathy/equirect.webp  plate carree, decoded to ImageData and resampled per
 //                        frame -- only the globe needs that, because rotation is
 //                        the one transform that is not affine.
-//   bathy/d/{c}_{r}.webp a 2x Natural Earth level, fetched only once the flat
+//   bathy/d/{c}_{r}.webp a 2x Equal Earth level, fetched only once the flat
 //                        view is upscaling the base past 1:1.
 //
 // Run after `just tiles`. The tiles are a build input only; nothing ships them.
@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoEqualEarth, geoPath } from 'd3-geo';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TILES = join(HERE, '..', 'tiles');
@@ -28,7 +28,7 @@ const SRC_Z = 5;
 const TILE = 512;
 
 const FLAT_W = Number(process.env.BATHY_FLAT_W ?? 8192);
-// The intermediate Web Mercator mosaic matches the Natural Earth width it feeds,
+// The intermediate Web Mercator mosaic matches the Equal Earth width it feeds,
 // so the reprojection resamples at roughly 1:1 and neither axis is starved.
 const MERC = FLAT_W;
 
@@ -166,22 +166,22 @@ async function equirect(merc) {
   return { data: dst, width: EQUI_W, height: EQUI_H, channels: 4 };
 }
 
-// The raster fits the sphere's Natural Earth bounding box to width, which is
+// The raster fits the sphere's Equal Earth bounding box to width, which is
 // what lets the runtime map any width onto any other by a single scale factor.
-function neGeom(W) {
-  const base = geoNaturalEarth1().scale(1).translate([0, 0]);
+function flatGeom(W) {
+  const base = geoEqualEarth().scale(1).translate([0, 0]);
   const [[x0, y0], [x1, y1]] = geoPath(base).bounds({ type: 'Sphere' });
   const s = W / (x1 - x0);
   return { base, x0, y0, s, W, H: Math.round((y1 - y0) * s) };
 }
 
-// Natural Earth 1 is pseudocylindrical: parallels are straight and x is exactly
+// Equal Earth is pseudocylindrical: parallels are straight and x is exactly
 // linear in longitude. So each output row needs one invert for its latitude,
 // not one per pixel -- 4k inverts instead of 34M.
 // Returns the first and last column it filled, so the tiler can tell which tiles
 // are entirely off the sphere without rescanning them.
-function neRow(ne, sample, j, dst, off) {
-  const { base, x0, y0, s, W } = ne;
+function flatRow(fg, sample, j, dst, off) {
+  const { base, x0, y0, s, W } = fg;
   const Y = y0 + (j + 0.5) / s;
   const ll = base.invert([0, Y]);
   if (!ll || !isFinite(ll[1])) return null;
@@ -210,26 +210,26 @@ function neRow(ne, sample, j, dst, off) {
 }
 
 async function flat(merc) {
-  const ne = neGeom(FLAT_W);
+  const fg = flatGeom(FLAT_W);
   const sample = sampler(merc, MERC);
-  const dst = Buffer.alloc(FLAT_W * ne.H * 4); // alloc: transparent outside the sphere
+  const dst = Buffer.alloc(FLAT_W * fg.H * 4); // alloc: transparent outside the sphere
 
-  for (let j = 0; j < ne.H; j++) {
-    neRow(ne, sample, j, dst, j * FLAT_W * 4);
-    if (j % 256 === 0) process.stdout.write(`\r  natural earth ${j}/${ne.H} rows`);
+  for (let j = 0; j < fg.H; j++) {
+    flatRow(fg, sample, j, dst, j * FLAT_W * 4);
+    if (j % 256 === 0) process.stdout.write(`\r  flat ${j}/${fg.H} rows`);
   }
-  process.stdout.write(`\r  natural earth ${ne.H}/${ne.H} rows\n`);
-  return { data: dst, width: FLAT_W, height: ne.H, channels: 4 };
+  process.stdout.write(`\r  flat ${fg.H}/${fg.H} rows\n`);
+  return { data: dst, width: FLAT_W, height: fg.H, channels: 4 };
 }
 
-// Baked one tile row at a time so the full 16384x8520 RGBA surface never has to
+// Baked one tile row at a time so the full 16384x7974 RGBA surface never has to
 // exist at once. Tiles the sphere never reaches are not written at all -- the
 // runtime reads their 404 as empty and leaves the base showing.
 async function detail(merc) {
-  const ne = neGeom(DETAIL_W);
+  const fg = flatGeom(DETAIL_W);
   const sample = sampler(merc, DETAIL_W);
   const cols = DETAIL_W / DETAIL_TILE;
-  const rows = Math.ceil(ne.H / DETAIL_TILE);
+  const rows = Math.ceil(fg.H / DETAIL_TILE);
   mkdirSync(join(OUT, 'd'), { recursive: true });
 
   const band = Buffer.alloc(DETAIL_W * DETAIL_TILE * 4);
@@ -240,9 +240,9 @@ async function detail(merc) {
     band.fill(0); // off the sphere, and the short last row, stay transparent
     const hit = new Uint8Array(cols);
     const top = r * DETAIL_TILE;
-    const end = Math.min(ne.H, top + DETAIL_TILE);
+    const end = Math.min(fg.H, top + DETAIL_TILE);
     for (let j = top; j < end; j++) {
-      const span = neRow(ne, sample, j, band, (j - top) * DETAIL_W * 4);
+      const span = flatRow(fg, sample, j, band, (j - top) * DETAIL_W * 4);
       if (!span) continue;
       const last = Math.floor(span[1] / DETAIL_TILE);
       for (let c = Math.floor(span[0] / DETAIL_TILE); c <= last; c++) hit[c] = 1;
@@ -260,7 +260,7 @@ async function detail(merc) {
     process.stdout.write(`\r  detail ${r + 1}/${rows} tile rows`);
   }
   process.stdout.write('\n');
-  return { cols, rows, wrote, height: ne.H };
+  return { cols, rows, wrote, height: fg.H };
 }
 
 function saturate(s) {

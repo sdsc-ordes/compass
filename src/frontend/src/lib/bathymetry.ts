@@ -1,9 +1,9 @@
-import { geoNaturalEarth1, geoPath, type GeoProjection } from 'd3-geo';
+import { geoEqualEarth, geoPath, type GeoProjection } from 'd3-geo';
 import type { Pal } from './palette';
 
 // Rasters baked by scripts/build-bathymetry.mjs.
 //
-// Flat: geoNaturalEarth1 only ever varies by scale and translate, so every pan
+// Flat: geoEqualEarth only ever varies by scale and translate, so every pan
 // and zoom is an exact similarity transform of one fixed image -- a single
 // drawImage, no per-pixel work. Past about k=4 it upscales the base, so a 2x
 // level is tiled over it, only where the viewport looks.
@@ -144,7 +144,7 @@ export class Bathymetry {
   // Sends for what paint() would draw, without drawing it.
   prefetch(pr: GeoProjection, globe: boolean, dpr: number): void {
     if (globe) this.equirect();
-    else this.flat(pr.scale() * NE_SPAN * dpr);
+    else this.flat(pr.scale() * FLAT_SPAN * dpr);
   }
 
   clear(): void {
@@ -192,7 +192,7 @@ export class Bathymetry {
     H: number,
     dpr: number,
   ): void {
-    const img = this.flat(pr.scale() * NE_SPAN * dpr);
+    const img = this.flat(pr.scale() * FLAT_SPAN * dpr);
     const ref = this.flatRef;
     if (!img || !ref) return;
 
@@ -579,18 +579,18 @@ function saveData(): boolean {
   return !!(nav as { connection?: { saveData?: boolean } } | undefined)?.connection?.saveData;
 }
 
-const NE = geoNaturalEarth1().scale(1).translate([0, 0]);
-const [[NE_X0, NE_Y0], [NE_X1]] = geoPath(NE).bounds({ type: 'Sphere' });
+const FLAT_PROJ = geoEqualEarth().scale(1).translate([0, 0]);
+const [[FLAT_X0, FLAT_Y0], [FLAT_X1]] = geoPath(FLAT_PROJ).bounds({ type: 'Sphere' });
 // The sphere's width at scale 1, so its drawn width is this times the scale.
-const NE_SPAN = NE_X1 - NE_X0;
+const FLAT_SPAN = FLAT_X1 - FLAT_X0;
 
 // Where the reference points land in the baked raster, which covers the sphere's
-// Natural Earth bounding box exactly and is fitted to width.
+// Equal Earth bounding box exactly and is fitted to width.
 function flatRefs(width: number): [number, number][] {
-  const s = width / NE_SPAN;
+  const s = width / FLAT_SPAN;
   return REF.map((ll) => {
-    const q = NE(ll) as [number, number];
-    return [(q[0] - NE_X0) * s, (q[1] - NE_Y0) * s];
+    const q = FLAT_PROJ(ll) as [number, number];
+    return [(q[0] - FLAT_X0) * s, (q[1] - FLAT_Y0) * s];
   });
 }
 

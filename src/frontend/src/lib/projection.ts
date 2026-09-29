@@ -1,7 +1,7 @@
 import {
   geoBounds,
   geoDistance,
-  geoNaturalEarth1,
+  geoEqualEarth,
   geoOrthographic,
   type GeoProjection,
 } from 'd3-geo';
@@ -40,7 +40,7 @@ export const ZOOM_BTN = 1.6;
 // this one scaled about the origin, which is what makes a fit a ratio rather
 // than a search.
 const flatBase = (w: number, h: number): GeoProjection =>
-  geoNaturalEarth1().fitExtent(
+  geoEqualEarth().fitExtent(
     [
       [10, 18],
       [w - 10, h - 18],
@@ -147,7 +147,7 @@ export function frameFor(
     return { k, rot: [-c[0], d - c[1]] };
   }
 
-  // Natural Earth is cut at the antimeridian, so a set straddling it really
+  // The flat map is cut at the antimeridian, so a set straddling it really
   // does span the sheet and no centre draws it together -- which is why the
   // flat fit is measured in projected px rather than in degrees. It is also
   // exact for a projection whose parallels are not evenly spaced.
