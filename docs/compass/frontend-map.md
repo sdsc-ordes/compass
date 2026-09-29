@@ -2,8 +2,9 @@
 
 Two views of one dataset: a flat **Natural Earth 1** projection (the default) and
 an orthographic **globe**. Both are drawn by `d3-geo` — SVG for land, borders and
-labels, canvas for the pins and the depth raster. There is no MapLibre: the v4
-design needed full control of every mark, and the price is hand-rolled gestures,
+labels, canvas for the pins and the depth raster. There is no MapLibre: the design
+needed full control of every mark — how countries are filled, outlined and
+labelled, for example — and the price is hand-rolled gestures,
 hit-testing and fanning in `src/lib/projection.ts` and `src/lib/pins.ts`.
 
 Everything the map draws is **generated ahead of time and committed**, so a fresh
