@@ -12,9 +12,7 @@ COPY --from=build /app/dist/compass-map.js /app/dist/compass-map.js.gz /usr/shar
 COPY --from=build /app/dist/basemap/ /usr/share/nginx/html/basemap/
 # The bundle's licences require their notice to accompany it.
 COPY --from=build /app/THIRD-PARTY-NOTICES.md /usr/share/nginx/html/
-# The committed pair, plus the d/ detail level when `just map::bathymetry-detail`
-# has been run (it is gitignored, so it is present only if built). Absent is
-# fine either way: the map falls back to a flat sea.
+# bathy/d/ is gitignored and included only if built (`just map::bathymetry-detail`).
 COPY src/frontend/bathy/ /usr/share/nginx/html/bathy/
 COPY tools/docker/og/ /usr/share/nginx/html/og/
 COPY tools/docker/index.html /usr/share/nginx/html/index.html
