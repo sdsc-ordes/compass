@@ -1,5 +1,4 @@
-# Shared by both Python projects (src/backend and src/turtle-generator), passed with
-# --config so one policy covers the repository rather than drifting per project.
+# Shared by src/backend and src/turtle-generator; the just recipes pass it with --config.
 
 line-length = 92
 target-version = "py311"
@@ -18,19 +17,16 @@ select = [
     "PL",   # pylint
 ]
 ignore = [
-    # Nested branches read better than early returns in the widget-inference
-    # and clause-building code, which is a series of parallel cases.
+    # Widget inference and clause building are flat lists of parallel cases.
     "PLR0912",
-    # Argument counts are deliberate: the query builders thread the four
-    # filter categories through rather than hiding them in a context object.
+    # The query builders take each filter category as its own argument.
     "PLR0913",
 ]
 
 [lint.per-file-ignores]
-# Comparing against a magic number is the point of an assertion.
+# Assertions compare against literal values.
 "**/tests/*" = ["PLR2004"]
-# FastAPI declares dependencies as call-valued defaults (Depends, Query,
-# Header, Body); the framework re-evaluates them per request.
+# FastAPI declares dependencies as call-valued defaults (Depends, Query, Header).
 "src/backend/app/routers/*" = ["B008"]
 
 [lint.isort]
