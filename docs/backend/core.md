@@ -1,9 +1,6 @@
 # Core
 
-Platform infrastructure: deployment settings, FastAPI dependencies, and domain
-errors.
-
-HTTP routes themselves are documented in the running API's OpenAPI UI (`/docs`).
+Deployment settings, FastAPI dependencies, domain errors and their handlers.
 
 ::: app.core.settings
 
@@ -13,4 +10,4 @@ HTTP routes themselves are documented in the running API's OpenAPI UI (`/docs`).
 
 ::: app.core.handlers
 
-::: app.core.development
+::: app.core.cors

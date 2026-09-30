@@ -1,28 +1,27 @@
 # Backend
 
-HTTP routes: OpenAPI UI at `/docs` when the API is running.
+FastAPI service that serves filters, entities and story counts from the ontology.
+With the API running, the OpenAPI UI is at `/docs`.
 
-Module docs and architecture: [docs site](https://sdsc-ordes.github.io/compass/)
-(served locally with `just docs::dev-up`).
-
-## Running
+## Run
 
 ```bash
-just backend              # http://127.0.0.1:8780
-just backend port=9000    # choose a different port
+just backend           # http://127.0.0.1:8780 (COMPASS_HTTP_PORT), hot reload
+just backend 9000      # another port
 ```
 
-`COMPASS_ENVIRONMENT` defaults to `development` locally, enabling CORS for the
-Vite dev server. Set it to `production` to disable development-only middleware;
-`docker-compose.yml` defaults to `production`.
+`COMPASS_CORS_ORIGINS` defaults to the Vite dev server origins; under
+`docker-compose.yml` it is empty unless set.
 
-## Tests
+## Test
 
 ```bash
-uv run pytest tests/ -v
+cd src/backend && uv run pytest
 ```
 
-## Configuration
+## Configure
 
-Use-case checklist: [backend configuration](https://sdsc-ordes.github.io/compass/configuration-backend/).
-Ontology setup: [ontology configuration](https://sdsc-ordes.github.io/compass/configuration-ontology/).
+- [Backend configuration](https://sdsc-ordes.github.io/compass/configuration-backend/)
+- [Ontology configuration](https://sdsc-ordes.github.io/compass/configuration-ontology/)
+- Module reference and request flow: [docs site](https://sdsc-ordes.github.io/compass/)
+  (`just docs::dev-up` serves it locally)

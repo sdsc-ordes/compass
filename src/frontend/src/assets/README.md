@@ -1,20 +1,12 @@
 # assets
 
-Binary the widget ships **inside** `dist/compass-map.js`, not beside it.
+Files here are bundled into `dist/compass-map.js`: Vite's library mode inlines
+every imported asset as a base64 data URI, which keeps the widget a single file.
 
-Nothing here needs configuring: `vite.config.ts` builds in library mode, and
-Vite inlines every asset as a base64 data URI in that mode regardless of
-`assetsInlineLimit` — verified by building at the 4096-byte default and getting a
-byte-identical single-file bundle. That is what keeps the widget one
-self-contained script with no network calls; share/, docker/ and the WordPress
-embed all load exactly one file.
+Base64 adds about a third to the size, and compressed PNGs barely gzip, so
+prefer SVG for new assets.
 
-The cost is real, though, and paid on every page load: base64 is ~4/3 the file's
-size on disk, and an already-compressed PNG gzips badly on top of that — the last
-one to ship here was 26.6 KB on disk and 29.4 KB gzipped in the bundle. Prefer SVG
-for anything that lands here next: a flat-colour mark is a couple of KB, sharper at
-any DPI, and gzips properly.
-
-Inlined: `www.oceancare.org-64x64.png`, the OceanCare map pin (2.7 KB, a 64-colour
-palette PNG). The pin draws it at most ~21 CSS px on a canvas capped at 2x, so 64 has room. The 32,
-180 and 192 px icons are dev-page favicons only and never reach the bundle.
+| File                                            | Use                                                        |
+| ----------------------------------------------- | ---------------------------------------------------------- |
+| `www.oceancare.org-64x64.png`                   | Host organisation pin logo (imported in `src/lib/pins.ts`) |
+| `www.oceancare.org-{32x32,180x180,192x192}.png` | Favicons of the dev page (`index.html`); not bundled       |

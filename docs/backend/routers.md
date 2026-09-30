@@ -1,7 +1,6 @@
 # Routers
 
-HTTP route handlers. OpenAPI summaries and request/response shapes also appear
-in the running API's UI at `/docs`.
+HTTP route handlers. The running API also serves the OpenAPI UI at `/docs`.
 
 ::: app.routers.admin
 

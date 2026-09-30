@@ -1,9 +1,9 @@
 # Schemas
 
-Pydantic request/response contracts used by FastAPI `response_model` / OpenAPI.
+Pydantic response models used as FastAPI `response_model`.
 
-Filter widgets are defined in [`shacl_to_filters`](shacl_to_filters.md) and
-re-exported from `app.schemas.filters`.
+Filter widget models (`FilterWidget`, `FilterOption`) are defined in
+[`shacl_to_filters`](shacl_to_filters.md).
 
 ::: app.schemas.entities
 

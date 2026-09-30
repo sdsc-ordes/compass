@@ -1,108 +1,92 @@
-# The Widget
+# The widget
 
-One bundle, `dist/compass-map.js`, registering a `<compass-map>` custom element.
-Svelte compiles to a custom element, so the whole UI lives in a shadow root and
-the host page's CSS cannot reach in — the widget is embedded in a page it does
-not own, OceanCare's WordPress site. The stylesheets in `src/styles/` are imported `?inline` and injected
-into that root for the same reason.
+`dist/compass-map.js` registers the `<compass-map>` custom element. Svelte
+compiles it as a custom element, so the UI lives in a shadow root and the host
+page's CSS does not reach it. The stylesheets in `src/styles/` are imported
+`?inline` and injected into that root.
 
-## Where data comes from
+## Data
 
-`init(apiurl)` and every query after it are HTTP calls to the FastAPI backend.
-The widget ships no ontology and no WASM SPARQL engine. An editorial change in
-the workbook reaches the map after a regenerate and a reload, with no frontend
-rebuild; the cost is that the widget cannot run without a backend.
+The widget ships no ontology: `init(apiurl)` and every query after it call the
+FastAPI backend. Editorial changes reach the map after a regenerate and a
+reload, without a frontend rebuild.
 
-| Call | Gives |
+| Call | Returns |
 | --- | --- |
-| `GET /api/v1/filters` | the whole filter panel — dimensions, labels, options, per language |
-| `GET /api/v1/entities` | the pins, as GeoJSON |
-| `GET /api/v1/entities/facets` | the per-option result counts in the panel |
-| `GET /api/v1/stories/count` | the story count and the URL to link out to |
+| `GET /api/v1/filters` | Filter dimensions, labels and options per language |
+| `GET /api/v1/entities` | Pins as GeoJSON |
+| `GET /api/v1/entities/facets` | Per-option result counts |
+| `GET /api/v1/stories/count` | Story count and link URL |
 
-The panel is therefore **not** configured in the frontend — with one exception,
-`DIM_IDS` in `src/lib/schema.ts`, which names the dimensions to draw and in what
-order. A scheme added to the ontology reaches the API on its own and the panel
-only after someone adds its id there. See
-[Frontend configuration](configuration-frontend.md).
+The filter panel comes from the API, except for `DIM_IDS` in
+`src/lib/schema.ts`, which selects and orders the dimensions to draw (see
+[Frontend configuration](configuration-frontend.md)).
 
-### OceanCare in the counts
+### Host organisation in the counts
 
-OceanCare (`compass:HostOrganization`, in `ALWAYS_ON_CLASSES`) is drawn whatever
-the filters say. The backend facet query leaves it out, and `shownFacets` in
-`CompassMap` adds its pins (`hostCount`, from `isHost` in `src/lib/pins.ts`) to
-every count, so no count reads below 1. The tally (`resultCount`) is left alone:
-it counts what `/entities` returns, which already includes OceanCare.
+`compass:HostOrganization` (OceanCare) is in the backend's `ALWAYS_ON_CLASSES`:
+its pins show whatever the filters say. The facet query leaves them out, and
+`shownFacets` in `CompassMap` adds `hostCount` (pins matching `isHost` in
+`src/lib/pins.ts`) to every count. The result tally (`resultCount`) counts
+what `/entities` returns, which already includes them.
 
 ## Layout
 
 | Path | Holds |
 | --- | --- |
-| `src/components/` | `CompassMap` (the element), `Stage` + `Basemap` (the map), `Sidebar`, `FilterAccordion`, `FilterRows`, `ActivePills`, `DetailPane` |
-| `src/lib/` | projection and camera, pins, bathymetry, labels, palette, i18n, URL state, the mobile sheet |
-| `src/engine/` | the API client and its types |
-| `src/styles/` | one stylesheet per region of the UI, injected into the shadow root |
+| `src/components/` | `CompassMap` (the element), `Stage` + `Basemap` (the map), `Sidebar`, `FilterAccordion`, `FilterRows`, `ActivePills`, `DetailPane`, and smaller parts |
+| `src/lib/` | Projection and camera, pins, bathymetry, labels, palette, i18n, URL state, mobile sheet |
+| `src/engine/` | API client and its types |
+| `src/styles/` | One stylesheet per UI region |
 
 ## Desktop and mobile
 
 One component tree, two layouts, split at 860 px (`isMobile` in
-`src/lib/sheet.ts` — the one place to ask).
+`src/lib/sheet.ts`).
 
-- **Desktop:** the filters sit in a rail beside the map, the active ones as
-  removable pills above them. An opened pin replaces the rail with its detail
-  pane.
-- **Mobile:** the rail becomes a bottom sheet with three stops — `dock`, `half`,
-  `full`. The active filters float as chips over the map instead. An entry opens
-  at `half` with the map still live above it, and the tapped pin eases to the
-  centre of that visible strip, below the chips; closing it returns to the dock.
-  A filter picked from `full` drops the sheet to `half` so its effect shows.
-  Each gesture on the sheet's content is settled as a drag or a scroll on its
-  first move, so the host page never scrolls under it.
+- **Desktop:** filters in a rail beside the map, active filters as removable
+  pills above them. An opened pin replaces the rail with its detail pane.
+- **Mobile:** the rail is a bottom sheet with stops `dock`, `half` and `full`;
+  active filters float as chips over the map. An entry opens at `half` and the
+  pin moves to the centre of the visible map; closing returns to `dock`. Picking
+  a filter from `full` drops the sheet to `half`. A gesture on the sheet is
+  classified as drag or scroll on its first move, so the host page does not
+  scroll under it.
 
-The URL carries the filters, or `?pin=` in their place when an entry is open, so
-either can be shared.
+The URL carries the active filters, or `?pin=` while an entry is open.
 
-## Changing the texts
+## Texts
 
-Text comes from two places, and which one depends on what it describes.
-
-- **Interface strings** — buttons, captions, prompts, errors, screen-reader
-  text — live in `src/lib/i18n.ts`, one `en` and one `de` object with the same
-  keys. Edit the value in both and keep the keys matching. `{n}`-style
-  placeholders are filled by `fmt`, and `…One` keys are the singular. Needs a
-  rebuild.
-- **Everything about the data** — filter group names, option labels, pin
-  names, descriptions, locations — comes from the `_en` / `_de` column pairs in
-  the use case's `source-data.ods`. Edit the cell, then `just data::generate`
-  and reload; no frontend rebuild. An empty `_de` cell falls back to the English
-  text, and the generator reports how many did.
+- **Interface strings** (buttons, captions, errors, screen-reader text):
+  `src/lib/i18n.ts`, one `en` and one `de` object with the same keys.
+  Placeholders like `{n}` are filled by `fmt`; keys ending in `One` are the
+  singular. Needs a rebuild.
+- **Data texts** (dimension names, option labels, pin names, descriptions,
+  locations): the `_en` / `_de` columns of the use-case's `source-data.ods`.
+  Edit, run `just data::generate`, reload the API. An empty `_de` cell falls
+  back to English.
 
 ## Design
 
-The UI follows the OceanCare website's design system: Cabin, five colours, square
-corners everywhere except the donate CTA. The map needed things that system has
-no spec for — chrome, switches, chips, dense type under 18 px — so those are
-deliberate extensions rather than inventions, and each carries its reason in a
-comment where it is defined. Two rules earn their keep:
+The UI follows the OceanCare website's design system: Cabin, five colours,
+square corners except the donate CTA. Map-specific parts the system does not
+cover (chrome, switches, chips, dense type under 18 px) are extensions, with the
+reason in a comment where each is defined. Two rules:
 
-- **Cerulean fill means a choice, a bare cerulean numeral means a quantity.** A
-  ticked filter row, and a group header's count of what you picked, are filled;
-  the per-option result counts are not.
-- **Text actions in the sidebar are links, not filled buttons.** The map is the
-  panel's primary action; everything leaving it is a link.
+- A cerulean **fill** marks a choice (a ticked filter row, a group header's
+  selection count); a bare cerulean **numeral** is a quantity (per-option result
+  counts).
+- Text actions in the sidebar are links, not filled buttons.
 
 ## Commands
 
 ```bash
-just frontend                   # dev server (type-checks first)
-just dev-up                     # API and widget together
-just check::frontend-standalone # svelte-check, then the no-third-party gate
-just lint                       # eslint + prettier (and the Python side)
-just test                       # vitest, with the backend and generator suites
+just frontend                    # dev server (runs the standalone check first)
+just dev-up                      # API and widget together
+just check::frontend-standalone  # svelte-check and the no-third-party-hosts gate
+just lint                        # ESLint + Prettier, and ruff for the Python side
+just test                        # vitest, plus the backend and generator suites
 ```
 
-`npm run build` in `src/frontend` produces the bundle. The offline gate is not a
-formality: the widget runs on someone else's page, which must not leak its
-visitors to third-party hosts, so fonts, atlas and imagery are all self-hosted
-and a stray CDN reference fails the check. It runs ahead of `just frontend` and
-in CI's Widget job.
+`npm run build` in `src/frontend` writes the bundle. The no-third-party-hosts
+gate also runs in the CI `Widget` job.
