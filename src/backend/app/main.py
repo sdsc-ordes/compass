@@ -1,8 +1,4 @@
-"""FastAPI application entrypoint.
-
-HTTP routes are documented via OpenAPI (``summary`` / ``description`` on
-decorators, and the interactive UI at ``/docs`` when the API is running).
-"""
+"""FastAPI application entrypoint."""
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -10,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.config import config
-from app.core.development import configure_development
+from app.core.cors import configure_cors
 from app.core.handlers import register_exception_handlers
 from app.core.settings import settings
 from app.rdf import RDFStore
@@ -20,11 +16,7 @@ from app.schemas.admin import RootMessage
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Load and check the ontology into the process-wide store before serving.
-
-    Validating here matches the reload path: an ontology that parses but yields
-    no entity shapes would otherwise serve an empty map and an empty filter
-    panel with no error anywhere.
+    """Load and validate the ontology before serving the first request.
 
     Args:
         app: FastAPI application (unused; required by the lifespan protocol).
@@ -35,7 +27,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     Raises:
         ReloadError: When the configured ontology cannot drive the API.
     """
-    RDFStore.instance().validate()  # load the ontology before the first request
+    RDFStore.instance().validate()
     yield
 
 
@@ -46,8 +38,8 @@ app = FastAPI(
 )
 register_exception_handlers(app)
 
-if settings.is_development:
-    configure_development(app)
+if settings.cors_origins:
+    configure_cors(app)
 
 
 @app.get(

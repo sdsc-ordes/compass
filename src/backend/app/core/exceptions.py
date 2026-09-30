@@ -35,19 +35,4 @@ class ReloadError(AppError):
 
 
 class QueryError(AppError):
-    """A SPARQL query could not be executed. Carries the query for the log.
-
-    Attributes:
-        sparql: The query text that failed.
-        detail: Short summary of the underlying exception.
-    """
-
-    def __init__(self, sparql: str, cause: Exception):
-        """Attach the failing query and summarize *cause*.
-
-        Args:
-            sparql: Query that Oxigraph rejected.
-            cause: Underlying exception.
-        """
-        self.sparql = sparql
-        super().__init__(f"{type(cause).__name__}: {cause}")
+    """A SPARQL query could not be executed."""

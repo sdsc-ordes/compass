@@ -1,9 +1,4 @@
-"""Shared RDF namespace definitions and SPARQL prefix declarations.
-
-Single source of truth for namespace URIs and prefix shorthands used across
-the query layer (``shacl_to_entities``, ``sparql_builder``,
-``sparql_to_geojson_translator``).
-"""
+"""Shared RDF namespaces, entity classes, separators, and SPARQL prefixes."""
 
 from rdflib import Namespace
 
@@ -14,7 +9,7 @@ GEO = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
 """W3C WGS84 geo namespace (``lat`` / ``long``)."""
 
 SCHEMA = Namespace("https://schema.org/")
-"""schema.org namespace (``url``, ``image``, …)."""
+"""schema.org namespace (``url``, ``image``, ...)."""
 
 PIN_CLASSES = (
     "InternationalForum",
@@ -32,23 +27,23 @@ count.
 """
 
 FILTERABLE_PIN_CLASSES = tuple(c for c in PIN_CLASSES if c not in ALWAYS_ON_CLASSES)
-"""The classes entityType offers. A class whose pin ignores a type selection has
-nothing to offer a filter that selects on type."""
+"""The classes the ``entityType`` dimension offers."""
 
-# Separators used by SPARQL GROUP_CONCAT expressions and the GeoJSON translator
+ENTITY_TYPE_ID = "entityType"
+"""Id of the synthetic filter dimension over ``rdf:type``; it has no property shape."""
+
 ITEM_SEP = ";;"
 """Separator between multi-valued items in GROUP_CONCAT output."""
 
 FIELD_SEP = "|"
 """Separator between fields within a single GROUP_CONCAT item (IRI|label)."""
 
-# Maps full namespace URIs to their SPARQL shorthand prefix (used by to_prefixed())
 PREFIX_MAP: dict[str, str] = {
-    "http://example.org/ocean-org/ontology#": "compass:",
-    "http://www.w3.org/2003/01/geo/wgs84_pos#": "geo:",
-    "https://schema.org/": "schema:",
+    str(COMPASS): "compass:",
+    str(GEO): "geo:",
+    str(SCHEMA): "schema:",
 }
-"""Full namespace URI → SPARQL prefix used by ``to_prefixed``."""
+"""Full namespace URI -> SPARQL prefix used by ``to_prefixed``."""
 
 SPARQL_PREFIXES = """
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -60,3 +55,15 @@ SPARQL_PREFIXES = """
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     """
 """PREFIX block prepended to every generated SPARQL query."""
+
+
+def local_name(iri: str) -> str:
+    """Return the part of *iri* after its last ``#`` or ``/``.
+
+    Args:
+        iri: Absolute IRI string.
+
+    Returns:
+        The fragment or final path segment.
+    """
+    return iri.rsplit("#", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1]

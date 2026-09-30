@@ -1,10 +1,4 @@
-"""Reload the ontology from disk without restarting the API.
-
-Editorial updates land as new Turtle files; this endpoint makes the running API
-pick them up. A rejected reload leaves the previous version serving. HTTP route
-descriptions live in OpenAPI (``summary`` / ``description`` on the route
-decorators).
-"""
+"""Reload the ontology from disk without restarting the API."""
 
 from __future__ import annotations
 
@@ -32,7 +26,7 @@ async def reload_ontology(
     settings: SettingsDep,
     x_reload_token: str = Header(default=""),
 ) -> ReloadSuccess:
-    expected = settings.reload_token
+    expected = settings.compass_reload_token
     if not expected:
         raise ReloadNotConfiguredError(
             "reload is not configured: set COMPASS_RELOAD_TOKEN on the API "

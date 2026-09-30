@@ -1,7 +1,4 @@
-"""Term construction is the only barrier between a query parameter and the
-query, so the properties it must hold are asserted over generated input rather
-than a handful of examples.
-"""
+"""SPARQL term construction tests, over generated input."""
 
 import re
 
@@ -44,17 +41,17 @@ class TestIriTerm:
 
 
 class TestStringLiteral:
-    def test_quotes_plain_text(self):
-        assert string_literal("plastic") == '"plastic"'
-
-    def test_escapes_a_quote(self):
-        assert string_literal('a"b') == '"a\\"b"'
-
-    def test_escapes_a_backslash(self):
-        assert string_literal("a\\b") == '"a\\\\b"'
-
-    def test_escapes_a_newline(self):
-        assert string_literal("a\nb") == '"a\\nb"'
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("plastic", '"plastic"'),
+            ('a"b', '"a\\"b"'),
+            ("a\\b", '"a\\\\b"'),
+            ("a\nb", '"a\\nb"'),
+        ],
+    )
+    def test_quotes_and_escapes(self, value, expected):
+        assert string_literal(value) == expected
 
     @given(st.text())
     def test_the_literal_is_always_one_closed_token(self, value):

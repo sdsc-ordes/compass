@@ -1,4 +1,4 @@
-"""SPARQL instances → GeoJSON FeatureCollection."""
+"""Decode SPARQL instance rows into a GeoJSON FeatureCollection."""
 
 from __future__ import annotations
 
@@ -7,32 +7,15 @@ from typing import Any
 
 from geojson import Feature, FeatureCollection, Point
 
-from app.config import entity_stories_url
-from app.namespaces import FIELD_SEP, ITEM_SEP
+from app.config import config
+from app.namespaces import FIELD_SEP, ITEM_SEP, local_name
 from app.shacl_to_entities import EntityShape
 
 logger = logging.getLogger(__name__)
 
-# GROUP_CONCAT emits "<iri>|<label>", so a well-formed item splits into two.
-_IRI_LABEL_FIELDS = 2
 
-
-def _local_name(iri: str) -> str:
-    """Return the fragment or last path segment of an IRI.
-
-    Args:
-        iri: Absolute IRI string.
-
-    Returns:
-        Local name after ``#`` or the final ``/`` segment.
-    """
-    return (
-        iri.rsplit("#", maxsplit=1)[-1] if "#" in iri else iri.rsplit("/", maxsplit=1)[-1]
-    )
-
-
-def extract_property(shape: EntityShape, instance: dict) -> Any:
-    """Extract one EntityShape value from an instance binding dict.
+def extract_property(shape: EntityShape, instance: dict[str, Any]) -> Any:
+    """Decode one EntityShape value from a SPARQL result row.
 
     Args:
         shape: Property descriptor describing how the row was projected.
@@ -41,56 +24,33 @@ def extract_property(shape: EntityShape, instance: dict) -> Any:
     Returns:
         Decoded value: IRI/label dict(s), bool, list of strings, or a scalar.
     """
-    sid = shape.id
-    cat = shape.category
-    is_multi = shape.is_multi
+    var = shape.id
 
-    if cat == "iri_with_label":
-        if is_multi:
-            raw = instance.get(f"{sid}Raw", "") or ""
+    if shape.category == "iri_with_label":
+        if shape.is_multi:
             items = []
-            for pair in raw.split(ITEM_SEP):
-                parts = pair.strip().split(FIELD_SEP, 1)
-                if len(parts) == _IRI_LABEL_FIELDS and parts[0]:
-                    items.append({"iri": parts[0].strip(), "label": parts[1].strip()})
+            for pair in instance.get(f"{var}Raw", "").split(ITEM_SEP):
+                iri, sep, label = pair.strip().partition(FIELD_SEP)
+                if sep and iri:
+                    items.append({"iri": iri.strip(), "label": label.strip()})
             return items
-        iri_val = instance.get(f"{sid}Iri")
-        label_val = instance.get(f"{sid}Label")
-        if not iri_val:
+        iri = instance.get(f"{var}Iri")
+        if not iri:
             return None
-        label = str(label_val) if label_val else str(iri_val).split("#")[-1].split("/")[-1]
-        return {"iri": str(iri_val), "label": label}
+        return {"iri": iri, "label": instance.get(f"{var}Label") or local_name(iri)}
 
-    if cat == "boolean":
-        return instance.get(f"{sid}Result", "") == "true"
+    if shape.category == "boolean":
+        return instance.get(f"{var}Result", "") == "true"
 
-    if is_multi:
-        raw = instance.get(f"{sid}Raw", "") or ""
-        return [a.strip() for a in raw.split(ITEM_SEP) if a.strip()]
+    if shape.is_multi:
+        raw = instance.get(f"{var}Raw", "")
+        return [item.strip() for item in raw.split(ITEM_SEP) if item.strip()]
 
-    return instance.get(f"{sid}Result", "")
-
-
-def _derived_properties(properties: dict[str, Any], lang: str) -> dict:
-    """Build GeoJSON properties computed from already-decoded ones.
-
-    Args:
-        properties: Properties decoded from the EntityShape list.
-        lang: UI language for the stories URL.
-
-    Returns:
-        Extra GeoJSON properties (currently ``storiesUrl``).
-    """
-    wp_entity_tag_id = properties.get("wpEntityTagId", "")
-    return {
-        "storiesUrl": (
-            entity_stories_url(wp_entity_tag_id, lang) if wp_entity_tag_id else ""
-        ),
-    }
+    return instance.get(f"{var}Result", "")
 
 
 def _parse_coordinates(instance: dict[str, Any]) -> Point | None:
-    """Build a GeoJSON Point from lat/long bindings, if usable.
+    """Build a GeoJSON Point from lat/long bindings.
 
     Args:
         instance: SPARQL result row.
@@ -98,20 +58,9 @@ def _parse_coordinates(instance: dict[str, Any]) -> Point | None:
     Returns:
         ``Point`` or ``None`` when coordinates are missing or unparseable.
     """
-    lat_raw = instance.get("lat")
-    long_raw = instance.get("long")
-    if not lat_raw or not long_raw:
-        return None
     try:
-        return Point((float(long_raw), float(lat_raw)))
-    except (TypeError, ValueError):
-        logger.warning(
-            "entity %s has unparseable coordinates (lat=%r, long=%r); "
-            "leaving it off the map",
-            instance.get("s"),
-            lat_raw,
-            long_raw,
-        )
+        return Point((float(instance["long"]), float(instance["lat"])))
+    except (KeyError, ValueError):
         return None
 
 
@@ -123,38 +72,36 @@ def instances_to_geojson(
     """Build one Feature per SPARQL instance, decoded via EntityShape descriptors.
 
     Args:
-        instances: SPARQL result rows.
+        instances: SPARQL result rows from ``sparql_for_instances``.
         shapes: Descriptors used to decode property columns.
-        lang: UI language for special properties.
+        lang: UI language for the stories URL.
 
     Returns:
-        GeoJSON FeatureCollection, one Point feature per pin. A row whose
-        coordinates are missing or unusable is logged and skipped: the generator
-        refuses to publish such a pin, so one here means hand-edited Turtle.
+        GeoJSON FeatureCollection, one Point feature per pin. A row without
+        usable coordinates is logged and skipped.
     """
     features = []
     for instance in instances:
-        if not instance.get("s") or not instance.get("label") or not instance.get("type"):
+        geometry = _parse_coordinates(instance)
+        if geometry is None:
             logger.warning(
-                "skipping instance without id, label or type: %r",
-                sorted(instance.keys()),
+                "skipping %s: no usable coordinates (lat=%r, long=%r)",
+                instance["s"],
+                instance.get("lat"),
+                instance.get("long"),
             )
             continue
 
         properties: dict[str, Any] = {
             "id": instance["s"],
             "label": instance["label"],
-            "type": str(instance.get("typeLabelResult") or _local_name(instance["type"])),
+            "type": instance.get("typeLabelResult") or local_name(instance["type"]),
             "typeIri": instance["type"],
         }
         for shape in shapes:
             properties[shape.id] = extract_property(shape, instance)
-        properties.update(_derived_properties(properties, lang))
-
-        geometry = _parse_coordinates(instance)
-        if geometry is None:
-            logger.warning("skipping %s: no usable coordinates", instance["s"])
-            continue
+        tag_id = properties.get("wpEntityTagId")
+        properties["storiesUrl"] = config.entity_stories_url(tag_id, lang) if tag_id else ""
 
         features.append(Feature(geometry=geometry, properties=properties))
 

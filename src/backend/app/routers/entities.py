@@ -1,3 +1,5 @@
+"""Entity routes: GeoJSON pins, facet counts, and per-entity triples."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -5,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Query, Request
 
 from app.core.deps import Lang, StoreDep
-from app.namespaces import SPARQL_PREFIXES
+from app.namespaces import ENTITY_TYPE_ID, SPARQL_PREFIXES
 from app.schemas.entities import FeatureCollection
 from app.schemas.facets import FacetCounts
 from app.sparql_builder import build_facet_query, sparql_for_instances
@@ -14,19 +16,8 @@ from app.sparql_to_geojson_translator import instances_to_geojson
 
 router = APIRouter()
 
-# forum is a relation to another pin rather than a tag, so a count under it would
-# not mean what a count under a tag means.
+# forum points at another pin rather than at a tag, so it gets no counts.
 _FACET_EXCLUDED = {"forum"}
-
-# entityType is counted, but it cannot be reached by the loop over the shapes:
-# it has no property shape at all, being the rdf:type that _pin_branch BINDs
-# rather than a path. It is asked for by name instead, and build_facet_query has
-# the branch that counts that variable instead of a triple's object.
-#
-# It is worth the special case because the type counts are the filter panel's
-# landing control -- the counted pills in the results block -- rather than rows
-# that could get away with showing no number.
-_FACET_UNSHAPED = ("entityType",)
 
 
 @router.get(
@@ -42,7 +33,7 @@ async def get_entities(
     lang: Lang,
     store: StoreDep,
 ) -> FeatureCollection:
-    shapes = store.get_entities()
+    shapes = store.entity_shapes()
     sparql = sparql_for_instances(shapes, lang, request.query_params)
     instances = store.query(sparql)
     return FeatureCollection.model_validate(instances_to_geojson(instances, shapes, lang))
@@ -66,28 +57,18 @@ async def get_facets(
     lang: Lang,
     store: StoreDep,
 ) -> FacetCounts:
-    shapes = store.get_entities()
-
-    def counts_for(dimension: str) -> dict[str, int]:
+    shapes = store.entity_shapes()
+    dimensions = [
+        shape.id
+        for shape in shapes
+        if shape.filter_type == "multiselect"
+        and shape.category == "iri_with_label"
+        and shape.id not in _FACET_EXCLUDED
+    ]
+    facets: FacetCounts = {}
+    for dimension in [*dimensions, ENTITY_TYPE_ID]:
         sparql = build_facet_query(shapes, lang, request.query_params, dimension)
-        return {
-            row["val"]: int(row["n"])
-            for row in store.query(sparql)
-            if row.get("val") and row.get("n")
-        }
-
-    facets: dict[str, dict[str, int]] = {}
-    for field in shapes:
-        sid = field.id
-        if (
-            field.filter_type != "multiselect"
-            or field.category != "iri_with_label"
-            or sid in _FACET_EXCLUDED
-        ):
-            continue
-        facets[sid] = counts_for(sid)
-    for sid in _FACET_UNSHAPED:
-        facets[sid] = counts_for(sid)
+        facets[dimension] = {row["val"]: int(row["n"]) for row in store.query(sparql)}
     return facets
 
 

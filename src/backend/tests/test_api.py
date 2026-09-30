@@ -1,13 +1,8 @@
-"""API integration tests.
-
-Full-stack tests using FastAPI's TestClient to verify the HTTP endpoints
-work correctly against the real ontology.
-"""
+"""HTTP endpoint tests against the real ontology."""
 
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import app
+from app.core.settings import settings
 from app.namespaces import ALWAYS_ON_CLASSES, COMPASS, FILTERABLE_PIN_CLASSES
 
 # Two species the fixture data shares across several entities, so the
@@ -19,117 +14,76 @@ ALWAYS_ON_IRIS = {str(COMPASS[name]) for name in ALWAYS_ON_CLASSES}
 
 
 def result_pins(features: list[dict]) -> list[dict]:
-    """The pins the facets count: every feature but the always-on ones."""
+    """Return the pins the facets count: every feature but the always-on ones."""
     return [f for f in features if f["properties"]["typeIri"] not in ALWAYS_ON_IRIS]
 
 
-@pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as c:
-        yield c
+def pin_ids(client, params: list[tuple[str, str]]) -> set[str]:
+    """Return the ids of the pins GET /entities returns for *params*."""
+    data = client.get("/api/v1/entities", params=[("lang", "en"), *params]).json()
+    return {f["properties"]["id"] for f in data["features"]}
 
 
-class TestFiltersEndpoint:
-    def test_returns_200(self, client):
-        resp = client.get("/api/v1/filters?lang=en")
-        assert resp.status_code == 200
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_filters_are_well_formed(client, lang):
+    resp = client.get("/api/v1/filters", params={"lang": lang})
+    assert resp.status_code == 200
+    filters = resp.json()
+    assert filters
+    for f in filters:
+        assert {"id", "label", "type"} <= f.keys()
+        assert f["type"] in {"multiselect", "slider", "datepicker", "toggle"}
 
-    def test_returns_list(self, client):
-        data = client.get("/api/v1/filters?lang=en").json()
-        assert isinstance(data, list)
-        assert len(data) > 0
 
-    def test_each_filter_has_required_keys(self, client):
-        data = client.get("/api/v1/filters?lang=en").json()
-        for f in data:
-            assert "id" in f
-            assert "label" in f
-            assert "type" in f
-            assert f["type"] in {"multiselect", "slider", "datepicker", "toggle"}
+def test_unsupported_lang_is_rejected(client):
+    assert client.get("/api/v1/filters", params={"lang": "fr"}).status_code == 400
 
-    def test_german_works(self, client):
-        data = client.get("/api/v1/filters?lang=de").json()
-        assert isinstance(data, list)
-        assert len(data) > 0
+
+def test_cors_allows_only_configured_origins(client):
+    allowed = settings.cors_origins[0]
+    response = client.get("/", headers={"Origin": allowed})
+    assert response.headers["access-control-allow-origin"] == allowed
+    response = client.get("/", headers={"Origin": "https://elsewhere.example"})
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_entity_type_offers_only_filterable_classes(client):
+    filters = client.get("/api/v1/filters", params={"lang": "en"}).json()
+    entity_type = next(f for f in filters if f["id"] == "entityType")
+    offered = {option["value"] for option in entity_type["options"]}
+    assert offered == {str(COMPASS[name]) for name in FILTERABLE_PIN_CLASSES}
 
 
 class TestEntitiesEndpoint:
-    def test_returns_200(self, client):
-        resp = client.get("/api/v1/entities?lang=en")
+    @pytest.mark.parametrize("lang", ["en", "de"])
+    def test_every_feature_is_a_drawable_pin(self, client, lang):
+        resp = client.get("/api/v1/entities", params={"lang": lang})
         assert resp.status_code == 200
-
-    def test_returns_geojson(self, client):
-        data = client.get("/api/v1/entities?lang=en").json()
+        data = resp.json()
         assert data["type"] == "FeatureCollection"
-        assert "features" in data
-
-    def test_has_features(self, client):
-        data = client.get("/api/v1/entities?lang=en").json()
-        assert len(data["features"]) > 0
-
-    def test_feature_structure(self, client):
-        data = client.get("/api/v1/entities?lang=en").json()
-        point = data["features"][0]
-        assert point["type"] == "Feature"
-        assert point["geometry"]["type"] == "Point"
-        assert len(point["geometry"]["coordinates"]) == 2
-        assert "id" in point["properties"]
-        assert "label" in point["properties"]
-
-    def test_every_feature_is_a_drawable_pin(self, client):
-        """The endpoint returns pins and nothing else.
-
-        It used to return Country/Area rows with null geometry for a region
-        layer the widget never drew, and the frontend dropped every one.
-        """
-        data = client.get("/api/v1/entities?lang=en").json()
         assert data["features"]
-        assert all(f["geometry"] is not None for f in data["features"])
-        assert all(f["geometry"]["type"] == "Point" for f in data["features"]), (
-            "a feature came back without a point to draw"
-        )
-
-    def test_entity_type_filter(self, client):
-        all_data = client.get("/api/v1/entities?lang=en").json()
-        # Get the type IRI from the first entity to use as a filter
-        first_type = all_data["features"][0]["properties"]["typeIri"]
-        filtered = client.get(
-            "/api/v1/entities", params={"lang": "en", "entityType": first_type}
-        ).json()
-        assert len(filtered["features"]) > 0
-        assert len(filtered["features"]) <= len(all_data["features"])
+        for feature in data["features"]:
+            assert feature["type"] == "Feature"
+            assert feature["geometry"]["type"] == "Point"
+            assert len(feature["geometry"]["coordinates"]) == 2
+            assert {"id", "label"} <= feature["properties"].keys()
 
     def test_two_values_in_one_dimension_intersect(self, client):
-        """Picking a second tag narrows the map: the result is the entities
-        carrying both tags, not the entities carrying either."""
-
-        def pins(*values: str) -> set[str]:
-            params = [("lang", "en")] + [("species", v) for v in values]
-            data = client.get("/api/v1/entities", params=params).json()
-            return {f["properties"]["id"] for f in data["features"]}
-
-        a, b = pins(SPECIES_A), pins(SPECIES_B)
-        both = pins(SPECIES_A, SPECIES_B)
+        a = pin_ids(client, [("species", SPECIES_A)])
+        b = pin_ids(client, [("species", SPECIES_B)])
+        both = pin_ids(client, [("species", SPECIES_A), ("species", SPECIES_B)])
         assert both, "the fixture must hold entities carrying both tags"
         assert both == a & b
-        assert both != a | b
         assert len(both) < len(a) and len(both) < len(b)
 
-    def test_two_dimensions_still_and(self, client):
-        """Across dimensions nothing changed: the two constraints still stack."""
-
-        def pins(params: list[tuple[str, str]]) -> set[str]:
-            data = client.get("/api/v1/entities", params=[("lang", "en"), *params]).json()
-            return {f["properties"]["id"] for f in data["features"]}
-
+    def test_two_dimensions_intersect(self, client):
         topic = str(COMPASS.Shipping)
-        species_only = pins([("species", SPECIES_A)])
-        topic_only = pins([("topic", topic)])
-        together = pins([("species", SPECIES_A), ("topic", topic)])
+        species_only = pin_ids(client, [("species", SPECIES_A)])
+        topic_only = pin_ids(client, [("topic", topic)])
+        together = pin_ids(client, [("species", SPECIES_A), ("topic", topic)])
         assert together == species_only & topic_only
 
-    def test_one_value_is_unaffected(self, client):
-        """A lone pick still means exactly the entities carrying that tag."""
+    def test_one_value_keeps_only_its_carriers(self, client):
         data = client.get(
             "/api/v1/entities", params={"lang": "en", "species": SPECIES_A}
         ).json()
@@ -138,68 +92,35 @@ class TestEntitiesEndpoint:
         assert all(SPECIES_A in str(f["properties"].get("species", "")) for f in pins)
 
     def test_an_always_on_pin_survives_every_filter(self, client):
-        """The host organization carries every concept, so the only selection it
-        cannot match names a tag no vocabulary defines -- a stale bookmark. Its
-        pin stays on the map even then, which is what always-on means.
-        """
+        """The host carries every concept, so only an undefined tag can exclude it."""
         data = client.get(
             "/api/v1/entities",
             params={"lang": "en", "species": str(COMPASS.NoSuchSpecies)},
         ).json()
-        pins = data["features"]
-        assert {f["properties"]["typeIri"] for f in pins} == ALWAYS_ON_IRIS, (
-            "the always-on pin should be the only one left on the map"
-        )
+        assert {f["properties"]["typeIri"] for f in data["features"]} == ALWAYS_ON_IRIS
 
-    def test_entity_type_is_still_disjunctive(self, client):
-        """An entity has exactly one class, so two picks there mean "either" --
-        AND would empty the map."""
-
-        def pins(*types: str) -> set[str]:
-            params = [("lang", "en")] + [("entityType", t) for t in types]
-            data = client.get("/api/v1/entities", params=params).json()
-            return {f["properties"]["id"] for f in data["features"]}
-
-        partner, network = str(COMPASS.PartnerOrganization), str(COMPASS.Network)
-        assert pins(partner, network) == pins(partner) | pins(network)
-
-    def test_german_entities(self, client):
-        data = client.get("/api/v1/entities?lang=de").json()
-        assert data["type"] == "FeatureCollection"
-        assert len(data["features"]) > 0
+    def test_entity_type_values_combine_with_or(self, client):
+        partner = ("entityType", str(COMPASS.PartnerOrganization))
+        network = ("entityType", str(COMPASS.Network))
+        either = pin_ids(client, [partner]) | pin_ids(client, [network])
+        assert pin_ids(client, [partner, network]) == either
 
 
 class TestFacetsEndpoint:
-    def test_returns_200(self, client):
-        resp = client.get("/api/v1/entities/facets?lang=en")
-        assert resp.status_code == 200
-
-    def test_shape_is_dict_of_dicts_of_ints(self, client):
+    def test_counts_every_tag_dimension_and_entity_type(self, client):
         data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert isinstance(data, dict)
-        assert len(data) > 0
+        assert set(data) == {
+            "countryArea",
+            "entityType",
+            "programme",
+            "species",
+            "topic",
+            "workArea",
+        }
         for counts in data.values():
-            assert isinstance(counts, dict)
             for iri, n in counts.items():
                 assert iri.startswith("http")
                 assert isinstance(n, int) and n > 0
-
-    def test_excludes_relations(self, client):
-        # forum points at another pin rather than at a tag, so a count under it
-        # would not mean what a count under a tag means. programme used to be
-        # here too and is now a vocabulary like any other.
-        data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert "forum" not in data
-        assert "programme" in data
-
-    def test_counts_entity_types(self, client):
-        # entityType has no property shape -- it is the class _pin_branch BINDs --
-        # so it is asked for by name. The filter panel leads with these counts.
-        data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert "entityType" in data
-        counts = data["entityType"]
-        assert counts, "every fixture entity has a class, so this cannot be empty"
-        assert set(counts) <= {str(COMPASS[name]) for name in FILTERABLE_PIN_CLASSES}
 
     def test_counts_exclude_the_host_but_entities_return_it_once(self, client):
         """The frontend adds the host to every count, so the backend never counts it."""
@@ -212,9 +133,6 @@ class TestFacetsEndpoint:
         assert facets["species"][SPECIES_A] == len(features) - 1
 
     def test_entity_type_counts_match_the_entities(self, client):
-        # The same drill-down rule as every other dimension: a dimension's own
-        # selection is excluded from its counts, so these are the totals per
-        # class across the unfiltered set.
         features = client.get("/api/v1/entities?lang=en").json()["features"]
         expected: dict[str, int] = {}
         for feature in result_pins(features):
@@ -223,34 +141,26 @@ class TestFacetsEndpoint:
 
         counts = client.get("/api/v1/entities/facets?lang=en").json()["entityType"]
         assert counts == expected
-
-    def test_includes_expected_dimensions(self, client):
-        data = client.get("/api/v1/entities/facets?lang=en").json()
-        assert "countryArea" in data
-        assert "species" in data
+        assert set(counts) <= {str(COMPASS[name]) for name in FILTERABLE_PIN_CLASSES}
 
     def test_lang_exposes_same_dimensions(self, client):
-        # Counts may differ across languages: an entity without a label in the
-        # requested language is filtered out (same as on the map). But the set
-        # of tag dimensions exposed is the same.
+        # Counts may differ: an entity without a name in the requested language
+        # is dropped, as on the map.
         en = client.get("/api/v1/entities/facets?lang=en").json()
         de = client.get("/api/v1/entities/facets?lang=de").json()
-        assert set(en.keys()) == set(de.keys())
+        assert set(en) == set(de)
 
     def test_a_sibling_count_is_what_adding_it_would_return(self, client):
-        """Values within a dimension AND together, so a count reads "results if
-        I also pick this" — including for siblings in the picked dimension."""
-        dim, first, second = "species", SPECIES_A, SPECIES_B
         after = client.get(
-            "/api/v1/entities/facets", params={"lang": "en", dim: first}
+            "/api/v1/entities/facets", params={"lang": "en", "species": SPECIES_A}
         ).json()
         both = client.get(
-            "/api/v1/entities", params=[("lang", "en"), (dim, first), (dim, second)]
+            "/api/v1/entities",
+            params=[("lang", "en"), ("species", SPECIES_A), ("species", SPECIES_B)],
         ).json()
-        assert after[dim][second] == len(result_pins(both["features"]))
+        assert after["species"][SPECIES_B] == len(result_pins(both["features"]))
 
     def test_sibling_counts_shrink_once_a_value_is_picked(self, client):
-        """The point of AND: a sibling can only narrow what is already selected."""
         base = client.get("/api/v1/entities/facets?lang=en").json()
         after = client.get(
             "/api/v1/entities/facets", params={"lang": "en", "species": SPECIES_A}
@@ -258,8 +168,6 @@ class TestFacetsEndpoint:
         assert after["species"][SPECIES_B] < base["species"][SPECIES_B]
 
     def test_a_picked_value_counts_the_whole_selection(self, client):
-        """Re-picking what is already picked changes nothing, so its count is
-        the current result total rather than a number that vanishes."""
         after = client.get(
             "/api/v1/entities/facets", params={"lang": "en", "species": SPECIES_A}
         ).json()
@@ -268,9 +176,8 @@ class TestFacetsEndpoint:
         ).json()
         assert after["species"][SPECIES_A] == len(result_pins(entities["features"]))
 
-    def test_entity_type_counts_stay_drilldown(self, client):
-        """entityType is disjunctive, so its own pick must stay out of its
-        counts — otherwise every unpicked class would read zero."""
+    def test_entity_type_counts_ignore_its_own_selection(self, client):
+        """Otherwise every unpicked class would read zero."""
         base = client.get("/api/v1/entities/facets?lang=en").json()["entityType"]
         after = client.get(
             "/api/v1/entities/facets",
@@ -279,7 +186,6 @@ class TestFacetsEndpoint:
         assert after == base
 
     def test_other_dimensions_never_grow_when_filtered(self, client):
-        """A filter on one dimension can only constrain (<=) other dimensions."""
         base = client.get("/api/v1/entities/facets?lang=en").json()
         dim = "species"
         value = next(iter(base[dim].keys()))
@@ -293,24 +199,19 @@ class TestFacetsEndpoint:
                 assert n <= base[other_dim].get(iri, 0)
 
     def test_count_matches_filtered_entities(self, client):
-        """A facet count for a value equals the point features the map renders
-        when that value is the only active filter. Regions are background
-        context and excluded from both the facet count and the result badge."""
         base = client.get("/api/v1/entities/facets?lang=en").json()
         dim = "species"
         value, count = next(iter(base[dim].items()))
         entities = client.get("/api/v1/entities", params={"lang": "en", dim: value}).json()
         assert count == len(result_pins(entities["features"]))
 
-    def test_counts_exclude_regions(self, client):
-        """Faroe Islands carries compass:topic ChemicalPollution as a region, but
-        the topic facet must not count it — only the pin itself."""
+    def test_cross_dimension_count_matches_filtered_entities(self, client):
         faroes = str(COMPASS.FaroeIslands)
+        chem = str(COMPASS.ChemicalPollution)
         data = client.get(
             "/api/v1/entities/facets",
             params={"lang": "en", "countryArea": faroes},
         ).json()
-        chem = str(COMPASS.ChemicalPollution)
         entities = client.get(
             "/api/v1/entities",
             params={"lang": "en", "countryArea": faroes, "topic": chem},
@@ -320,28 +221,22 @@ class TestFacetsEndpoint:
 
 class TestEntityDetailEndpoint:
     def test_returns_detail(self, client):
-        # First get an entity ID from the list
         entities = client.get("/api/v1/entities?lang=en").json()
         entity_id = entities["features"][0]["properties"]["id"]
         resp = client.get("/api/v1/entities/detail", params={"iri": entity_id})
         assert resp.status_code == 200
-        data = resp.json()
-        assert isinstance(data, list)
-        assert len(data) > 0
+        assert resp.json()
 
-    def test_rejects_an_iri_that_would_escape_the_query(self, client):
-        # A '>' would close the IRIREF and let the rest become graph patterns.
-        resp = client.get(
-            "/api/v1/entities/detail",
-            params={"iri": "http://example.org/a> ?p ?o } UNION { ?x ?p ?o . #"},
-        )
-        assert resp.status_code == 400
-
-    def test_rejects_whitespace_in_an_iri(self, client):
-        resp = client.get(
-            "/api/v1/entities/detail",
-            params={"iri": "http://example.org/a b"},
-        )
+    @pytest.mark.parametrize(
+        "iri",
+        [
+            # A '>' would close the IRIREF and let the rest become graph patterns.
+            "http://example.org/a> ?p ?o } UNION { ?x ?p ?o . #",
+            "http://example.org/a b",
+        ],
+    )
+    def test_rejects_an_unsafe_iri(self, client, iri):
+        resp = client.get("/api/v1/entities/detail", params={"iri": iri})
         assert resp.status_code == 400
 
 
@@ -350,8 +245,10 @@ class TestCorsPolicy:
         resp = client.get(
             "/api/v1/filters?lang=en", headers={"Origin": "https://evil.example"}
         )
-        assert resp.headers.get("access-control-allow-origin") != "*"
-        assert resp.headers.get("access-control-allow-origin") != "https://evil.example"
+        assert resp.headers.get("access-control-allow-origin") not in {
+            "*",
+            "https://evil.example",
+        }
 
     def test_dev_origin_is_allowed(self, client):
         resp = client.get(

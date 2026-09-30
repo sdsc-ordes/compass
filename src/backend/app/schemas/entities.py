@@ -1,8 +1,7 @@
-"""Thin Pydantic GeoJSON models for entity list HTTP responses / OpenAPI.
+"""GeoJSON response models that document and validate the entity list wire shape.
 
-Runtime GeoJSON is still built with the `geojson` package in
-`sparql_to_geojson_translator`. These models exist only so FastAPI
-`response_model` can document and validate the wire shape.
+The features themselves are built with the ``geojson`` package in
+``sparql_to_geojson_translator``.
 """
 
 from __future__ import annotations
@@ -25,7 +24,7 @@ class GeoJSONGeometry(BaseModel):
 
 
 class GeoJSONFeature(BaseModel):
-    """Single GeoJSON Feature returned for a pin or region."""
+    """Single GeoJSON Feature returned for a pin."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -35,7 +34,7 @@ class GeoJSONFeature(BaseModel):
     )
     geometry: GeoJSONGeometry | dict[str, Any] | None = Field(
         default=None,
-        description="Point for pins; null for shaded regions.",
+        description="Point geometry of the pin.",
     )
     properties: dict[str, Any] = Field(
         default_factory=dict,

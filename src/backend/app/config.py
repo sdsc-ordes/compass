@@ -6,11 +6,15 @@ import httpx
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.settings import root_env_file
+
 
 class Config(BaseSettings):
     """Use-case knobs: API metadata, languages, and the stories provider."""
 
-    model_config = SettingsConfigDict(extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=root_env_file(), env_file_encoding="utf-8", extra="ignore"
+    )
 
     api_title: str = Field(
         default="Compass API",
@@ -49,8 +53,6 @@ class Config(BaseSettings):
         description="Message returned when the upstream stories API fails.",
     )
 
-    # Default upstream count header for the OceanCare WordPress REST API.
-    # Override parse_stories_count for a different provider.
     stories_count_header: str = Field(
         default="x-wp-total",
         description="Response header holding the total story count.",
@@ -58,11 +60,7 @@ class Config(BaseSettings):
 
     @property
     def stories_base_urls(self) -> dict[str, str]:
-        """Map language code → public stories index URL.
-
-        Returns:
-            Dict keyed by language code.
-        """
+        """Map language code to public stories index URL."""
         return {
             "en": self.stories_base_url_en,
             "de": self.stories_base_url_de,
@@ -70,11 +68,7 @@ class Config(BaseSettings):
 
     @property
     def supported_langs(self) -> list[str]:
-        """Language codes accepted by the ``lang`` query parameter.
-
-        Returns:
-            Keys of ``stories_base_urls``.
-        """
+        """Language codes accepted by the ``lang`` query parameter."""
         return list(self.stories_base_urls.keys())
 
     def create_stories_base_url(self, lang: str) -> str:
@@ -155,76 +149,3 @@ class Config(BaseSettings):
 
 
 config = Config()
-
-# Module-level aliases kept for callers and tests that import constants/helpers.
-API_TITLE = config.api_title
-API_WELCOME_MESSAGE = config.api_welcome_message
-STORIES_PROVIDER_NAME = config.stories_provider_name
-STORIES_BASE_URL_EN = config.stories_base_url_en
-STORIES_BASE_URL_DE = config.stories_base_url_de
-STORIES_BASE_URLS = config.stories_base_urls
-STORIES_API_URL = config.stories_api_url
-STORIES_API_ERROR_MESSAGE = config.stories_api_error_message
-
-
-def create_stories_base_url(lang: str) -> str:
-    """Delegate to ``config.create_stories_base_url``.
-
-    Args:
-        lang: Requested language code.
-
-    Returns:
-        Public index URL.
-    """
-    return config.create_stories_base_url(lang)
-
-
-def entity_stories_url(entity_tag_id: str, lang: str) -> str:
-    """Delegate to ``config.entity_stories_url``.
-
-    Args:
-        entity_tag_id: Upstream term id.
-        lang: UI language.
-
-    Returns:
-        Public URL filtered to one entity.
-    """
-    return config.entity_stories_url(entity_tag_id, lang)
-
-
-def create_stories_frontend_url(ids: list[int], lang: str) -> str:
-    """Delegate to ``config.create_stories_frontend_url``.
-
-    Args:
-        ids: Upstream term ids.
-        lang: UI language.
-
-    Returns:
-        Public URL for user navigation.
-    """
-    return config.create_stories_frontend_url(ids, lang)
-
-
-def create_stories_api_url(ids: list[int], lang: str) -> str:
-    """Delegate to ``config.create_stories_api_url``.
-
-    Args:
-        ids: Upstream term ids.
-        lang: UI language.
-
-    Returns:
-        Upstream request URL.
-    """
-    return config.create_stories_api_url(ids, lang)
-
-
-def parse_stories_count(response: httpx.Response) -> int:
-    """Delegate to ``config.parse_stories_count``.
-
-    Args:
-        response: Successful upstream response.
-
-    Returns:
-        Integer story count.
-    """
-    return config.parse_stories_count(response)

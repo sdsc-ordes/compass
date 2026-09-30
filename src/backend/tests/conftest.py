@@ -1,37 +1,36 @@
-"""Shared fixtures for backend tests.
+"""Shared fixtures: the real ontology store and an API client over it."""
 
-Provides a real RDFStore loaded from the ontology files so tests validate
-against the actual data/shapes/vocab rather than synthetic mocks.
-"""
-
-import os
+from collections.abc import Iterator
 
 import pytest
+from fastapi.testclient import TestClient
+from rdflib import Graph
 
-from app.core.settings import settings
+from app.main import app
 from app.rdf import RDFStore
-
-_ONTOLOGY_DIR = str(settings.ontology_dir)
-_USECASE_DIR = str(settings.use_case_dir)
+from app.shacl_to_entities import EntityShape
 
 
 @pytest.fixture(scope="session")
 def store() -> RDFStore:
-    """Session-scoped RDFStore loaded from the real ontology files."""
-    return RDFStore(
-        data_path=os.path.join(_USECASE_DIR, "compass.ttl"),
-        shapes_path=os.path.join(_ONTOLOGY_DIR, "shapes.ttl"),
-        vocab_path=os.path.join(_USECASE_DIR, "vocab.ttl"),
-    )
+    """RDFStore loaded from the configured ontology files."""
+    return RDFStore.from_settings()
 
 
 @pytest.fixture(scope="session")
-def read_graph(store: RDFStore):
-    """Session-scoped rdflib Graph for SHACL introspection tests."""
-    return store.read_graph
+def graph(store: RDFStore) -> Graph:
+    """Merged rdflib graph of the ontology."""
+    return store.graph
 
 
 @pytest.fixture(scope="session")
-def property_specs(store: RDFStore):
-    """Cached EntityShape list projected from SHACL shapes."""
-    return store.get_entities()
+def entity_shapes(store: RDFStore) -> list[EntityShape]:
+    """EntityShape list projected from the SHACL shapes."""
+    return store.entity_shapes()
+
+
+@pytest.fixture(scope="session")
+def client() -> Iterator[TestClient]:
+    """TestClient with the app lifespan running."""
+    with TestClient(app) as test_client:
+        yield test_client

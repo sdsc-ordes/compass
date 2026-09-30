@@ -9,24 +9,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _default_ontology_dir() -> Path:
-    """Resolve the default ontology directory relative to this package.
-
-    Returns:
-        ``src/ontology`` when the layout matches a normal checkout.
-    """
-    # app/core/settings.py -> app -> backend -> src -> ontology
-    base = Path(__file__).resolve().parents[3]
-    return base / "ontology"
+    """Return ``src/ontology`` of the checkout this package lives in."""
+    # parents[3] of src/backend/app/core/settings.py is src/
+    return Path(__file__).resolve().parents[3] / "ontology"
 
 
-def _project_root_env_file() -> Path | None:
-    """Return the project-root .env file if it exists.
-
-    Returns:
-        Path to ``.env`` at the repository root, or ``None`` when absent.
-        Docker Compose injects variables directly, so the file is optional.
-    """
-    # app/core/settings.py -> app -> backend -> src -> project root
+def root_env_file() -> Path | None:
+    """Return the project-root .env file, or ``None`` when absent (e.g. under Compose)."""
+    # parents[4] of src/backend/app/core/settings.py is the repository root
     env_file = Path(__file__).resolve().parents[4] / ".env"
     return env_file if env_file.exists() else None
 
@@ -36,17 +26,13 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         extra="ignore",
-        env_file=_project_root_env_file(),
+        env_file=root_env_file(),
         env_file_encoding="utf-8",
     )
 
-    compass_environment: str = Field(
-        default="development",
-        description="Runtime environment: 'development' enables dev-only behavior.",
-    )
     compass_cors_origins: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173",
-        description="Comma-separated browser origins allowed for CORS.",
+        description="Comma-separated browser origins allowed for CORS; empty disables it.",
     )
     compass_reload_token: str = Field(
         default="",
@@ -67,15 +53,6 @@ class Settings(BaseSettings):
         ),
     )
 
-    @property
-    def is_development(self) -> bool:
-        """Whether the app is running in a development environment.
-
-        Returns:
-            ``True`` when ``compass_environment`` is 'development' or 'dev'.
-        """
-        return self.compass_environment.lower() in {"development", "dev"}
-
     @field_validator("compass_ontology_dir", mode="before")
     @classmethod
     def _empty_ontology_dir_is_none(cls, value: object) -> object:
@@ -87,9 +64,7 @@ class Settings(BaseSettings):
         Returns:
             ``None`` for empty input, otherwise *value* unchanged.
         """
-        if value == "" or value is None:
-            return None
-        return value
+        return None if value == "" else value
 
     @field_validator("compass_use_case", mode="before")
     @classmethod
@@ -121,15 +96,6 @@ class Settings(BaseSettings):
             for origin in self.compass_cors_origins.split(",")
             if origin.strip()
         ]
-
-    @property
-    def reload_token(self) -> str:
-        """Token expected in the ``X-Reload-Token`` header.
-
-        Returns:
-            Configured reload secret (may be empty).
-        """
-        return self.compass_reload_token
 
     @property
     def ontology_dir(self) -> Path:

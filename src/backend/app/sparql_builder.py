@@ -1,12 +1,20 @@
-"""SPARQL generation from EntityShape descriptors plus the active filters."""
+"""SPARQL generation from EntityShape descriptors plus the active filters.
+
+Every generated pattern constrains ``?s``, the pin, whose class is bound to
+``?type``.
+"""
 
 from __future__ import annotations
 
+import math
 from datetime import date
 from typing import Any
 
+from rdflib.namespace import XSD
+
 from app.namespaces import (
     ALWAYS_ON_CLASSES,
+    ENTITY_TYPE_ID,
     FIELD_SEP,
     FILTERABLE_PIN_CLASSES,
     ITEM_SEP,
@@ -29,19 +37,17 @@ def to_prefixed(iri: str) -> str:
     Returns:
         Prefixed name when the namespace is known, otherwise an ``<IRIREF>``.
     """
-    for ns, prefix in PREFIX_MAP.items():
-        if iri.startswith(ns):
-            return prefix + iri[len(ns) :]
+    for namespace, prefix in PREFIX_MAP.items():
+        if iri.startswith(namespace):
+            return prefix + iri[len(namespace) :]
     return iri_term(iri)
 
 
 def _is_iri_value(value: str) -> bool:
-    """True when a filter value names a concept rather than a literal tag.
+    """Tell a concept IRI filter value from a literal one.
 
-    A tag dimension can be filtered either by concept IRI or by literal text,
-    so the two are told apart by shape. The IRI check is the grammar's, not a
-    guess: a value that cannot be written as an IRIREF is treated as a literal
-    rather than interpolated between brackets.
+    A value that is not a safe IRIREF is treated as a literal rather than
+    interpolated between brackets.
 
     Args:
         value: Raw query-parameter value.
@@ -52,93 +58,74 @@ def _is_iri_value(value: str) -> bool:
     return value.startswith(("http://", "https://")) and is_iri(value)
 
 
-def build_optional(spec: EntityShape, lang: str) -> str:
+def build_optional(shape: EntityShape, lang: str) -> str:
     """Build the OPTIONAL clause that binds one EntityShape property.
 
-    A multi-valued property is aggregated in its own subquery, one row per pin.
-
     Args:
-        spec: Property descriptor from SHACL.
+        shape: Property descriptor from SHACL.
         lang: Preferred language for labels / langString filters.
 
     Returns:
-        SPARQL OPTIONAL fragment, or empty string for unknown categories.
+        SPARQL OPTIONAL fragment.
     """
-    sid = spec.id
-    path = to_prefixed(spec.path_iri)
-    cat = spec.category
+    var = shape.id
+    path = to_prefixed(shape.path_iri)
 
-    if cat == "lang_literal":
-        body = f'?s {path} ?{sid} . FILTER(lang(?{sid}) = "{lang}")'
-    elif cat in ("simple_literal", "uri_literal", "boolean"):
-        body = f"?s {path} ?{sid} ."
-    elif cat == "iri_with_label":
+    if shape.category == "lang_literal":
+        body = f'?s {path} ?{var} . FILTER(lang(?{var}) = "{lang}")'
+    elif shape.category == "iri_with_label":
         body = (
-            f"?s {path} ?{sid}Node .\n"
-            f"            OPTIONAL {{ ?{sid}Node skos:prefLabel ?{sid}Skos . "
-            f'FILTER(lang(?{sid}Skos) = "{lang}") }}\n'
-            f"            OPTIONAL {{ ?{sid}Node rdfs:label ?{sid}Rdfs . "
-            f'FILTER(lang(?{sid}Rdfs) = "{lang}") }}\n'
-            f"            BIND(COALESCE(?{sid}Skos, ?{sid}Rdfs) AS ?{sid}Lab)"
+            f"?s {path} ?{var}Node .\n"
+            f"            OPTIONAL {{ ?{var}Node skos:prefLabel ?{var}Skos . "
+            f'FILTER(lang(?{var}Skos) = "{lang}") }}\n'
+            f"            OPTIONAL {{ ?{var}Node rdfs:label ?{var}Rdfs . "
+            f'FILTER(lang(?{var}Rdfs) = "{lang}") }}\n'
+            f"            BIND(COALESCE(?{var}Skos, ?{var}Rdfs) AS ?{var}Lab)"
         )
     else:
-        return ""
-    if not spec.is_multi:
+        body = f"?s {path} ?{var} ."
+    if not shape.is_multi:
         return f"OPTIONAL {{\n            {body}\n        }}"
-    # A multi-valued property is folded to one row per pin in its own subquery.
-    # Side by side in the outer WHERE, the lists would join into their cross
-    # product first: a pin with every tag ran to tens of thousands of rows.
+    # Folding each multi-valued property in its own subquery keeps one row per
+    # pin; side by side in the outer WHERE the lists would join into their
+    # cross product.
     return (
         f"OPTIONAL {{\n"
-        f"            SELECT ?s {_concat(spec)}\n"
+        f"            SELECT ?s {_group_concat(shape)}\n"
         f"            WHERE {{\n            {body}\n            }}\n"
         f"            GROUP BY ?s\n"
         f"        }}"
     )
 
 
-def _concat(spec: EntityShape) -> str:
-    """The GROUP_CONCAT folding a multi-valued property into ``?<id>Agg``."""
-    sid = spec.id
-    if spec.category == "iri_with_label":
-        item = f'CONCAT(STR(?{sid}Node), "{FIELD_SEP}", COALESCE(?{sid}Lab, ""))'
+def _group_concat(shape: EntityShape) -> str:
+    """Build the GROUP_CONCAT folding a multi-valued property into ``?<id>Agg``."""
+    var = shape.id
+    if shape.category == "iri_with_label":
+        item = f'CONCAT(STR(?{var}Node), "{FIELD_SEP}", COALESCE(?{var}Lab, ""))'
     else:
-        item = f"?{sid}"
-    return f'(GROUP_CONCAT(DISTINCT {item}; separator="{ITEM_SEP}") AS ?{sid}Agg)'
+        item = f"?{var}"
+    return f'(GROUP_CONCAT(DISTINCT {item}; separator="{ITEM_SEP}") AS ?{var}Agg)'
 
 
-def build_select_expr(spec: EntityShape) -> str:
-    """SAMPLE of each property, or of its subquery's GROUP_CONCAT when multi-valued.
+def build_select_expr(shape: EntityShape) -> str:
+    """Build the SELECT projection sampling one property from its group.
 
     Args:
-        spec: Property descriptor from SHACL.
+        shape: Property descriptor from SHACL.
 
     Returns:
         SELECT projection expression(s) for this property.
     """
-    sid = spec.id
-    cat = spec.category
-    is_multi = spec.is_multi
-
-    if is_multi:
-        # Already folded by the subquery in build_optional.
-        return f"(SAMPLE(?{sid}Agg) AS ?{sid}Raw)"
-    if cat == "iri_with_label":
+    var = shape.id
+    if shape.is_multi:
+        return f"(SAMPLE(?{var}Agg) AS ?{var}Raw)"
+    if shape.category == "iri_with_label":
         return (
-            f"(SAMPLE(?{sid}Node) AS ?{sid}Iri)\n"
-            f"           (SAMPLE(?{sid}Lab) AS ?{sid}Label)"
+            f"(SAMPLE(?{var}Node) AS ?{var}Iri)\n"
+            f"           (SAMPLE(?{var}Lab) AS ?{var}Label)"
         )
-    return f"(SAMPLE(?{sid}) AS ?{sid}Result)"
-
-
-# The synthetic dimension over rdf:type. shacl_to_filters builds its widget and
-# _build_where_clauses filters on it; neither reaches it through a property shape.
-ENTITY_TYPE_ID = "entityType"
-
-
-# The one subject every clause constrains: the pin the map draws.
-PIN_VAR = "?s"
-TYPE_VAR = "?type"
+    return f"(SAMPLE(?{var}) AS ?{var}Result)"
 
 
 def _class_union(names: tuple[str, ...], indent: str) -> str:
@@ -156,14 +143,11 @@ def _class_union(names: tuple[str, ...], indent: str) -> str:
     )
 
 
-def _pin_branch(
-    where_clauses: list[str], indent: str = "        ", *, with_always_on: bool = False
-) -> str:
+def _pin_branch(where_clauses: list[str], *, with_always_on: bool = False) -> str:
     """Build the UNION of the entity classes that carry coordinates.
 
     Args:
         where_clauses: Extra FILTER / pattern lines applied to each filtered pin.
-        indent: Leading whitespace for generated lines.
         with_always_on: Also emit ``ALWAYS_ON_CLASSES``, outside the filtered
             group so no clause reaches them. Off for facet counts, which never
             count them.
@@ -171,6 +155,7 @@ def _pin_branch(
     Returns:
         SPARQL WHERE fragment for map pins.
     """
+    indent = "        "
     inner = indent + "    " if with_always_on else indent
     body = f"{inner}{_class_union(FILTERABLE_PIN_CLASSES, inner)}\n"
     if where_clauses:
@@ -187,11 +172,10 @@ def _pin_branch(
 
 
 def _shared_optionals(lang: str) -> str:
-    """Geometry and label binding for every pin.
+    """Bind geometry and labels for every pin.
 
     Coordinates stay OPTIONAL so a pin missing them reaches the decoder, which
-    logs it, rather than dropping out of the query unremarked. A pin with no
-    name in the requested language drops out, exactly as it would on the map.
+    logs it. The name is required, so a pin without one in *lang* drops out.
 
     Args:
         lang: Preferred language tag.
@@ -206,30 +190,9 @@ def _shared_optionals(lang: str) -> str:
 """
 
 
-def _distinct(values: list[str]) -> list[str]:
-    """Drop empties and repeats from a dimension's selected values, in order.
-
-    A repeated value would compile to a second identical required pattern,
-    which constrains nothing and only makes the query longer.
-
-    Args:
-        values: Raw query-parameter values for one dimension.
-
-    Returns:
-        The non-empty values, first occurrence order preserved.
-    """
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        if value and value not in seen:
-            seen.add(value)
-            out.append(value)
-    return out
-
-
 def _build_where_clauses(
     query_params: Any,
-    filter_map: dict[str, str],
+    value_filters: dict[str, str],
     range_filters: RangeFilters,
     date_filters: dict[str, str],
     *,
@@ -237,30 +200,21 @@ def _build_where_clauses(
 ) -> list[str]:
     """Translate HTTP query params into SPARQL WHERE fragments.
 
-    Values picked within one tag dimension are conjunctive: each becomes its own
-    required triple pattern, so picking a second value narrows the selection.
-    Dimensions are conjunctive with each other for the same reason -- every
-    clause lands in the same group. ``entityType`` is the exception and stays
-    disjunctive: an entity has exactly one class, so requiring two would return
-    nothing (see the ``FILTER(... IN ...)`` branch below).
-
-    ``exclude_key`` drops that dimension's own constraints. It is the drill-down
-    device for a disjunctive dimension, whose unpicked values would otherwise all
-    count zero; a conjunctive dimension wants its own selection kept, so
-    ``build_facet_query`` passes this only for ``entityType``.
+    Values within one tag dimension, and dimensions with each other, combine
+    with AND. ``entityType`` values combine with OR: an entity has exactly one
+    class, so requiring two would match nothing.
 
     Args:
         query_params: Starlette/FastAPI query parameter multi-dict.
-        filter_map: Multiselect/toggle property id → prefixed predicate.
-        range_filters: Slider property id → (predicate, datatype).
-        date_filters: Datepicker property id → prefixed predicate.
-        exclude_key: Dimension id to ignore (disjunctive-dimension faceting).
+        value_filters: Multiselect/toggle property id -> prefixed predicate.
+        range_filters: Slider property id -> (predicate, datatype).
+        date_filters: Datepicker property id -> prefixed predicate.
+        exclude_key: Dimension id whose own constraints are dropped.
 
     Returns:
         List of SPARQL pattern / FILTER lines.
     """
     where_clauses = []
-    subj = PIN_VAR
 
     for key, val in query_params.items():
         if key in ("lang", exclude_key) or not val:
@@ -268,133 +222,112 @@ def _build_where_clauses(
         values = query_params.getlist(key)
         var = f"?{key}Val"
 
-        if key in filter_map:
-            prop = filter_map[key]
-            # Every picked value is its own required pattern, so a second pick
-            # narrows the selection instead of widening it: "dolphins AND
-            # whales" means the entities that carry both tags. The literal
-            # branch needs a fresh variable per value -- one variable cannot
-            # equal two different literals at once, and reusing it would match
-            # nothing.
-            for index, v in enumerate(_distinct(values)):
-                if _is_iri_value(v):
-                    where_clauses.append(f"{subj} {prop} {iri_term(v)} .")
+        if key in value_filters:
+            prop = value_filters[key]
+            # One variable cannot equal two literals, so each literal value
+            # gets its own; repeats are dropped as they constrain nothing.
+            for index, value in enumerate(dict.fromkeys(v for v in values if v)):
+                if _is_iri_value(value):
+                    where_clauses.append(f"?s {prop} {iri_term(value)} .")
                 else:
-                    val_var = f"{var}{index}"
+                    value_var = f"{var}{index}"
                     where_clauses.append(
-                        f"{subj} {prop} {val_var} . "
-                        f"FILTER(str({val_var}) = {string_literal(v)})"
+                        f"?s {prop} {value_var} . "
+                        f"FILTER(str({value_var}) = {string_literal(value)})"
                     )
 
         elif key in date_filters:
             try:
                 date.fromisoformat(val)
             except ValueError:
-                continue  # not a date, so it constrains nothing
+                continue
             prop = date_filters[key]
             where_clauses.append(
-                f"OPTIONAL {{ {subj} {prop} {var} . }} "
+                f"OPTIONAL {{ ?s {prop} {var} . }} "
                 f"FILTER(!BOUND({var}) || {var} >= {string_literal(val)}^^xsd:date)"
             )
 
         elif key == ENTITY_TYPE_ID:
             iri_list = ", ".join(iri_term(v) for v in values if _is_iri_value(v))
             if iri_list:
-                # Disjunctive on purpose, unlike the tag dimensions above: an
-                # entity has exactly one rdf:type, so requiring two picked
-                # classes at once would empty the map. Picking Programme and
-                # Network means "either".
-                where_clauses.append(f"FILTER({TYPE_VAR} IN ({iri_list}))")
+                where_clauses.append(f"FILTER(?type IN ({iri_list}))")
 
         elif key in range_filters:
             prop, datatype = range_filters[key]
             try:
-                numeric_val = float(val)
-                if datatype and "gYear" in datatype:
-                    year_int = int(numeric_val)
-                    where_clauses.append(
-                        f"OPTIONAL {{ {subj} {prop} {var} . }} "
-                        f'FILTER(!BOUND({var}) || {var} >= "{year_int}"^^xsd:gYear)'
-                    )
-                else:
-                    where_clauses.append(
-                        f"OPTIONAL {{ {subj} {prop} {var} . }} "
-                        f"FILTER(!BOUND({var}) || {var} >= {numeric_val})"
-                    )
+                threshold = float(val)
             except ValueError:
                 continue
+            if not math.isfinite(threshold):
+                continue
+            if datatype == str(XSD.gYear):
+                literal = f'"{int(threshold)}"^^xsd:gYear'
+            else:
+                literal = str(threshold)
+            where_clauses.append(
+                f"OPTIONAL {{ ?s {prop} {var} . }} "
+                f"FILTER(!BOUND({var}) || {var} >= {literal})"
+            )
 
     return where_clauses
 
 
-def _categorize_specs(
-    specs: list[EntityShape],
+def _categorize_shapes(
+    shapes: list[EntityShape],
 ) -> tuple[dict[str, str], RangeFilters, dict[str, str]]:
-    """Split EntityShape list into multiselect, range, and date filter maps.
+    """Split EntityShapes into value, range, and date filter maps.
 
     Args:
-        specs: SHACL-projected property descriptors.
+        shapes: SHACL-projected property descriptors.
 
     Returns:
-        Tuple of ``(filter_map, range_filters, date_filters)``.
+        Tuple of ``(value_filters, range_filters, date_filters)``.
     """
-    filter_map: dict[str, str] = {}
+    value_filters: dict[str, str] = {}
     range_filters: RangeFilters = {}
     date_filters: dict[str, str] = {}
-    for spec in specs:
-        prefixed = to_prefixed(spec.path_iri)
-        if spec.filter_type in ("multiselect", "toggle"):
-            filter_map[spec.id] = prefixed
-        elif spec.filter_type == "slider":
-            range_filters[spec.id] = (prefixed, spec.datatype)
-        elif spec.filter_type == "datepicker":
-            date_filters[spec.id] = prefixed
-    return filter_map, range_filters, date_filters
+    for shape in shapes:
+        prefixed = to_prefixed(shape.path_iri)
+        if shape.filter_type in ("multiselect", "toggle"):
+            value_filters[shape.id] = prefixed
+        elif shape.filter_type == "slider":
+            range_filters[shape.id] = (prefixed, shape.datatype)
+        elif shape.filter_type == "datepicker":
+            date_filters[shape.id] = prefixed
+    return value_filters, range_filters, date_filters
 
 
 def build_facet_query(
-    specs: list[EntityShape], lang: str, query_params: Any, target_id: str
+    shapes: list[EntityShape], lang: str, query_params: Any, target_id: str
 ) -> str:
-    """Count entities per value of one tag dimension.
+    """Count entities per value of one dimension.
 
-    A count reads "how many results if I also pick this". For a conjunctive tag
-    dimension that means the dimension's own selection stays in the query: a
-    second pick genuinely does shrink what is left reachable beside it, and the
-    count for an already-picked value is simply the current result total. Values
-    that would empty the map drop out of the results entirely, which is what the
-    panel dims.
-
-    ``entityType`` is the one disjunctive dimension, so it keeps the old
-    drill-down: its own picks are excluded, or every class the user has not
-    picked would count zero and look unpickable.
+    A count reads "how many results if I also pick this", so a tag dimension
+    keeps its own selection. ``entityType`` drops its own picks instead:
+    being disjunctive, every unpicked class would otherwise count zero.
 
     Args:
-        specs: EntityShape list for the ontology.
+        shapes: EntityShape list for the ontology.
         lang: Preferred language for shared optionals.
         query_params: Active filter query parameters.
         target_id: Dimension whose values are counted.
 
     Returns:
-        Complete SPARQL SELECT counting ``?val``.
+        Complete SPARQL SELECT counting ``?n`` per ``?val``.
     """
-    filter_map, range_filters, date_filters = _categorize_specs(specs)
+    value_filters, range_filters, date_filters = _categorize_shapes(shapes)
 
     exclude_key = target_id if target_id == ENTITY_TYPE_ID else None
     where_clauses = _build_where_clauses(
-        query_params, filter_map, range_filters, date_filters, exclude_key=exclude_key
+        query_params, value_filters, range_filters, date_filters, exclude_key=exclude_key
     )
 
     sparql_where = _pin_branch(where_clauses)
-    # entityType has no property shape and so no path in filter_map: it is the
-    # class that _pin_branch has already BOUND to ?type in every branch, so the
-    # count groups by that variable rather than by a triple's object. Aliasing it
-    # to ?val keeps one result shape for the caller; ?val cannot be aliased to
-    # itself, which is why the ordinary path selects it bare.
     if target_id == ENTITY_TYPE_ID:
-        selected, grouped = f"({TYPE_VAR} AS ?val)", TYPE_VAR
+        selected, grouped = "(?type AS ?val)", "?type"
     else:
         selected, grouped = "?val", "?val"
-        sparql_where += f"        ?s {filter_map[target_id]} ?val .\n"
+        sparql_where += f"        ?s {value_filters[target_id]} ?val .\n"
     sparql_where += _shared_optionals(lang)
 
     return (
@@ -407,35 +340,35 @@ def build_facet_query(
     )
 
 
-def sparql_for_instances(specs: list[EntityShape], lang: str, query_params: Any) -> str:
+def sparql_for_instances(shapes: list[EntityShape], lang: str, query_params: Any) -> str:
     """Compile the main entity SELECT for the map.
 
     Args:
-        specs: EntityShape list for the ontology.
+        shapes: EntityShape list for the ontology.
         lang: Preferred language.
         query_params: Active filter query parameters.
 
     Returns:
         Complete SPARQL SELECT returning one grouped row per entity.
     """
-    filter_map, range_filters, date_filters = _categorize_specs(specs)
+    value_filters, range_filters, date_filters = _categorize_shapes(shapes)
 
-    auto_optionals = "\n        ".join(build_optional(spec, lang) for spec in specs)
-    auto_selects = "\n           ".join(build_select_expr(spec) for spec in specs)
+    optionals = "\n        ".join(build_optional(shape, lang) for shape in shapes)
+    selects = "\n           ".join(build_select_expr(shape) for shape in shapes)
     pin_clauses = _build_where_clauses(
-        query_params, filter_map, range_filters, date_filters
+        query_params, value_filters, range_filters, date_filters
     )
 
     sparql_where = _pin_branch(pin_clauses, with_always_on=True)
     sparql_where += _shared_optionals(lang)
-    sparql_where += "        " + auto_optionals + "\n"
+    sparql_where += "        " + optionals + "\n"
 
     return (
         SPARQL_PREFIXES
         + "    SELECT ?s ?label ?lat ?long ?type\n"
         + "           (SAMPLE(?typeLabel) AS ?typeLabelResult)\n"
         + "           "
-        + auto_selects
+        + selects
         + "\n"
         + "    WHERE {\n"
         + sparql_where
