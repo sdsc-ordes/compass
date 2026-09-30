@@ -9,11 +9,7 @@
 @prefix schema: <https://schema.org/> .
 
 # ============================================================
-# SHACL Shapes: OceanCare Compass Entities
-# ============================================================
-
-# ============================================================
-# Entity Classes (4 types appearing on the map)
+# Entity classes
 # ============================================================
 
 compass:MapEntity a rdfs:Class ;
@@ -50,7 +46,7 @@ compass:PartnerOrganization a rdfs:Class ;
     rdfs:comment "Eine OceanCare-Partnerorganisation, die im Meeresschutz oder in der Meeresforschung tätig ist."@de .
 
 # ============================================================
-# Tag Dimension Classes (5 SKOS-based tag vocabularies)
+# Tag dimension classes
 # ============================================================
 
 compass:WorkArea a rdfs:Class ;
@@ -84,13 +80,12 @@ compass:CountryArea a rdfs:Class ;
     rdfs:comment "A country or geographic region relevant to OceanCare's work."@en .
 
 # ============================================================
-# Property Declarations
-# All properties used as sh:path values must be typed as rdf:Property
-# with rdfs:label and rdfs:comment to satisfy ordes:pathShape and
-# ordes:conceptShape in shacl-shacl.ttl.
+# Property declarations
+# shacl-shacl.ttl requires every sh:path to be an rdf:Property with an
+# rdfs:label and an rdfs:comment.
 # ============================================================
 
-# -- Core entity properties --
+# -- Entity properties --
 
 compass:name a rdf:Property ;
     rdfs:label "name"@en ;
@@ -156,7 +151,7 @@ compass:wpEntityTagId a rdf:Property ;
     rdfs:comment "Numeric WP term ID of the per-entity tag on OceanCare, used to link to stories about this entity. One term serves both language sites, which differ only in the URL the link is built on."@en ;
     rdfs:range xsd:integer .
 
-# -- External properties (stub declarations) --
+# -- External properties --
 
 rdfs:label a rdf:Property ;
     rdfs:label "label"@en ;
@@ -187,10 +182,10 @@ skos:altLabel a rdf:Property ;
     rdfs:comment "An alternative lexical label — for an entity, the long form of an abbreviated name."@en .
 
 # ============================================================
-# Named Property Shapes (shared across entity NodeShapes)
+# Property shapes shared by the entity node shapes
 # ============================================================
 
-# -- Core property shapes --
+# -- Entity property shapes --
 
 compass:NameShape a sh:Shape ;
     sh:path compass:name ;
@@ -321,8 +316,7 @@ compass:ProgrammePropertyShape a sh:Shape ;
     sh:description "A programme this entity takes part in."@en ;
     sh:class compass:Programme .
 
-# No sh:class: targets are partner organizations, networks or OceanCare itself,
-# separate classes.
+# No sh:class: objects are PartnerOrganization, Network or HostOrganization.
 compass:RelatedOrganizationPropertyShape a sh:Shape ;
     sh:path compass:relatedOrganization ;
     sh:name "Related Organization"@en ;
@@ -331,8 +325,7 @@ compass:RelatedOrganizationPropertyShape a sh:Shape ;
     sh:nodeKind sh:IRI .
 
 # ============================================================
-# SHACL Node Shapes: 4 entity types
-# Each references the shared named property shapes above.
+# Entity node shapes
 # ============================================================
 
 compass:InternationalForumShape a sh:NodeShape ;
@@ -439,7 +432,7 @@ compass:PartnerOrganizationShape a sh:NodeShape ;
     sh:property compass:ProgrammePropertyShape .
 
 # ============================================================
-# SKOS Vocabulary
+# SKOS vocabulary
 # ============================================================
 
 skos:Concept a rdfs:Class ;
