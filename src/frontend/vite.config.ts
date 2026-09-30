@@ -3,34 +3,32 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type ModuleNode, type Plugin } from 'vite';
-import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(root, '..', '..');
 const bathyDir = path.join(root, 'bathy');
 
-const repoRoot = path.resolve(root, '..', '..');
-
-// A rebake keeps the file names, so the bundle fetches them as ?v=<this>: a
-// hash of every raster and the atlas, which lets nginx cache them immutable.
-// Taken from what is on disk at build, d/ included when it has been baked.
+// Content hash of the rasters and the atlas, which keep their names across a
+// rebake. The bundle fetches them with ?v=<hash> so nginx can cache them immutable.
 function assetVersion(): string {
-  const files = (dir: string): string[] =>
+  const listFiles = (dir: string): string[] =>
     fs.existsSync(dir)
       ? fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
           const p = path.join(dir, e.name);
-          return e.isDirectory() ? files(p) : [p];
+          return e.isDirectory() ? listFiles(p) : [p];
         })
       : [];
+  const inputs = [...listFiles(bathyDir), path.join(root, 'public/basemap/atlas.json')];
   const hash = crypto.createHash('sha256');
-  for (const f of [...files(bathyDir), path.join(root, 'public/basemap/atlas.json')].sort()) {
+  for (const f of inputs.sort()) {
     hash.update(path.relative(root, f)).update(fs.readFileSync(f));
   }
   return hash.digest('hex').slice(0, 10);
 }
 
-// Substitutes __VAR__ in the dev-only index.html. Deliberately not Vite's own
-// %VAR% syntax: envPrefix below makes Vite's built-in env hook claim those, and
-// it runs ahead of this one, warning about a variable we resolve ourselves.
+// Replace __KEY__ in the dev index.html. Not Vite's %KEY%: with envPrefix set,
+// Vite's own env hook runs first and warns about variables it cannot resolve.
 function devPageConfig(values: Record<string, string>): Plugin {
   return {
     name: 'compass-dev-page-config',
@@ -42,21 +40,19 @@ function devPageConfig(values: Record<string, string>): Plugin {
   };
 }
 
-// The baked rasters live outside the bundle (they are megabytes), so the dev
-// server hands them over the same way nginx does in production.
+// Serve bathy/ in dev as nginx does in production; it is not under public/.
 function serveBathymetry(): Plugin {
   return {
     name: 'serve-bathymetry',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         if (!req.url?.startsWith('/bathy/')) return next();
-        const rel = decodeURIComponent(req.url.slice('/bathy/'.length).split('?')[0] ?? '');
+        const rel = decodeURIComponent(req.url.slice('/bathy/'.length).split('?')[0]);
         const file = path.resolve(bathyDir, rel);
-        if (
-          !file.startsWith(bathyDir + path.sep) ||
-          !fs.existsSync(file) ||
-          !fs.statSync(file).isFile()
-        ) {
+        const stat = file.startsWith(bathyDir + path.sep)
+          ? fs.statSync(file, { throwIfNoEntry: false })
+          : undefined;
+        if (!stat?.isFile()) {
           res.statusCode = 404;
           res.end();
           return;
@@ -104,12 +100,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       devPageConfig({ COMPASS_API_URL: apiUrl }),
-      svelte({
-        preprocess: [vitePreprocess()],
-        compilerOptions: {
-          customElement: true,
-        },
-      }),
+      // Options live in svelte.config.js, which svelte-check reads too.
+      svelte(),
       reloadCustomElement(path.join(root, 'src/components/CompassMap.svelte')),
       serveBathymetry(),
     ],

@@ -1,8 +1,10 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join, relative } from 'node:path';
+// Fail if the widget source names any host outside ALLOWED: the widget must make
+// no third-party requests at runtime.
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+
+const ROOT = join(import.meta.dirname, '..', 'src');
 const EXTENSIONS = ['.ts', '.svelte', '.css', '.html'];
 
 const ALLOWED = new Map([
@@ -20,12 +22,14 @@ const ALLOWED = new Map([
 const isTest = (path) => /\.(test|spec)\.[^.]+$/.test(path);
 
 function walk(dir) {
-  return readdirSync(dir).flatMap((entry) => {
-    const path = join(dir, entry);
-    if (statSync(path).isDirectory()) return walk(path);
-    if (isTest(path)) return [];
-    return EXTENSIONS.some((e) => path.endsWith(e)) ? [path] : [];
-  });
+  return readdirSync(dir)
+    .sort()
+    .flatMap((entry) => {
+      const path = join(dir, entry);
+      if (statSync(path).isDirectory()) return walk(path);
+      if (isTest(path)) return [];
+      return EXTENSIONS.some((e) => path.endsWith(e)) ? [path] : [];
+    });
 }
 
 const offenders = [];

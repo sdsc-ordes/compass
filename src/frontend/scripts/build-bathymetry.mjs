@@ -1,56 +1,41 @@
-// Bakes the GEBCO tile pyramid (see build-tiles.mjs) into the rasters the widget
-// actually loads at runtime:
+// Bake the z5 GEBCO tiles from build-tiles.mjs into the rasters the widget loads:
 //
-//   bathy/flat.webp      world pre-projected into Equal Earth, drawn with a
-//                        single drawImage because flat pan/zoom is an exact
-//                        similarity transform of a fixed image.
-//   bathy/flat-small.webp  the same, narrower, for screens too small to use the
-//                        full one until they zoom in.
-//   bathy/equirect.webp  plate carree, decoded to ImageData and resampled per
-//                        frame -- only the globe needs that, because rotation is
-//                        the one transform that is not affine.
-//   bathy/d/{c}_{r}.webp a 2x Equal Earth level, fetched only once the flat
-//                        view is upscaling the base past 1:1.
-//
-// Run after `just tiles`. The tiles are a build input only; nothing ships them.
+//   bathy/flat.webp        Equal Earth, drawn by the flat view
+//   bathy/flat-small.webp  the same at FLAT_SMALL_W, for small screens
+//   bathy/equirect.webp    plate carree, resampled per frame by the globe
+//   bathy/d/{c}_{r}.webp   2x Equal Earth tiles the flat view overlays past 1:1
+//                          (skipped when BATHY_NO_DETAIL is set)
 
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import sharp from 'sharp';
 import { geoEqualEarth, geoPath } from 'd3-geo';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const TILES = join(HERE, '..', 'tiles');
-const OUT = join(HERE, '..', 'bathy');
+const TILES = join(import.meta.dirname, '..', 'tiles');
+const OUT = join(import.meta.dirname, '..', 'bathy');
 
 const SRC_Z = 5;
 const TILE = 512;
 
 const FLAT_W = Number(process.env.BATHY_FLAT_W ?? 8192);
-// The intermediate Web Mercator mosaic matches the Equal Earth width it feeds,
-// so the reprojection resamples at roughly 1:1 and neither axis is starved.
-const MERC = FLAT_W;
+// Same width as the Equal Earth output, so reprojection resamples at about 1:1.
+const MERC_W = FLAT_W;
 
-// ~16x lighter than the full base (0.27 MB against 4.5), and still 1:1 on a
-// phone to about k=2.6 (the stage caps dpr at 2). Must match SMALL_W in
-// src/lib/bathymetry.ts.
+// Must match SMALL_W in src/lib/bathymetry.ts.
 const FLAT_SMALL_W = 2048;
 
 const EQUI_W = 4096;
 const EQUI_H = 2048;
 
-// Detail level: 2x the base, which is exactly the z5 source width (32 x 512), so
-// it adds real data rather than inventing it. Tiled because WebP caps a side at
-// 16383, and its mosaic runs 1:1 for the same reason the base one does. Must
-// match DETAIL_W in src/lib/bathymetry.ts.
+// The z5 source width (32 x 512). Tiled because WebP caps a side at 16383.
+// Must match DETAIL_W and DETAIL_TILE in src/lib/bathymetry.ts.
 const DETAIL_W = 16384;
 const DETAIL_TILE = 2048;
 
 const QUALITY = Number(process.env.BATHY_Q ?? 70);
 // sharp quantises the unsharp mask, so anything below ~0.5 is silently a no-op.
 const SHARPEN = Number(process.env.BATHY_SHARPEN ?? 0.5);
-// GEBCO's own colours are too vivid for this map, so the ramp is toned down.
+// Saturation factor for GEBCO's colour ramp; 1 leaves it unchanged.
 const SAT = Number(process.env.BATHY_SAT ?? 0.6);
 const REC709 = [0.2126, 0.7152, 0.0722];
 
@@ -61,17 +46,17 @@ function tilePath(z, x, y) {
   return join(TILES, String(z), String(x), `${y}.jpg`);
 }
 
-// Stitches one row of source tiles, downscales it, and returns raw RGB.
+// Stitch one row of source tiles and downscale it to n x rowH raw RGB.
 async function strip(ty, across, rowH, n) {
   const composite = [];
   for (let tx = 0; tx < across; tx++) {
     const file = tilePath(SRC_Z, tx, ty);
     if (!existsSync(file))
-      throw new Error(`missing tile ${SRC_Z}/${tx}/${ty} -- run \`just tiles\` first`);
+      throw new Error(`missing tile ${SRC_Z}/${tx}/${ty} -- run \`just map::tiles\` first`);
     composite.push({ input: readFileSync(file), top: 0, left: tx * TILE });
   }
-  // Two passes on purpose: sharp resizes before it composites, so shrinking in
-  // the same pipeline would drop every tile past the first off the canvas.
+  // Two pipelines: sharp resizes before it composites, so a single one would
+  // drop every tile past the first off the canvas.
   const full = await sharp({
     create: { width: across * TILE, height: TILE, channels: 3, background: '#000' },
   })
@@ -112,10 +97,10 @@ function sampler(merc, n) {
     const xb = (xa + 1) % n;
     const ra = y0 * n * 3;
     const rb = y1 * n * 3;
-    const w00 = (1 - fx) * (1 - fy),
-      w10 = fx * (1 - fy);
-    const w01 = (1 - fx) * fy,
-      w11 = fx * fy;
+    const w00 = (1 - fx) * (1 - fy);
+    const w10 = fx * (1 - fy);
+    const w01 = (1 - fx) * fy;
+    const w11 = fx * fy;
     for (let c = 0; c < 3; c++) {
       out[c] =
         merc[ra + xa * 3 + c] * w00 +
@@ -132,7 +117,7 @@ const mercV = (lat) => {
 };
 
 async function equirect(merc) {
-  const sample = sampler(merc, MERC);
+  const sample = sampler(merc, MERC_W);
   const dst = Buffer.alloc(EQUI_W * EQUI_H * 4);
   const px = [0, 0, 0];
   let first = -1;
@@ -153,12 +138,8 @@ async function equirect(merc) {
     last = j;
   }
 
-  // Mercator stops at 85.05 deg, so the source has nothing for the last ~5 deg
-  // at each pole. Carry the outermost row up to it: the globe samples this
-  // bilinearly, and a transparent gap there would not merely be a hole -- the
-  // unwritten pixels are black, so every sample straddling the edge would pull
-  // that black into the picture as a dark ring. Polar ocean is nearly uniform,
-  // so the smear reads as ice rather than as an artefact.
+  // Mercator ends at LAT_MAX. Repeat the outermost rows up to the poles: left
+  // black, they would bleed a dark ring into the globe's bilinear sampling.
   const row = EQUI_W * 4;
   for (let j = 0; j < first; j++) dst.copyWithin(j * row, first * row, first * row + row);
   for (let j = last + 1; j < EQUI_H; j++) dst.copyWithin(j * row, last * row, last * row + row);
@@ -166,8 +147,8 @@ async function equirect(merc) {
   return { data: dst, width: EQUI_W, height: EQUI_H, channels: 4 };
 }
 
-// The raster fits the sphere's Equal Earth bounding box to width, which is
-// what lets the runtime map any width onto any other by a single scale factor.
+// Fit the sphere's Equal Earth bounds to width W, so every width is the same
+// image up to one scale factor.
 function flatGeom(W) {
   const base = geoEqualEarth().scale(1).translate([0, 0]);
   const [[x0, y0], [x1, y1]] = geoPath(base).bounds({ type: 'Sphere' });
@@ -175,18 +156,16 @@ function flatGeom(W) {
   return { base, x0, y0, s, W, H: Math.round((y1 - y0) * s) };
 }
 
-// Equal Earth is pseudocylindrical: parallels are straight and x is exactly
-// linear in longitude. So each output row needs one invert for its latitude,
-// not one per pixel -- 4k inverts instead of 34M.
-// Returns the first and last column it filled, so the tiler can tell which tiles
-// are entirely off the sphere without rescanning them.
+// Fill output row j. Equal Earth is pseudocylindrical (x is linear in longitude
+// along a row), so one invert per row gives its latitude. Return the [first,
+// last] column filled, or null when the row misses the sphere.
 function flatRow(fg, sample, j, dst, off) {
   const { base, x0, y0, s, W } = fg;
   const Y = y0 + (j + 0.5) / s;
   const ll = base.invert([0, Y]);
   if (!ll || !isFinite(ll[1])) return null;
   const lat = ll[1];
-  if (Math.abs(lat) > LAT_MAX) return null; // no source data; the sea colour shows through
+  if (Math.abs(lat) > LAT_MAX) return null; // beyond the mosaic; left transparent
   const A = base([DEG, lat])[0]; // x at one radian of longitude
   if (!isFinite(A) || A === 0) return null;
   const v = mercV(lat);
@@ -196,7 +175,7 @@ function flatRow(fg, sample, j, dst, off) {
   let hi = -1;
   for (let i = 0; i < W; i++) {
     const X = x0 + (i + 0.5) / s;
-    if (X < -maxX || X > maxX) continue; // outside the sphere on this row
+    if (X < -maxX || X > maxX) continue;
     sample(((X / A) * DEG) / 360 + 0.5, v, px);
     const d = off + i * 4;
     dst[d] = px[0];
@@ -211,7 +190,7 @@ function flatRow(fg, sample, j, dst, off) {
 
 async function flat(merc) {
   const fg = flatGeom(FLAT_W);
-  const sample = sampler(merc, MERC);
+  const sample = sampler(merc, MERC_W);
   const dst = Buffer.alloc(FLAT_W * fg.H * 4); // alloc: transparent outside the sphere
 
   for (let j = 0; j < fg.H; j++) {
@@ -222,9 +201,8 @@ async function flat(merc) {
   return { data: dst, width: FLAT_W, height: fg.H, channels: 4 };
 }
 
-// Baked one tile row at a time so the full 16384x7974 RGBA surface never has to
-// exist at once. Tiles the sphere never reaches are not written at all -- the
-// runtime reads their 404 as empty and leaves the base showing.
+// Bake one tile row at a time, so the full RGBA surface never exists at once.
+// Tiles off the sphere are not written: the runtime treats their 404 as empty.
 async function detail(merc) {
   const fg = flatGeom(DETAIL_W);
   const sample = sampler(merc, DETAIL_W);
@@ -254,7 +232,7 @@ async function detail(merc) {
         band.copy(tile, y * DETAIL_TILE * 4, from, from + DETAIL_TILE * 4);
       }
       const raw = { data: tile, width: DETAIL_TILE, height: DETAIL_TILE, channels: 4 };
-      await write(join('d', `${c}_${r}.webp`), raw, true);
+      await write(join('d', `${c}_${r}.webp`), raw);
       wrote++;
     }
     process.stdout.write(`\r  detail ${r + 1}/${rows} tile rows`);
@@ -263,65 +241,54 @@ async function detail(merc) {
   return { cols, rows, wrote, height: fg.H };
 }
 
-function saturate(s) {
+function saturationMatrix(s) {
   return REC709.map((_, i) => REC709.map((l, j) => (i === j ? l + (1 - l) * s : l - l * s)));
 }
 
-async function write(name, raw, alpha) {
+async function write(name, raw) {
   const file = join(OUT, name);
   const pipe = sharp(raw.data, {
     raw: { width: raw.width, height: raw.height, channels: raw.channels },
   });
-  // The stage upscales this past 1:1 at deep zoom, where plain interpolation
-  // reads as mush. A light unsharp adds no data but keeps shelf edges legible.
+  // Keeps shelf edges legible where the stage upscales past 1:1.
   const sharpened = SHARPEN > 0 ? pipe.sharpen({ sigma: SHARPEN }) : pipe;
-  const shaped = SAT === 1 ? sharpened : sharpened.recomb(saturate(SAT));
-  await shaped
-    .webp({ quality: QUALITY, alpha_quality: alpha ? 100 : undefined, effort: 5 })
-    .toFile(file);
+  const shaped = SAT === 1 ? sharpened : sharpened.recomb(saturationMatrix(SAT));
+  await shaped.webp({ quality: QUALITY, alpha_quality: 100, effort: 5 }).toFile(file);
   return file;
 }
 
-async function main() {
-  if (!existsSync(join(TILES, String(SRC_Z)))) {
-    console.error(`no z${SRC_Z} tiles in ${TILES} -- run \`just tiles\` first`);
-    process.exit(1);
-  }
-  mkdirSync(OUT, { recursive: true });
+async function save(name, raw) {
+  const file = await write(name, raw);
+  console.log(`  ${file}  ${raw.width}x${raw.height}`);
+}
 
-  console.log(`baking from z${SRC_Z} tiles via a ${MERC}x${MERC} mercator mosaic`);
-  let merc = await mosaic(MERC);
+if (!existsSync(join(TILES, String(SRC_Z)))) {
+  console.error(`no z${SRC_Z} tiles in ${TILES} -- run \`just map::tiles\` first`);
+  process.exit(1);
+}
+mkdirSync(OUT, { recursive: true });
 
-  const f = await flat(merc);
-  const ff = await write('flat.webp', f, true);
-  console.log(`  ${ff}  ${f.width}x${f.height}`);
+console.log(`baking from z${SRC_Z} tiles via a ${MERC_W}x${MERC_W} mercator mosaic`);
+let merc = await mosaic(MERC_W);
 
-  const { data, info } = await sharp(f.data, {
-    raw: { width: f.width, height: f.height, channels: 4 },
-  })
-    .resize(FLAT_SMALL_W, null, { kernel: 'lanczos3' })
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const sf = await write('flat-small.webp', { ...info, data }, true);
-  console.log(`  ${sf}  ${info.width}x${info.height}`);
+const flatRaw = await flat(merc);
+await save('flat.webp', flatRaw);
 
-  const e = await equirect(merc);
-  const ef = await write('equirect.webp', e, true);
-  console.log(`  ${ef}  ${e.width}x${e.height}`);
+const { data, info } = await sharp(flatRaw.data, {
+  raw: { width: flatRaw.width, height: flatRaw.height, channels: 4 },
+})
+  .resize(FLAT_SMALL_W, null, { kernel: 'lanczos3' })
+  .raw()
+  .toBuffer({ resolveWithObject: true });
+await save('flat-small.webp', { ...info, data });
 
-  // The detail level is gitignored -- it is a deploy step, not a clone one --
-  // so a rebake of the committed pair alone skips its ~800 MB mosaic.
-  if (process.env.BATHY_NO_DETAIL) return;
+await save('equirect.webp', await equirect(merc));
 
-  merc = null; // the detail mosaic is ~800 MB; do not hold both
+if (!process.env.BATHY_NO_DETAIL) {
+  merc = null; // release it before the ~800 MB detail mosaic
   console.log(`detail level via a ${DETAIL_W}x${DETAIL_W} mosaic`);
   const d = await detail(await mosaic(DETAIL_W));
   console.log(
     `  ${join(OUT, 'd')}  ${d.wrote}/${d.cols * d.rows} tiles  ${DETAIL_W}x${d.height}`,
   );
 }
-
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
