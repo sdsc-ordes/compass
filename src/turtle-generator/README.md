@@ -1,32 +1,19 @@
-# turtle-generator
+# Turtle generator
 
-Paths under `src/ontology/` are selected by `COMPASS_USE_CASE` (default
-`oceancare`, also read from the repo-root `.env` when unset).
-
-## Update the data
+`ods_to_rdf.py` reads `src/ontology/<COMPASS_USE_CASE>/source-data.ods`,
+validates the result against `src/ontology/shapes.ttl`, and writes `compass.ttl`
+and `vocab.ttl` next to the workbook. `COMPASS_USE_CASE` (default `oceancare`)
+is read from the environment, then from the repository-root `.env`.
 
 ```bash
-just data::generate
+just data::generate    # regenerate the Turtle
+just data::check       # fail if the committed Turtle differs from a fresh run
 ```
 
-`ods_to_rdf.py` reads `src/ontology/<COMPASS_USE_CASE>/source-data.ods`, validates
-the output with SHACL (`src/ontology/shapes.ttl`), and writes
-`src/ontology/<COMPASS_USE_CASE>/compass.ttl` and
-`src/ontology/<COMPASS_USE_CASE>/vocab.ttl`.
+Output is deterministic: unchanged input gives byte-identical files.
 
-## Check the committed ontology is fresh
+## Test
 
 ```bash
-just data::check
-```
-
-Fails if the committed Turtle differs from a fresh run.
-
-## Run the updater tests
-
-To run only the generator tests:
-
-```bash
-cd src/turtle-generator
-uv run --group dev pytest
+cd src/turtle-generator && uv run pytest
 ```

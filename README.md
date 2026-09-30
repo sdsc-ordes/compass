@@ -3,384 +3,179 @@
 An interactive map of ocean-focused research institutes, NGOs and
 intergovernmental bodies, driven by a SHACL-validated RDF ontology.
 
-## Table of contents
+- **Ontology.** Organisations, networks and international fora are RDF
+  instances tagged with bilingual SKOS vocabularies (work areas, topics,
+  programmes, species, countries / regions). Shapes and validation are in SHACL
+  (`src/ontology/shapes.ttl`).
+- **Spreadsheet editing.** Editors maintain an `.ods` workbook. A generator turns
+  it into Turtle and refuses to write output that fails SHACL validation.
+- **Map widget.** `<compass-map>` is a self-contained web component (Svelte;
+  d3-geo SVG basemap, canvas pins) with filters and a detail pane. It makes no
+  third-party requests at runtime.
+- **Backend.** A FastAPI service derives the filter panel and the entity query
+  from the SHACL shapes at runtime.
 
-- [What Compass provides](#what-compass-provides)
-- [Use-cases](#use-cases)
-- [Code structure](#code-structure)
-- [Configuration](#configuration)
-- [Deployment](#deployment)
-- [Generate/update the map data](#generateupdate-the-map-data)
-- [Development: run it locally](#development-run-it-locally)
-- [Widget requirements](#widget-requirements)
-- [Tests](#tests)
-- [Attribution and licences](#attribution-and-licences)
+The first deployment is for [OceanCare](https://www.oceancare.org), a marine
+conservation NGO: it maps OceanCare's partners, networks and international fora
+and links into its Stories & News.
 
----
-
-## What Compass provides
-
-### Knowledge modeling via the COMPASS ontology
-
-Compass models a conservation organisation’s partners, networks and
-international fora as RDF instances, tagged with bilingual SKOS vocabularies
-(work areas, topics, programmes, species, and countries / regions).
-Schema and validation live in SHACL (`src/ontology/shapes.ttl`); instance and
-vocabulary Turtle are generated from an editorial spreadsheet.
-
-### A data modeling and data generator friendly to non-semantic experts
-
-Editors maintain the map in a spreadsheet — no Turtle or SPARQL required. A
-generator turns that workbook into RDF and refuses to publish unless it passes
-SHACL. See [Generate/update the map data](#generateupdate-the-map-data).
-
-### An interactive map
-
-A self-contained `<compass-map>` web component (Svelte, with the map drawn as
-SVG by d3-geo and the pins on a canvas) plots those entities and offers filter
-and detail views, without third-party map traffic at runtime. Embedding and accessibility
-constraints are under [Widget requirements](#widget-requirements).
-
-### SHACL-driven filters and queries
-
-Filter chips and entity queries are projected from SHACL at runtime, so the UI
-stays aligned with the ontology. Adding a filter dimension is documented under
-[Generate/update the map data](#generateupdate-the-map-data).
-
-### A backend designed for integration into an existing website
-
-Embed `<compass-map>`, point its `apiurl` at the FastAPI ontology service, and
-adapt languages and story links in use-case config. Same-origin deploy is
-covered under [Deployment](#deployment); CORS and related settings under
-[Configuration](#configuration).
-
----
-
-## Use-cases
-
-### OceanCare
-
-**Website:** [https://www.oceancare.org](https://www.oceancare.org)
-
-OceanCare is an international marine conservation NGO founded in Switzerland in
-1989. Compass’s first deployment maps their partners, projects, research
-networks, and international policy forums, with deep links into OceanCare’s
-Stories & News, so visitors can explore where and how OceanCare works
-worldwide.
-
----
-
-## Code Structure
+## Repository layout
 
 ```
-src/ontology/          – SHACL shapes, template workbook; use-case data under subdirs
-src/ontology/oceancare/ – OceanCare source-data.ods and generated Turtle
-src/frontend/          – Svelte widget (SVG basemap, canvas pins); scripts/ builds atlas, tiles
-src/backend/           – FastAPI service: SPARQL over the ontology, filter schema, reload
-src/turtle-generator/  – ODS → RDF generator and its tests
-tools/nix/             – the Nix flake providing the dev shell
-tools/docker/          – Dockerfiles, nginx config and the compose entry page
-docs/                  – MkDocs site (Overview is this README; Backend + Turtle generator sections)
+src/ontology/            SHACL shapes, empty template workbook
+src/ontology/oceancare/  OceanCare source-data.ods and generated Turtle
+src/frontend/            Svelte widget; scripts/ builds atlas, fonts, bathymetry
+src/backend/             FastAPI service: filters, entities, stories, reload
+src/turtle-generator/    ODS -> RDF generator and its tests
+tools/docker/            Dockerfiles, nginx config, deployed entry page
+tools/just/              just modules (check, data, map, docs)
+tools/nix/               Nix flake for the dev shell
+docs/                    MkDocs site (this README is its overview page)
 ```
 
----
+## Setup
+
+Either option provides the tools every command below needs.
+
+**uv and Node** (macOS, Linux, WSL): install [uv](https://docs.astral.sh/uv/),
+[Node](https://nodejs.org) 22 and [just](https://just.systems). uv fetches the
+Python version pinned in `.python-version`.
+
+**Nix** (required on NixOS):
+
+```bash
+nix develop ./tools/nix                                   # interactive shell
+nix develop ./tools/nix --command just test               # one command
+```
+
+On NixOS the shell is required: the `pyoxigraph` wheel links `libstdc++.so.6`,
+and the flake puts it on `LD_LIBRARY_PATH`.
+
+## Run locally
+
+```bash
+just dev-up      # API on :8780 and the widget dev server on :5173
+```
+
+Open <http://localhost:5173>. Ports and origins are set in the root `.env`
+(template: `.env.example`); see
+[frontend configuration](https://sdsc-ordes.github.io/compass/configuration-frontend/).
+
+## Deploy
+
+```bash
+just deploy      # docker compose up --build
+```
+
+Open <http://localhost:8780> (`COMPASS_HTTP_PORT`). nginx serves the widget and
+proxies `/api/` to the backend on the same origin.
+
+The deep-zoom bathymetry tiles (`src/frontend/bathy/d/`) are gitignored and
+only ship if built beforehand with `just map::tiles` and
+`just map::bathymetry-detail`; see
+[The map](https://sdsc-ordes.github.io/compass/frontend-map/).
 
 ## Configuration
 
-### Data & Ontology
+| Topic | Page |
+| --- | --- |
+| New use-case folder and workbook | [Ontology](https://sdsc-ordes.github.io/compass/configuration-ontology/) |
+| API metadata, stories provider, languages, reload token, CORS | [Backend](https://sdsc-ordes.github.io/compass/configuration-backend/) |
+| Element attributes, dev ports, use-case specific frontend code | [Frontend](https://sdsc-ordes.github.io/compass/configuration-frontend/) |
 
-See [ontology configuration](https://sdsc-ordes.github.io/compass/configuration-ontology/)
-for the step-by-step checklist to set up a use-case folder, fill
-`source-data.ods`, and run `just data::generate`.
+## Map data
 
-### Backend: settings
-
-See [backend configuration](https://sdsc-ordes.github.io/compass/configuration-backend/)
-for how to configure the backend and adapt it for a new Compass use-case. It
-covers API metadata, the stories provider, language support, and deployment
-settings such as `COMPASS_RELOAD_TOKEN` and `COMPASS_CORS_ORIGINS`.
-
-### Frontend
-
-See [frontend configuration](https://sdsc-ordes.github.io/compass/configuration-frontend/).
-
-### Bathymetry
-
-Nothing here is needed to run the map: `bathy/flat.webp` and `bathy/equirect.webp`
-are committed, so a fresh clone already draws the seafloor.
-
-Two reasons to run it. To ship deep-zoom detail, build `bathy/d/` — it is
-gitignored, so it exists only where someone built it, and `just deploy` says so
-if it is missing:
-
-```bash
-just map::tiles              # once: fetch the GEBCO pyramid (~53 MB, network, gitignored)
-just map::bathymetry-detail  # then: the pair plus d/ (~20 MB), before `just deploy`
-```
-
-To refresh the imagery itself — a new GEBCO release, a different palette — rebake
-the committed pair and commit the result:
-
-```bash
-just map::tiles         # once, as above
-just map::bathymetry    # ~12 s, rewrites the two committed files
-```
-
-Both bakes read `src/frontend/tiles/`, so `just map::tiles` has to have run at
-least once; they need no network of their own. The scripts are
-`src/frontend/scripts/build-tiles.mjs` and `build-bathymetry.mjs`, and what the
-rasters are for is described under
-[No third-party requests at runtime](#no-third-party-requests-at-runtime).
-
----
-
-## Deployment
-
-```bash
-just deploy
-```
-
-Open <http://localhost:8780>.
-
----
-
-## Generate/Update the Map Data
-
-Start from `src/ontology/template-source-data.ods` when modeling knowledge for a
-new use-case: it has the three sheets and column headers the generator expects,
-with no data rows. Copy it into a use-case folder under `src/ontology/` (named
-to match `COMPASS_USE_CASE`, for example `src/ontology/oceancare/source-data.ods`)
-and fill it in.
-
-`COMPASS_USE_CASE` (default `oceancare`, set in `.env`) selects which subdirectory
-under `src/ontology/` the generator and the API use for `source-data.ods`,
-`compass.ttl`, and `vocab.ttl`. Shared files (`shapes.ttl`, the template) stay at
-the ontology root.
-
-Upload the workbook (`src/ontology/<COMPASS_USE_CASE>/source-data.ods`) to Google Sheets to edit it (the three sheets import as tabs),
-then download it back as `.ods`.
-
-`compass.ttl` and `vocab.ttl` then get **generated** into that same use-case folder:
-
-```bash
-just data::generate
-```
-
-After regenerating Turtle (and shipping the updated files into the ontology
-directory the API reads), trigger a reload so the running service picks them
-up without a restart:
-
-```bash
-curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
-  http://localhost:8780/api/v1/admin/reload
-```
-
-Set `COMPASS_RELOAD_TOKEN` on the API (empty disables the endpoint). A rejected
-reload leaves the previous ontology serving. See
-[backend configuration](https://sdsc-ordes.github.io/compass/configuration-backend/).
+`COMPASS_USE_CASE` (default `oceancare`) selects the folder under
+`src/ontology/` that the generator and the API read.
 
 | File | Purpose |
-|---|---|
-| `src/ontology/template-source-data.ods` | **Starting point** — empty workbook (headers only) for modeling a new use-case |
-| `src/ontology/<COMPASS_USE_CASE>/source-data.ods` | **Source of truth** — `schemes` (the five tag dimensions), `concepts` (one row per tag term), `pins` (one row per thing on the map) |
-| `src/ontology/shapes.ttl` | SHACL shapes — drive the filter UI, the SPARQL query, and instance validation |
-| `src/ontology/shacl-shacl.ttl` | Meta-shapes validating that `shapes.ttl` is well-formed |
-| `src/ontology/<COMPASS_USE_CASE>/compass.ttl` | *Generated* — instance data (the pins on the map) |
-| `src/ontology/<COMPASS_USE_CASE>/vocab.ttl` | *Generated* — SKOS controlled vocabularies (work areas, topics, programmes, species, countries / regions) |
+| --- | --- |
+| `src/ontology/template-source-data.ods` | Empty workbook (headers only) to start a new use-case |
+| `src/ontology/<COMPASS_USE_CASE>/source-data.ods` | Source of truth: sheets `schemes` (tag dimensions), `concepts` (tag terms), `pins` (map entries) |
+| `src/ontology/shapes.ttl` | SHACL shapes: drive the filter panel, the SPARQL query and instance validation |
+| `src/ontology/shacl-shacl.ttl` | Meta-shapes that validate `shapes.ttl` |
+| `src/ontology/<COMPASS_USE_CASE>/compass.ttl` | Generated: instance data |
+| `src/ontology/<COMPASS_USE_CASE>/vocab.ttl` | Generated: SKOS vocabularies |
 
-Every row carries its own `id`, and **pins** link to other rows by id in a
-`links` column. **The predicate a link becomes is decided by what it points
-at**: a link to a Species concept becomes `compass:species`, one to an
-InternationalForum becomes `compass:forum`. So adding a tag to a pin means
-adding an id to its `links` cell — nothing else. There is no configuration file
-and no mapping to keep in step.
+To update the data:
 
-Concepts never link out: the `concepts` sheet has no `links` column, so a tag is
-recorded once, on the pin that carries it. A concept no pin refers to stays a
-filter value that matches nothing.
+1. Edit `source-data.ods` in any spreadsheet app. In Google Sheets, upload it
+   (the sheets import as tabs) and download it again as `.ods`.
+2. Regenerate the Turtle:
 
-Adding a filter dimension means adding a property shape to `shapes.ttl` — the
-filter panel and the query follow automatically.
+   ```bash
+   just data::generate
+   ```
 
-A link to an id that does not exist fails the run, naming the sheet, the row and
-the id. Mistakes are collected across the whole run rather than reported one per
-attempt.
+3. Make the running API pick up the new files:
 
----
+   ```bash
+   curl -X POST -H "X-Reload-Token: $COMPASS_RELOAD_TOKEN" \
+     http://localhost:8780/api/v1/admin/reload
+   ```
 
-## Development: Run it locally
+   An empty `COMPASS_RELOAD_TOKEN` disables the endpoint. A rejected reload
+   keeps the previous ontology serving.
 
-### Setup
+Workbook rules:
 
-Pick one option. Every command in the rest of this README is the same either way.
+- Every row has an `id`. A pin tags itself by listing ids in its `links` cell;
+  the predicate follows the target's type (a Species concept becomes
+  `compass:species`, an InternationalForum `compass:forum`).
+- The `concepts` sheet has no `links` column. A concept no pin links to is a
+  filter option that matches nothing.
+- A link to an unknown id fails the run with the sheet, row and id. All problems
+  are reported together.
+- Translatable fields are `_en` / `_de` column pairs. An empty `_de` cell falls
+  back to the English text; the generator lists every fallback, or prints
+  `every German cell is filled`.
+- A new filter dimension needs a property shape in `shapes.ttl` and its id in
+  `DIM_IDS` (`src/frontend/src/lib/schema.ts`).
 
-#### Option A — uv and Node
+## Widget constraints
 
-Works on macOS, Linux and Windows (WSL). Install [uv](https://docs.astral.sh/uv/) and [Node](https://nodejs.org) 20 or newer:
+**No third-party requests at runtime.** The basemap topology
+(`src/frontend/public/basemap/`), the GEBCO bathymetry rasters
+(`src/frontend/bathy/`) and the Cabin fonts are self-hosted, and place names are
+bundled. The only runtime origin
+besides `tileurl` is the API at `apiurl`. `just check::frontend-standalone` fails
+if a host outside the allowlist in `src/frontend/scripts/check-offline.mjs`
+appears in the widget source; the allowed hosts are RDF namespace IRIs and
+link targets.
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh    # uv
-uv --version
-node --version                                     # expect v20 or newer
-```
+**Accessibility.** Target: WCAG 2.1 AA (German BFSG).
 
-No system Python needed — uv fetches its own Python 3.11, pinned in `src/backend/.python-version`.
+- The map is a labelled `role="application"` region with keyboard pan and zoom.
+- Every pin is also a focusable button, so Tab reaches each entry.
+- The result count is announced through a polite live region.
+- `prefers-reduced-motion` disables camera and UI animations.
 
-#### Option B — Nix on Linux and MacOS
-
-Supplies uv, Node 22 and Python 3.11 in one shell:
-
-```bash
-nix develop ./tools/nix        # then run the commands below normally
-```
-
-To run a single command without entering the shell:
-
-```bash
-cd src/frontend && nix develop ../../tools/nix --command npm run dev
-```
-
-On **NixOS this option is required**. `pyoxigraph` ships as a manylinux wheel that links `libstdc++.so.6`, which NixOS does not provide globally; the flake sets the `LD_LIBRARY_PATH` that makes it loadable. Outside the shell, any Python command fails.
-
-### Local Build
-
-For local development without Docker, run the API and widget together:
+## Tests and checks
 
 ```bash
-just dev-up
-```
-
-Open <http://localhost:5173>; `index.html` already passes
-`apiurl="http://localhost:8780"` and serves bathymetry from the Vite origin
-(`tileurl=""`). The baked pair is committed, so this works on a fresh clone. The
-`d/` detail level is not; without it deep zoom is simply softer.
-
----
-
-## Widget Requirements
-
-Three constraints the widget has to satisfy wherever it is embedded.
-
-### No third-party requests at runtime
-
-The widget contacts nothing but its own origin, so embedding it leaks no
-visitor data. The basemap is drawn from a Natural Earth topology served beside
-the bundle from `tileurl` (`src/frontend/public/basemap/atlas.json`, rebuilt
-with `just map::atlas`), not from a tile service, and its place names are
-bundled into the widget rather than drawn from a glyph server. Cluster tallies
-and the OceanCare star are drawn on a canvas at runtime for the same reason.
-
-The bathymetry ships as baked rasters in `src/frontend/bathy/`, baked from the
-GEBCO pyramid — `src/frontend/src/lib/bathymetry.ts`. A visitor downloads a
-fraction of what the folder holds.
-
-`flat.webp` (4.4 MB) is the world already drawn in Equal Earth. Because that
-projection only ever varies by scale and translate, every pan and zoom is an
-exact similarity transform of that one image, so the flat view is a single
-`drawImage` with no per-pixel work. `equirect.webp` (1.5 MB) is only fetched if
-the visitor opens the globe, where rotation is genuinely not affine and the
-raster still has to be resampled per frame.
-
-Those two are committed, so a fresh clone has a working map.
-
-`d/` holds a 2x Equal Earth level (16384 px wide, the native resolution of the
-GEBCO pyramid) cut into 32 tiles of 2048 px. It is fetched only once the flat
-view is upscaling `flat.webp` past 1:1, from around zoom 4, and only for the
-tiles the viewport covers — four to six of them, so about 2–3 MB, and nothing at
-all for a visitor who never zooms in. They are drawn over the base, never
-instead of it, so a tile that is slow or absent costs sharpness and nothing else.
-
-That is why `d/` is gitignored rather than committed: ~20 MB of binary git
-cannot delta-compress, serving a case the base already covers. Build it with
-`just map::bathymetry-detail` before deploying, or skip it and ship the base.
-A deployment with none of these files still works: the 404 turns the layer off
-and the map draws the flat sea it always did.
-
-`just check::frontend-standalone` fails if any new host appears in the widget source. The allowlist
-in `src/frontend/scripts/check-offline.mjs` holds only inert entries: RDF
-namespace IRIs, which are identifiers and never fetched, and oceancare.org,
-which the visitor reaches by clicking a link.
-
-The deliberate exception is the API origin passed in as the `apiurl` attribute,
-which serves the map's data and the story count.
-
-Cabin and Cabin Condensed are self-hosted for the same reason: a `<link>` to
-fonts.googleapis.com sends every visitor's IP to Google before a glyph is drawn.
-`just map::fonts` fetches the latin subset of each as a variable woff2 and
-writes `src/frontend/src/styles/fonts.css` with the files inlined as base64
-(41 KB of woff2, 55 KB encoded), which `lib/fonts.ts` injects into
-`document.head` — @font-face is ignored inside a shadow root.
-
-### Accessibility
-
-Targeting the German BFSG criteria, which follow WCAG 2.1 AA.
-
-The map is a canvas and carries nothing for a screen reader, so the same
-results are always rendered as a table in the accessibility tree — the map view
-includes an off-screen `ListView`, the very component the list view shows. One
-renderer means the alternative cannot drift from what the map displays. The map
-itself is a labelled `role="application"` region describing where that
-alternative is.
-
-Filtering changes results without a page load, so the result count is announced
-through a polite live region. Every control has a localised accessible name,
-text meets the 4.5:1 contrast floor, focus is always visible, and
-`prefers-reduced-motion` suppresses the fly-to animation.
-
-### Bilingual content
-
-Language variants are RDF language tags, not separate records: one subject
-carries `"Whales"@en` and `"Wale"@de`, and the SPARQL layer filters on the
-requested language. In the workbook a translatable field is a column pair —
-`name_en`/`name_de`, `description_en`/`description_de`,
-`location_en`/`location_de`, `definition_en`/`definition_de` — and every pair
-reaches the RDF in both languages.
-
-An empty German cell takes the English text so a German reader never sees a
-blank where an English one sees prose. `just data::generate` reports every substitution,
-so a missing translation is visible rather than silently shipped; a clean run
-prints `every German cell is filled`. Some pairs are legitimately identical:
-`Caracas, Venezuela` reads the same in both, and registered names such as
-`British Divers Marine Life Rescue` are not translated.
-
---- 
-
-## Tests
-
-```bash
-just check::all                   # lint, frontend-standalone, tests, then format
-just check::tests                 # backend (API, SHACL, SPARQL builder, ontology contract),
-                                  # generator, and the widget's map logic
-just check::frontend-standalone   # Svelte + TypeScript, and the no-third-party-hosts gate
-just check::lint                  # ruff over both Python projects, ESLint + Prettier over the widget
-just check::format                # rewrite every source file in the project's style
+just check::all                   # format, lint, type/offline gate, ontology, tests
+just check::tests                 # backend, generator and widget tests
+just check::lint                  # ruff (both Python projects), ESLint + Prettier
+just check::format                # rewrite sources in the project style
+just check::frontend-standalone   # svelte-check and the no-third-party-hosts gate
 just data::check                  # fail if the committed Turtle is stale
 ```
 
-Python style is one shared `tools/configs/ruff.toml`; the widget's ESLint and
-Prettier configs sit next to its `tsconfig.json`, and both read the repository
-`.editorconfig`.
-
----
+Python style is configured in `tools/configs/ruff.toml`; ESLint and Prettier
+configs are in `src/frontend/`. Both follow `.editorconfig`.
 
 ## Attribution and licences
 
-Two data sources carry obligations, and both are surfaced in the map's
-attribution control at runtime rather than only in the repository:
-
-- **Natural Earth** (land, borders, lakes, rivers) is public domain; credit is
-  requested, not required, and is given.
-- **GEBCO** bathymetry is free to use with attribution. The map states
-  `Imagery reproduced from the GEBCO_2026 Grid, GEBCO Compilation Group` and
-  carries GEBCO's condition that it is **not to be used for navigation or any
-  purpose relating to safety at sea**.
-
-`attributionControl` is set explicitly in `Map.svelte`; leaving a licence
-obligation resting on a library default would be a mistake.
-
-The widget bundle carries third-party code under BSD-3-Clause, MIT and ISC,
-all of which require their notice to accompany a distribution. Two things
-satisfy that: esbuild's `legalComments: 'eof'` keeps the packages' own banners
-inside the minified file, and `THIRD-PARTY-NOTICES.md` is generated from
-`node_modules` on every `npm run build` and served next to the bundle. Embed
-the widget elsewhere and that file has to travel with it.
+- **Natural Earth** (country geometry and place names): public domain; credited
+  in the map's attribution line.
+- **GEBCO_2026 Grid** (bathymetry): free to use on condition that the source is
+  acknowledged, no endorsement by GEBCO, the IHO or the IOC is implied, and it is
+  **not used for navigation or any purpose involving safety at sea**. The
+  attribution line links to the grid page while the depth layer is on;
+  `src/frontend/THIRD-PARTY-NOTICES.md` carries the citation and conditions.
+- **Bundled npm packages** (MIT, ISC): their licences require the notice to
+  accompany the bundle. `npm run build` regenerates
+  `src/frontend/THIRD-PARTY-NOTICES.md` from `node_modules`, esbuild keeps the
+  packages' legal comments at the end of `compass-map.js`, and the frontend
+  image serves the notices file next to the bundle. Ship that file wherever you
+  host the bundle.

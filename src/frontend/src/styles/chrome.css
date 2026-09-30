@@ -529,17 +529,6 @@
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .coach-glyph,
-  .coach-trail,
-  .coach-ripple,
-  .coach-scroll,
-  .coach-pinch,
-  .coach-zring,
-  .cap-drag,
-  .cap-zoom,
-  .cap-act {
-    animation: none;
-  }
   .coach.show {
     animation:
       coach-in 0.01s linear both,
@@ -556,6 +545,7 @@
     display: none;
   }
   .coach-glyph {
+    animation: none;
     transform: translate(100px, 15px);
   }
   .coach-caps {
@@ -619,7 +609,6 @@
   }
   .zoom {
     right: calc(12px + env(safe-area-inset-right, 0px));
-    left: auto;
     bottom: 14px;
     flex-direction: row;
     align-items: center;
@@ -636,13 +625,11 @@
     margin-bottom: 0;
   }
   .setpanel {
-    right: 0;
     bottom: calc(100% + 10px);
     max-height: 60vh;
   }
   .plate {
-    inset: auto 0 auto 0;
-    top: 32%;
+    inset: 32% 0 auto;
     font-size: 18px;
     padding: 0 24px;
   }

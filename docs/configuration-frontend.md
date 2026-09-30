@@ -1,11 +1,10 @@
-# Configuring the Frontend for a New Use-case
+# Frontend configuration
 
-The widget ships as one file, `dist/compass-map.js`, which registers a
-`<compass-map>` element. Nothing in it is read from a config file at runtime —
-a static bundle has none — so configuration reaches it by three routes: the
-element's attributes, the API it is pointed at, and a rebuild.
+The widget is one file, `dist/compass-map.js`, which registers `<compass-map>`.
+It reads no config file at runtime. It is configured through element
+attributes, the API, and source edits that need a rebuild.
 
-## At runtime: the element's attributes
+## Element attributes
 
 ```html
 <script src="compass-map.js"></script>
@@ -14,71 +13,58 @@ element's attributes, the API it is pointed at, and a rebuild.
 
 | Attribute | Default | Meaning |
 | --- | --- | --- |
-| `apiurl` | `''` (this page's origin) | Where the API lives. Every query, facet count and story count goes here. |
-| `tileurl` | `''` (this page's origin) | Where `/basemap/` serves the atlas and `/bathy/` the baked GEBCO depth rasters, including the `/bathy/d/` detail tiles the flat view loads at deep zoom. Not always the same host as `apiurl` — the dev stack runs the API on its own port and the rasters on vite's. |
+| `apiurl` | `''` (page origin) | API origin for filters, entities, facets and story counts |
+| `tileurl` | `''` (page origin) | Origin serving `/basemap/` (atlas) and `/bathy/` (depth rasters, including `/bathy/d/` detail tiles) |
 | `lang` | `en` | `en` or `de`. A `?lang=` query parameter overrides it. |
 
-Served behind the project's nginx image, `apiurl` and `tileurl` can both stay
-empty: nginx proxies `/api` and serves `/basemap/` and `/bathy/` on the same origin, which is
-also why the deployed widget needs no CORS. `tools/docker/index.html` sets both
-to `location.origin` explicitly, because the origin is only known at runtime.
+Behind the project's nginx image both URLs can stay empty: nginx proxies `/api/`
+and serves `/basemap/` and `/bathy/` on the page origin. `tools/docker/index.html`
+sets both to `location.origin`.
 
-Embedded on another origin, `tileurl` has to name the host that has `/basemap/`
-and `/bathy/`, and that host has to answer with `Access-Control-Allow-Origin` — the widget
-reads the globe raster back off a canvas to reproject it, and a tainted canvas cannot
-be read. The project's nginx config sends that header. Point `tileurl` at a host
-that does not, and the layer quietly stays off rather than failing.
+Embedded on another origin, `tileurl` must point at a host that serves
+`/basemap/` and `/bathy/` with `Access-Control-Allow-Origin` (the project's
+nginx config does). The globe reads the raster back from a canvas, which fails
+for a cross-origin image without that header; the depth layer then stays off.
 
-## From the API: everything about the ontology
+## From the API
 
-The filter panel is not configured here. `GET /api/v1/filters` returns one
-widget per dimension — id, label, order and every option, in the requested
-language — all of it derived from the SHACL shapes. Adding a concept or renaming
-a tag changes the panel with no frontend change and no rebuild.
+- `GET /api/v1/filters` returns every filter dimension (id, label, order,
+  options) per language, derived from the SHACL shapes.
+- `GET /api/v1/stories/count` returns the story count and the URL to link to,
+  built from `STORIES_BASE_URL_EN` / `STORIES_BASE_URL_DE` (see
+  [Backend configuration](configuration-backend.md)).
 
-The same is true of the stories link: `GET /api/v1/stories/count` answers with
-the URL to link to, built from `STORIES_BASE_URL_EN` / `STORIES_BASE_URL_DE` in
-the root `.env`. The widget names no host of its own.
+Adding a concept or renaming a tag needs no frontend change.
 
-## For local development: the root `.env`
+## Local development: root `.env`
 
-`vite.config.ts` reads the repository-root `.env` — the same file Compose and
-`settings.py` read — so a port is settled once.
+`vite.config.ts` reads the repository-root `.env`, the same file Compose and
+`settings.py` read. No `.env` is needed when the defaults suit.
 
 | Variable | Default | Used for |
 | --- | --- | --- |
-| `COMPASS_DEV_PORT` | `5173` | The port `just frontend` serves on. |
-| `COMPASS_API_URL` | `http://localhost:$COMPASS_HTTP_PORT` | What the dev page puts in `apiurl`. |
-| `COMPASS_HTTP_PORT` | `8780` | Where the API listens; the fallback for the above. |
+| `COMPASS_DEV_PORT` | `5173` | Port of the dev server (`just frontend`) |
+| `COMPASS_API_URL` | `http://localhost:$COMPASS_HTTP_PORT` | `apiurl` on the dev page |
+| `COMPASS_HTTP_PORT` | `8780` | API port; fallback for `COMPASS_API_URL` |
 
-`COMPASS_DEV_PORT` must appear in `COMPASS_CORS_ORIGINS`, or the browser blocks
-every request the widget makes. The dev server uses `strictPort`, so it refuses
-to start rather than stepping to the next free port and falling out of that
-allowlist — a drifting port is otherwise indistinguishable from a backend fault.
+The dev origin must be listed in `COMPASS_CORS_ORIGINS`, or the browser blocks
+the widget's requests. The dev server uses `strictPort`, so it fails to start
+rather than moving to another port outside that list.
 
-No `.env` is needed to run the dev stack: every default above matches
-`settings.py`.
+## Use-case specific code (needs a rebuild)
 
-## What still needs a rebuild — and an edit
-
-These are use-case specific and have no configuration surface yet. A deployment
-that is not OceanCare's has to change them and rebuild:
-
-| What | Where |
+| What | Where (under `src/frontend/`) |
 | --- | --- |
-| The class drawn with a logo, on top of the other pins | `src/lib/pins.ts` (`isHost`), logo in `src/assets/` |
-| The short type names on the pills | `src/lib/i18n.ts` (`typeShort`) |
-| Which dimensions the panel draws, and in what order | `src/lib/schema.ts` (`DIM_IDS`) |
-| The icon on each filter section | `src/lib/schema.ts` (`DIM_ICONS`) |
+| Class drawn with a logo, above the other pins | `src/lib/pins.ts` (`isHost`), logo in `src/assets/` |
+| Short type names on the pills | `src/lib/i18n.ts` (`typeShort`) |
+| Dimensions the panel draws, and their order | `src/lib/schema.ts` (`DIM_IDS`) |
+| Icon per filter section | `src/lib/schema.ts` (`DIM_ICONS`) |
 | Palette and type scale | `src/lib/palette.ts`, `src/styles/` |
 | Interface strings, including the screen-reader page title | `src/lib/i18n.ts` |
-| The two web fonts | `scripts/build-fonts.mjs`, then `just map::fonts` |
+| Web fonts | `scripts/build-fonts.mjs`, then `just map::fonts` |
 
-`DIM_IDS` is the sharpest edge of these: it names dimensions the API may or may
-not return, and a name that does not match a widget id renders an empty section
-rather than failing. It lists every concept scheme the source spreadsheet
-defines, plus `entityType`, which is not a scheme — so the panel offers the
-whole vocabulary. It leaves out `forum`, which points at another pin rather than
-at a tag. Keeping that true as the ontology grows is a manual step: a scheme
-added to the spreadsheet reaches the API on its own, and the panel only after
-someone adds its id here.
+`DIM_IDS` lists every concept scheme plus `entityType`, and leaves out `forum`
+(it links to another pin, not a tag). An id with no matching dimension from the
+API renders an empty section without an error. A scheme added to the workbook
+reaches the API automatically but appears in the panel only once its id is added
+to `DIM_IDS`.

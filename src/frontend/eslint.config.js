@@ -12,7 +12,7 @@ export default ts.config(
   ...svelte.configs['flat/prettier'],
   {
     languageOptions: {
-      globals: { ...globals.browser, ...globals.es2021 },
+      globals: globals.browser,
     },
     rules: {
       'no-console': ['error', { allow: ['warn', 'error'] }],

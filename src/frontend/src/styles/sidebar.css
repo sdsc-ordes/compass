@@ -25,7 +25,6 @@ aside.filters::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Outside both panes, so the credit stays put when the detail view takes over. */
 .sidefoot {
   margin-top: 26px;
   padding-top: 14px;
@@ -34,8 +33,6 @@ aside.filters::-webkit-scrollbar-track {
   line-height: 17px;
   color: var(--tundora);
 }
-/* Inherits the footer's ink on purpose: Burnt Sienna is the donate CTA's colour
-   in the design system and is not spent on decoration elsewhere. */
 .sidefoot .heart {
   margin: 0 0.28em;
   font-size: 1.05em;
@@ -81,18 +78,16 @@ aside.filters::-webkit-scrollbar-track {
   color: var(--tundora);
   text-wrap: pretty;
 }
-/* The lead sits on its own line and carries the weight the rest of the prompt
-   gives up. A block rather than a <br> so the copy stays two sentences for a
-   translator, and so text-wrap: pretty balances each one on its own. */
+/* a block rather than a <br>, so text-wrap: pretty balances each sentence */
 .tallybox .lbl.ask .asklead {
   display: block;
   font-weight: 700;
 }
-.storiesgo {
+.storiesgo,
+.storiesbtn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 14px;
   color: var(--astronaut);
   font-family: Cabin, system-ui, sans-serif;
   font-size: 16px;
@@ -100,6 +95,9 @@ aside.filters::-webkit-scrollbar-track {
   font-weight: 700;
   text-decoration: none;
   transition: color 0.16s ease;
+}
+.storiesgo {
+  margin-top: 14px;
 }
 .storiesgo .sb-lb {
   border-bottom: 2px solid var(--sienna);
@@ -168,7 +166,8 @@ aside.filters::-webkit-scrollbar-track {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.tpill:hover {
+.tpill:hover,
+.tpill.amore:hover {
   background: var(--sea);
   border-color: var(--cerulean);
   color: var(--cerulean);
@@ -200,9 +199,9 @@ aside.filters::-webkit-scrollbar-track {
   }
 }
 
-/* Active selections: a chosen .tpill with a ×, on up to two rows; the rest go under "+N". */
+/* Active selections, on up to two rows; the overflow goes under "+N". */
 .apills {
-  /* pill: 22px × + 3px padding + 1px border, each side; two rows always reserved */
+  /* pill height: 22px close button + 2 * (3px padding + 1px border); both rows are reserved */
   --ah: calc(22px + 2 * (3px + 1px));
   --agap: 8px;
   position: relative;
@@ -228,10 +227,11 @@ aside.filters::-webkit-scrollbar-track {
   background: var(--cerulean);
   border-color: var(--cerulean);
 }
-/* hidden beats .tpill's display; a removed pill keeps its slot until the pointer leaves */
+/* [hidden] must beat .tpill's display */
 .apills [hidden] {
   display: none;
 }
+/* a removed pill keeps its slot until the pointer leaves */
 .apill.gone {
   visibility: hidden;
 }
@@ -271,11 +271,6 @@ aside.filters::-webkit-scrollbar-track {
   font-weight: 700;
   cursor: default;
 }
-.tpill.amore:hover {
-  background: var(--sea);
-  border-color: var(--cerulean);
-  color: var(--cerulean);
-}
 .amore .atip {
   position: absolute;
   top: calc(100% + 6px);
@@ -314,21 +309,14 @@ aside.filters::-webkit-scrollbar-track {
   color: var(--astronaut);
   border-bottom: 2px solid var(--cerulean);
 }
+.reset:hover {
+  color: var(--cerulean);
+}
 .storiesbtn {
-  display: inline-flex;
   align-self: flex-start;
-  align-items: center;
-  gap: 6px;
   margin: 0;
   padding: 0;
   background: none;
-  color: var(--astronaut);
-  font-family: Cabin, system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 22px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: color 0.16s ease;
 }
 .storiesbtn .sb-lb {
   border-bottom: 2px solid var(--cerulean);
@@ -353,9 +341,6 @@ aside.filters::-webkit-scrollbar-track {
     transition: none;
   }
 }
-.reset:hover {
-  color: var(--cerulean);
-}
 
 @media (max-width: 860px) {
   aside.filters {
@@ -365,15 +350,12 @@ aside.filters::-webkit-scrollbar-track {
     bottom: 0;
     z-index: 20;
     width: auto;
-    height: auto;
     max-height: 90dvh;
     padding: 0;
     border-right: 0;
     border-top: 1px solid var(--land-hi);
     border-radius: 18px 18px 0 0;
-    background: #fff;
     box-shadow: 0 -8px 34px rgba(var(--astronaut-rgb), 0.22);
-    overflow-y: auto;
     overscroll-behavior: contain;
     overflow-anchor: none;
     -webkit-overflow-scrolling: touch;
@@ -394,7 +376,7 @@ aside.filters::-webkit-scrollbar-track {
     display: flex;
     flex-direction: column;
   }
-  /* The sheet moves padding onto the panes, so the footer has to carry its own. */
+  /* the sheet has no padding, so the footer carries its own */
   .sidefoot {
     margin: 0 18px;
     padding: 12px 0 calc(20px + var(--sbtm));
@@ -404,9 +386,6 @@ aside.filters::-webkit-scrollbar-track {
   .pane-filters > * {
     flex: none;
   }
-  /* One unit, flush left with the rest of the sheet: a bold line (the prompt's
-     lead, or the stories count) and the link under it. The result count is the
-     grab row's, so .sub gives up its line. */
   .tallyband {
     order: -1;
     margin: 0;
@@ -433,6 +412,7 @@ aside.filters::-webkit-scrollbar-track {
   .tallybox .lbl.ask .asklead {
     color: var(--astronaut);
   }
+  /* the grab row carries the result count */
   .tallyband .sub,
   .tallybox .spinner {
     display: none;
@@ -464,7 +444,7 @@ aside.filters::-webkit-scrollbar-track {
     position: absolute;
     inset: -6px 0;
   }
-  /* the chips float over the map instead (.chipbar) */
+  /* shown over the map in .chipbar instead */
   .pane-filters .apills {
     display: none;
   }

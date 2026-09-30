@@ -1,263 +1,207 @@
 """Tests for the source-data to RDF generator."""
 
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from odf.table import TableCell, TableRow
+from odf import teletype
+from odf.table import Table, TableCell, TableRow
 from odf.text import P
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import ods_to_rdf as gen
 
-
-@pytest.fixture(scope="module")
-def tables():
-    schemes = gen.read_table(gen.SCHEMES, gen.SCHEME_COLUMNS)
-    concepts = gen.read_table(gen.CONCEPTS, gen.CONCEPT_COLUMNS)
-    pins = gen.read_table(gen.PINS, gen.PIN_COLUMNS)
-    return schemes, concepts, pins
+COLUMNS = {
+    gen.SCHEME_SHEET: gen.SCHEME_COLUMNS,
+    gen.CONCEPT_SHEET: gen.CONCEPT_COLUMNS,
+    gen.PIN_SHEET: gen.PIN_COLUMNS,
+}
 
 
 @pytest.fixture(scope="module")
-def kinds(tables):
-    _, concepts, pins = tables
+def kinds():
+    concepts = gen.read_sheet(gen.CONCEPT_SHEET, gen.CONCEPT_COLUMNS)
+    pins = gen.read_sheet(gen.PIN_SHEET, gen.PIN_COLUMNS)
     problems = gen.Problems()
     result = gen.index_terms(concepts, pins, problems)
     problems.raise_if_any()
     return result
 
 
-def row(table, **cells):
-    """A single in-memory row, for exercising one rule at a time."""
-    columns = {
-        gen.CONCEPTS: gen.CONCEPT_COLUMNS,
-        gen.PINS: gen.PIN_COLUMNS,
-    }[table]
-    return gen.Row(number=42, table=table, cells={c: cells.get(c, "") for c in columns})
+def make_row(sheet, **cells):
+    """Build an in-memory row with every column of ``sheet``, empty unless given."""
+    return gen.Row(
+        number=42, sheet=sheet, cells={c: cells.get(c, "") for c in COLUMNS[sheet]}
+    )
 
 
-# ============================================================
-# The tables are well formed
-# ============================================================
+def make_cell(text, **attributes):
+    cell = TableCell(**attributes)
+    paragraph = P()
+    teletype.addTextToElement(paragraph, text)
+    cell.addElement(paragraph)
+    return cell
 
 
-def test_a_concept_definition_becomes_skos_definition():
-    """The one line the filter panel prints under an option's name."""
+def test_committed_ontology_is_fresh_and_conforms():
+    assert gen.main(["--check"]) == 0
+
+
+def test_workbook_uses_exactly_the_declared_dimensions_and_classes():
+    schemes = gen.read_sheet(gen.SCHEME_SHEET, gen.SCHEME_COLUMNS)
+    pins = gen.read_sheet(gen.PIN_SHEET, gen.PIN_COLUMNS)
+    assert {s["id"] for s in schemes} == set(gen.DIMENSIONS)
+    assert {p["class"] for p in pins} == set(gen.CLASSES)
+
+
+def test_every_dimension_and_class_has_a_link_predicate():
+    assert set(gen.LINK_PREDICATE) == {*gen.DIMENSIONS, *gen.CLASSES}
+
+
+def test_concept_definition_becomes_skos_definition():
     triples = gen.concept_triples(
-        row(
-            gen.CONCEPTS,
-            id="Whales",
+        make_row(
+            gen.CONCEPT_SHEET,
             dimension="Species",
             name_en="Whales",
-            name_de="Wale",
-            definition_en="Large marine mammals of the order Cetacea.",
-            definition_de="Grosse Meeressaeugetiere der Ordnung Cetacea.",
+            definition_en="Large marine mammals.",
+            definition_de="Grosse Meeressaeugetiere.",
         ),
         gen.Problems(),
         gen.Fallbacks(),
     )
-    assert (
-        "skos:definition",
-        '"Large marine mammals of the order Cetacea."@en',
-    ) in triples
-    assert (
-        "skos:definition",
-        '"Grosse Meeressaeugetiere der Ordnung Cetacea."@de',
-    ) in triples
+    definitions = [value for predicate, value in triples if predicate == "skos:definition"]
+    assert definitions == ['"Large marine mammals."@en', '"Grosse Meeressaeugetiere."@de']
 
 
-def test_an_undefined_concept_emits_no_definition():
-    """Empty is the normal case today, and it must not reach the graph as ""."""
-    triples = gen.concept_triples(
-        row(gen.CONCEPTS, id="Whales", dimension="Species", name_en="Whales"),
-        gen.Problems(),
-        gen.Fallbacks(),
+@pytest.mark.parametrize("sheet", [gen.CONCEPT_SHEET, gen.PIN_SHEET])
+@given(data=st.data())
+def test_every_language_tagged_predicate_gets_both_languages(sheet, data):
+    """An empty German cell takes the English text; an empty English cell emits nothing."""
+    paired = [c for c in COLUMNS[sheet] if c.endswith(("_en", "_de"))]
+    cells = data.draw(
+        st.fixed_dictionaries({c: st.sampled_from(["", "x"]) for c in paired})
     )
-    assert not [p for p, _ in triples if p == "skos:definition"]
-
-
-def test_every_id_is_unique_and_typed(tables, kinds):
-    _, concepts, pins = tables
-    assert len(kinds) == len(concepts) + len(pins)
-
-
-def test_every_dimension_and_class_is_populated(tables):
-    """Each declared dimension and class has members, and no row invents one.
-
-    build_vocab raises on a dimension with no concepts, so an empty one is a
-    build failure rather than a quiet gap.
-    """
-    _, concepts, pins = tables
-    assert {c["dimension"] for c in concepts} == set(gen.DIMENSIONS)
-    assert {p["class"] for p in pins} == set(gen.CLASSES)
-
-
-def test_every_link_resolves(tables, kinds):
-    """No link on any pin points at an id that does not exist."""
-    _, _, pins = tables
-    problems = gen.Problems()
-    for pin in pins:
-        gen.parse_links(pin, kinds, problems)
-    problems.raise_if_any()
-
-
-def test_only_pins_carry_links():
-    """Concepts never link out, so the sheet gives them nowhere to record a link."""
-    assert "links" in gen.PIN_COLUMNS
-    assert "links" not in gen.CONCEPT_COLUMNS
-
-
-def test_every_language_paired_field_reaches_both_languages(tables):
-    """No German reader sees a blank where an English one sees text.
-
-    An empty German cell takes the English text, so the two languages emit the
-    same number of literals per predicate; a mismatch means a field was written
-    in one language only.
-    """
-    _, concepts, pins = tables
+    row = make_row(
+        sheet, dimension="Species", lat="1", lon="1", **{"class": "Network"}, **cells
+    )
     fallbacks = gen.Fallbacks()
+    if sheet == gen.CONCEPT_SHEET:
+        triples = gen.concept_triples(row, gen.Problems(), fallbacks)
+    else:
+        triples = gen.pin_triples(row, {}, gen.Problems(), fallbacks)
+
+    languages = Counter((p, v[-3:]) for p, v in triples if v.endswith(("@en", "@de")))
+    for predicate, _ in languages:
+        assert languages[predicate, "@en"] == languages[predicate, "@de"]
+    english_only = [
+        c for c in paired if c.endswith("_en") and cells[c] and not cells[c[:-3] + "_de"]
+    ]
+    assert fallbacks.counts.total() == len(english_only)
+
+
+@pytest.mark.parametrize(
+    "concepts, message",
+    [
+        ([make_row(gen.CONCEPT_SHEET, dimension="Species")], "row has no id"),
+        (
+            [
+                make_row(gen.CONCEPT_SHEET, id="Whales", dimension="Species"),
+                make_row(gen.CONCEPT_SHEET, id="Whales", dimension="Species"),
+            ],
+            "already used by",
+        ),
+        ([make_row(gen.CONCEPT_SHEET, id="Kelp", dimension="Flora")], "'Flora'"),
+    ],
+)
+def test_bad_concept_rows_are_reported(concepts, message):
     problems = gen.Problems()
-    kinds = gen.index_terms(concepts, pins, gen.Problems())
-
-    for rows, build in (
-        (concepts, lambda r: gen.concept_triples(r, problems, fallbacks)),
-        (pins, lambda r: gen.pin_triples(r, kinds, problems, fallbacks)),
-    ):
-        for row in rows:
-            counts: dict[tuple[str, str], int] = {}
-            for predicate, value in build(row):
-                if value.endswith(('"@en', '"@de')):
-                    counts[(predicate, value[-3:])] = (
-                        counts.get((predicate, value[-3:]), 0) + 1
-                    )
-            predicates = {p for p, _ in counts}
-            for predicate in predicates:
-                english = counts.get((predicate, "@en"), 0)
-                german = counts.get((predicate, "@de"), 0)
-                assert english == german, (
-                    f"{row.table}:{row.number} {row['id']}: {predicate} has "
-                    f"{english} English and {german} German literal(s)"
-                )
-
-
-def test_every_pin_has_a_name_and_parse_coordinates(tables):
-    _, _, pins = tables
-    for pin in pins:
-        assert pin["name_en"], f"{pin['id']} has no English name"
-        assert pin["lat"] and pin["lon"], f"{pin['id']} has no coordinates"
-
-
-def test_every_dimension_has_a_scheme_row(tables):
-    schemes, _, _ = tables
-    assert {s["id"] for s in schemes} == set(gen.DIMENSIONS)
-
-
-def test_every_kind_has_a_predicate():
-    """A dimension or class with no predicate would drop every link into it."""
-    for kind in [*gen.DIMENSIONS, *gen.CLASSES]:
-        assert kind in gen.TAG_PREDICATE
-
-
-# ============================================================
-# Mistakes are reported, not swallowed
-# ============================================================
-
-
-def test_unknown_link_target_is_reported(kinds):
-    problems = gen.Problems()
-    gen.parse_links(row(gen.PINS, id="BEES", links="Whales, NoSuchThing"), kinds, problems)
+    gen.index_terms(concepts, [], problems)
     assert len(problems.items) == 1
-    assert "NoSuchThing" in problems.items[0]
+    assert message in problems.items[0]
 
 
-def test_self_link_is_reported(kinds):
+@pytest.mark.parametrize(
+    "links, message",
+    [("Whales, NoSuchThing", "unknown id 'NoSuchThing'"), ("BEES", "links to itself")],
+)
+def test_bad_links_are_reported(kinds, links, message):
     problems = gen.Problems()
-    gen.parse_links(row(gen.PINS, id="BEES", links="BEES"), kinds, problems)
+    gen.parse_links(make_row(gen.PIN_SHEET, id="BEES", links=links), kinds, problems)
     assert len(problems.items) == 1
-    assert "links to itself" in problems.items[0]
+    assert message in problems.items[0]
 
 
 def test_problems_accumulate(kinds):
-    """One run reports every mistake, rather than stopping at the first."""
     problems = gen.Problems()
-    gen.parse_links(row(gen.PINS, id="BEES", links="Nope, AlsoNope"), kinds, problems)
-    gen.parse_links(row(gen.PINS, id="CIT", links="StillNope"), kinds, problems)
+    gen.parse_links(
+        make_row(gen.PIN_SHEET, id="BEES", links="Nope, AlsoNope"), kinds, problems
+    )
+    gen.parse_links(make_row(gen.PIN_SHEET, id="CIT", links="StillNope"), kinds, problems)
     with pytest.raises(gen.SheetError, match="3 problem"):
         problems.raise_if_any()
 
 
-def test_duplicate_id_is_reported():
-    problems = gen.Problems()
-    gen.index_terms(
-        [
-            row(gen.CONCEPTS, id="Whales", dimension="Species"),
-            row(gen.CONCEPTS, id="Whales", dimension="Species"),
-        ],
-        [],
-        problems,
-    )
-    assert len(problems.items) == 1
-    assert "already used by" in problems.items[0]
-
-
-def test_unknown_dimension_is_reported():
-    problems = gen.Problems()
-    gen.index_terms([row(gen.CONCEPTS, id="Kelp", dimension="Flora")], [], problems)
-    assert len(problems.items) == 1
-    assert "Flora" in problems.items[0]
-
-
 def test_non_numeric_cell_is_reported():
     problems = gen.Problems()
-    assert (
-        gen.number(
-            row(gen.CONCEPTS, wp_tag_id="four-five-five"), "wp_tag_id", problems, int
-        )
-        == ""
-    )
+    row = make_row(gen.CONCEPT_SHEET, wp_tag_id="four-five-five")
+    assert gen.numeric_cell(row, "wp_tag_id", problems, int) == ""
     assert len(problems.items) == 1
 
 
-def test_a_wrong_header_names_the_columns():
-    with pytest.raises(gen.SheetError, match="missing"):
-        gen.read_table(gen.CONCEPTS, [*gen.CONCEPT_COLUMNS, "no_such_column"])
+def test_missing_scheme_row_is_named():
+    schemes = [
+        make_row(gen.SCHEME_SHEET, id=d, name_en=d, name_de=d) for d in gen.DIMENSIONS[:-1]
+    ]
+    with pytest.raises(gen.SheetError, match=gen.DIMENSIONS[-1]):
+        gen.build_vocab(schemes, [], gen.Problems(), gen.Fallbacks())
 
 
-def test_an_unknown_sheet_is_named():
-    with pytest.raises(gen.SheetError, match="no sheet named"):
-        gen.read_table("nope", gen.SCHEME_COLUMNS)
+def test_wrong_header_names_the_missing_column():
+    with pytest.raises(gen.SheetError, match=r"missing.*no_such_column"):
+        gen.read_sheet(gen.CONCEPT_SHEET, [*gen.CONCEPT_COLUMNS, "no_such_column"])
+
+
+def test_unknown_sheet_is_named():
+    with pytest.raises(gen.SheetError, match="no sheet named 'nope'"):
+        gen.read_sheet("nope", gen.SCHEME_COLUMNS)
+
+
+def test_row_numbers_count_repeated_empty_rows(monkeypatch):
+    table = Table(name="t")
+    for text, repeat in (("id", 1), ("a", 1), ("", 3), ("b", 1)):
+        sheet_row = TableRow(numberrowsrepeated=repeat)
+        sheet_row.addElement(make_cell(text, valuetype="string"))
+        table.addElement(sheet_row)
+    monkeypatch.setattr(gen, "_sheet", lambda name: table)
+    assert [(r.number, r["id"]) for r in gen.read_sheet("t", ["id"])] == [
+        (2, "a"),
+        (6, "b"),
+    ]
 
 
 @pytest.mark.parametrize(
-    "text, expected",
-    [("47.22953", "47.22953"), ("148.0", "148"), ("", "")],
+    "attributes, expected",
+    [
+        ({"valuetype": "float", "value": "47.22953"}, "47.22953"),
+        ({"valuetype": "float", "value": "148.0"}, "148"),
+        ({"valuetype": "string"}, "two  spaces"),
+    ],
 )
-def test_stored_numbers_beat_displayed_text(text, expected):
-    """A spreadsheet may display a rounded number; the stored value is authoritative."""
-    cell = (
-        TableCell(valuetype="float", value=text) if text else TableCell(valuetype="string")
-    )
-    cell.addElement(P(text="rounded"))
-    assert gen._cell_text(cell) == (expected if text else "rounded")
+def test_cell_text(attributes, expected):
+    """A stored number beats the displayed text, and packed spaces are expanded."""
+    assert gen._cell_text(make_cell("two  spaces", **attributes)) == expected
 
 
 def test_repeated_cells_expand():
-    """Spreadsheets pack runs of identical cells; the reader must unpack them."""
-    row = TableRow()
-    first = TableCell(valuetype="string")
-    first.addElement(P(text="a"))
-    row.addElement(first)
-    row.addElement(TableCell(valuetype="string", numbercolumnsrepeated=3))
-    assert gen._row_values(row, 5) == ["a", "", "", "", ""]
-
-
-# ============================================================
-# Link direction
-# ============================================================
+    sheet_row = TableRow()
+    sheet_row.addElement(make_cell("a", valuetype="string"))
+    sheet_row.addElement(TableCell(valuetype="string", numbercolumnsrepeated=3))
+    assert gen._row_values(sheet_row, 5) == ["a", "", "", "", ""]
 
 
 @pytest.mark.parametrize(
@@ -273,18 +217,14 @@ def test_repeated_cells_expand():
     ],
 )
 def test_predicate_follows_the_target(kinds, target, predicate):
-    """A link's predicate is decided by what it points at, not by the source row."""
-    grouped = gen.parse_links(row(gen.PINS, id="BEES", links=target), kinds, gen.Problems())
+    grouped = gen.parse_links(
+        make_row(gen.PIN_SHEET, id="BEES", links=target), kinds, gen.Problems()
+    )
     assert list(grouped) == [predicate]
 
 
-# ============================================================
-# Serialisation
-# ============================================================
-
-
-@given(value=st.floats(min_value=-180, max_value=180, allow_nan=False))
-def test_parse_coordinates_keep_five_decimals(value):
+@given(value=st.floats(min_value=-180, max_value=180))
+def test_coordinates_render_with_five_decimals(value):
     rendered = gen.coordinate(str(value))
     assert rendered.endswith('"^^xsd:float')
     text = rendered.split('"')[1]
@@ -298,6 +238,7 @@ def test_parse_coordinates_keep_five_decimals(value):
         ("plain", '"plain"@en'),
         ('a "quoted" word', '"a \\"quoted\\" word"@en'),
         ("back\\slash", '"back\\\\slash"@en'),
+        ("two\nparagraphs", '"two\\nparagraphs"@en'),
     ],
 )
 def test_literals_are_escaped(text, expected):
@@ -311,55 +252,9 @@ def test_predicates_emit_in_a_fixed_order():
         ("a", "compass:Network"),
         ("compass:name", '"A"@en'),
     ]
-    ordered = [p for p, _ in sorted(triples, key=gen.order_key)]
-    assert ordered == ["a", "compass:name", "compass:name", "geo:lat"]
-    # English before German within one predicate.
-    values = [v for _, v in sorted(triples, key=gen.order_key)]
-    assert values[1] == '"A"@en' and values[2] == '"B"@de'
-
-
-# ============================================================
-# Determinism and conformance
-# ============================================================
-
-
-def test_output_matches_the_committed_files():
-    data, vocab = gen.generate()
-    assert gen.OUT_DATA.read_text(encoding="utf-8") == data, (
-        "compass.ttl is stale; run `just data::generate`"
-    )
-    assert gen.OUT_VOCAB.read_text(encoding="utf-8") == vocab, (
-        "vocab.ttl is stale; run `just data::generate`"
-    )
-
-
-def test_generation_is_repeatable():
-    assert gen.generate() == gen.generate()
-
-
-def test_generated_data_passes_shacl():
-    data, vocab = gen.generate()
-    gen.validate(data, vocab)
-
-
-class TestMissingSchemeRow:
-    """An absent scheme row is reported, naming the dimension that is missing."""
-
-    def test_reports_the_missing_dimension(self):
-        schemes = [
-            gen.Row(
-                number=2,
-                table="schemes",
-                cells={
-                    "id": d,
-                    "name_en": d,
-                    "name_de": d,
-                    "definition_en": "",
-                    "definition_de": "",
-                },
-            )
-            for d in gen.DIMENSIONS[:-1]
-        ]
-        with pytest.raises(gen.SheetError) as excinfo:
-            gen.build_vocab(schemes, [], gen.Problems(), gen.Fallbacks())
-        assert gen.DIMENSIONS[-1] in str(excinfo.value)
+    assert sorted(triples, key=gen.order_key) == [
+        ("a", "compass:Network"),
+        ("compass:name", '"A"@en'),
+        ("compass:name", '"B"@de'),
+        ("geo:lat", '"1.0"^^xsd:float'),
+    ]

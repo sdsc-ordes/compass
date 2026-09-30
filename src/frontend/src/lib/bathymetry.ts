@@ -1,53 +1,55 @@
 import { geoEqualEarth, geoPath, type GeoProjection } from 'd3-geo';
-import type { Pal } from './palette';
+import type { Palette } from './palette';
 
 // Rasters baked by scripts/build-bathymetry.mjs.
 //
-// Flat: geoEqualEarth only ever varies by scale and translate, so every pan
-// and zoom is an exact similarity transform of one fixed image -- a single
-// drawImage, no per-pixel work. Past about k=4 it upscales the base, so a 2x
-// level is tiled over it, only where the viewport looks.
+// Flat: Equal Earth pan and zoom are a similarity transform of one pre-projected
+// image, so a frame is a single drawImage. Past about k=4 that upscales the
+// base, so a 2x detail level is tiled over the part in view.
 //
-// Globe: rotation is the one transform that is not affine, so it resamples per
-// frame from the equirectangular raster.
+// Globe: rotation is not affine, so each frame resamples the equirectangular
+// raster.
 const FLAT = `bathy/flat.webp?v=${__ASSET_V__}`;
-// The same, narrower, for a stage drawing the sphere at no more device pixels
-// than this: a phone starts on 0.3 MB rather than 4.5 (140 MB decoded), and only
-// zooming past it fetches the full one. Save-Data stays on it.
+// Used while the sphere is at most SMALL_W device px wide, and always under
+// Save-Data. SMALL_W matches FLAT_SMALL_W in scripts/build-bathymetry.mjs.
 const FLAT_SMALL = `bathy/flat-small.webp?v=${__ASSET_V__}`;
 const SMALL_W = 2048;
 const EQUI = `bathy/equirect.webp?v=${__ASSET_V__}`;
 const DETAIL = 'bathy/d';
 
-// The z5 source width, cut into tiles because WebP caps a side at 16383.
-const DETAIL_W = 16384; // DETAIL_W in scripts/build-bathymetry.mjs
+// The detail level's full width, tiled because WebP caps a side at 16383.
+// Both match scripts/build-bathymetry.mjs.
+const DETAIL_W = 16384;
 const DETAIL_TILE = 2048;
 
-// Never decoded, only drawImage'd, so each is a GPU texture rather than 16 MB of
-// ImageData. A viewport spans about 2x2 of them; this is room to pan.
+// Detail tiles kept loaded. A viewport spans about 2x2.
 const DETAIL_KEEP = 12;
 
+// Globe mesh cell, in raster px: nodes are inverted exactly, pixels between
+// them interpolated.
 const CELL = 8;
-// Fraction of the texture width one mesh cell may span before it is sampled
-// exactly rather than interpolated. See the pole note in the globe sampler.
+// Fraction of the texture width a mesh cell may span before its pixels are
+// inverted exactly. See the pole note in reproject().
 const SMEAR = 0.12;
 
-// Enough that a settled globe rasterises about 1:1 against the sphere's own
-// bounds. A drag gets far less: rotation cannot reuse a previous frame, so this
-// is paid per frame while it moves.
+// Globe raster area in px: about 1:1 at rest, far less while rotating, since
+// that is paid every frame.
 const BUDGET_IDLE = 2_800_000;
 const BUDGET_DRAG = 500_000;
 
+// Probe points: where they land tells whether two projections differ only by a
+// scale and a translate (see similarity()).
 const REF: [number, number][] = [
   [0, 0],
   [60, 0],
   [0, 45],
 ];
 
+// Allowed misfit of a probe point, px.
 const REF_TOL = 0.5;
 
-// Below this fraction of the source width, downscale once into a mip rather than
-// making the compositor rescale all 35M source pixels on every frame.
+// Below this fraction of the base's width, draw from a downscaled copy rather
+// than rescaling the full raster every frame.
 const MIP_AT = 0.5;
 
 interface Snapshot {
@@ -58,9 +60,8 @@ interface Snapshot {
   ref: [number, number][];
 }
 
-// The screen rect a raster covers. The globe is a disc in a wider canvas, so
-// rasterising the whole canvas spends up to half the budget on pixels that are
-// not the sphere; confining it to these bounds buys ~1:1 for the same cost.
+// The screen rect a raster covers: for the globe, the sphere's bounds, so the
+// budget is not spent on the canvas around it.
 interface Box {
   x: number;
   y: number;
@@ -72,6 +73,7 @@ interface Grid {
   px: Uint8ClampedArray;
   w: number;
   h: number;
+  // w - 1; w is a power of two, so `x & mask` wraps longitude.
   mask: number;
 }
 
@@ -80,21 +82,21 @@ export class Bathymetry {
   private flatRef: [number, number][] | null = null;
   private mip: HTMLCanvasElement | null = null;
   private mipW = 0;
-  // The full base's width, off the image since BATHY_FLAT_W can rebake it;
-  // detail tiles wait for it.
+  // The full base's width, read off the image (BATHY_FLAT_W sets it at bake
+  // time); detail tiles wait for it.
   private fullW = Infinity;
 
   private equi: Grid | null = null;
   private asked = { small: false, full: false, equi: false };
 
-  // Insertion order is the LRU. A null value means asked for and not here yet --
-  // or never coming, for a tile the bake left out as entirely off the sphere.
-  private det = new Map<string, HTMLImageElement | null>();
+  // Insertion order is the LRU. null: requested and not loaded yet, or never
+  // coming, for a tile the bake left out as wholly off the sphere.
+  private tiles = new Map<string, HTMLImageElement | null>();
 
   private buf: HTMLCanvasElement | null = null;
   private dragBuf: HTMLCanvasElement | null = null;
   private snap: Snapshot | null = null;
-  private img: ImageData | null = null;
+  private scratchImg: ImageData | null = null;
 
   available = false;
   private absent = false;
@@ -104,9 +106,8 @@ export class Bathymetry {
     private onReady: () => void,
   ) {}
 
-  // Whether the depth layer is worth offering. Optimistic on purpose: the map
-  // starts without it, so nothing has been fetched yet and "not loaded" must not
-  // read as "not available" -- that would hide the switch that does the loading.
+  // False once a raster has failed to load. True before anything is fetched, so
+  // the switch that triggers the first load is offered.
   get ready(): boolean {
     return !this.absent;
   }
@@ -116,7 +117,7 @@ export class Bathymetry {
     pr: GeoProjection,
     W: number,
     H: number,
-    p: Pal,
+    p: Palette,
     globe: boolean,
     interact: boolean,
     depth: boolean,
@@ -145,10 +146,10 @@ export class Bathymetry {
     this.snap = null;
     this.dragBuf = null;
     this.buf = null;
-    this.img = null;
+    this.scratchImg = null;
     this.mip = null;
     this.mipW = 0;
-    this.det.clear();
+    this.tiles.clear();
   }
 
   private overlay(
@@ -165,12 +166,20 @@ export class Bathymetry {
       return;
     }
 
+    // Mid-gesture, a zoom of the last settled raster is reused while it still
+    // covers the sphere.
     if (interact) {
-      const keep = this.snap;
-      const t = keep && keep.W === W && keep.H === H ? similarity(keep.ref, pr) : null;
-      if (keep && t && covered(t, keep, pr, W, H)) {
-        const b = keep.box;
-        ctx.drawImage(keep.canvas, t.g * b.x + t.dx, t.g * b.y + t.dy, t.g * b.w, t.g * b.h);
+      const snap = this.snap;
+      const move = snap && snap.W === W && snap.H === H ? similarity(snap.ref, pr) : null;
+      if (snap && move && covered(move, snap, pr, W, H)) {
+        const b = snap.box;
+        ctx.drawImage(
+          snap.canvas,
+          move.g * b.x + move.dx,
+          move.g * b.y + move.dy,
+          move.g * b.w,
+          move.g * b.h,
+        );
         return;
       }
     }
@@ -196,8 +205,7 @@ export class Bathymetry {
     const dw = t.g * img.width;
     const dh = t.g * img.height;
     ctx.drawImage(this.level(img, dw), t.dx, t.dy, dw, dh);
-    // Always underneath: a tile still in flight, or one the bake skipped, just
-    // leaves the base showing rather than a hole.
+    // Over the base, so a tile in flight or skipped by the bake leaves no hole.
     if (dw > this.fullW) this.detail(ctx, t, img.width, img.height, W, H);
   }
 
@@ -232,48 +240,44 @@ export class Bathymetry {
   }
 
   private tile(key: string): HTMLImageElement | null {
-    const held = this.det.get(key);
+    const held = this.tiles.get(key);
     if (held !== undefined) {
       if (held) {
-        this.det.delete(key); // re-insert: youngest again
-        this.det.set(key, held);
+        this.tiles.delete(key); // re-insert as most recently used
+        this.tiles.set(key, held);
       }
       return held;
     }
-    if (typeof document === 'undefined') return null;
-
-    this.det.set(key, null);
+    // A 404 (a tile wholly off the sphere) leaves this null, so it is not
+    // requested again.
+    this.tiles.set(key, null);
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
     img.onload = () => {
-      this.det.set(key, img);
+      this.tiles.set(key, img);
       this.evict();
       this.onReady();
     };
-    // 404 is the normal answer for a tile wholly outside the sphere, so the null
-    // stands and nothing asks again.
-    img.onerror = () => {};
     img.src = `${this.base}/${DETAIL}/${key}.webp?v=${__ASSET_V__}`;
     return null;
   }
 
-  // Nulls are cheap and must survive, or a missing tile would be re-requested
-  // every frame; only decoded images are worth evicting.
+  // Evicts loaded tiles only: dropping a null would re-request a missing tile
+  // every frame.
   private evict(): void {
     let live = 0;
-    for (const img of this.det.values()) if (img) live++;
-    for (const [k, img] of this.det) {
+    for (const img of this.tiles.values()) if (img) live++;
+    for (const [key, img] of this.tiles) {
       if (live <= DETAIL_KEEP) return;
       if (!img) continue;
-      this.det.delete(k);
+      this.tiles.delete(key);
       live--;
     }
   }
 
-  // The baked raster is far wider than the stage at normal zoom. Rescaling all of
-  // it every frame is the one way this path could cost more than it saves, so
-  // hold a downscaled copy and rebuild it only when the zoom bucket changes.
+  // The base, or a copy downscaled to the next power-of-two width at or above
+  // drawW, rebuilt only when that width changes.
   private level(img: HTMLImageElement, drawW: number): CanvasImageSource {
     if (drawW >= img.width * MIP_AT) return img;
     const want = 1 << Math.ceil(Math.log2(Math.max(64, drawW)));
@@ -353,15 +357,10 @@ export class Bathymetry {
     }
     if (!any) return null;
 
-    // Crossing a pole flips longitude by half a turn, and the unwrap above only
-    // ever corrects by whole ones -- so the row of cells that straddles a pole
-    // keeps the jump and interpolates u across most of the texture, smearing one
-    // raster row into a ray from the pole out to the limb. It is a handful of
-    // cells, so they are inverted per pixel instead of off the mesh.
-    // A cell spanning more than SMEAR of the texture -- 43 degrees of longitude
-    // inside 8 screen pixels -- is either that pole row or hard against the limb,
-    // and the mesh is too coarse to carry either. Below about this the count
-    // climbs into ordinary limb cells for no visible gain; it costs 0.5% of them.
+    // Crossing a pole flips longitude by half a turn, which the whole-turn unwrap
+    // above cannot correct, so interpolating across that cell smears a ray from
+    // the pole to the limb. Cells spanning more than SMEAR of the texture (the
+    // pole row, and some cells hard against the limb) are inverted per pixel.
     const exact = new Uint8Array(cols * rows);
     for (let j = 0; j < rows; j++) {
       for (let i = 0; i < cols; i++) {
@@ -375,7 +374,6 @@ export class Bathymetry {
     }
 
     const out = this.buffer(rw, rh, interact);
-    if (!out) return null;
     const ctx = out.getContext('2d');
     if (!ctx) return null;
     const img = this.scratch(ctx, rw, rh);
@@ -387,14 +385,14 @@ export class Bathymetry {
       SMASK = src.mask;
     let drew = false;
 
-    for (let v = 0; v < rh; v++) {
-      const jf = v / CELL;
+    for (let ry = 0; ry < rh; ry++) {
+      const jf = ry / CELL;
       const j0 = Math.min(rows - 1, jf | 0);
       const fy = jf - j0;
       const rowA = j0 * (cols + 1);
       const rowB = rowA + (cols + 1);
-      for (let u = 0; u < rw; u++) {
-        const uf = u / CELL;
+      for (let rx = 0; rx < rw; rx++) {
+        const uf = rx / CELL;
         const i0 = Math.min(cols - 1, uf | 0);
         const fx = uf - i0;
         const a = rowA + i0,
@@ -404,7 +402,7 @@ export class Bathymetry {
         let mx: number;
         let my: number;
         if (exact[j0 * cols + i0]) {
-          const ll = invert([box.x + u / perCss, box.y + v / perCss]);
+          const ll = invert([box.x + rx / perCss, box.y + ry / perCss]);
           if (!ll || !isFinite(ll[0]) || !isFinite(ll[1])) continue;
           // The lookup masks x into the texture, so a raw turn needs no unwrap.
           mx = (ll[0] + 180) / 360;
@@ -442,14 +440,13 @@ export class Bathymetry {
           w01 = (1 - tu) * tv,
           w11 = tu * tv;
 
-        const d = (v * rw + u) * 4;
+        const d = (ry * rw + rx) * 4;
         dst[d] = px[o00] * w00 + px[o10] * w10 + px[o01] * w01 + px[o11] * w11;
         dst[d + 1] =
           px[o00 + 1] * w00 + px[o10 + 1] * w10 + px[o01 + 1] * w01 + px[o11 + 1] * w11;
         dst[d + 2] =
           px[o00 + 2] * w00 + px[o10 + 2] * w10 + px[o01 + 2] * w01 + px[o11 + 2] * w11;
-        // The bake carries the raster to both poles, so every sample is opaque and
-        // interpolating alpha would be four multiplies to arrive back at 255.
+        // Every source sample is opaque: the bake fills to both poles.
         dst[d + 3] = 255;
         drew = true;
       }
@@ -458,22 +455,13 @@ export class Bathymetry {
     ctx.putImageData(img, 0, 0);
 
     if (!interact) {
-      const ref: [number, number][] = [];
-      for (const ll of REF) {
-        const xy = pr(ll);
-        if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) {
-          ref.length = 0;
-          break;
-        }
-        ref.push([xy[0], xy[1]]);
-      }
-      this.snap = ref.length === REF.length ? { canvas: out, W, H, box, ref } : null;
+      const ref = projectRefs(pr);
+      this.snap = ref ? { canvas: out, W, H, box, ref } : null;
     }
     return { canvas: out, box };
   }
 
-  private buffer(w: number, h: number, drag: boolean): HTMLCanvasElement | null {
-    if (typeof document === 'undefined') return null;
+  private buffer(w: number, h: number, drag: boolean): HTMLCanvasElement {
     let cv = drag ? this.dragBuf : this.buf;
     if (!cv) {
       cv = document.createElement('canvas');
@@ -488,24 +476,24 @@ export class Bathymetry {
   }
 
   private scratch(ctx: CanvasRenderingContext2D, w: number, h: number): ImageData {
-    const held = this.img;
+    const held = this.scratchImg;
     if (held && held.width === w && held.height === h) {
-      // Carried over from the last frame, so wipe the pixels the loop leaves alone.
+      // Reused, so clear the pixels the sampler skips.
       held.data.fill(0);
       return held;
     }
     const img = ctx.createImageData(w, h);
-    this.img = img;
+    this.scratchImg = img;
     return img;
   }
 
   private load(
     path: string,
-    seen: 'small' | 'full' | 'equi',
+    which: 'small' | 'full' | 'equi',
     done: (img: HTMLImageElement) => void,
   ): void {
-    if (this.asked[seen] || typeof document === 'undefined') return;
-    this.asked[seen] = true;
+    if (this.asked[which]) return;
+    this.asked[which] = true;
 
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -516,19 +504,18 @@ export class Bathymetry {
       this.onReady();
     };
     img.onerror = () => {
-      // Nothing baked, or nothing served. Say so, so the switch offering a layer
-      // that cannot arrive takes itself away rather than doing nothing.
+      // Missing or blocked: `ready` goes false, which hides the depth switch.
       if (!this.available) this.absent = true;
       this.onReady();
     };
     img.src = `${this.base}/${path}`;
   }
 
-  // need: the sphere's drawn width in device pixels.
-  private flat(need: number): HTMLImageElement | null {
-    const full = need > SMALL_W && !saveData();
+  // sphereW: the sphere's drawn width in device px.
+  private flat(sphereW: number): HTMLImageElement | null {
+    const full = sphereW > SMALL_W && !saveData();
     const done = (img: HTMLImageElement) => {
-      if (this.flatImg && this.flatImg.width >= img.width) return; // small landing late
+      if (this.flatImg && this.flatImg.width >= img.width) return; // small base landing late
       this.flatImg = img;
       this.flatRef = flatRefs(img.width);
       this.mip = null;
@@ -543,8 +530,8 @@ export class Bathymetry {
     return this.flatImg;
   }
 
-  // Decoded once into a 4096x2048 RGBA buffer (~33 MB) because the globe samples
-  // it per pixel. Only paid for if the globe is actually used.
+  // Decoded to RGBA (~33 MB) on the first globe paint, since the globe samples it
+  // per pixel.
   private equirect(): Grid | null {
     this.load(EQUI, 'equi', (img) => {
       const cv = document.createElement('canvas');
@@ -561,6 +548,7 @@ export class Bathymetry {
           mask: img.width - 1,
         };
       } catch {
+        // getImageData throws on a canvas tainted by a raster served without CORS.
         this.absent = true;
       }
     });
@@ -568,10 +556,8 @@ export class Bathymetry {
   }
 }
 
-function saveData(): boolean {
-  const nav = typeof navigator === 'undefined' ? undefined : navigator;
-  return !!(nav as { connection?: { saveData?: boolean } } | undefined)?.connection?.saveData;
-}
+const saveData = (): boolean =>
+  !!(navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
 
 const FLAT_PROJ = geoEqualEarth().scale(1).translate([0, 0]);
 const [[FLAT_X0, FLAT_Y0], [FLAT_X1]] = geoPath(FLAT_PROJ).bounds({ type: 'Sphere' });
@@ -588,19 +574,29 @@ function flatRefs(width: number): [number, number][] {
   });
 }
 
+// screen = g * raster + (dx, dy)
 interface Move {
   g: number;
   dx: number;
   dy: number;
 }
 
-function similarity(was: [number, number][], pr: GeoProjection): Move | null {
-  const now: [number, number][] = [];
+// Where the REF points land under `pr`, or null if any does not.
+function projectRefs(pr: GeoProjection): [number, number][] | null {
+  const out: [number, number][] = [];
   for (const ll of REF) {
     const xy = pr(ll);
     if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) return null;
-    now.push([xy[0], xy[1]]);
+    out.push([xy[0], xy[1]]);
   }
+  return out;
+}
+
+// The scale and translate taking the REF points from `was` to where `pr` puts
+// them, or null when `pr` is not such a transform of `was`.
+function similarity(was: [number, number][], pr: GeoProjection): Move | null {
+  const now = projectRefs(pr);
+  if (!now) return null;
   const span = Math.hypot(was[1][0] - was[0][0], was[1][1] - was[0][1]);
   if (span < 1) return null;
   const g = Math.hypot(now[1][0] - now[0][0], now[1][1] - now[0][1]) / span;
@@ -615,6 +611,7 @@ function similarity(was: [number, number][], pr: GeoProjection): Move | null {
   return { g, dx, dy };
 }
 
+// Whether the snapshot, moved by `t`, still covers the sphere's on-screen bounds.
 function covered(t: Move, s: Snapshot, pr: GeoProjection, W: number, H: number): boolean {
   const now = sphereBox(pr, W, H);
   if (!now) return true;

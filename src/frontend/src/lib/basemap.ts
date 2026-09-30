@@ -1,5 +1,5 @@
 import { geoPath, geoGraticule10 } from 'd3-geo';
-import type { GeoProjection, GeoPermissibleObjects } from 'd3-geo';
+import type { GeoPermissibleObjects } from 'd3-geo';
 import { merge, mesh } from 'topojson-client';
 import type {
   GeometryCollection,
@@ -9,7 +9,7 @@ import type {
 } from 'topojson-specification';
 import { writable } from 'svelte/store';
 import labelsJson from '../atlas-labels.json';
-import { P, type Theme } from './palette';
+import { PALETTES } from './palette';
 import { proj, type ViewState } from './projection';
 import type { MapLabel, SeaLabel } from './labels';
 
@@ -35,30 +35,30 @@ export interface BasemapRefs {
   sh2: SVGStopElement;
 }
 
-// The topology is most of the widget's weight, so it is fetched beside the
-// bundle, from the same host as the rasters, rather than parsed as part of it.
+// Fetched from tileurl rather than bundled: the topology outweighs the rest of the widget.
 const ATLAS = `basemap/atlas.json?v=${__ASSET_V__}`;
 
 export const atlas = writable<Atlas | null>(null);
 
-let pending: Promise<Atlas> | null = null;
+let request: Promise<Atlas> | null = null;
 
+/** Fetch and build the atlas once; a failed load is retried on the next call. */
 export function loadAtlas(base: string): Promise<Atlas> {
-  pending ??= fetch(`${base}/${ATLAS}`)
+  request ??= fetch(`${base}/${ATLAS}`)
     .then((res) => {
       if (!res.ok) throw new Error(`basemap HTTP ${res.status}`);
       return res.json();
     })
     .then((json) => {
-      const a = build(json);
-      atlas.set(a);
-      return a;
+      const built = build(json);
+      atlas.set(built);
+      return built;
     })
     .catch((e) => {
-      pending = null;
+      request = null;
       throw e;
     });
-  return pending;
+  return request;
 }
 
 function build(json: unknown): Atlas {
@@ -66,7 +66,7 @@ function build(json: unknown): Atlas {
     countries: GeometryCollection<{ name: string }>;
   }>;
   const countries = topo.objects.countries;
-  const table = labelsJson as { cty: MapLabel[]; sea: SeaLabel[] };
+  const labels = labelsJson as { cty: MapLabel[]; sea: SeaLabel[] };
   return {
     land: merge(
       topo,
@@ -74,34 +74,25 @@ function build(json: unknown): Atlas {
     ) as GeoPermissibleObjects,
     borders: mesh(topo, countries, (a, b) => a !== b) as GeoPermissibleObjects,
     grat: geoGraticule10() as GeoPermissibleObjects,
-    cty: table.cty,
-    sea: table.sea,
+    cty: labels.cty,
+    sea: labels.sea,
   };
 }
 
-/* Re-projecting Natural Earth is the expensive half of a frame, and a gesture
-   does not need it: zooming or panning the flat map, or zooming the globe at a
-   rest rotation, moves every projected point by the same translate-and-scale.
-   So mid-gesture the world group is nudged by that transform and the paths are
-   left alone; the real projection is rebuilt once the hands come off. Only a
-   rotation is genuinely non-affine. */
-interface Anchor {
-  view: 'flat' | 'globe';
-  theme: Theme;
-  rot: [number, number];
-  k: number;
-  tx: number;
-  ty: number;
+// The view the paths were last projected for. Flat pan and zoom, and globe
+// zoom, move every projected point by one translate and scale, so mid-gesture
+// nudgeBasemap transforms the group instead of re-projecting. Rotation cannot.
+type Anchor = Pick<ViewState, 'view' | 'theme' | 'rot' | 'k' | 'tx' | 'ty'> & {
   w: number;
   h: number;
-}
+};
 
 let anchor: Anchor | null = null;
 
+/** Move the last projected paths to the current view; false when only a re-render can. */
 export function nudgeBasemap(bm: BasemapRefs, S: ViewState, W: number, H: number): boolean {
   if (!anchor || anchor.view !== S.view || anchor.w !== W || anchor.h !== H) return false;
-  // a nudge moves the paths, it cannot recolour them
-  if (anchor.theme !== S.theme) return false;
+  if (anchor.theme !== S.theme) return false; // a transform cannot recolour
   if (S.view === 'globe' && (anchor.rot[0] !== S.rot[0] || anchor.rot[1] !== S.rot[1]))
     return false;
   const g = S.k / anchor.k;
@@ -116,50 +107,42 @@ export function renderBasemap(
   S: ViewState,
   W: number,
   H: number,
-  atlas: Atlas,
+  data: Atlas,
 ): void {
-  const p = P[S.theme as Theme],
-    k = S.k;
+  const p = PALETTES[S.theme];
   bm.svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   bm.world.removeAttribute('transform');
   anchor = {
     view: S.view,
     theme: S.theme,
     rot: [S.rot[0], S.rot[1]],
-    k,
+    k: S.k,
     tx: S.tx,
     ty: S.ty,
     w: W,
     h: H,
   };
-  const pr: GeoProjection = proj(S, W, H);
-  const path = geoPath(pr);
-  const landD = path(atlas.land);
+  const path = geoPath(proj(S, W, H));
 
-  set(bm.grat, {
-    d: path(atlas.grat) ?? '',
+  setAttrs(bm.grat, {
+    d: path(data.grat) ?? '',
     stroke: p.grat,
     'stroke-width': 0.6,
     fill: 'none',
   });
-
-  set(bm.land, {
-    d: landD ?? '',
+  setAttrs(bm.land, {
+    d: path(data.land) ?? '',
     fill: p.land,
     stroke: p.coast,
-    'stroke-width': Math.min(1.2, 0.6 + k * 0.05),
+    'stroke-width': Math.min(1.2, 0.6 + S.k * 0.05),
   });
-  if (atlas.borders) {
-    set(bm.borders, {
-      d: path(atlas.borders) ?? '',
-      stroke: p.ctyLine,
-      'stroke-width': 0.75,
-      'stroke-linejoin': 'round',
-      fill: 'none',
-    });
-  } else {
-    bm.borders.removeAttribute('d');
-  }
+  setAttrs(bm.borders, {
+    d: path(data.borders) ?? '',
+    stroke: p.ctyLine,
+    'stroke-width': 0.75,
+    'stroke-linejoin': 'round',
+    fill: 'none',
+  });
 
   if (S.view === 'globe') {
     const sphereD = path({ type: 'Sphere' }) ?? '';
@@ -169,7 +152,7 @@ export function renderBasemap(
     bm.sh2.setAttribute('stop-color', p.shade);
     bm.shade.setAttribute('d', sphereD);
     bm.shade.style.display = '';
-    set(bm.rim, { d: sphereD, stroke: p.rim, 'stroke-width': 1, fill: 'none' });
+    setAttrs(bm.rim, { d: sphereD, stroke: p.rim, 'stroke-width': 1, fill: 'none' });
     bm.rim.style.display = '';
   } else {
     bm.shade.style.display = 'none';
@@ -177,6 +160,6 @@ export function renderBasemap(
   }
 }
 
-function set(el: Element, attrs: Record<string, string | number>): void {
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+function setAttrs(el: Element, attrs: Record<string, string | number>): void {
+  for (const [name, value] of Object.entries(attrs)) el.setAttribute(name, String(value));
 }

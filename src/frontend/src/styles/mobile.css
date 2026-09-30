@@ -50,7 +50,6 @@
     border-radius: 5px;
     background: var(--land-hi);
   }
-  /* title and badge left; the result count and Clear right, on one baseline */
   .grabrow {
     display: flex;
     align-items: baseline;
@@ -87,7 +86,7 @@
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
-  /* the .reset link, sized to the row; ::after widens the target to 44px */
+  /* ::after widens the target to 44px */
   .grabclear {
     flex: none;
     position: relative;

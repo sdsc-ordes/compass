@@ -8,11 +8,11 @@ root_dir := `git rev-parse --show-toplevel`
 default:
     just --list
 
-# Serve the API with hot reload. Default matches COMPASS_HTTP_PORT / Compose host port.
+# Serve the API with hot reload (default port: COMPASS_HTTP_PORT or 8780).
 backend port=(env("COMPASS_HTTP_PORT", "8780")):
     cd "{{root_dir}}/src/backend" && uv run uvicorn app.main:app --reload --port {{port}}
 
-# Serve the widget's dev server.
+# Type-check the widget, then serve its dev server.
 frontend:
     just check::frontend-standalone
     cd "{{root_dir}}/src/frontend" && npm run dev
@@ -27,29 +27,25 @@ dev-up:
     wait
 
 # Rewrite every source file in the project's style.
-format *args:
-    just check::format "$@"
+format:
+    just check::format
 
 # Report style and correctness problems without changing anything.
-lint *args:
-    just check::lint "$@"
+lint:
+    just check::lint
 
 # Run the backend, generator and widget test suites.
 test *args:
     just check::tests "$@"
 
-# Bring up the stack with docker compose.
-# The image picks up src/frontend/bathy/ as it finds it. The committed pair is
-# always there; the d/ detail level is gitignored, so say so rather than ship a
-# softer map by accident -- building it is deliberate, not a deploy step.
-[doc("Bring up the stack with docker compose.")]
+# Build and start the stack with docker compose.
 [confirm("Bring up docker compose? [y/n]")]
 deploy:
     @test -d "{{root_dir}}/src/frontend/bathy/d" \
       || echo "note: no bathy/d -- deep zoom ships at base resolution. \`just map::bathymetry-detail\` builds it."
     cd "{{root_dir}}" && docker compose up --build
 
-# Lint, format, tests, and frontend type/offline checks.
+# Lint, format, test, and the widget type/offline gate.
 [group('modules')]
 mod check 'tools/just/check.just'
 
@@ -57,7 +53,7 @@ mod check 'tools/just/check.just'
 [group('modules')]
 mod data 'tools/just/data.just'
 
-# Rebuild map regions, basemap geometry, and bathymetry rasters.
+# Rebuild map assets: atlas, fonts, bathymetry.
 [group('modules')]
 mod map 'tools/just/map.just'
 

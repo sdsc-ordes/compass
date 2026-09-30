@@ -1,6 +1,6 @@
 import type { PinBox } from './types';
 
-export interface Placement {
+interface Placement {
   left: number;
   top: number;
   flip: boolean;
@@ -11,10 +11,7 @@ function clampX(x: number, halfWidth: number, W: number): number {
   return Math.max(half, Math.min(W - half, x));
 }
 
-export function previewPlacement(
-  box: { x: number; y: number; headR: number; tipY: number },
-  W: number,
-): Placement {
+function previewPlacement(box: PinBox, W: number): Placement {
   const above = box.y - box.headR > 92;
   return {
     left: clampX(box.x, 124, W),
@@ -23,7 +20,7 @@ export function previewPlacement(
   };
 }
 
-export function cardPlacement(xy: [number, number], W: number): Placement {
+function cardPlacement(xy: [number, number], W: number): Placement {
   const above = xy[1] > 160;
   return {
     left: clampX(xy[0], 126, W),
@@ -32,16 +29,17 @@ export function cardPlacement(xy: [number, number], W: number): Placement {
   };
 }
 
-export function applyPlacement(el: HTMLElement, p: Placement): void {
+function applyPlacement(el: HTMLElement, p: Placement): void {
   el.style.left = p.left + 'px';
   el.style.top = p.top + 'px';
   el.classList.toggle('flip', p.flip);
 }
 
-export function cardOnStage(xy: [number, number] | null, W: number): xy is [number, number] {
+function cardOnStage(xy: [number, number] | null, W: number): xy is [number, number] {
   return !!xy && isFinite(xy[0]) && xy[0] >= -80 && xy[0] <= W + 80;
 }
 
+// Positions the hover preview and the open entry's card over the stage.
 export class CardLayer {
   constructor(
     private nodes: {

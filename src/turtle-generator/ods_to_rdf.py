@@ -1,23 +1,12 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# requires-python = ">=3.11"
-# dependencies = ["rdflib>=7.0,<8", "pyshacl>=0.30,<0.32", "odfpy>=1.4"]
-# ///
-"""Generate compass.ttl and vocab.ttl from a use-case source-data.ods.
+"""Generate compass.ttl and vocab.ttl from a use case's source-data.ods.
 
-Pin rows carry their own `id` and link by id in a `links` column; a link's
-predicate follows what it points at, so there is no mapping to configure.
-Concepts never link out: a tag is recorded on the pin that carries it, so a
-region is on the map only because some pin points at it.
+``COMPASS_USE_CASE`` (default ``oceancare``) selects the directory under
+``src/ontology/``. Pins link to other rows by id in their ``links`` column; the
+predicate a link becomes depends on the dimension or class of its target.
+Concepts carry no links.
 
-The use-case subdirectory under ``src/ontology/`` is selected by
-``COMPASS_USE_CASE`` (default ``oceancare``).
-
-    turtle-generator/ods_to_rdf.py            regenerate
-    turtle-generator/ods_to_rdf.py --check    exit 1 if the committed files are stale
-
-Subject order, predicate order and float precision are all pinned, so unchanged
-input produces byte-identical output.
+Subject order, predicate order and float precision are fixed, so unchanged input
+produces byte-identical output.
 """
 
 from __future__ import annotations
@@ -25,6 +14,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -40,30 +30,26 @@ ONTOLOGY_DIR = REPO / "src" / "ontology"
 
 
 def _resolve_use_case() -> str:
-    """Return ``COMPASS_USE_CASE`` from the environment or repo ``.env``."""
+    """Return ``COMPASS_USE_CASE`` from the environment, else the repo ``.env``."""
     value = os.environ.get("COMPASS_USE_CASE", "").strip()
     if value:
         return value
     env_file = REPO / ".env"
     if env_file.is_file():
         for line in env_file.read_text(encoding="utf-8").splitlines():
-            stripped = line.strip()
-            if not stripped.startswith("COMPASS_USE_CASE="):
-                continue
-            raw = stripped.split("=", 1)[1].strip().strip("\"'")
-            if " #" in raw:
-                raw = raw.split(" #", 1)[0].strip()
-            if raw:
-                return raw
+            if line.strip().startswith("COMPASS_USE_CASE="):
+                value = line.split("=", 1)[1].split(" #", 1)[0].strip().strip("\"'")
+                if value:
+                    return value
     return "oceancare"
 
 
 USE_CASE = _resolve_use_case()
 USE_CASE_DIR = ONTOLOGY_DIR / USE_CASE
 WORKBOOK = USE_CASE_DIR / "source-data.ods"
-SCHEMES = "schemes"
-CONCEPTS = "concepts"
-PINS = "pins"
+SCHEME_SHEET = "schemes"
+CONCEPT_SHEET = "concepts"
+PIN_SHEET = "pins"
 SHAPES = ONTOLOGY_DIR / "shapes.ttl"
 OUT_DATA = USE_CASE_DIR / "compass.ttl"
 OUT_VOCAB = USE_CASE_DIR / "vocab.ttl"
@@ -71,10 +57,10 @@ OUT_VOCAB = USE_CASE_DIR / "vocab.ttl"
 ONTOLOGY_NS = "http://example.org/ocean-org/ontology#"
 DATA_NS = "http://example.org/ocean-org/data#"
 
-# The five tag dimensions, in the order their sections appear in vocab.ttl.
+# In vocab.ttl section order.
 DIMENSIONS = ["WorkArea", "Topic", "Programme", "Species", "CountryArea"]
 
-# The four entity classes, in the order their sections appear in compass.ttl.
+# Entity class -> section title, in compass.ttl section order.
 CLASSES = {
     "InternationalForum": "International Fora",
     "Network": "Networks",
@@ -82,8 +68,8 @@ CLASSES = {
     "HostOrganization": "Host Organization",
 }
 
-# Which predicate a link becomes, keyed by what the link points at.
-TAG_PREDICATE = {
+# Keyed by the dimension or class of the link's target.
+LINK_PREDICATE = {
     "WorkArea": "compass:workArea",
     "Topic": "compass:topic",
     "Programme": "compass:programme",
@@ -126,8 +112,9 @@ PIN_COLUMNS = [
     "notes",
 ]
 
-# Emission order within a subject block. Anything unlisted sorts last, by name.
+# Every predicate the generator emits, in the order it appears within a subject.
 PREDICATE_ORDER = [
+    "a",
     "compass:name",
     "rdfs:label",
     "skos:prefLabel",
@@ -154,7 +141,6 @@ PREDICATE_ORDER = [
     "geo:long",
 ]
 
-# English first, then German, then anything else -- the order the files read in.
 LANGUAGE_ORDER = ["@en", "@de"]
 
 BANNER = (
@@ -176,62 +162,59 @@ PREFIXES = [
     ("ocinst", DATA_NS),
 ]
 
+_TURTLE_ESCAPES = str.maketrans({"\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r"})
+
 
 class SheetError(Exception):
-    """A defect in the tables that the operator must resolve."""
+    """A defect in the workbook, to be fixed there."""
 
 
-def display(path: Path) -> str:
-    """Repo-relative where possible, absolute otherwise, so messages never crash."""
+def repo_relative(path: Path) -> str:
+    """Return ``path`` relative to the repo root, or absolute if it lies outside."""
     try:
         return str(path.relative_to(REPO))
     except ValueError:
         return str(path)
 
 
+@dataclass(frozen=True)
+class Row:
+    """One non-empty data row of a sheet."""
+
+    number: int  # 1-based, as the spreadsheet shows it
+    sheet: str
+    cells: dict[str, str]
+
+    def __getitem__(self, column: str) -> str:
+        return self.cells[column]
+
+
 @dataclass
 class Problems:
-    """Collects every defect in one pass, so a run reports all of them at once."""
+    """Collect workbook defects so one run reports all of them."""
 
     items: list[str] = field(default_factory=list)
 
-    def add(self, table: str, row: int, message: str) -> None:
-        self.items.append(f"  {table}:{row}  {message}")
+    def add(self, row: Row, message: str) -> None:
+        self.items.append(f"  {row.sheet}:{row.number}  {message}")
 
     def raise_if_any(self) -> None:
         if self.items:
             raise SheetError(f"{len(self.items)} problem(s):\n" + "\n".join(self.items))
 
 
-# ============================================================
-# Reading
-# ============================================================
-
-
-@dataclass(frozen=True)
-class Row:
-    number: int  # 1-based, matching what a spreadsheet shows
-    table: str  # sheet name
-    cells: dict[str, str]
-
-    def __getitem__(self, column: str) -> str:
-        return self.cells.get(column, "")
-
-
 def _cell_text(cell) -> str:
-    """A cell's value, preferring the stored number over its displayed form."""
+    """Return a cell's stored number if it has one, else its displayed text."""
     if cell.getAttribute("valuetype") == "float":
         stored = cell.getAttribute("value")
         if stored is not None:
-            # Trim the trailing .0 a spreadsheet adds to whole numbers.
-            return stored[:-2] if stored.endswith(".0") else stored
-    # teletype, not str(): a spreadsheet packs runs of spaces into <text:s/>
-    # elements that str() renders as nothing, silently joining words.
+            return stored.removesuffix(".0")
+    # str() drops the <text:s/> elements that pack runs of spaces; teletype expands them.
     return "\n".join(teletype.extractText(p) for p in cell.getElementsByType(P)).strip()
 
 
 def _row_values(row, width: int) -> list[str]:
-    """Expand a row's cells, honouring the repeat counts spreadsheets pack with."""
+    """Return the first ``width`` cell texts of a row, expanding repeated cells."""
     values: list[str] = []
     for cell in row.getElementsByType(TableCell):
         if len(values) >= width:
@@ -243,32 +226,34 @@ def _row_values(row, width: int) -> list[str]:
 
 def _sheet(name: str):
     if not WORKBOOK.exists():
-        raise SheetError(f"{display(WORKBOOK)} is missing")
+        raise SheetError(f"{repo_relative(WORKBOOK)} is missing")
     for table in load(WORKBOOK).spreadsheet.getElementsByType(Table):
         if table.getAttribute("name") == name:
             return table
-    raise SheetError(f"{display(WORKBOOK)} has no sheet named {name!r}")
+    raise SheetError(f"{repo_relative(WORKBOOK)} has no sheet named {name!r}")
 
 
-def read_table(name: str, columns: list[str]) -> list[Row]:
-    """Read one sheet of the workbook, requiring exactly the expected header."""
+def read_sheet(name: str, columns: list[str]) -> list[Row]:
+    """Read the non-empty rows of a workbook sheet whose header must equal ``columns``.
+
+    Raises:
+        SheetError: The workbook or sheet is missing or empty, or the header differs.
+    """
     sheet_rows = _sheet(name).getElementsByType(TableRow)
     if not sheet_rows:
         raise SheetError(f"sheet {name!r} is empty")
 
+    # Read past the expected width so that extra columns are reported.
     header = [h for h in _row_values(sheet_rows[0], len(columns) + 8) if h]
     if header != columns:
         missing = [c for c in columns if c not in header]
         extra = [c for c in header if c not in columns]
-        detail = ", ".join(
-            part
-            for part in (
-                f"missing {missing}" if missing else "",
-                f"unexpected {extra}" if extra else "",
-                "" if (missing or extra) else "columns are in the wrong order",
-            )
-            if part
-        )
+        parts = []
+        if missing:
+            parts.append(f"missing {missing}")
+        if extra:
+            parts.append(f"unexpected {extra}")
+        detail = ", ".join(parts) or "columns are in the wrong order"
         raise SheetError(f"sheet {name!r}: {detail}")
 
     rows = []
@@ -276,28 +261,17 @@ def read_table(name: str, columns: list[str]) -> list[Row]:
     for sheet_row in sheet_rows[1:]:
         repeat = int(sheet_row.getAttribute("numberrowsrepeated") or 1)
         values = _row_values(sheet_row, len(columns))
-        # A repeated row is spreadsheet padding, so only a filled one counts.
-        for _ in range(repeat if any(values) else 1):
-            number += 1
-            if any(values):
-                rows.append(
-                    Row(
-                        number=number,
-                        table=name,
-                        # _row_values pads to len(columns), so the two always match.
-                        cells=dict(zip(columns, values, strict=True)),
-                    )
-                )
+        if any(values):
+            rows += [
+                Row(number + offset, name, dict(zip(columns, values, strict=True)))
+                for offset in range(1, repeat + 1)
+            ]
+        number += repeat
     return rows
 
 
-# ============================================================
-# Validation
-# ============================================================
-
-
 def index_terms(concepts: list[Row], pins: list[Row], problems: Problems) -> dict[str, str]:
-    """Map every id to the dimension or class it belongs to."""
+    """Map every concept and pin id to its dimension or class."""
     kinds: dict[str, str] = {}
     seen: dict[str, Row] = {}
     for rows, column, allowed in (
@@ -307,78 +281,63 @@ def index_terms(concepts: list[Row], pins: list[Row], problems: Problems) -> dic
         for row in rows:
             identifier = row["id"]
             if not identifier:
-                problems.add(row.table, row.number, "row has no id")
-                continue
-            if identifier in seen:
+                problems.add(row, "row has no id")
+            elif identifier in seen:
+                first = seen[identifier]
                 problems.add(
-                    row.table,
-                    row.number,
-                    f"id {identifier!r} is already used by "
-                    f"{seen[identifier].table}:{seen[identifier].number}",
+                    row,
+                    f"id {identifier!r} is already used by {first.sheet}:{first.number}",
                 )
-                continue
-            if row[column] not in allowed:
+            elif row[column] not in allowed:
                 problems.add(
-                    row.table,
-                    row.number,
-                    f"{column} {row[column]!r} is not one of {sorted(allowed)}",
+                    row, f"{column} {row[column]!r} is not one of {sorted(allowed)}"
                 )
-                continue
-            seen[identifier] = row
-            kinds[identifier] = row[column]
+            else:
+                seen[identifier] = row
+                kinds[identifier] = row[column]
     return kinds
 
 
 def parse_links(row: Row, kinds: dict[str, str], problems: Problems) -> dict[str, set[str]]:
-    """Resolve a links cell into objects grouped by the predicate they become."""
+    """Group the targets in a pin's ``links`` cell by the predicate each becomes."""
     grouped: dict[str, set[str]] = {}
     for target in (part.strip() for part in row["links"].split(",")):
         if not target:
             continue
         if target == row["id"]:
-            problems.add(row.table, row.number, f"{target!r} links to itself")
-            continue
-        if target not in kinds:
+            problems.add(row, f"{target!r} links to itself")
+        elif target not in kinds:
             problems.add(
-                row.table,
-                row.number,
-                f"link to unknown id {target!r} -- check the spelling, or add the row",
+                row, f"link to unknown id {target!r} -- check the spelling, or add the row"
             )
-            continue
-        predicate = TAG_PREDICATE[kinds[target]]
-        prefix = "compass:" if kinds[target] in DIMENSIONS else "ocinst:"
-        grouped.setdefault(predicate, set()).add(prefix + target)
+        else:
+            prefix = "compass:" if kinds[target] in DIMENSIONS else "ocinst:"
+            grouped.setdefault(LINK_PREDICATE[kinds[target]], set()).add(prefix + target)
     return grouped
 
 
-def number(row: Row, column: str, problems: Problems, kind: type) -> str:
-    """Validate a numeric cell, reporting rather than raising on a bad value."""
+def numeric_cell(row: Row, column: str, problems: Problems, parse: type) -> str:
+    """Return the cell text, or "" after reporting a value ``parse`` rejects."""
     value = row[column]
     if not value:
         return ""
     try:
-        kind(value)
+        parse(value)
     except ValueError:
-        problems.add(row.table, row.number, f"{column} {value!r} is not a number")
+        problems.add(row, f"{column} {value!r} is not a number")
         return ""
     return value
 
-
-# ============================================================
-# Triple assembly
-# ============================================================
 
 Triples = list[tuple[str, str]]  # (predicate qname, object term)
 
 
 def literal(text: str, lang: str) -> str:
-    escaped = text.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"@{lang}'
+    return f'"{text.translate(_TURTLE_ESCAPES)}"@{lang}'
 
 
 def typed(text: str, datatype: str) -> str:
-    escaped = text.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"^^{datatype}'
+    return f'"{text.translate(_TURTLE_ESCAPES)}"^^{datatype}'
 
 
 def coordinate(value: str) -> str:
@@ -387,13 +346,12 @@ def coordinate(value: str) -> str:
 
 @dataclass
 class Fallbacks:
-    """Counts German cells that were empty and took the English text instead."""
+    """Count the empty German cells that took the English text."""
 
-    counts: dict[str, int] = field(default_factory=dict)
+    counts: Counter[str] = field(default_factory=Counter)
 
-    def note(self, table: str, column: str) -> None:
-        key = f"{table}.{column}"
-        self.counts[key] = self.counts.get(key, 0) + 1
+    def note(self, sheet: str, column: str) -> None:
+        self.counts[f"{sheet}.{column}"] += 1
 
     def summary(self) -> str:
         if not self.counts:
@@ -403,18 +361,17 @@ class Fallbacks:
 
 
 def bilingual(row: Row, column: str, fallbacks: Fallbacks) -> tuple[str, str] | None:
-    """The English and German text of a `<column>_en` / `<column>_de` pair.
+    """Return the English and German text of ``<column>_en`` / ``<column>_de``.
 
-    An empty German cell takes the English text, so a German reader never gets
-    a blank where an English one gets prose. Each substitution is counted, so a
-    missing translation stays visible instead of silently shipping.
+    An empty German cell takes the English text and is noted in ``fallbacks``.
+    Returns None when the English cell is empty.
     """
     english = row[f"{column}_en"]
     if not english:
         return None
     german = row[f"{column}_de"]
     if not german:
-        fallbacks.note(row.table, f"{column}_de")
+        fallbacks.note(row.sheet, f"{column}_de")
         german = english
     return english, german
 
@@ -429,23 +386,13 @@ def bilingual_triples(
     return [(predicate, literal(english, "en")), (predicate, literal(german, "de"))]
 
 
-def link_triples(grouped: dict[str, set[str]]) -> Triples:
-    return [
-        (predicate, ", ".join(sorted(objects)))
-        for predicate, objects in sorted(grouped.items())
-    ]
-
-
 def concept_triples(row: Row, problems: Problems, fallbacks: Fallbacks) -> Triples:
     dimension = row["dimension"]
     scheme = f"compass:{dimension}Scheme"
     triples: Triples = [("a", f"skos:Concept, compass:{dimension}")]
     triples += bilingual_triples(row, "name", "skos:prefLabel", fallbacks)
-    # One line under the option in the filter panel. An empty English cell emits
-    # no triple at all, so nothing downstream ever sees a blank definition -- and
-    # most cells are empty today, the workbook owner filling them in over time.
     triples += bilingual_triples(row, "definition", "skos:definition", fallbacks)
-    wp_tag_id = number(row, "wp_tag_id", problems, int)
+    wp_tag_id = numeric_cell(row, "wp_tag_id", problems, int)
     if wp_tag_id:
         triples.append(("compass:wpTagId", typed(wp_tag_id, "xsd:integer")))
     triples += [("skos:inScheme", scheme), ("skos:topConceptOf", scheme)]
@@ -458,7 +405,7 @@ def pin_triples(
     triples: Triples = [("a", f"compass:{row['class']}")]
     name = bilingual(row, "name", fallbacks)
     if name is None:
-        problems.add(row.table, row.number, f"{row['id']!r} has no English name")
+        problems.add(row, f"{row['id']!r} has no English name")
     else:
         for predicate in ("compass:name", "rdfs:label"):
             triples += [
@@ -476,45 +423,35 @@ def pin_triples(
         triples.append(("schema:url", typed(row["url"], "xsd:anyURI")))
     if row["logo"]:
         triples.append(("schema:image", typed(row["logo"], "xsd:anyURI")))
-    wp_entity_tag_id = number(row, "wp_entity_tag_id", problems, int)
+    wp_entity_tag_id = numeric_cell(row, "wp_entity_tag_id", problems, int)
     if wp_entity_tag_id:
         triples.append(("compass:wpEntityTagId", typed(wp_entity_tag_id, "xsd:integer")))
 
-    triples += link_triples(parse_links(row, kinds, problems))
+    links = parse_links(row, kinds, problems)
+    triples += [
+        (predicate, ", ".join(sorted(objects))) for predicate, objects in links.items()
+    ]
 
-    latitude = number(row, "lat", problems, float)
-    longitude = number(row, "lon", problems, float)
+    latitude = numeric_cell(row, "lat", problems, float)
+    longitude = numeric_cell(row, "lon", problems, float)
     if latitude and longitude:
         triples.append(("geo:lat", coordinate(latitude)))
         triples.append(("geo:long", coordinate(longitude)))
     else:
         problems.add(
-            row.table,
-            row.number,
-            f"{row['id']!r} has no coordinates, so it can never reach the map",
+            row, f"{row['id']!r} has no coordinates, so it can never reach the map"
         )
     return triples
 
 
-# ============================================================
-# Serialisation
-# ============================================================
-
-
-def order_key(triple: tuple[str, str]) -> tuple[int, str, int, str]:
-    """Total order over a subject's triples: predicate, then language, then value."""
+def order_key(triple: tuple[str, str]) -> tuple[int, int, str]:
+    """Sort key: predicate, then language, then value."""
     predicate, value = triple
-    if predicate == "a":
-        rank = -1
-    elif predicate in PREDICATE_ORDER:
-        rank = PREDICATE_ORDER.index(predicate)
-    else:
-        rank = len(PREDICATE_ORDER)
     suffix = value[-3:]
     language = (
         LANGUAGE_ORDER.index(suffix) if suffix in LANGUAGE_ORDER else len(LANGUAGE_ORDER)
     )
-    return (rank, predicate if rank == len(PREDICATE_ORDER) else "", language, value)
+    return PREDICATE_ORDER.index(predicate), language, value
 
 
 def render_subject(subject: str, triples: Triples) -> str:
@@ -523,7 +460,7 @@ def render_subject(subject: str, triples: Triples) -> str:
     return f"{subject}\n{body} .\n"
 
 
-def header(title: str) -> str:
+def section_header(title: str) -> str:
     rule = "# " + "=" * 60
     return f"{rule}\n# {title}\n{rule}\n"
 
@@ -535,7 +472,7 @@ def render_file(sections: list[tuple[str, list[str]]]) -> str:
     for title, blocks in sections:
         if not blocks:
             continue
-        parts.append(header(title))
+        parts.append(section_header(title))
         parts.extend(blocks)
     return "\n".join(parts).rstrip("\n") + "\n"
 
@@ -546,7 +483,7 @@ def build_vocab(
     by_id = {row["id"]: row for row in schemes}
     missing = [d for d in DIMENSIONS if d not in by_id]
     if missing:
-        raise SheetError(f"sheet {SCHEMES!r} has no row for {missing}")
+        raise SheetError(f"sheet {SCHEME_SHEET!r} has no row for {missing}")
 
     sections: list[tuple[str, list[str]]] = []
     for dimension in DIMENSIONS:
@@ -593,12 +530,8 @@ def build_data(
     return render_file(sections)
 
 
-# ============================================================
-# Validation and entry point
-# ============================================================
-
-
 def validate(data: str, vocab: str) -> None:
+    """Raise SheetError unless the generated Turtle conforms to shapes.ttl."""
     shapes = Graph().parse(SHAPES, format="turtle")
     graph = Graph()
     graph.parse(data=data, format="turtle")
@@ -611,14 +544,17 @@ def validate(data: str, vocab: str) -> None:
         raise SheetError(f"SHACL validation failed:\n{report}")
 
 
-def generate(fallbacks: Fallbacks | None = None) -> tuple[str, str]:
-    """The two Turtle files. Pass a Fallbacks to learn which translations are missing."""
-    schemes = read_table(SCHEMES, SCHEME_COLUMNS)
-    concepts = read_table(CONCEPTS, CONCEPT_COLUMNS)
-    pins = read_table(PINS, PIN_COLUMNS)
+def generate(fallbacks: Fallbacks) -> tuple[str, str]:
+    """Return the text of compass.ttl and vocab.ttl, noting German fallbacks.
+
+    Raises:
+        SheetError: The workbook has defects; the message lists all of them.
+    """
+    schemes = read_sheet(SCHEME_SHEET, SCHEME_COLUMNS)
+    concepts = read_sheet(CONCEPT_SHEET, CONCEPT_COLUMNS)
+    pins = read_sheet(PIN_SHEET, PIN_COLUMNS)
 
     problems = Problems()
-    fallbacks = fallbacks if fallbacks is not None else Fallbacks()
     kinds = index_terms(concepts, pins, problems)
     problems.raise_if_any()  # ids must be sound before links can be checked
 
@@ -629,6 +565,7 @@ def generate(fallbacks: Fallbacks | None = None) -> tuple[str, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the command line; return the exit status."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--check",
@@ -652,15 +589,15 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if args.check:
-        drift = [
-            path.relative_to(REPO)
+        stale = [
+            repo_relative(path)
             for path, fresh in ((OUT_DATA, data), (OUT_VOCAB, vocab))
             if not path.exists() or path.read_text(encoding="utf-8") != fresh
         ]
-        if drift:
+        if stale:
             print(
-                f"error: {', '.join(str(p) for p in drift)} differ from a fresh run. "
-                f"Run `just data::generate`.",
+                f"error: {', '.join(stale)} differ from a fresh run. "
+                "Run `just data::generate`.",
                 file=sys.stderr,
             )
             return 1
@@ -669,7 +606,7 @@ def main(argv: list[str] | None = None) -> int:
 
     OUT_DATA.write_text(data, encoding="utf-8", newline="\n")
     OUT_VOCAB.write_text(vocab, encoding="utf-8", newline="\n")
-    print(f"wrote {OUT_DATA.relative_to(REPO)} and {OUT_VOCAB.relative_to(REPO)}")
+    print(f"wrote {repo_relative(OUT_DATA)} and {repo_relative(OUT_VOCAB)}")
     print(fallbacks.summary())
     return 0
 

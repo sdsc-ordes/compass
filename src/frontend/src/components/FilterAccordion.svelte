@@ -20,18 +20,22 @@
   let accEl: HTMLElement | null = null;
   let rows: Record<string, FilterRows | null> = {};
 
+  // Matches the .apanel transition in filters.css.
   const EXPAND_MS = 240;
 
+  const headerFor = (id: string): HTMLElement | null =>
+    accEl?.querySelector<HTMLElement>(`[data-head="${id}"]`) ?? null;
+
   export function focusHeader(id: string): void {
-    accEl?.querySelector<HTMLElement>(`[data-head="${id}"]`)?.focus({ preventScroll: true });
+    headerFor(id)?.focus({ preventScroll: true });
   }
 
   export async function focusRow(dim: string, iri: string): Promise<void> {
     await tick();
-    const pane = rows[dim];
-    if (!pane) return;
-    pane.focusRow(iri);
-    afterExpanded(dim, () => pane.revealRow(iri));
+    const list = rows[dim];
+    if (!list) return;
+    list.focusRow(iri);
+    afterExpanded(dim, () => list.revealRow(iri));
   }
 
   // Opening one group collapses another, which can carry the new header off screen
@@ -42,13 +46,13 @@
     if (!opening) return;
     await tick();
     afterExpanded(id, () => {
-      const h = accEl?.querySelector<HTMLElement>(`[data-head="${id}"]`);
-      const sc = h?.closest('aside');
-      if (!h || !sc) return;
-      const top = h.getBoundingClientRect().top - sc.getBoundingClientRect().top;
-      const off = parseFloat(getComputedStyle(h).scrollMarginTop) || 0;
-      if (top < off || top > sc.clientHeight / 2)
-        h.scrollIntoView({ block: 'start', behavior: Sheet.scrollBehavior() });
+      const head = headerFor(id);
+      const scroller = head?.closest('aside');
+      if (!head || !scroller) return;
+      const top = head.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+      const margin = parseFloat(getComputedStyle(head).scrollMarginTop) || 0;
+      if (top < margin || top > scroller.clientHeight / 2)
+        head.scrollIntoView({ block: 'start', behavior: Sheet.scrollBehavior() });
     });
   }
 

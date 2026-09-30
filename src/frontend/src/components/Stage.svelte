@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { geoDistance } from 'd3-geo';
   import type { GeoProjection } from 'd3-geo';
-  import { P } from '../lib/palette';
+  import { PALETTES } from '../lib/palette';
   import {
     proj,
     initialView,
@@ -33,7 +33,7 @@
     type Cluster,
     type PinBox,
     type PinTarget,
-    type Proj,
+    type Entry,
   } from '../lib/types';
   import Basemap from './Basemap.svelte';
   import Spinner from './Spinner.svelte';
@@ -41,13 +41,13 @@
   import MapCard from './MapCard.svelte';
   import StageChrome from './StageChrome.svelte';
   import Coach from './Coach.svelte';
-  import { fmt, type Strings } from '../lib/i18n';
+  import { fmt, loadErrorText, type Lang, type Strings } from '../lib/i18n';
   import { isMobile } from '../lib/sheet';
 
   export let t: Strings;
-  export let projs: Proj[] = [];
-  export let selected: Proj | null = null;
-  export let onSelect: (p: Proj | null) => void;
+  export let entries: Entry[] = [];
+  export let selected: Entry | null = null;
+  export let onSelect: (p: Entry | null) => void;
   export let onTheme: (night: boolean) => void = () => {};
   export let lift: () => number = () => 0;
   // The map left seen between the filter chips and the sheet, from the stage's top.
@@ -57,33 +57,30 @@
   export let loading = false;
   export let error: string | null = null;
   export let tileurl = '';
-  export let lang: 'en' | 'de' = 'en';
-  export let onLang: (l: 'en' | 'de') => void = () => {};
-  // Bumped by the host when a filter change has landed a new set of entities.
-  // A count rather than the list itself: `projs` gets a fresh identity on every
-  // reload, and a language switch is not a reason to move the camera.
+  export let lang: Lang = 'en';
+  export let onLang: (l: Lang) => void = () => {};
+  // Bumped when a filter change lands new entities; a reload for a language switch leaves it.
   export let focusKey = 0;
 
   const S: ViewState = initialView();
+  const GLIDE_MS = 620;
   let atlas: Atlas | null = null;
   let atlasError: string | null = null;
-  let interact = false;
-  // interact is also raised by a running tween; this one is only ever the user.
+  let interacting = false;
+  // Raised by the user only; interacting is also raised by a running tween.
   let gesturing = false;
-  let qid: number | null = null;
-  let painted = 0;
-  let cost = 0;
-  let retry: ReturnType<typeof setTimeout> | null = null;
+  let frameId: number | null = null;
+  let lastPaint = 0;
+  let paintCost = 0;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
   let hovered: PinTarget | null = null;
   let pinbox: PinBox[] = [];
 
-  // GEBCO ask that the source be acknowledged; the grid's own page carries the
-  // citation, the DOI and the terms, so the credit links there rather than
-  // spending the attribution line on a DOI nobody can read at 10px.
+  // The attribution links to the grid's page, which carries GEBCO's citation, DOI and terms.
   const GEBCO_GRID =
     'https://www.gebco.net/data-products-gridded-bathymetry-data/gebco2026-grid';
 
-  const COACH_DELAY = 3000;
+  const COACH_DELAY_MS = 3000;
   let coachOn = false;
   let coachDone = false;
   let coachTimer: ReturnType<typeof setTimeout> | null = null;
@@ -93,8 +90,8 @@
     coachDone = true;
     coachTimer = setTimeout(() => {
       coachTimer = null;
-      if (!selected && !error && projs.length > 0) coachOn = true;
-    }, COACH_DELAY);
+      if (!selected && !error && entries.length > 0) coachOn = true;
+    }, COACH_DELAY_MS);
   }
 
   function cancelCoach(): void {
@@ -103,97 +100,91 @@
       clearTimeout(coachTimer);
       coachTimer = null;
     }
-    if (coachOn) coachOn = false;
+    coachOn = false;
   }
 
-  $: armCoach(!loading && !error && projs.length > 0);
+  $: armCoach(!loading && !error && entries.length > 0);
 
   let viewMode: 'flat' | 'globe' = 'flat';
   let night = false;
 
   let stage: HTMLDivElement;
-  let water: HTMLCanvasElement;
-  let cv: HTMLCanvasElement;
-  let ov: HTMLDivElement;
+  let waterCanvas: HTMLCanvasElement;
+  let pinCanvas: HTMLCanvasElement;
+  let labelLayer: HTMLDivElement;
   let basemap: Basemap;
   let cardEl: HTMLDivElement;
-  let prevEl: HTMLDivElement;
+  let previewEl: HTMLDivElement;
   let attribEl: HTMLDivElement;
   let emptyEl: HTMLDivElement;
   let loadEl: HTMLDivElement;
   let errEl: HTMLDivElement;
   let zoomEl: HTMLDivElement;
   let panelEl: HTMLDivElement | null = null;
-  let chipsEl: HTMLDivElement;
+  let chipbarEl: HTMLDivElement;
 
-  const cards = new CardLayer({ preview: () => prevEl, card: () => cardEl });
+  const cards = new CardLayer({ preview: () => previewEl, card: () => cardEl });
 
-  // On by default; a small stage starts on the light raster (bathymetry.ts).
+  // On by default, as a small stage starts on the light raster (bathymetry.ts).
   let depth = true;
   let depthReady = true;
-  let depthOn = false;
+  let depthAvailable = false;
   const bathy = new Bathymetry(tileurl, () => {
-    depthReady = bathy.ready;
-    depthOn = bathy.available;
+    syncDepth();
     queue();
   });
 
-  const anim = new PinAnimator(
-    () => paintPins(),
-    () => {
-      if (interact || !stage || !atlas) return;
-      const W = stage.clientWidth,
-        H = stage.clientHeight;
-      if (W && H) runLabels(proj(S, W, H), W, H);
-    },
-  );
-  const tween = new Tweener(
-    S,
-    (full?: boolean) => queue(full),
-    (on) => {
-      interact = on;
-    },
-  );
+  function syncDepth(): void {
+    depthReady = bathy.ready;
+    depthAvailable = bathy.available;
+  }
+
+  const anim = new PinAnimator(paintPins, () => {
+    if (interacting || !stage || !atlas) return;
+    const [W, H] = stageSize();
+    if (W && H) runLabels(proj(S, W, H), W, H);
+  });
+  const tween = new Tweener(S, queue, (on) => {
+    interacting = on;
+  });
+
+  const stageSize = (): [number, number] => [stage.clientWidth, stage.clientHeight];
 
   function queue(full?: boolean): void {
-    if (!S.ready) return;
-    if (qid) return;
-    // rAF rather than a bare timer so paints land in phase with the compositor.
-    // The gap is budgeted from what the last paint measured, so a cheap frame --
-    // a nudged basemap -- runs every vsync and only one that genuinely overran
-    // backs the rate off.
-    const gap = interact && !full ? Math.min(32, cost) : 0;
+    if (!S.ready || frameId) return;
+    // Mid-gesture, frames are spaced by the measured cost of recent paints, so only
+    // a frame that overran slows the rate.
+    const gap = interacting && !full ? Math.min(32, paintCost) : 0;
     const step = (now: number): void => {
-      if (gap && now - painted < gap) {
-        qid = requestAnimationFrame(step);
+      if (gap && now - lastPaint < gap) {
+        frameId = requestAnimationFrame(step);
         return;
       }
-      qid = null;
-      painted = now;
+      frameId = null;
+      lastPaint = now;
       const t0 = performance.now();
       renderAll();
-      if (interact) cost = cost * 0.6 + (performance.now() - t0) * 0.4;
+      if (interacting) paintCost = paintCost * 0.6 + (performance.now() - t0) * 0.4;
     };
-    qid = requestAnimationFrame(step);
+    frameId = requestAnimationFrame(step);
   }
 
   function renderAll(): void {
     if (!atlas || !stage) return;
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
+    const [W, H] = stageSize();
     if (!W || !H) {
-      if (retry) clearTimeout(retry);
-      retry = setTimeout(() => queue(true), 80);
+      if (retryTimer) clearTimeout(retryTimer);
+      retryTimer = setTimeout(() => queue(true), 80);
       return;
     }
     fitKMax(W, H);
-    if (!interact || !nudgeBasemap(basemap.refs(), S, W, H))
+    if (!interacting || !nudgeBasemap(basemap.refs(), S, W, H))
       renderBasemap(basemap.refs(), S, W, H, atlas);
-    const pr = paintCanvas(W, H);
+    const pr = paintPinCanvas(W, H);
     if (!pr) return;
     paintWater(pr, W, H);
-    if (!interact) runLabels(pr, W, H);
-    else ov.textContent = '';
+    if (!interacting) runLabels(pr, W, H);
+    else labelLayer.textContent = '';
   }
 
   function fitKMax(W: number, H: number): void {
@@ -202,21 +193,31 @@
   }
 
   function paintPins(): void {
-    if (!stage || !cv) return;
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
-    if (W && H) paintCanvas(W, H);
+    if (!stage || !pinCanvas) return;
+    const [W, H] = stageSize();
+    if (W && H) paintPinCanvas(W, H);
   }
 
-  function paintCanvas(W: number, H: number): GeoProjection | null {
+  // Size the canvas to W x H CSS px at the device pixel ratio (capped at 2).
+  function scaledContext(
+    canvas: HTMLCanvasElement,
+    W: number,
+    H: number,
+  ): { ctx: CanvasRenderingContext2D; dpr: number } | null {
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    if (cv.width !== W * dpr || cv.height !== H * dpr) {
-      cv.width = W * dpr;
-      cv.height = H * dpr;
+    if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
     }
-    const ctx = cv.getContext('2d');
+    const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, dpr };
+  }
+
+  function paintPinCanvas(W: number, H: number): GeoProjection | null {
+    const ctx = scaledContext(pinCanvas, W, H)?.ctx;
+    if (!ctx) return null;
     ctx.clearRect(0, 0, W, H);
     const pr = proj(S, W, H);
     pinbox = drawPins({
@@ -224,10 +225,10 @@
       pr,
       W,
       H,
-      p: P[S.theme],
+      p: PALETTES[S.theme],
       S,
       anim,
-      visible: projs,
+      visible: entries,
       selected,
       touch: isMobile(),
       clusterLabel: (n) => ({ title: fmt(t.clusterTitle, { n }), where: t.clusterWhere }),
@@ -238,28 +239,24 @@
   }
 
   function paintWater(pr: GeoProjection, W: number, H: number): void {
-    if (!water) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    if (water.width !== W * dpr || water.height !== H * dpr) {
-      water.width = W * dpr;
-      water.height = H * dpr;
-    }
-    const ctx = water.getContext('2d');
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    bathy.paint(ctx, pr, W, H, P[S.theme], S.view === 'globe', interact, depth, dpr);
-    depthReady = bathy.ready;
-    depthOn = bathy.available;
+    if (!waterCanvas) return;
+    const scaled = scaledContext(waterCanvas, W, H);
+    if (!scaled) return;
+    const { ctx, dpr } = scaled;
+    bathy.paint(ctx, pr, W, H, PALETTES[S.theme], S.view === 'globe', interacting, depth, dpr);
+    syncDepth();
   }
 
-  function pumpPins(list: Proj[] = projs): void {
+  function pumpPins(list: Entry[] = entries): void {
     if (!S.ready) return;
     anim.pump(list, selected?.id ?? null, hovered?.id ?? null);
   }
 
-  function keepOut(): { x: number; y: number; w: number; h: number }[] {
+  type Box = { x: number; y: number; w: number; h: number };
+
+  function keepOut(): Box[] {
     const sr = stage.getBoundingClientRect();
-    const boxes: { x: number; y: number; w: number; h: number }[] = [];
+    const boxes: Box[] = [];
     const add = (el: Element | null, padW: number, padH: number) => {
       if (!el) return;
       if (getComputedStyle(el).display === 'none') return;
@@ -273,31 +270,21 @@
       });
     };
     [attribEl, emptyEl, loadEl, errEl].forEach((el) => add(el, 40, 16));
-    [zoomEl, panelEl, chipsEl].forEach((el) => add(el, 30, 20));
-    if (isMobile() && sheetEl) {
-      const sb = sheetEl.getBoundingClientRect();
-      if (sb.width) {
-        boxes.push({
-          x: sb.left - sr.left + sb.width / 2,
-          y: sb.top - sr.top + sb.height / 2,
-          w: sb.width + 20,
-          h: sb.height + 16,
-        });
-      }
-    }
+    [zoomEl, panelEl, chipbarEl].forEach((el) => add(el, 30, 20));
+    if (isMobile()) add(sheetEl, 20, 16);
     return boxes;
   }
 
   function runLabels(pr: GeoProjection, W: number, H: number): void {
-    const ctx = cv.getContext('2d');
+    const ctx = pinCanvas.getContext('2d');
     if (!ctx || !atlas) return;
     placeLabels({
       pr,
       W,
       H,
-      p: P[S.theme],
+      p: PALETTES[S.theme],
       S,
-      ov,
+      ov: labelLayer,
       pinbox,
       keepOut: keepOut(),
       measureCtx: ctx,
@@ -305,7 +292,7 @@
       sea: atlas.sea,
       land: atlas.land,
       lang,
-      depth: depth && depthOn,
+      depth: depth && depthAvailable,
     });
   }
 
@@ -323,8 +310,9 @@
   function zoomStep(f: number): void {
     const k = Math.max(K_MIN, Math.min(S.kMax, S.k * f));
     if (k === S.k) return;
-    const mx = stage.clientWidth / 2,
-      my = stage.clientHeight / 2,
+    const [W, H] = stageSize();
+    const mx = W / 2,
+      my = H / 2,
       g = k / S.k;
     if (S.view === 'flat')
       tween.to({ k, tx: mx - g * (mx - S.tx), ty: my - g * (my - S.ty) }, 280);
@@ -344,9 +332,8 @@
 
   function home(): TweenTo {
     const to: TweenTo = { k: 1, tx: 0, ty: 0, rot: [-18, -8] };
-    if (!isMobile() || S.view !== 'flat' || !projs.length) return to;
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
+    if (!isMobile() || S.view !== 'flat' || !entries.length) return to;
+    const [W, H] = stageSize();
     const [top, bot] = band() ?? [0, H];
     // k = 1 positions; any other flat camera is tx/ty plus k times these
     const pr = proj({ ...S, k: 1, tx: 0, ty: 0 }, W, H);
@@ -354,8 +341,8 @@
       y0 = Infinity,
       x1 = -Infinity,
       y1 = -Infinity;
-    for (const d of projs) {
-      const xy = pr(d.c);
+    for (const d of entries) {
+      const xy = pr(d.lonLat);
       if (!xy || !isFinite(xy[0]) || !isFinite(xy[1])) continue;
       x0 = Math.min(x0, xy[0]);
       x1 = Math.max(x1, xy[0]);
@@ -381,12 +368,12 @@
 
   // Once, on the first entities, unless a gesture or a ?pin= got there first.
   let homed = false;
-  $: if (S.ready && !homed && projs.length) {
+  $: if (S.ready && !homed && entries.length) {
     homed = true;
     if (!selected && !gesturing && S.view === 'flat' && S.k === 1 && !S.tx && !S.ty) {
       const to = home();
       // before the basemap is up there is nothing to glide from
-      if (atlas) tween.to(to, 620);
+      if (atlas) tween.to(to, GLIDE_MS);
       else {
         Object.assign(S, to);
         queue();
@@ -394,7 +381,7 @@
     }
   }
 
-  let fade: ReturnType<typeof setTimeout> | null = null;
+  let fadeTimer: ReturnType<typeof setTimeout> | null = null;
 
   function underFade(ms: number, apply: () => void): void {
     if (REDUCED.matches) {
@@ -402,9 +389,9 @@
       return;
     }
     stage.classList.add('swapping');
-    if (fade) clearTimeout(fade);
-    fade = setTimeout(() => {
-      fade = null;
+    if (fadeTimer) clearTimeout(fadeTimer);
+    fadeTimer = setTimeout(() => {
+      fadeTimer = null;
       apply();
       stage.classList.remove('swapping');
     }, ms);
@@ -413,8 +400,7 @@
   function setMode(m: 'flat' | 'globe'): void {
     if (m === S.view) return;
     tween.stop();
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
+    const [W, H] = stageSize();
     const c = centreLonLat(S, W, H);
     viewMode = m;
     underFade(140, () => {
@@ -447,16 +433,9 @@
 
   function syncPinPreview(): void {
     if (!hovered) return;
-    if (!isCluster(hovered) && !projs.some((d) => d.id === hovered!.id)) {
-      setHover(null);
-      return;
-    }
-    if (!boxFor(pinbox, hovered.id)) {
-      if (!interact) setHover(null);
-      else positionPinPreview();
-      return;
-    }
-    positionPinPreview();
+    const gone = !isCluster(hovered) && !entries.some((d) => d.id === hovered!.id);
+    if (gone || (!interacting && !boxFor(pinbox, hovered.id))) setHover(null);
+    else positionPinPreview();
   }
 
   function setHover(p: PinTarget | null): void {
@@ -465,15 +444,11 @@
       return;
     }
     hovered = p;
-    if (!p) {
-      cards.closePreview();
-      stage.style.cursor = 'crosshair';
-      pumpPins();
-      return;
-    }
-    stage.style.cursor = 'pointer';
-    cards.openPreview();
-    requestAnimationFrame(positionPinPreview);
+    stage.style.cursor = p ? 'pointer' : 'crosshair';
+    if (p) {
+      cards.openPreview();
+      requestAnimationFrame(positionPinPreview);
+    } else cards.closePreview();
     pumpPins();
   }
 
@@ -493,18 +468,11 @@
 
   function clickAt(e: PointerEvent): void {
     const hit = pinAt(e);
-    if (!hit) {
-      onSelect(null);
-      return;
-    }
-    if (isCluster(hit)) {
-      zoomIntoCluster(hit);
-      return;
-    }
-    onSelect(hit);
+    if (hit && isCluster(hit)) zoomIntoCluster(hit);
+    else onSelect(hit);
   }
 
-  function onTwinFocus(d: Proj): void {
+  function onPinNavFocus(d: Entry): void {
     flyTo(d);
     setHover(d);
   }
@@ -513,36 +481,35 @@
   function zoomIntoCluster(cl: Cluster): void {
     setHover(null);
     const k = S.kMax;
+    const [W, H] = stageSize();
     tween.to(
       S.view === 'globe'
-        ? { k, rot: [-cl.c[0], -cl.c[1]] }
-        : { k, ...flatOffsetFor(S, stage.clientWidth, stage.clientHeight, cl.c, k) },
-      620,
+        ? { k, rot: [-cl.lonLat[0], -cl.lonLat[1]] }
+        : { k, ...flatOffsetFor(S, W, H, cl.lonLat, k) },
+      GLIDE_MS,
     );
   }
 
-  const DETAIL_K = 3.4;
-  const CARD_K = 2.2;
+  const ENTRY_K = 3.4;
+  const CARD_MIN_K = 2.2;
 
   function positionProjectCard(): void {
-    if (!selected || S.k < CARD_K || !onFront(S, selected.c)) {
+    if (!selected || S.k < CARD_MIN_K || !onFront(S, selected.lonLat)) {
       cards.closeEntry();
       return;
     }
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
+    const [W, H] = stageSize();
     // A fanned pin sits off its coordinate, so follow its drawn box.
-    const b = pinbox.find((bb) => bb.p.id === selected!.id);
-    cards.entry(b ? [b.x, b.y] : proj(S, W, H)(selected.c), W);
+    const b = pinbox.find((bb) => bb.target.id === selected!.id);
+    cards.entry(b ? [b.x, b.y] : proj(S, W, H)(selected.lonLat), W);
   }
 
   let lastW = 0;
   let lastH = 0;
 
-  export function absorbResize(): void {
+  function absorbResize(): void {
     if (!stage || !S.ready) return;
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
+    const [W, H] = stageSize();
     if (!W || !H) return;
     if (!lastW || !lastH) {
       lastW = W;
@@ -567,7 +534,7 @@
   // A phone pans at the zoom it is at, slower, on a map app's glide.
   const PAN_MS = 700;
 
-  function zoomToProject(p: Proj): void {
+  function zoomToProject(p: Entry): void {
     const W = settledWidth() || stage.clientWidth,
       H = stage.clientHeight;
     const up = lift();
@@ -576,21 +543,21 @@
         // turned past the pin by the arc that spans `up` px on the rim
         const R = proj({ ...S, k }, W, H).scale();
         const d = (Math.asin(Math.min(1, up / R)) * 180) / Math.PI;
-        return { k, rot: [-p.c[0], d - p.c[1]] as [number, number] };
+        return { k, rot: [-p.lonLat[0], d - p.lonLat[1]] as [number, number] };
       }
-      const o = flatOffsetFor(S, W, H, p.c, k);
+      const o = flatOffsetFor(S, W, H, p.lonLat, k);
       return { k, tx: o.tx, ty: o.ty - up };
     };
     const at = (v: typeof to) => proj({ ...S, ...v }, W, H);
     const phone = isMobile();
-    let to = frame(phone ? S.k : Math.max(S.k, DETAIL_K));
+    let to = frame(phone ? S.k : Math.max(S.k, ENTRY_K));
     // Still clustered there (e.g. opened from a link): go to max zoom, where it fans,
     // and frame the pin's fanned spot rather than its coordinate.
-    if (fanSpot(at(to), projs, p, W, H, phone)) {
+    if (fanSpot(at(to), entries, p, W, H, phone)) {
       to = frame(S.kMax);
-      const aim = at(to)(p.c);
+      const aim = at(to)(p.lonLat);
       for (let i = 0; i < 2 && aim && to.tx !== undefined && to.ty !== undefined; i++) {
-        const f = fanSpot(at(to), projs, p, W, H, phone);
+        const f = fanSpot(at(to), entries, p, W, H, phone);
         if (!f) break;
         to.tx += aim[0] - f[0];
         to.ty += aim[1] - f[1];
@@ -600,15 +567,14 @@
     else tween.to(to, ENTRY_MS);
   }
 
-  function flyTo(p: Proj): void {
-    const W = stage.clientWidth,
-      H = stage.clientHeight;
+  function flyTo(p: Entry): void {
+    const [W, H] = stageSize();
     if (S.view === 'globe') {
-      if (geoDistance(p.c, frontCentre(S)) < 1.0) return;
-      tween.to({ rot: [-p.c[0], -p.c[1]] }, 620);
+      if (geoDistance(p.lonLat, frontCentre(S)) < 1.0) return;
+      tween.to({ rot: [-p.lonLat[0], -p.lonLat[1]] }, GLIDE_MS);
       return;
     }
-    const xy = proj(S, W, H)(p.c);
+    const xy = proj(S, W, H)(p.lonLat);
     if (
       xy &&
       isFinite(xy[0]) &&
@@ -618,28 +584,23 @@
       xy[1] < H * 0.8
     )
       return;
-    const o = flatOffsetFor(S, W, H, p.c);
-    tween.to({ tx: o.tx, ty: o.ty }, 620);
+    const o = flatOffsetFor(S, W, H, p.lonLat);
+    tween.to({ tx: o.tx, ty: o.ty }, GLIDE_MS);
   }
 
-  const FOCUS_MS = 620;
-
-  // Reframe on what survived a filter -- but never over something the user is
-  // doing. A gesture owns the camera outright, and an entry that outlived the
-  // filter keeps the frame zoomToProject just gave it. An empty result moves
-  // nothing: the stage says so in words, and leaving the view where it was is
-  // what makes undoing the filter feel like undoing it.
-  function refocus(list: Proj[]): void {
+  // Frame what survived a filter, unless a gesture or an open entry owns the camera.
+  // An empty result keeps the view, so undoing the filter returns to it.
+  function refocus(list: Entry[]): void {
     if (!stage || gesturing || selected || !list.length) return;
-    const H = stage.clientHeight;
+    const [W, H] = stageSize();
     const to = frameFor(
       S,
-      stage.clientWidth,
+      W,
       H,
-      list.map((d) => d.c),
+      list.map((d) => d.lonLat),
       band() ?? [0, H],
     );
-    if (to) tween.to(to, FOCUS_MS);
+    if (to) tween.to(to, GLIDE_MS);
   }
 
   let lastSelectedId: string | null = null;
@@ -648,7 +609,7 @@
     onSelectionChanged(selected);
   }
 
-  function onSelectionChanged(p: Proj | null): void {
+  function onSelectionChanged(p: Entry | null): void {
     setHover(null);
     if (p) {
       cancelCoach();
@@ -656,22 +617,20 @@
     } else {
       cards.closeEntry();
       tween.stop();
-      queue();
     }
     queue();
     pumpPins();
   }
 
-  // After the selection block, not before it: a filter that drops the open
-  // entry clears the selection in the same flush, and onSelectionChanged stops
-  // the tween on its way out.
+  // Must follow the selection block: a filter that drops the open entry clears the
+  // selection in the same flush, and onSelectionChanged stops the tween.
   let lastFocusKey = focusKey;
   $: if (S.ready && focusKey !== lastFocusKey) {
     lastFocusKey = focusKey;
-    refocus(projs);
+    refocus(entries);
   }
 
-  $: pumpPins(projs);
+  $: pumpPins(entries);
 
   let unbind: (() => void) | null = null;
   let unfonts: (() => void) | null = null;
@@ -686,7 +645,7 @@
       },
       (e) => {
         console.error('[Compass] Failed to load the basemap:', e);
-        atlasError = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
+        atlasError = loadErrorText(t, e);
       },
     );
     unbind = bindInput({
@@ -694,7 +653,7 @@
       stage,
       queue,
       setInteract: (on) => {
-        interact = on;
+        interacting = on;
         gesturing = on;
       },
       tween,
@@ -708,13 +667,11 @@
     });
     renderAll();
     pumpPins();
-    if (window.ResizeObserver) {
-      ro = new ResizeObserver(() => {
-        absorbResize();
-        refreshNow();
-      });
-      ro.observe(stage);
-    }
+    ro = new ResizeObserver(() => {
+      absorbResize();
+      renderNow();
+    });
+    ro.observe(stage);
     unfonts = onFontsReady(() => queue(true));
   });
 
@@ -724,9 +681,9 @@
     ro?.disconnect();
     tween.stop();
     anim.stop();
-    if (qid) cancelAnimationFrame(qid);
-    if (retry) clearTimeout(retry);
-    if (fade) clearTimeout(fade);
+    if (frameId) cancelAnimationFrame(frameId);
+    if (retryTimer) clearTimeout(retryTimer);
+    if (fadeTimer) clearTimeout(fadeTimer);
     if (coachTimer) clearTimeout(coachTimer);
     bathy.clear();
   });
@@ -735,10 +692,10 @@
     queue(full);
   }
 
-  export function refreshNow(): void {
-    if (qid) {
-      cancelAnimationFrame(qid);
-      qid = null;
+  function renderNow(): void {
+    if (frameId) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
     }
     if (!S.ready) return;
     renderAll();
@@ -746,26 +703,25 @@
 
   $: previewEntity = hovered ? entityLabel(hovered) : '';
   $: cardEntity = selected ? entityLabel(selected) : '';
-  $: fault = error ?? atlasError;
-  $: showEmpty = !loading && !fault && !!atlas && projs.length === 0;
-  $: showLoading = !fault && (!atlas || (loading && projs.length === 0));
+  $: shownError = error ?? atlasError;
+  $: showEmpty = !loading && !shownError && !!atlas && entries.length === 0;
+  $: showLoading = !shownError && (!atlas || (loading && entries.length === 0));
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
   class="stage"
-  class:depth={depth && depthOn}
   bind:this={stage}
   tabindex="0"
   role="application"
   aria-label={t.stageAria}
   aria-busy={loading || !atlas}
 >
-  <canvas id="water" bind:this={water} aria-hidden="true"></canvas>
+  <canvas id="water" bind:this={waterCanvas} aria-hidden="true"></canvas>
   <Basemap bind:this={basemap} />
 
-  <canvas id="cv" bind:this={cv} aria-hidden="true"></canvas>
-  <div class="ov" bind:this={ov} aria-hidden="true"></div>
+  <canvas id="cv" bind:this={pinCanvas} aria-hidden="true"></canvas>
+  <div class="ov" bind:this={labelLayer} aria-hidden="true"></div>
 
   <MapCard
     kind="projcard"
@@ -779,7 +735,7 @@
 
   <MapCard
     kind="pinprev"
-    bind:el={prevEl}
+    bind:el={previewEl}
     entity={previewEntity}
     title={hovered?.title ?? ''}
     where={hovered?.where ?? ''}
@@ -791,9 +747,13 @@
     <Spinner />
     {t.loadingMap}
   </div>
-  <div class="plate plate-error" class:show={!!fault} bind:this={errEl}>{fault ?? ''}</div>
+  <div class="plate plate-error" class:show={!!shownError} bind:this={errEl}>
+    {shownError ?? ''}
+  </div>
   <div class="attrib" bind:this={attribEl}>
-    {t.attribution}{#if depth && depthOn}<span class="attribsep" aria-hidden="true"> · </span><a
+    {t.attribution}{#if depth && depthAvailable}<span class="attribsep" aria-hidden="true">
+        &middot;
+      </span><a
         class="attriblink"
         href={GEBCO_GRID}
         target="_blank"
@@ -806,7 +766,7 @@
   <!-- the active filters, over the map on mobile; kept from the map's own gestures -->
   <div
     class="chipbar"
-    bind:this={chipsEl}
+    bind:this={chipbarEl}
     on:pointerdown|stopPropagation
     on:wheel|stopPropagation
   >
@@ -836,11 +796,11 @@
 
   <!-- last, so the tab order reaches the map controls before every pin -->
   <PinNav
-    {projs}
-    onFocus={onTwinFocus}
+    {entries}
+    onFocus={onPinNavFocus}
     onBlur={(d) => {
       if (hovered?.id === d.id) setHover(null);
     }}
-    onSelect={(d) => onSelect(d)}
+    {onSelect}
   />
 </div>

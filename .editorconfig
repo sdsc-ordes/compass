@@ -1,4 +1,4 @@
-# EditorConfig is awesome: https://EditorConfig.org
+# https://editorconfig.org
 root = true
 
 [*]
@@ -8,8 +8,7 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
-# The web sources have always been two-space; declaring it here keeps
-# Prettier, which reads this file, from reindenting the whole widget.
+# Prettier takes its indentation from this file.
 [*.{ts,js,mjs,cjs,svelte,css,html}]
 indent_size = 2
 

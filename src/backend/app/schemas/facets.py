@@ -1,4 +1,4 @@
-"""Facet count response: dimension id → tag IRI → count."""
+"""Facet count response: dimension id -> tag IRI -> count."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""SHACL → filter panel widgets (multiselect, slider, datepicker, toggle)."""
+"""Project SHACL property shapes into filter-panel widgets."""
 
 from __future__ import annotations
 
@@ -11,13 +11,14 @@ from rdflib.collection import Collection
 from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
 
-from app.namespaces import COMPASS, FILTERABLE_PIN_CLASSES
+from app.namespaces import COMPASS, ENTITY_TYPE_ID, FILTERABLE_PIN_CLASSES, local_name
 from app.shacl_to_entities import (
     BUILTIN_PATHS,
     DISPLAY_ONLY,
-    get_shacl_definition,
-    get_shacl_label,
-    get_shacl_property,
+    FILTER_BY_DATATYPE,
+    get_definition,
+    get_label,
+    map_property_shapes,
 )
 
 FilterWidgetType = Literal["multiselect", "slider", "datepicker", "toggle"]
@@ -34,10 +35,7 @@ class FilterOption(BaseModel):
     label: str = Field(description="Human-readable label shown in the filter panel.")
     description: str | None = Field(
         default=None,
-        description=(
-            "The concept's skos:definition, printed under the option's name. "
-            "Absent -- never empty -- when the concept defines none."
-        ),
+        description="The concept's skos:definition; absent when it defines none.",
     )
 
 
@@ -51,16 +49,13 @@ class FilterWidget(BaseModel):
     label: str = Field(description="Section title shown in the filter panel.")
     description: str | None = Field(
         default=None,
-        description=(
-            "The concept scheme's skos:definition, printed under the section title. "
-            "Absent -- never empty -- when the dimension has no scheme behind it."
-        ),
+        description="The concept scheme's skos:definition; absent without a scheme.",
     )
     type: FilterWidgetType = Field(description="Widget kind rendered by the frontend.")
-    order: int = Field(default=0, description="Optional sort hint (currently unused).")
+    order: int = Field(default=0, description="Sort hint (always 0).")
     options: list[FilterOption] | None = Field(
         default=None,
-        description="Choices for multiselect widgets; null for other types.",
+        description="Choices for multiselect widgets.",
     )
     min: float | int | str | None = Field(
         default=None,
@@ -84,43 +79,36 @@ def get_filters_from_shacl(g: Graph, lang: str = "en") -> list[FilterWidget]:
     """
     filters: list[FilterWidget] = []
 
-    for property in get_shacl_property(g):
-        path = g.value(property, SH.path)
+    for prop_shape in map_property_shapes(g):
+        path = g.value(prop_shape, SH.path)
         if path in _SKIP_PROPS:
             continue
 
-        datatype = g.value(property, SH.datatype)
+        datatype = g.value(prop_shape, SH.datatype)
         if datatype == XSD.anyURI:
             continue
 
-        target_class = g.value(property, SH["class"])
-        sh_in_list = list(g.objects(property, SH["in"]))
-        path_str = str(path)
-        local_name = path_str.rsplit("#", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1]
-
+        target_class = g.value(prop_shape, SH["class"])
         widget = _infer_widget(datatype)
         options = None
-        min_v = max_v = None
+        low = high = None
         if widget == "multiselect":
-            options = _multiselect_options(g, path, target_class, sh_in_list, lang)
+            options = _multiselect_options(g, prop_shape, path, target_class, lang)
         elif widget == "slider":
-            bounds = _slider_bounds(g, property, path, datatype)
-            min_v, max_v = bounds["min"], bounds["max"]
+            low, high = _slider_bounds(g, prop_shape, path, datatype)
         elif widget == "datepicker":
-            bounds = _datepicker_bounds(g, path)
-            min_v, max_v = bounds["min"], bounds["max"]
+            low, high = _datepicker_bounds(g, path)
 
         filters.append(
             FilterWidget(
-                id=local_name,
-                path=path_str,
-                label=get_shacl_label(g, property, SH.name, lang),
+                id=local_name(str(path)),
+                path=str(path),
+                label=get_label(g, prop_shape, SH.name, lang),
                 description=_scheme_description(g, target_class, lang),
                 type=widget,
-                order=0,
                 options=options,
-                min=min_v,
-                max=max_v,
+                min=low,
+                max=high,
             )
         )
 
@@ -137,41 +125,33 @@ def _infer_widget(datatype: Node | None) -> FilterWidgetType:
     Returns:
         Widget type; defaults to ``multiselect``.
     """
-    if datatype in {XSD.integer, XSD.float, XSD.gYear}:
-        return "slider"
-    if datatype == XSD.date:
-        return "datepicker"
-    if datatype == XSD.boolean:
-        return "toggle"
-    return "multiselect"
+    return FILTER_BY_DATATYPE.get(datatype, "multiselect")
 
 
 def _multiselect_options(
     g: Graph,
+    prop_shape: Node,
     path: Node,
     target_class: Node | None,
-    sh_in_list: list[Node],
     lang: str,
 ) -> list[FilterOption]:
     """Collect multiselect choices from class instances, sh:in, or observed values.
 
     Args:
         g: Ontology graph.
+        prop_shape: Property-shape subject.
         path: Property path URIRef.
         target_class: ``sh:class`` constraint, if any.
-        sh_in_list: Objects of ``sh:in``, if any.
         lang: Preferred label language.
 
     Returns:
         Options sorted by label.
     """
-    options: list[FilterOption] = []
+    in_list = g.value(prop_shape, SH["in"])
     if target_class:
-        for s in g.subjects(RDF.type, target_class):
-            options.append(_iri_option(g, s, lang))
-    elif sh_in_list:
-        for member in Collection(g, sh_in_list[0]):
-            options.append(_iri_option(g, member, lang))
+        options = [_iri_option(g, s, lang) for s in g.subjects(RDF.type, target_class)]
+    elif in_list is not None:
+        options = [_iri_option(g, member, lang) for member in Collection(g, in_list)]
     else:
         seen: dict[str, FilterOption] = {}
         for val in g.objects(None, path):
@@ -190,7 +170,7 @@ def _multiselect_options(
 
 
 def _iri_option(g: Graph, term: URIRef, lang: str) -> FilterOption:
-    """One option for a concept, carrying its definition only when it has one.
+    """Build the option selecting concept *term*.
 
     Args:
         g: Ontology graph.
@@ -198,28 +178,21 @@ def _iri_option(g: Graph, term: URIRef, lang: str) -> FilterOption:
         lang: Preferred language for label and definition.
 
     Returns:
-        The option, with ``description`` left unset when the concept defines none.
+        The option, with ``description`` unset when the concept defines none.
     """
-    definition = get_shacl_definition(g, term, lang)
     return FilterOption(
         value=str(term),
-        label=get_shacl_label(g, term, RDFS.label, lang),
-        description=definition or None,
+        label=get_label(g, term, RDFS.label, lang),
+        description=get_definition(g, term, lang),
     )
 
 
 def _scheme_description(g: Graph, target_class: Node | None, lang: str) -> str | None:
-    """The definition of the concept scheme a dimension draws its options from.
+    """Return the definition of the concept scheme a dimension's options sit in.
 
-    The shape's own ``sh:description`` says much the same thing and is one lookup
-    away, but it is hand-written in shapes.ttl and English-only, while the scheme
-    definition is bilingual and comes from the spreadsheet the client edits --
-    so the panel prints the wording OceanCare can change without us.
-
-    The scheme is reached through the graph rather than by spelling
-    ``sh:class`` + "Scheme": the naming convention holds today only because one
-    generator writes both, and a vocabulary hand-authored against the same shapes
-    would silently lose its subtitles.
+    The scheme is found through ``skos:inScheme`` of the class instances, not by
+    naming convention. Its definition is used over the shape's ``sh:description``
+    because the vocabulary carries it in every language.
 
     Args:
         g: Ontology graph.
@@ -227,16 +200,15 @@ def _scheme_description(g: Graph, target_class: Node | None, lang: str) -> str |
         lang: Preferred definition language.
 
     Returns:
-        The definition, or ``None`` for a dimension whose class has no instances,
-        whose concepts sit in no scheme, or whose scheme defines nothing --
-        ``entityType`` and the relations to entity classes among them.
+        The definition, or ``None`` when no instance sits in a scheme that
+        defines one (e.g. relations to entity classes).
     """
     if target_class is None:
         return None
     for concept in g.subjects(RDF.type, target_class):
         for scheme in g.objects(concept, SKOS.inScheme):
             if isinstance(scheme, URIRef):
-                definition = get_shacl_definition(g, scheme, lang)
+                definition = get_definition(g, scheme, lang)
                 if definition:
                     return definition
     return None
@@ -262,29 +234,29 @@ def _numeric_values(g: Graph, path: Node) -> list[float]:
 
 
 def _slider_bounds(
-    g: Graph, property: Node, path: Node, datatype: Node | None
-) -> dict[str, float | int]:
+    g: Graph, prop_shape: Node, path: Node, datatype: Node | None
+) -> tuple[float | int, float | int]:
     """Compute min/max for a slider from SHACL bounds or observed values.
 
     Args:
         g: Ontology graph.
-        property: Property-shape subject.
+        prop_shape: Property-shape subject.
         path: Property path.
         datatype: XSD datatype (affects gYear defaults).
 
     Returns:
-        Dict with ``min`` and ``max`` keys.
+        ``(min, max)``.
     """
-    vals = _numeric_values(g, path)
+    values = _numeric_values(g, path)
     if datatype == XSD.gYear:
-        return {"min": min(vals) if vals else 1900, "max": max(vals) if vals else 2026}
-    return {
-        "min": int(g.value(property, SH.minInclusive) or (min(vals) if vals else 0)),
-        "max": int(g.value(property, SH.maxInclusive) or (max(vals) if vals else 1000)),
-    }
+        return (min(values) if values else 1900, max(values) if values else 2026)
+    return (
+        int(g.value(prop_shape, SH.minInclusive) or (min(values) if values else 0)),
+        int(g.value(prop_shape, SH.maxInclusive) or (max(values) if values else 1000)),
+    )
 
 
-def _datepicker_bounds(g: Graph, path: Node) -> dict[str, str]:
+def _datepicker_bounds(g: Graph, path: Node) -> tuple[str, str]:
     """Compute min/max ISO date strings from observed values.
 
     Args:
@@ -292,20 +264,14 @@ def _datepicker_bounds(g: Graph, path: Node) -> dict[str, str]:
         path: Property path.
 
     Returns:
-        Dict with ``min`` and ``max`` date strings.
+        ``(min, max)`` date strings.
     """
-    date_vals = sorted([str(v) for v in g.objects(None, path) if str(v)])
-    return {
-        "min": date_vals[0] if date_vals else "2000-01-01",
-        "max": date_vals[-1] if date_vals else "2026-12-31",
-    }
+    dates = sorted(str(v) for v in g.objects(None, path) if str(v))
+    return (dates[0], dates[-1]) if dates else ("2000-01-01", "2026-12-31")
 
 
 def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
     """Build the entity-type multiselect over the filterable pin classes.
-
-    ``ALWAYS_ON_CLASSES`` is absent by construction: a class whose pin stays on
-    the map through a type selection has nothing to offer a filter on type.
 
     Args:
         g: Ontology graph (for class labels).
@@ -316,13 +282,12 @@ def _entity_type_dimension(g: Graph, lang: str) -> FilterWidget:
     """
     type_classes = [COMPASS[name] for name in sorted(FILTERABLE_PIN_CLASSES)]
     return FilterWidget(
-        id="entityType",
+        id=ENTITY_TYPE_ID,
         path=str(RDF.type),
         label="Entity Type" if lang == "en" else "Eintragsart",
         type="multiselect",
-        order=0,
         options=[
-            FilterOption(value=str(cls), label=get_shacl_label(g, cls, RDFS.label, lang))
+            FilterOption(value=str(cls), label=get_label(g, cls, RDFS.label, lang))
             for cls in type_classes
         ],
     )

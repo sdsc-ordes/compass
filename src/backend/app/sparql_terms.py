@@ -1,9 +1,7 @@
-"""Safe construction of SPARQL terms from untrusted input.
+"""Build SPARQL terms from untrusted input.
 
 Every IRI and literal that reaches a query from an HTTP parameter goes through
-here. Interpolating a raw value would let a caller close the term and append
-graph patterns of their own, so the checks below follow the SPARQL 1.1 grammar
-rather than blacklisting characters ad hoc.
+here, so a caller can never close the term and append graph patterns.
 """
 
 import re
@@ -28,7 +26,7 @@ class InvalidTerm(ValueError):
 
 
 def is_iri(value: str) -> bool:
-    """True when *value* can be written between angle brackets unchanged.
+    """Report whether *value* can be written between angle brackets unchanged.
 
     Args:
         value: Candidate IRI string.
@@ -41,9 +39,6 @@ def is_iri(value: str) -> bool:
 
 def iri_term(value: str) -> str:
     """Render *value* as an IRIREF.
-
-    Raise InvalidTerm when the value carries a character that would escape the
-    brackets, so a caller-supplied IRI can never extend the query.
 
     Args:
         value: Absolute IRI.

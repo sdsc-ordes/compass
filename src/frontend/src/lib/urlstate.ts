@@ -8,17 +8,17 @@ const localName = (iri: string): string =>
   iri.slice(Math.max(iri.lastIndexOf('#'), iri.lastIndexOf('/')) + 1);
 
 // IRI -> URL token: the local name, or the full IRI if another IRI shares that name.
-function tokens(iris: readonly string[]): Map<string, string> {
+function iriToToken(iris: readonly string[]): Map<string, string> {
   const names = iris.map(localName);
   const unique = (n: string) => names.indexOf(n) === names.lastIndexOf(n);
   return new Map(iris.map((iri, i) => [iri, unique(names[i]) ? names[i] : iri]));
 }
 
 // URL token (or full IRI) -> IRI.
-const reverse = (iris: readonly string[]): Map<string, string> =>
+const tokenToIri = (iris: readonly string[]): Map<string, string> =>
   new Map(
-    [...tokens(iris)].flatMap(([iri, tok]) => [
-      [tok, iri],
+    [...iriToToken(iris)].flatMap(([iri, token]) => [
+      [token, iri],
       [iri, iri],
     ]),
   );
@@ -28,8 +28,8 @@ const values = (dim: Dim) => dim.options.map((o) => o.value);
 export function encodeFilters(filters: QueryFilters, dims: readonly Dim[]): QueryFilters {
   const out: QueryFilters = {};
   for (const d of dims) {
-    const t = tokens(values(d));
-    if (filters[d.id]?.length) out[d.id] = filters[d.id].map((v) => t.get(v) ?? v);
+    const toToken = iriToToken(values(d));
+    if (filters[d.id]?.length) out[d.id] = filters[d.id].map((v) => toToken.get(v) ?? v);
   }
   return out;
 }
@@ -38,20 +38,21 @@ export function encodeFilters(filters: QueryFilters, dims: readonly Dim[]): Quer
 export function decodeFilters(params: URLSearchParams, dims: readonly Dim[]): QueryFilters {
   const out: QueryFilters = {};
   for (const d of dims) {
-    const back = reverse(values(d));
-    const iris = params.getAll(d.id).flatMap((v) => back.get(v) ?? []);
+    const toIri = tokenToIri(values(d));
+    const iris = params.getAll(d.id).flatMap((v) => toIri.get(v) ?? []);
     if (iris.length) out[d.id] = iris;
   }
   return out;
 }
 
 export const encodePin = (id: string, ids: readonly string[]): string =>
-  tokens(ids).get(id) ?? id;
+  iriToToken(ids).get(id) ?? id;
 
 export const decodePin = (token: string, ids: readonly string[]): string | null =>
-  reverse(ids).get(token) ?? null;
+  tokenToIri(ids).get(token) ?? null;
 
-// An open pin replaces the filters: `pin` is an already-encoded token.
+// Replace our query parameters in the page URL. An open pin replaces the
+// filters: `pin` is an already-encoded token. `state` is removed, never written.
 export function syncUrl(
   filters: QueryFilters,
   lang: string,
@@ -60,8 +61,8 @@ export function syncUrl(
 ): void {
   const url = new URL(window.location.href);
   const ours = new Set<string>([...dims.map((d) => d.id), 'lang', 'state', 'pin']);
-  [...url.searchParams.keys()].forEach((k) => {
-    if (ours.has(k)) url.searchParams.delete(k);
+  [...url.searchParams.keys()].forEach((key) => {
+    if (ours.has(key)) url.searchParams.delete(key);
   });
   if (pin) url.searchParams.set('pin', pin);
   else

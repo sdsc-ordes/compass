@@ -1,8 +1,7 @@
-"""SHACL → EntityShape descriptors for SPARQL build and GeoJSON decode.
+"""Project SHACL property shapes into EntityShape descriptors.
 
-Parallel to ``shacl_to_filters``: both walk the same NodeShapes; this
-module projects ``EntityShape`` descriptors, not filter UI widgets. Instance
-data is filled later by SPARQL over ``compass.ttl``.
+The descriptors drive both SPARQL generation and GeoJSON decoding.
+``shacl_to_filters`` walks the same shapes to build the filter panel.
 """
 
 from __future__ import annotations
@@ -16,7 +15,7 @@ from rdflib import Literal as RDFLiteral
 from rdflib.namespace import SKOS, XSD
 from rdflib.term import Node
 
-from app.namespaces import COMPASS, GEO, SCHEMA
+from app.namespaces import COMPASS, GEO, SCHEMA, local_name
 
 PropertyCategory = Literal[
     "lang_literal",
@@ -28,6 +27,7 @@ PropertyCategory = Literal[
 FilterType = Literal["multiselect", "slider", "datepicker", "toggle", "none"]
 
 BUILTIN_PATHS = {GEO.lat, GEO.long, COMPASS.name}
+"""Paths the pin query binds itself, so they are never projected."""
 
 DISPLAY_ONLY = {
     SCHEMA.url,
@@ -38,17 +38,15 @@ DISPLAY_ONLY = {
     COMPASS.relatedOrganization,
     COMPASS.wpEntityTagId,
 }
+"""Paths shown on a pin but never offered as a filter."""
 
-_FILTER_BY_CATEGORY: dict[str, FilterType] = {
-    "boolean": "toggle",
-    "iri_with_label": "multiselect",
-}
-_FILTER_BY_DATATYPE: dict[str, FilterType] = {
-    str(XSD.integer): "slider",
-    str(XSD.float): "slider",
-    str(XSD.double): "slider",
-    str(XSD.gYear): "slider",
-    str(XSD.date): "datepicker",
+FILTER_BY_DATATYPE: dict[Node, FilterType] = {
+    XSD.integer: "slider",
+    XSD.float: "slider",
+    XSD.double: "slider",
+    XSD.gYear: "slider",
+    XSD.date: "datepicker",
+    XSD.boolean: "toggle",
 }
 
 
@@ -75,12 +73,10 @@ class EntityShape(BaseModel):
 
 
 def targets_map_entity(g: Graph, node_shape: Node) -> bool:
-    """Report whether *node_shape* constrains a class drawn on the map.
+    """Report whether *node_shape* targets a ``compass:MapEntity`` subclass.
 
-    The ontology declares that boundary: map entity classes are subclasses of
-    ``compass:MapEntity``. Shapes targeting anything else -- the SKOS tag
-    vocabularies, for instance -- validate generated Turtle only and must not
-    reach the filter panel or the SPARQL projection.
+    Shapes targeting anything else (the SKOS tag vocabularies, for instance)
+    only validate the generated Turtle and stay out of the map projection.
 
     Args:
         g: Merged ontology graph (shapes + data + vocab).
@@ -95,7 +91,7 @@ def targets_map_entity(g: Graph, node_shape: Node) -> bool:
     )
 
 
-def get_shacl_property(g: Graph) -> Iterator[URIRef]:
+def map_property_shapes(g: Graph) -> Iterator[URIRef]:
     """Yield every sh:property IRI of every NodeShape targeting a map entity class.
 
     Args:
@@ -104,23 +100,20 @@ def get_shacl_property(g: Graph) -> Iterator[URIRef]:
     Yields:
         ``URIRef`` property-shape subjects, de-duplicated.
     """
-    seen: set = set()
+    seen: set[URIRef] = set()
     for node_shape in g.subjects(SH.targetClass, None):
         if not targets_map_entity(g, node_shape):
             continue
-        for p in g.objects(node_shape, SH.property):
-            if isinstance(p, URIRef) and p not in seen:
-                seen.add(p)
-                yield p
+        for prop_shape in g.objects(node_shape, SH.property):
+            if isinstance(prop_shape, URIRef) and prop_shape not in seen:
+                seen.add(prop_shape)
+                yield prop_shape
 
 
-def get_shacl_definition(g: Graph, subject: URIRef, lang: str) -> str:
-    """Return a concept's ``skos:definition`` in *lang*, or "" when it has none.
+def get_definition(g: Graph, subject: URIRef, lang: str) -> str | None:
+    """Return a non-blank ``skos:definition`` in *lang*, falling back to English.
 
-    The same language order as :func:`get_shacl_label` -- requested language,
-    then English -- but with no fallback to an arbitrary literal and nothing
-    synthesised from the IRI: a definition in a language nobody asked for is
-    worse than none, and the caller omits the field rather than sending "".
+    Unlike :func:`get_label`, there is no fallback to any other language.
 
     Args:
         g: Ontology graph.
@@ -128,7 +121,7 @@ def get_shacl_definition(g: Graph, subject: URIRef, lang: str) -> str:
         lang: BCP 47 language tag.
 
     Returns:
-        The definition, or an empty string when none is defined in either language.
+        The definition, or ``None`` when none is defined in either language.
     """
     definitions = [
         d for d in g.objects(subject, SKOS.definition) if isinstance(d, RDFLiteral)
@@ -137,10 +130,10 @@ def get_shacl_definition(g: Graph, subject: URIRef, lang: str) -> str:
         for definition in definitions:
             if definition.language == wanted and str(definition).strip():
                 return str(definition)
-    return ""
+    return None
 
 
-def get_shacl_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
+def get_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> str:
     """Return a label in *lang*, falling back to English, then any available label.
 
     Args:
@@ -156,18 +149,16 @@ def get_shacl_label(g: Graph, subject: URIRef, predicate: URIRef, lang: str) -> 
     if predicate != SKOS.prefLabel:
         candidates += list(g.objects(subject, SKOS.prefLabel))
 
-    for label in candidates:
-        if isinstance(label, RDFLiteral) and label.language == lang:
-            return str(label)
-    for label in candidates:
-        if isinstance(label, RDFLiteral) and label.language == "en":
-            return str(label)
+    for wanted in (lang, "en"):
+        for label in candidates:
+            if isinstance(label, RDFLiteral) and label.language == wanted:
+                return str(label)
     if candidates:
         return str(candidates[0])
-    return str(subject).split("#")[-1].split("/")[-1]
+    return local_name(str(subject))
 
 
-def get_entity_shape_from_shacl(g: Graph) -> list[EntityShape]:
+def get_entity_shapes_from_shacl(g: Graph) -> list[EntityShape]:
     """Project SHACL property shapes into EntityShape descriptors for query and decode.
 
     Args:
@@ -176,48 +167,39 @@ def get_entity_shape_from_shacl(g: Graph) -> list[EntityShape]:
     Returns:
         One ``EntityShape`` per filterable/display property (builtins skipped).
     """
-    fields: list[EntityShape] = []
+    shapes: list[EntityShape] = []
 
-    for property_node in get_shacl_property(g):
-        path = g.value(property_node, SH.path)
+    for prop_shape in map_property_shapes(g):
+        path = g.value(prop_shape, SH.path)
         if path is None or path in BUILTIN_PATHS:
             continue
 
-        path_str = str(path)
-        datatype = g.value(property_node, SH.datatype)
-        target_class = g.value(property_node, SH["class"])
-        sh_in_list = list(g.objects(property_node, SH["in"]))
-        node_kind = g.value(property_node, SH.nodeKind)
-        max_count_val = g.value(property_node, SH.maxCount)
-
+        datatype = g.value(prop_shape, SH.datatype)
+        max_count = g.value(prop_shape, SH.maxCount)
         one_per_language = (
             datatype == RDF.langString
-            and str(g.value(property_node, SH.uniqueLang)).lower() == "true"
+            and str(g.value(prop_shape, SH.uniqueLang)).lower() == "true"
         )
-        is_multi = not one_per_language and (
-            max_count_val is None or int(str(max_count_val)) != 1
-        )
+        is_multi = not one_per_language and (max_count is None or int(max_count) != 1)
         is_iri = (
-            (node_kind is not None and str(node_kind) == str(SH.IRI))
-            or target_class is not None
-            or bool(sh_in_list)
+            g.value(prop_shape, SH.nodeKind) == SH.IRI
+            or g.value(prop_shape, SH["class"]) is not None
+            or g.value(prop_shape, SH["in"]) is not None
         )
-
         category = _infer_category(datatype, is_iri)
-        filter_type = _infer_filter_type(path, category, datatype)
 
-        fields.append(
+        shapes.append(
             EntityShape(
-                id=path_str.rsplit("#", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1],
-                path_iri=path_str,
+                id=local_name(str(path)),
+                path_iri=str(path),
                 category=category,
                 is_multi=is_multi,
-                filter_type=filter_type,
+                filter_type=_infer_filter_type(path, category, datatype),
                 datatype=str(datatype) if datatype else None,
             )
         )
 
-    return fields
+    return shapes
 
 
 def _infer_category(datatype: Node | None, is_iri: bool) -> PropertyCategory:
@@ -232,16 +214,18 @@ def _infer_category(datatype: Node | None, is_iri: bool) -> PropertyCategory:
     """
     if is_iri:
         return "iri_with_label"
-    if datatype is not None and str(datatype) == str(XSD.anyURI):
+    if datatype == XSD.anyURI:
         return "uri_literal"
-    if datatype is not None and str(datatype) == str(XSD.boolean):
+    if datatype == XSD.boolean:
         return "boolean"
-    if datatype is not None and str(datatype) in (str(XSD.string), str(RDF.langString)):
+    if datatype in (XSD.string, RDF.langString):
         return "lang_literal"
     return "simple_literal"
 
 
-def _infer_filter_type(path: Node, category: str, datatype: Node | None) -> FilterType:
+def _infer_filter_type(
+    path: Node, category: PropertyCategory, datatype: Node | None
+) -> FilterType:
     """Choose the filter widget for a property, or ``none`` if display-only.
 
     Args:
@@ -254,9 +238,8 @@ def _infer_filter_type(path: Node, category: str, datatype: Node | None) -> Filt
     """
     if path in DISPLAY_ONLY or category == "uri_literal":
         return "none"
-    if category in _FILTER_BY_CATEGORY:
-        return _FILTER_BY_CATEGORY[category]
-    by_datatype = _FILTER_BY_DATATYPE.get(str(datatype) if datatype is not None else "")
-    if by_datatype:
-        return by_datatype
+    if category == "iri_with_label":
+        return "multiselect"
+    if datatype in FILTER_BY_DATATYPE:
+        return FILTER_BY_DATATYPE[datatype]
     return "multiselect" if category == "lang_literal" else "none"

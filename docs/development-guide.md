@@ -1,14 +1,15 @@
-### Development Guide
+# Development guide
 
-This guide documents our procedures and policies for project maintenance tasks,
-including managing our conventions, pull/merge-requests, continuous integration,
-releasing.
+## Commit convention
 
-## Commit Convention
+Commit messages and pull request titles follow
+[Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-We use the
-[conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
-specification for commit messages and pull/merge-request titles.
+## Continuous integration
 
-<!-- Additional 'scopes' should be described here.-->
-<!-- ### Scopes -->
+| Workflow | Runs |
+| --- | --- |
+| `.github/workflows/ci.yml` | Python lint, backend and generator tests, ontology freshness (`just data::check`); widget lint, format, type check, no-third-party-hosts gate, tests |
+| `.github/workflows/mkdocs-ci.yml` | Strict MkDocs build; deploys to GitHub Pages on push to `main` |
+
+Run the same checks locally with `just check::all`.

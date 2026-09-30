@@ -1,9 +1,4 @@
-"""Stories proxy router.
-
-Maps concept IRIs to upstream term IDs via ``compass:wpTagId``, then queries
-the configured stories provider for a count. HTTP route descriptions live in
-OpenAPI (``summary`` / ``description`` on the route decorators).
-"""
+"""Stories proxy: count upstream stories for a set of concept IRIs."""
 
 from __future__ import annotations
 
@@ -23,11 +18,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _resolve_tags_ids(iris: list[str], store: RDFStore) -> list[int]:
-    """Return upstream term IDs for the given concept IRIs.
-
-    Concepts without a ``compass:wpTagId`` mapping are skipped. Invalid IRIs
-    are ignored.
+def _wp_tag_ids(iris: list[str], store: RDFStore) -> list[int]:
+    """Return the ``compass:wpTagId`` of each concept, skipping unmapped or invalid IRIs.
 
     Args:
         iris: Concept IRIs from the ``tags`` query parameter.
@@ -47,8 +39,7 @@ def _resolve_tags_ids(iris: list[str], store: RDFStore) -> list[int]:
         ?concept compass:wpTagId ?wpTagId .
     }}
     """
-    rows = store.query(sparql)
-    return [int(row["wpTagId"]) for row in rows if row.get("wpTagId")]
+    return [int(row["wpTagId"]) for row in store.query(sparql)]
 
 
 @router.get(
@@ -71,20 +62,14 @@ async def get_stories_count(
     if not tags:
         logger.info("Stories count requested with no tags")
         return StoriesCountResponse(
-            count=0,
-            url=cfg.create_stories_base_url(lang),
-            status="no_tags",
-            message=None,
+            count=0, url=cfg.create_stories_base_url(lang), status="no_tags"
         )
 
-    ids = _resolve_tags_ids(tags, store)
+    ids = _wp_tag_ids(tags, store)
     if not ids:
         logger.warning("No term-id mapping for IRIs: %s", tags)
         return StoriesCountResponse(
-            count=0,
-            url=cfg.create_stories_base_url(lang),
-            status="no_ID_mapping",
-            message=None,
+            count=0, url=cfg.create_stories_base_url(lang), status="no_ID_mapping"
         )
 
     frontend_url = cfg.create_stories_frontend_url(ids, lang)
@@ -102,29 +87,14 @@ async def get_stories_count(
             exc.response.status_code,
             api_url,
         )
-        return StoriesCountResponse(
-            count=0,
-            url=frontend_url,
-            status="upstream_error",
-            message=cfg.stories_api_error_message,
-        )
-    except Exception as exc:
-        logger.error(
-            "%s API unreachable: %s",
-            cfg.stories_provider_name,
-            exc,
-            exc_info=True,
-        )
-        return StoriesCountResponse(
-            count=0,
-            url=frontend_url,
-            status="upstream_error",
-            message=cfg.stories_api_error_message,
-        )
+    except Exception:
+        logger.exception("%s API unreachable", cfg.stories_provider_name)
+    else:
+        return StoriesCountResponse(count=count, url=frontend_url, status="ok")
 
     return StoriesCountResponse(
-        count=count,
+        count=0,
         url=frontend_url,
-        status="ok",
-        message=None,
+        status="upstream_error",
+        message=cfg.stories_api_error_message,
     )

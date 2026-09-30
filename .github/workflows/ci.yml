@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@v6
 
       - name: Install just
@@ -24,13 +24,11 @@ jobs:
         run: just check::lint-python
 
       - name: Test the backend
-        run: cd src/backend && uv run pytest tests/
+        run: cd src/backend && uv run pytest
 
       - name: Test the generator
-        run: cd src/turtle-generator && uv run --group dev pytest
+        run: cd src/turtle-generator && uv run pytest
 
-      # The workbook is the source of truth and the Turtle is committed, so an
-      # edit to one without the other has to fail here rather than at deploy.
       - name: Verify the committed ontology matches the workbook
         run: just data::check
 
@@ -63,7 +61,6 @@ jobs:
       - name: Type-check
         run: npm run check
 
-      # The widget must contact no third party at runtime; this is the gate.
       - name: Verify no third-party hosts
         run: node scripts/check-offline.mjs
 

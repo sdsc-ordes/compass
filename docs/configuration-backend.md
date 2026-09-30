@@ -1,44 +1,54 @@
-# Configuring the Backend for a New Use-case
+# Backend configuration
 
-Use-case settings live in `app/config.py` (pydantic `Config`). Platform /
-deployment settings live in `app/core/settings.py`. A Python-proficient user
-should be able to adapt the backend for a new use-case by editing
-`app/config.py` (and the route `.env`).
+| File | Holds |
+| --- | --- |
+| `src/backend/app/core/settings.py` (`Settings`) | Deployment settings (`COMPASS_*`) |
+| `src/backend/app/config.py` (`Config`) | Use-case settings: API metadata, stories provider, languages |
 
-## Minimal Checklist
+Both read environment variables and the repository-root `.env`. Under Compose
+the backend container receives `.env` too.
 
-1. **Point at the ontology and use-case** (`app/core/settings.py` / env)
-   - `COMPASS_USE_CASE` — the name of the subdirectory under `src/ontology` where you placed your `source-data.ods`.
+## Deployment settings
 
-2. **Set the reload token** (`app/core/settings.py` / env)
-   - `COMPASS_RELOAD_TOKEN` — secret token required by the `/api/admin/reload`
-     endpoint. The endpoint re-parses the ontology files without restarting the
-     container, which is useful for editorial updates. Keep this secret strong
-     in production; anyone holding it can trigger a reload on demand.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `COMPASS_USE_CASE` | `oceancare` | Folder under the ontology root holding `compass.ttl` and `vocab.ttl` |
+| `COMPASS_ONTOLOGY_DIR` | `src/ontology` of the checkout | Ontology root holding `shapes.ttl` |
+| `COMPASS_RELOAD_TOKEN` | empty (reload disabled) | Secret for `POST /api/v1/admin/reload`, sent as `X-Reload-Token`. Anyone holding it can trigger a reload. |
+| `COMPASS_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated origins allowed to call the API cross-origin (dev server, embedding sites). Empty disables CORS; Compose defaults to empty. |
 
-3. **Set API metadata** (`app/config.py` / env)
-   - `API_TITLE` — title shown in the FastAPI docs.
-   - `API_WELCOME_MESSAGE` — payload returned by `GET /`.
+The reload endpoint re-parses the ontology without a restart. A rejected reload
+keeps the previous version serving.
 
-4. **Configure to your website (stories provider)** (`app/config.py`)
-   - `STORIES_PROVIDER_NAME` — provider name used in log messages.
-   - `STORIES_BASE_URL_EN` / `STORIES_BASE_URL_DE` (and `stories_base_urls`) — public index URLs.
-   - `STORIES_API_URL` — upstream endpoint queried by `/api/v1/stories/count`.
-   - `STORIES_API_ERROR_MESSAGE` — message returned when the upstream API fails.
-   - Override `Config.create_stories_frontend_url` / `create_stories_api_url` if the
-     provider uses a different query shape.
-   - Override `Config.parse_stories_count` (or set `stories_count_header`) if the
-     upstream count is not in the default response header.
+## Use-case settings
 
-5. **Adapt language support**
-   - Add or remove language base URLs on `Config` so `supported_langs` updates.
-   - Routers read allowed `lang` values from `Config` via `app/core/deps.py`.
+| Variable | Purpose |
+| --- | --- |
+| `API_TITLE` | Title in the OpenAPI docs |
+| `API_WELCOME_MESSAGE` | Message returned by `GET /` and `GET /api/` |
+| `STORIES_PROVIDER_NAME` | Provider name in log messages |
+| `STORIES_BASE_URL_EN`, `STORIES_BASE_URL_DE` | Public stories index per language |
+| `STORIES_API_URL` | Upstream endpoint queried by `GET /api/v1/stories/count` |
+| `STORIES_API_ERROR_MESSAGE` | Message returned when the upstream API fails |
+| `STORIES_COUNT_HEADER` | Upstream response header holding the count (default `x-wp-total`) |
 
-6. **Run the test suite** (sanity check)
+The defaults target OceanCare's WordPress REST API. For another provider,
+override these methods on `Config`:
 
-   ```bash
-   uv run pytest tests/ -v
-   ```
+- `create_stories_frontend_url`, `create_stories_api_url`: query shape of the
+  public and upstream URLs.
+- `parse_stories_count`: when the count is not in a response header.
 
-See also the [Config](backend/config.md) and [Core](backend/core.md) API
-reference.
+## Languages
+
+`Config.supported_langs` is the key set of `Config.stories_base_urls`; routers
+reject any other `lang` (`app/core/deps.py`). The widget's interface strings and
+the workbook's column pairs exist for `en` and `de` only.
+
+## Check
+
+```bash
+just check::tests
+```
+
+API reference: [Config](backend/config.md), [Core](backend/core.md).

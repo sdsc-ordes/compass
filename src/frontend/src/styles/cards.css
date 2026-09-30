@@ -57,6 +57,7 @@
 .projcard.flip.show {
   transform: translate(-50%, 12px) scale(1);
 }
+/* .xclose's cerulean is 1.7:1 on the dark card, so the close follows the card ink */
 .projcard .pc-x,
 .projcard .pc-x:hover {
   color: var(--card-ink);
@@ -67,6 +68,9 @@
   width: 24px;
   height: 24px;
   font-size: 22px;
+}
+.projcard .pc-x:focus-visible {
+  outline-color: var(--card-ink);
 }
 @media (prefers-reduced-motion: reduce) {
   .projcard {
@@ -94,10 +98,4 @@
   .pinprev {
     width: min(236px, 72vw);
   }
-}
-
-/* The shared .xclose turns cerulean on hover and rings cerulean on focus, which
-   is 1.7:1 on the dark card. On a card, both follow the card's own ink. */
-.projcard .pc-x:focus-visible {
-  outline-color: var(--card-ink);
 }

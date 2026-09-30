@@ -1,42 +1,27 @@
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+// Write THIRD-PARTY-NOTICES.md for every package in "dependencies", which are
+// the ones bundled into dist/compass-map.js.
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const LICENCE_FILES = [
-  'LICENSE',
-  'LICENSE.md',
-  'LICENSE.txt',
-  'LICENCE',
-  'license',
-  'LICENSE-MIT',
-];
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
-const RUNTIME_FROM_DEV = ['svelte'];
+const ROOT = join(import.meta.dirname, '..');
 
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
-const declared = Object.keys(pkg.dependencies ?? {});
-const shipped = [...new Set([...declared, ...RUNTIME_FROM_DEV])]
-  .filter((name) => existsSync(join(ROOT, 'node_modules', name)))
-  .sort();
+const bundled = Object.keys(pkg.dependencies ?? {}).sort();
 
-function licenceText(name) {
-  const dir = join(ROOT, 'node_modules', name);
-  for (const candidate of LICENCE_FILES) {
-    const path = join(dir, candidate);
-    if (existsSync(path)) return readFileSync(path, 'utf8').trim();
-  }
-  const found = readdirSync(dir).find((f) => /^licen[cs]e/i.test(f));
-  return found ? readFileSync(join(dir, found), 'utf8').trim() : null;
+function licenceText(dir) {
+  const file = readdirSync(dir)
+    .filter((f) => /^licen[cs]e/i.test(f))
+    .sort()[0];
+  return file ? readFileSync(join(dir, file), 'utf8').trim() : null;
 }
 
 const sections = [];
 const missing = [];
-for (const name of shipped) {
-  const meta = JSON.parse(
-    readFileSync(join(ROOT, 'node_modules', name, 'package.json'), 'utf8'),
-  );
-  const text = licenceText(name);
+for (const name of bundled) {
+  const dir = join(ROOT, 'node_modules', name);
+  const meta = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+  const text = licenceText(dir);
   if (!text) missing.push(name);
   sections.push(
     `## ${name} ${meta.version}\n\n` +
@@ -72,7 +57,7 @@ const out =
   '\n';
 
 writeFileSync(join(ROOT, 'THIRD-PARTY-NOTICES.md'), out);
-console.log(`wrote THIRD-PARTY-NOTICES.md for ${shipped.length} bundled package(s)`);
+console.log(`wrote THIRD-PARTY-NOTICES.md for ${bundled.length} bundled package(s)`);
 if (missing.length) {
-  console.warn(`no licence file found in: ${missing.join(', ')} — check these by hand`);
+  console.warn(`no licence file found in: ${missing.join(', ')} -- check these by hand`);
 }

@@ -1,12 +1,15 @@
+// Build src/styles/fonts.css: the Latin Cabin faces from Google Fonts, inlined as
+// base64 woff2.
+
 import { writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
 const FAMILIES = [
   { name: 'Cabin', axis: 'wght@400..700' },
   { name: 'Cabin Condensed', axis: 'wght@700' },
 ];
 
+// Google Fonts serves woff2 only to user agents it recognises.
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -22,12 +25,17 @@ const LICENCE = `/*
  */
 `;
 
-async function fetchCss(family) {
-  const spec = `${family.name.replace(/ /g, '+')}:${family.axis}`;
-  const url = `https://fonts.googleapis.com/css2?family=${spec}&display=swap`;
+const OUT = join(import.meta.dirname, '..', 'src', 'styles', 'fonts.css');
+
+async function get(url) {
   const res = await fetch(url, { headers: { 'User-Agent': UA } });
   if (!res.ok) throw new Error(`fetch failed HTTP ${res.status} (${url})`);
-  return res.text();
+  return res;
+}
+
+async function fetchCss(family) {
+  const spec = `${family.name.replace(/ /g, '+')}:${family.axis}`;
+  return (await get(`https://fonts.googleapis.com/css2?family=${spec}&display=swap`)).text();
 }
 
 function faceBlocks(css) {
@@ -43,58 +51,42 @@ function field(block, name) {
 async function inlineFace(block) {
   const url = field(block, 'src')?.match(/url\((https:[^)]+)\)/)?.[1];
   if (!url) throw new Error(`no woff2 url in: ${block.slice(0, 80)}`);
-
-  const res = await fetch(url, { headers: { 'User-Agent': UA } });
-  if (!res.ok) throw new Error(`fetch failed HTTP ${res.status} (${url})`);
-  const bytes = Buffer.from(await res.arrayBuffer());
-
-  const family = field(block, 'font-family');
-  const weight = field(block, 'font-weight');
-  const style = field(block, 'font-style');
-  const range = field(block, 'unicode-range');
+  const woff2 = Buffer.from(await (await get(url)).arrayBuffer());
 
   return {
-    bytes: bytes.length,
+    bytes: woff2.length,
     css: [
       '@font-face {',
-      `  font-family: ${family};`,
-      `  font-style: ${style};`,
-      `  font-weight: ${weight};`,
+      `  font-family: ${field(block, 'font-family')};`,
+      `  font-style: ${field(block, 'font-style')};`,
+      `  font-weight: ${field(block, 'font-weight')};`,
       '  font-display: swap;',
-      `  src: url(data:font/woff2;base64,${bytes.toString('base64')}) format('woff2');`,
-      `  unicode-range: ${range};`,
+      `  src: url(data:font/woff2;base64,${woff2.toString('base64')}) format('woff2');`,
+      `  unicode-range: ${field(block, 'unicode-range')};`,
       '}',
     ].join('\n'),
   };
 }
 
-async function main() {
-  const faces = [];
-  let raw = 0;
+const faces = [];
+let woff2Bytes = 0;
 
-  for (const family of FAMILIES) {
-    const blocks = faceBlocks(await fetchCss(family)).filter((b) => b.subset === 'latin');
-    if (blocks.length !== 1) {
-      throw new Error(
-        `${family.name}: expected one latin face from a variable axis, got ${blocks.length}`,
-      );
-    }
-    const face = await inlineFace(blocks[0].block);
-    raw += face.bytes;
-    faces.push(face.css);
-    console.log(`${family.name}: ${(face.bytes / 1024).toFixed(1)} KB of woff2`);
+for (const family of FAMILIES) {
+  const blocks = faceBlocks(await fetchCss(family)).filter((b) => b.subset === 'latin');
+  if (blocks.length !== 1) {
+    throw new Error(
+      `${family.name}: expected one latin face from a variable axis, got ${blocks.length}`,
+    );
   }
-
-  const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'styles', 'fonts.css');
-  const css = LICENCE + '\n' + faces.join('\n\n') + '\n';
-  writeFileSync(out, css);
-  console.log(
-    `wrote ${faces.length} faces to ${out}` +
-      ` (${(raw / 1024).toFixed(0)} KB of woff2, ${(css.length / 1024).toFixed(0)} KB as base64)`,
-  );
+  const face = await inlineFace(blocks[0].block);
+  woff2Bytes += face.bytes;
+  faces.push(face.css);
+  console.log(`${family.name}: ${(face.bytes / 1024).toFixed(1)} KB of woff2`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const css = LICENCE + '\n' + faces.join('\n\n') + '\n';
+writeFileSync(OUT, css);
+const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
+console.log(
+  `wrote ${faces.length} faces to ${OUT} (${kb(woff2Bytes)} of woff2, ${kb(css.length)} as base64)`,
+);

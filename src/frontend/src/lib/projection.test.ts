@@ -10,26 +10,45 @@ const globe = (): ViewState => ({ ...initialView(), view: 'globe', k: 2 });
 // Where a point lands once the camera the fit asked for is in place.
 const after = (S: ViewState, to: object, c: [number, number]) => proj({ ...S, ...to }, W, H)(c);
 
+// Seeded point sets of 1-6 points (mulberry32), so failures reproduce.
+function randomSets(seed: number, count: number): [number, number][][] {
+  let state = seed;
+  const rand = () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return Array.from({ length: count }, () =>
+    Array.from({ length: 1 + Math.floor(rand() * 6) }, (): [number, number] => [
+      rand() * 360 - 180,
+      rand() * 160 - 80,
+    ]),
+  );
+}
+
 describe('frameFor', () => {
   it('has nothing to say about an empty set', () => {
     expect(frameFor(flat(), W, H, [])).toBeNull();
     expect(frameFor(globe(), W, H, [])).toBeNull();
   });
 
-  it('brings every point of a flat frame onto the stage', () => {
-    const pts: [number, number][] = [
-      [6.6, 46.5],
-      [13.4, 52.5],
-      [-3.7, 40.4],
-    ];
-    const to = frameFor(flat(), W, H, pts)!;
-    pts.forEach((c) => {
-      const xy = after(flat(), to, c)!;
-      expect(xy[0]).toBeGreaterThan(0);
-      expect(xy[0]).toBeLessThan(W);
-      expect(xy[1]).toBeGreaterThan(0);
-      expect(xy[1]).toBeLessThan(H);
-    });
+  it('keeps k within [K_MIN, FOCUS_K_MAX] and every flat point on the stage', () => {
+    for (const pts of randomSets(7, 300)) {
+      for (const S of [flat(), globe()]) {
+        const { k } = frameFor(S, W, H, pts)!;
+        expect(k).toBeGreaterThanOrEqual(K_MIN);
+        expect(k).toBeLessThanOrEqual(FOCUS_K_MAX);
+      }
+      const to = frameFor(flat(), W, H, pts)!;
+      pts.forEach((c) => {
+        const [x, y] = after(flat(), to, c)!;
+        expect(x).toBeGreaterThan(0);
+        expect(x).toBeLessThan(W);
+        expect(y).toBeGreaterThan(0);
+        expect(y).toBeLessThan(H);
+      });
+    }
   });
 
   it('centres a flat frame on the set it framed', () => {
@@ -44,20 +63,19 @@ describe('frameFor', () => {
     expect((Math.min(...ys) + Math.max(...ys)) / 2).toBeCloseTo(H / 2, 6);
   });
 
-  it('stops short of the tightest zoom the map allows', () => {
-    const one: [number, number][] = [[8.5, 47.4]];
-    expect(frameFor(flat(), W, H, one)!.k).toBe(FOCUS_K_MAX);
-    expect(frameFor(globe(), W, H, one)!.k).toBe(FOCUS_K_MAX);
-  });
-
-  it('treats a set within metres of itself as a single point', () => {
-    const huddle: [number, number][] = [
-      [8.5, 47.4],
-      [8.50001, 47.40001],
-      [8.49999, 47.39999],
-    ];
-    expect(frameFor(flat(), W, H, huddle)!.k).toBe(FOCUS_K_MAX);
-    expect(frameFor(globe(), W, H, huddle)!.k).toBe(FOCUS_K_MAX);
+  it.each([
+    ['a single point', [[8.5, 47.4]]],
+    [
+      'points metres apart',
+      [
+        [8.5, 47.4],
+        [8.50001, 47.40001],
+        [8.49999, 47.39999],
+      ],
+    ],
+  ] as [string, [number, number][]][])('stops at FOCUS_K_MAX for %s', (_name, pts) => {
+    expect(frameFor(flat(), W, H, pts)!.k).toBe(FOCUS_K_MAX);
+    expect(frameFor(globe(), W, H, pts)!.k).toBe(FOCUS_K_MAX);
   });
 
   it('stops at the world view for a flat set too wide to pad', () => {
@@ -78,8 +96,6 @@ describe('frameFor', () => {
       [-170, -10],
     ];
     const to = frameFor(globe(), W, H, pts)!;
-    // The centre is out at the dateline, not back at Greenwich as a min/max
-    // over the longitudes would have it.
     expect(Math.abs(to.rot![0])).toBeCloseTo(180, 6);
     expect(to.rot![1]).toBeCloseTo(0, 6);
     expect(to.k).toBeGreaterThan(1);
@@ -105,18 +121,6 @@ describe('frameFor', () => {
     pts.forEach((c) => {
       const xy = after(globe(), to, c)!;
       expect(Math.hypot(xy[0] - W / 2, xy[1] - H / 2)).toBeLessThan(Math.min(W, H) / 2);
-    });
-  });
-
-  it('never asks for a camera the map cannot hold', () => {
-    const spread: [number, number][] = [
-      [-60, -30],
-      [60, 30],
-    ];
-    [flat(), globe()].forEach((S) => {
-      const to = frameFor(S, W, H, spread)!;
-      expect(to.k).toBeGreaterThanOrEqual(K_MIN);
-      expect(to.k).toBeLessThanOrEqual(FOCUS_K_MAX);
     });
   });
 

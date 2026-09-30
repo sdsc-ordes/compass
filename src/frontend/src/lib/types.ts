@@ -3,16 +3,16 @@ export interface Tag {
   label: string;
 }
 
-export interface Proj {
+export interface Entry {
   id: string;
-  c: [number, number];
+  lonLat: [number, number];
   title: string;
-  // The unabbreviated name, where the display name is an acronym. Empty for
-  // the entities whose workbook row leaves skos:altLabel blank.
+  // Unabbreviated name when `title` is an acronym; empty where the workbook
+  // leaves skos:altLabel blank.
   longName: string;
   where: string;
-  txt: string;
-  entity: string;
+  description: string;
+  typeLabel: string;
   typeIri: string;
   tags: Record<string, Tag[]>;
   storiesUrl: string;
@@ -21,22 +21,23 @@ export interface Proj {
 
 export interface Cluster {
   id: string;
-  cluster: Proj[];
-  c: [number, number];
+  cluster: Entry[];
+  lonLat: [number, number];
   title: string;
   where: string;
-  txt: string;
 }
 
-export type PinTarget = Proj | Cluster;
+export type PinTarget = Entry | Cluster;
 
 export const isCluster = (p: PinTarget): p is Cluster => 'cluster' in p;
 
+/** Join the distinct entity type names of a pin or cluster. */
 export function entityLabel(p: PinTarget): string {
-  const keys = isCluster(p) ? [...new Set(p.cluster.map((d) => d.entity))] : [p.entity];
-  return keys.filter(Boolean).join(' · ');
+  const names = isCluster(p) ? [...new Set(p.cluster.map((d) => d.typeLabel))] : [p.typeLabel];
+  return names.filter(Boolean).join(' · ');
 }
 
+// A drawn pin's screen box, centred on its head, in paint order.
 export interface PinBox {
   x: number;
   y: number;
@@ -44,6 +45,7 @@ export interface PinBox {
   h: number;
   headR: number;
   tipY: number;
-  p: PinTarget;
-  r: number;
+  target: PinTarget;
+  // Hit-test radius around (x, y).
+  hitR: number;
 }

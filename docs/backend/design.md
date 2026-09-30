@@ -1,8 +1,10 @@
 # Design
 
-## From SHACL & SPARQL to Filters & Entities
+## Request flow
 
-| Color | Script |
+Node colours in the diagrams:
+
+| Colour | Module |
 | --- | --- |
 | Blue | API, `routers/filters.py` or `routers/entities.py`, Frontend |
 | Orange | `rdf.py` |
@@ -10,19 +12,19 @@
 | Violet | `shacl_to_entities.py` |
 | Green | `sparql_builder.py` |
 | Pink | `sparql_to_geojson_translator.py` |
-| Gray | Ontology Turtle / Oxigraph |
+| Grey | Ontology Turtle / Oxigraph |
 
-### Boot — create filter panel
+### Filter panel (on load)
 
 ```mermaid
 flowchart TB
   API["GET /api/v1/filters"]
   FR["get_filters<br/>validate FilterWidget models"]
-  G["read_graph<br/>parse Turtle once"]
+  G["RDFStore.graph<br/>parse Turtle once"]
   TTL[("shapes.ttl compass.ttl vocab.ttl")]
   F["get_filters_from_shacl<br/>walk SHACL into FilterWidget"]
-  N["get_shacl_property<br/>yield sh:property nodes"]
-  L["get_shacl_label<br/>labels in lang"]
+  N["map_property_shapes<br/>yield sh:property nodes"]
+  L["get_label<br/>labels in lang"]
   OUT["JSON FilterWidget list<br/>filter accordion / type pills"]
 
   API --> FR --> G
@@ -42,18 +44,18 @@ flowchart TB
   class TTL ontology
 ```
 
-### Map load / filter change
+### Entities (on load and on every filter or language change)
 
-When language or filters change (`loadData` → `getEntities`). Builds SPARQL,
-fills instances, returns GeoJSON.
+The widget calls `getEntities` from `loadData`. The backend compiles SPARQL
+from the entity shapes, runs it, and returns GeoJSON.
 
 ```mermaid
 flowchart TB
   API["GET /api/v1/entities"]
   ER["get_entities<br/>orchestrate shapes SPARQL GeoJSON"]
-  EF["get_entities<br/>cached EntityShape list"]
-  EP["get_entity_shape_from_shacl<br/>project SHACL"]
-  G["read_graph<br/>merged Graph"]
+  EF["RDFStore.entity_shapes<br/>cached EntityShape list"]
+  EP["get_entity_shapes_from_shacl<br/>project SHACL"]
+  G["RDFStore.graph<br/>merged Graph"]
   TTL[("shapes.ttl compass.ttl vocab.ttl")]
   SHAPE["EntityShape list<br/>query and decode plan"]
   B["sparql_for_instances<br/>compile SELECT WHERE"]
@@ -86,25 +88,17 @@ flowchart TB
   class TTL,OXI ontology
 ```
 
-## Filters & Entities
+## Filters and entities
 
-For the map user, the relationship is simple: **filters ask; entities answer.**
+- **Entities** are the pins: forums, networks, partner organisations and the
+  host organisation. Clicking one opens the detail pane (name, type, tag chips).
+- **Filters** narrow the set: the filter sections (work areas, topics,
+  programmes, species, countries / regions) and the entity-type pills. The
+  result count is the number of matching entities.
 
-**Entities** are the **things on the map**: a Network, Partner or Forum, each as
-a pin. Click one and the detail pane shows name, type, and colored tag chips.
+The backend builds both from separate SHACL projections:
 
-**Filters** are the **controls that narrow that set**: the filter panel (work
-areas, topics, programmes, species, countries / regions) plus the entity-type
-pills. Choosing chips changes which entities stay visible; the result-count
-badge is “how many entities match.”
-
-| | Filter (UI) | Entity (UI) |
-| --- | --- | --- |
-| Looks like | Sections of clickable chips / type pills | Pins on the map, detail pane |
-| Role | “Show me only …” | “Here is one matching thing” |
-| Example | Chip **Topics → Plastic Pollution** | Partner pin whose properties include that tag |
-
-In the backend, those two faces are separate SHACL projections:
-
-- `FilterWidget` → `GET /api/v1/filters` (`shacl_to_filters`) → Filter panel
-- `EntityShape` → `GET /api/v1/entities` (`shacl_to_entities`) → SPARQL + GeoJSON → pins/list/sidebar
+| Model | Endpoint | Module | Feeds |
+| --- | --- | --- | --- |
+| `FilterWidget` | `GET /api/v1/filters` | `shacl_to_filters` | Filter panel |
+| `EntityShape` | `GET /api/v1/entities` | `shacl_to_entities` | SPARQL query and GeoJSON: pins, sidebar, detail pane |

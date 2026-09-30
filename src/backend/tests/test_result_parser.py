@@ -1,17 +1,16 @@
-"""SPARQL → GeoJSON translator tests."""
+"""SPARQL -> GeoJSON translator tests."""
 
+import pytest
 from starlette.datastructures import QueryParams
 
+from app.config import config
+from app.namespaces import COMPASS, PIN_CLASSES
 from app.shacl_to_entities import EntityShape
 from app.sparql_builder import sparql_for_instances
-from app.sparql_to_geojson_translator import (
-    _derived_properties,
-    extract_property,
-    instances_to_geojson,
-)
+from app.sparql_to_geojson_translator import extract_property, instances_to_geojson
 
 
-def _ep(**kwargs) -> EntityShape:
+def _shape(**kwargs) -> EntityShape:
     defaults = {
         "path_iri": "http://example.org/x",
         "category": "simple_literal",
@@ -19,86 +18,86 @@ def _ep(**kwargs) -> EntityShape:
         "filter_type": "none",
         "datatype": None,
     }
-    defaults.update(kwargs)
-    return EntityShape(**defaults)
+    return EntityShape(**{**defaults, **kwargs})
 
 
-class TestDerivedProperties:
-    """storiesUrl is derived from the decoded wpEntityTagId property."""
+def _row(**bindings: str) -> dict[str, str]:
+    return {
+        "s": "http://ex.org/pin",
+        "label": "Pin",
+        "type": str(COMPASS.Network),
+        "lat": "46.5",
+        "long": "6.6",
+        **bindings,
+    }
 
-    def test_builds_the_english_stories_url(self):
-        props = _derived_properties({"wpEntityTagId": "921"}, "en")
-        assert props["storiesUrl"].endswith("?tag=921")
-        assert "/en/" in props["storiesUrl"]
 
-    def test_builds_the_german_stories_url(self):
-        props = _derived_properties({"wpEntityTagId": "921"}, "de")
-        assert props["storiesUrl"].endswith("?tag=921")
-        assert "/de/" in props["storiesUrl"]
+class TestStoriesUrl:
+    @pytest.mark.parametrize("lang", ["en", "de"])
+    def test_is_built_from_the_entity_tag_id(self, lang):
+        shape = _shape(id="wpEntityTagId")
+        rows = [_row(wpEntityTagIdResult="921")]
+        [feature] = instances_to_geojson(rows, [shape], lang)["features"]
+        url = feature["properties"]["storiesUrl"]
+        assert url == config.entity_stories_url("921", lang)
+        assert url.endswith("?tag=921")
+        assert f"/{lang}/" in url
 
     def test_no_tag_id_means_no_url(self):
-        assert _derived_properties({}, "en")["storiesUrl"] == ""
+        [feature] = instances_to_geojson([_row()], [])["features"]
+        assert feature["properties"]["storiesUrl"] == ""
 
 
 class TestExtractProperty:
     def test_multi_iri_with_label(self):
-        spec = _ep(id="workArea", category="iri_with_label", is_multi=True)
-        res = {"workAreaRaw": "http://ex.org/A|LabelA;;http://ex.org/B|LabelB"}
-        result = extract_property(spec, res)
-        assert len(result) == 2
-        assert result[0] == {"iri": "http://ex.org/A", "label": "LabelA"}
+        shape = _shape(id="workArea", category="iri_with_label", is_multi=True)
+        row = {"workAreaRaw": "http://ex.org/A|LabelA;;http://ex.org/B|LabelB"}
+        assert extract_property(shape, row) == [
+            {"iri": "http://ex.org/A", "label": "LabelA"},
+            {"iri": "http://ex.org/B", "label": "LabelB"},
+        ]
 
     def test_single_iri_with_label(self):
-        spec = _ep(id="funding", category="iri_with_label", is_multi=False)
-        res = {"fundingIri": "http://ex.org/public", "fundingLabel": "Public"}
-        result = extract_property(spec, res)
-        assert result == {"iri": "http://ex.org/public", "label": "Public"}
+        shape = _shape(id="funding", category="iri_with_label")
+        row = {"fundingIri": "http://ex.org/public", "fundingLabel": "Public"}
+        assert extract_property(shape, row) == {
+            "iri": "http://ex.org/public",
+            "label": "Public",
+        }
+
+    def test_single_iri_without_label_falls_back_to_its_local_name(self):
+        shape = _shape(id="funding", category="iri_with_label")
+        row = {"fundingIri": "http://ex.org/ns#Public"}
+        assert extract_property(shape, row) == {
+            "iri": "http://ex.org/ns#Public",
+            "label": "Public",
+        }
 
     def test_boolean(self):
-        spec = _ep(id="active", category="boolean", is_multi=False)
-        assert extract_property(spec, {"activeResult": "true"}) is True
-        assert extract_property(spec, {"activeResult": "false"}) is False
+        shape = _shape(id="active", category="boolean")
+        assert extract_property(shape, {"activeResult": "true"}) is True
+        assert extract_property(shape, {"activeResult": "false"}) is False
 
     def test_multi_literal(self):
-        spec = _ep(id="activities", category="lang_literal", is_multi=True)
-        res = {"activitiesRaw": "Research;;Education;;Policy"}
-        result = extract_property(spec, res)
-        assert result == ["Research", "Education", "Policy"]
+        shape = _shape(id="activities", category="lang_literal", is_multi=True)
+        row = {"activitiesRaw": "Research;;Education;;Policy"}
+        assert extract_property(shape, row) == ["Research", "Education", "Policy"]
 
 
-class TestResultsToGeojsonIntegration:
-    def test_round_trip_produces_features(self, store, property_specs):
-        sparql = sparql_for_instances(property_specs, "en", QueryParams(""))
-        results = store.query(sparql)
-        geojson = instances_to_geojson(results, property_specs)
-        assert geojson["type"] == "FeatureCollection"
-        assert len(geojson["features"]) > 0
+def test_a_row_without_usable_coordinates_is_skipped():
+    rows = [_row(), _row(lat="north"), {k: v for k, v in _row().items() if k != "long"}]
+    assert len(instances_to_geojson(rows, [])["features"]) == 1
 
-    def test_features_have_required_properties(self, store, property_specs):
-        sparql = sparql_for_instances(property_specs, "en", QueryParams(""))
-        results = store.query(sparql)
-        geojson = instances_to_geojson(results, property_specs)
 
-        for feature in geojson["features"]:
-            props = feature["properties"]
-            assert "id" in props
-            assert "label" in props
-            assert "type" in props
-            assert "typeIri" in props
-            assert feature["geometry"]["type"] == "Point"
-            coords = feature["geometry"]["coordinates"]
-            assert -180 <= coords[0] <= 180, f"Invalid longitude: {coords[0]}"
-            assert -90 <= coords[1] <= 90, f"Invalid latitude: {coords[1]}"
-
-    def test_only_entities_with_coordinates_come_back(self, store, property_specs):
-        """A tag vocabulary is never a feature.
-
-        Country/Area concepts used to arrive as geometry-less "region" features
-        for a layer the widget never drew; nothing but a pin belongs here now.
-        """
-        sparql = sparql_for_instances(property_specs, "en", QueryParams(""))
-        geojson = instances_to_geojson(store.query(sparql), property_specs)
-        assert geojson["features"]
-        assert not [
-            f for f in geojson["features"] if f["properties"]["typeIri"].endswith("Area")
-        ]
+def test_round_trip_yields_valid_pins(store, entity_shapes):
+    sparql = sparql_for_instances(entity_shapes, "en", QueryParams(""))
+    features = instances_to_geojson(store.query(sparql), entity_shapes)["features"]
+    assert features
+    pin_iris = {str(COMPASS[name]) for name in PIN_CLASSES}
+    for feature in features:
+        props = feature["properties"]
+        assert {"id", "label", "type", "typeIri"} <= props.keys()
+        assert props["typeIri"] in pin_iris
+        longitude, latitude = feature["geometry"]["coordinates"]
+        assert -180 <= longitude <= 180
+        assert -90 <= latitude <= 90

@@ -31,27 +31,27 @@
   font: inherit;
   color: inherit;
 }
-/* NIGHT_INK in palette.ts, which paints the same colour onto the canvas. CSS
-   cannot import it, so the two are kept in step by hand. */
+/* must match NIGHT_INK in palette.ts */
 .mapc.night .stage {
   background: #081827;
 }
-#water {
+#water,
+#basemap,
+#cv {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: block;
+}
+#water,
+#basemap {
   pointer-events: none;
+}
+#water {
   z-index: 0;
 }
 #basemap {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
   z-index: 1;
 }
 #basemap .bm-grat,
@@ -59,20 +59,12 @@
 #basemap .bm-rim {
   fill: none;
 }
-/* A gesture scales the world group rather than re-projecting it, and a scaled
-   coastline should not come with a scaled coastline stroke. No-op at rest:
-   the group carries no transform once the paths are rebuilt. */
+/* gestures scale the world group; strokes keep their width meanwhile */
 #bworld path {
   vector-effect: non-scaling-stroke;
 }
 #cv {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
   z-index: 2;
-  background: transparent;
 }
 .ov {
   position: absolute;
@@ -144,12 +136,8 @@
     right: 0;
     top: 0;
     bottom: var(--dock);
-    min-height: 0;
-    touch-action: none;
   }
-  /* Bottom-left beside the zoom row, clear of the chips: one source a line,
-     centred on the 44px buttons and narrower than what they leave free. The
-     scrim keeps it legible over the deep water it now sits on. */
+  /* one source per line beside the zoom row; the scrim keeps it legible over deep water */
   .attrib {
     left: calc(14px + env(safe-area-inset-left, 0px));
     bottom: 19px;
@@ -167,9 +155,8 @@
     display: block;
     width: fit-content;
   }
-  /* Active filters as one scrolling row of chips over the map; the grab row's
-     Clear is the one clear-all. The 7px padding holds the ×'s 44px target.
-     10% of the stage down, so iOS Safari's top chrome doesn't bury them. */
+  /* The 7px padding holds the close buttons' 44px targets; 10% down clears iOS
+     Safari's top bar. */
   .chipbar:has(li) {
     display: block;
     position: absolute;

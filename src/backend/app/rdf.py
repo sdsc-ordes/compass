@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from typing import Any, ClassVar
 
@@ -12,7 +11,7 @@ from rdflib import Graph
 
 from app.core.exceptions import QueryError, ReloadError
 from app.core.settings import settings
-from app.shacl_to_entities import EntityShape, get_entity_shape_from_shacl
+from app.shacl_to_entities import EntityShape, get_entity_shapes_from_shacl
 
 logger = logging.getLogger(__name__)
 
@@ -32,37 +31,23 @@ class RDFStore:
             shapes_path: Path to ``shapes.ttl`` (SHACL).
             vocab_path: Path to ``vocab.ttl`` (SKOS / class labels).
         """
+        self._paths = (shapes_path, data_path, vocab_path)
         self.store = pyoxigraph.Store()
-        self.data_path = data_path
-        self.shapes_path = shapes_path
-        self.vocab_path = vocab_path
-        self._read_graph: Graph | None = None
-        self._entity_shapes_cache: list[EntityShape] | None = None
-        self.load_data()
-
-    def load_data(self) -> None:
-        """Parse the three Turtle files into the Oxigraph store."""
-        with open(self.data_path, "rb") as f:
-            self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
-        with open(self.shapes_path, "rb") as f:
-            self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
-        with open(self.vocab_path, "rb") as f:
-            self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
+        for path in self._paths:
+            with open(path, "rb") as f:
+                self.store.load(f, pyoxigraph.RdfFormat.TURTLE)
+        self._graph: Graph | None = None
+        self._entity_shapes: list[EntityShape] | None = None
 
     @property
-    def read_graph(self) -> Graph:
-        """Merged rdflib graph of shapes, data, and vocab (parsed once).
-
-        Returns:
-            Shared ``Graph`` used by SHACL projection helpers.
-        """
-        if self._read_graph is None:
-            g = Graph()
-            g.parse(self.shapes_path, format="turtle")
-            g.parse(self.data_path, format="turtle")
-            g.parse(self.vocab_path, format="turtle")
-            self._read_graph = g
-        return self._read_graph
+    def graph(self) -> Graph:
+        """Merged rdflib graph of shapes, data, and vocab, parsed on first use."""
+        if self._graph is None:
+            graph = Graph()
+            for path in self._paths:
+                graph.parse(path, format="turtle")
+            self._graph = graph
+        return self._graph
 
     def query(self, sparql: str) -> list[dict[str, Any]]:
         """Run a SPARQL SELECT; one dict per row, unbound variables omitted.
@@ -74,10 +59,10 @@ class RDFStore:
             List of row dicts keyed by variable name.
 
         Raises:
-            QueryError: When Oxigraph rejects or fails the query. The failing
-                query text is attached for logging.
+            QueryError: When Oxigraph rejects or fails the query; the query
+                text is logged.
         """
-        start = time.time()
+        start = time.perf_counter()
         try:
             results = self.store.query(sparql)
             parsed = []
@@ -92,36 +77,29 @@ class RDFStore:
                             else val.value
                         )
                 parsed.append(item)
-            logger.debug("SPARQL query executed in %.4fs", time.time() - start)
+            logger.debug("SPARQL query executed in %.4fs", time.perf_counter() - start)
             return parsed
         except Exception as exc:
             logger.exception("SPARQL query failed:\n%s", sparql)
-            raise QueryError(sparql, exc) from exc
+            raise QueryError(f"{type(exc).__name__}: {exc}") from exc
 
-    def get_entities(self) -> list[EntityShape]:
-        """Return cached ``EntityShape`` descriptors projected from SHACL.
+    def entity_shapes(self) -> list[EntityShape]:
+        """Return the ``EntityShape`` descriptors projected from SHACL, cached.
 
         Returns:
             Property descriptors used to build SPARQL and decode GeoJSON.
         """
-        if self._entity_shapes_cache is None:
-            self._entity_shapes_cache = get_entity_shape_from_shacl(self.read_graph)
-        return self._entity_shapes_cache
+        if self._entity_shapes is None:
+            self._entity_shapes = get_entity_shapes_from_shacl(self.graph)
+        return self._entity_shapes
 
     def validate(self) -> None:
-        """Reject a store that parsed but cannot answer a query.
-
-        Turtle can parse and still be useless — a truncated file, or shapes that
-        no longer describe the data — and a reload that swapped such a store in
-        would take the map down. Deriving entity shapes exercises the SHACL
-        introspection the whole query layer is built on, and counting entities
-        proves the data reached the store.
+        """Reject a store that parsed but cannot drive the map.
 
         Raises:
             ReloadError: When shapes yield nothing or no entity has coordinates.
         """
-        shapes = self.get_entities()
-        if not shapes:
+        if not self.entity_shapes():
             raise ReloadError(
                 "the shapes yielded no EntityShape fields, so no filter would work"
             )
@@ -129,7 +107,7 @@ class RDFStore:
             "PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> "
             "SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s geo:lat ?lat . }"
         )
-        if not rows or int(rows[0].get("n", 0)) == 0:
+        if int(rows[0]["n"]) == 0:
             raise ReloadError(
                 "no entity in the data has coordinates, so the map would be empty"
             )
@@ -145,12 +123,10 @@ class RDFStore:
             ``settings.ontology_dir`` and ``compass.ttl`` / ``vocab.ttl`` under
             ``settings.use_case_dir``.
         """
-        ontology = str(settings.ontology_dir)
-        use_case = str(settings.use_case_dir)
         return cls(
-            data_path=os.path.join(use_case, "compass.ttl"),
-            shapes_path=os.path.join(ontology, "shapes.ttl"),
-            vocab_path=os.path.join(use_case, "vocab.ttl"),
+            data_path=str(settings.use_case_dir / "compass.ttl"),
+            shapes_path=str(settings.ontology_dir / "shapes.ttl"),
+            vocab_path=str(settings.use_case_dir / "vocab.ttl"),
         )
 
     @classmethod
@@ -167,10 +143,6 @@ class RDFStore:
     @classmethod
     def reload_instance(cls) -> dict[str, Any]:
         """Swap in the files currently on disk, keeping the live store on failure.
-
-        The candidate is built and validated in full before ``_instance`` moves,
-        so a bad edit leaves the last good version serving rather than taking the
-        API down with it.
 
         Returns:
             Status dict with ``reloaded``, ``source``, and

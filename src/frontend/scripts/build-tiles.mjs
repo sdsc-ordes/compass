@@ -1,23 +1,33 @@
-import { mkdirSync, existsSync, writeFileSync, statSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+// Fetch the GEBCO Web Mercator tile pyramid into tiles/{z}/{x}/{y}.jpg, the input
+// of build-bathymetry.mjs. Tiles already on disk are skipped.
+// Usage: node scripts/build-tiles.mjs [maxzoom=5]
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT = join(HERE, '..', 'tiles');
+import { mkdirSync, writeFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
+const OUT = join(import.meta.dirname, '..', 'tiles');
 const MAX_ZOOM = Number(process.argv[2] ?? 5);
 
 const TILE_PX = 512;
 const FORMAT = 'image/jpeg';
 const CONCURRENCY = 8;
+// Anything smaller is an error page, not a tile.
+const MIN_TILE_BYTES = 1024;
 
-const R = 20037508.342789244;
+// Half the width of the EPSG:3857 world, in metres.
+const MERCATOR_EXTENT = 20037508.342789244;
 
 function bbox(z, x, y) {
-  const span = (2 * R) / 2 ** z;
-  return [-R + x * span, R - (y + 1) * span, -R + (x + 1) * span, R - y * span];
+  const span = (2 * MERCATOR_EXTENT) / 2 ** z;
+  return [
+    -MERCATOR_EXTENT + x * span,
+    MERCATOR_EXTENT - (y + 1) * span,
+    -MERCATOR_EXTENT + (x + 1) * span,
+    MERCATOR_EXTENT - y * span,
+  ];
 }
 
-function source(z, x, y) {
+function wmsUrl(z, x, y) {
   const [west, south, east, north] = bbox(z, x, y);
   // Pinned: GEBCO_LATEST silently rolls onto the next annual grid.
   return (
@@ -27,7 +37,7 @@ function source(z, x, y) {
   );
 }
 
-function planned() {
+function allTiles() {
   const tiles = [];
   for (let z = 0; z <= MAX_ZOOM; z++) {
     for (let x = 0; x < 2 ** z; x++) {
@@ -37,59 +47,53 @@ function planned() {
   return tiles;
 }
 
-async function render([z, x, y]) {
+// Return the bytes written, 0 when the tile is already on disk.
+async function fetchTile([z, x, y]) {
   const dir = join(OUT, String(z), String(x));
   const path = join(dir, `${y}.jpg`);
-  if (existsSync(path) && statSync(path).size > 1024) return 0;
+  if ((statSync(path, { throwIfNoEntry: false })?.size ?? 0) > MIN_TILE_BYTES) return 0;
 
-  const response = await fetch(source(z, x, y));
+  const response = await fetch(wmsUrl(z, x, y));
   if (!response.ok) throw new Error(`z${z}/${x}/${y}: HTTP ${response.status}`);
   const body = Buffer.from(await response.arrayBuffer());
-  if (body.length < 1024)
+  if (body.length < MIN_TILE_BYTES)
     throw new Error(`z${z}/${x}/${y}: ${body.length} bytes, too small to be a tile`);
   mkdirSync(dir, { recursive: true });
   writeFileSync(path, body);
   return body.length;
 }
 
-async function main() {
-  const tiles = planned();
-  console.log(`${tiles.length} tiles for z0-${MAX_ZOOM} at ${TILE_PX}px -> ${OUT}`);
+const tiles = allTiles();
+console.log(`${tiles.length} tiles for z0-${MAX_ZOOM} at ${TILE_PX}px -> ${OUT}`);
 
-  let done = 0;
-  let bytes = 0;
-  const failures = [];
-  const queue = tiles.slice();
+let next = 0;
+let done = 0;
+let bytes = 0;
+const failures = [];
 
-  async function worker() {
-    while (queue.length) {
-      const tile = queue.shift();
-      try {
-        const written = await render(tile);
-        bytes += written;
-      } catch (e) {
-        failures.push(e.message);
-      }
-      done++;
-      if (done % 100 === 0 || done === tiles.length) {
-        process.stdout.write(
-          `\r  ${done}/${tiles.length}  ${(bytes / 1e6).toFixed(0)} MB written`,
-        );
-      }
+async function worker() {
+  while (next < tiles.length) {
+    const tile = tiles[next++];
+    try {
+      const written = await fetchTile(tile);
+      bytes += written;
+    } catch (e) {
+      failures.push(e.message);
+    }
+    done++;
+    if (done % 100 === 0 || done === tiles.length) {
+      process.stdout.write(
+        `\r  ${done}/${tiles.length}  ${(bytes / 1e6).toFixed(0)} MB written`,
+      );
     }
   }
-  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-  process.stdout.write('\n');
-
-  if (failures.length) {
-    console.error(`${failures.length} tile(s) failed; re-run to retry just those:`);
-    failures.slice(0, 10).forEach((f) => console.error(`  ${f}`));
-    process.exit(1);
-  }
-  console.log(`done: ${tiles.length} tiles, ${(bytes / 1e6).toFixed(0)} MB fetched this run`);
 }
+await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+process.stdout.write('\n');
 
-main().catch((e) => {
-  console.error(e);
+if (failures.length) {
+  console.error(`${failures.length} tile(s) failed; re-run to retry just those:`);
+  failures.slice(0, 10).forEach((f) => console.error(`  ${f}`));
   process.exit(1);
-});
+}
+console.log(`done: ${tiles.length} tiles, ${(bytes / 1e6).toFixed(0)} MB fetched this run`);
