@@ -4,14 +4,8 @@
 aside.filters.detail .pane-filters {
   display: none;
 }
-/* Forward goes in from the right, back from the left. Both animations hang off
-   the pane itself rather than a class someone toggles: a CSS animation restarts
-   by itself when an element goes from display:none to block, so the swap is the
-   whole trigger. A class added for the motion and dropped after it has to be
-   dropped at some arbitrary later moment, and that recalc tears down the layer
-   the pane was composited onto -- a flash once everything has already settled.
-   Only one pane is ever displayed, so neither can fade up from nothing either:
-   there is nothing behind it but bare sidebar. Both start mostly opaque. */
+/* The display: none -> block swap restarts these animations, so no class is
+   toggled for them: removing one later would recomposite the pane and flash. */
 aside.filters.detail .pane-detail {
   display: block;
   animation: panein 0.19s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -186,11 +180,6 @@ aside.filters.detail .pane-detail {
   color: var(--tundora);
   margin: 20px 0 0;
 }
-/* The one outbound link a reader is likely to want, so it follows the prose it
-   follows from instead of waiting below the tag list, and it sits on the --sea
-   block the tally block already uses for the same errand. Not a filled slab:
-   the map is this panel's primary action and every text action in the sidebar
-   is a link. */
 .storiescall {
   margin: 18px 0 0;
   padding: 14px 16px;
@@ -212,8 +201,7 @@ aside.filters.detail .pane-detail {
   flex-wrap: wrap;
   gap: 8px;
 }
-/* the accordion's section heading, a step down: the panel names the schemes in
-   the same voice and the same order the filter list does */
+/* .ahbtn's type, a size down */
 .ptaglabel {
   margin: 0 0 7px;
   font-family: 'Cabin Condensed', Cabin, system-ui, sans-serif;
@@ -272,8 +260,7 @@ aside.filters.detail .pane-detail {
     border-bottom: 1px solid var(--land-hi);
     min-height: 60px;
   }
-  /* One close, top left: back and close both dismiss the entry, and the map
-     is what the sheet goes back to. */
+  /* on the sheet, back and close both dismiss the entry */
   .back {
     display: none;
   }
@@ -283,9 +270,7 @@ aside.filters.detail .pane-detail {
     font-size: 28px;
     opacity: 0.9;
   }
-  /* Tag, title and description lead under the header, so half height opens
-     on what the entry is; the globe, the tags and the links follow below the
-     fold. A flex column so order can move them without a second copy. */
+  /* a flex column, so order can move the thumb, tags and links below the fold */
   aside.filters.detail .pane-detail {
     display: flex;
     flex-direction: column;
