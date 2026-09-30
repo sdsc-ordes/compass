@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## 1.1.0 — 2026-09-30
+
+### Upgrade notes
+
+- `COMPASS_ENVIRONMENT` is removed. The API sends CORS headers whenever
+  `COMPASS_CORS_ORIGINS` is set; Compose leaves it empty by default.
+- `COMPASS_RELOAD_TOKEN` no longer defaults to `change-me`. Reload stays
+  disabled until a token is set.
+
+### Added
+
+- The backend reads the use-case settings (`API_*`, `STORIES_*`) from the root
+  `.env`, and Compose passes `.env` to the backend container.
+- Sites listed in `COMPASS_CORS_ORIGINS` can embed the widget and call the API.
+- The served page loads Matomo; the dev page and the widget bundle do not.
+
+### Fixed
+
+- The entity-type pills no longer count OceanCare, which belongs to none of them.
+- A second tag click within 1.8 s keeps its highlight.
+- A story count that lands after a newer query is dropped instead of shown.
+- A non-finite range filter value (`inf`, `nan`) is ignored instead of
+  returning HTTP 500.
+- The generator reports correct row numbers after blank rows, escapes newlines
+  in cells, and strips quotes from a commented `.env` value.
+- Filter widgets and the entity query take their widget type from one table.
+
+### Changed
+
+- Python dependencies are capped at the next major version; `pyshacl` moved to
+  the backend's dev group; the docs build no longer installs the runtime deps.
+- Clearer names, less dead code and fewer duplicate tests across backend,
+  generator and widget; README and docs condensed and corrected.
+- Removed the generic Copilot skills under `.github/`.
+
 ## 1.0.0 — 2026-09-29
 
 ### Taxonomy realigned with the editorial spreadsheet

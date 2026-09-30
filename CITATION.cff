@@ -15,8 +15,8 @@ authors:
     given-names: "Hannah"
     orcid: ""
     affiliation: "SDSC - Swiss Data Science Center"
-date-released: 2026-09-29
-version: "1.0.0"
+date-released: 2026-09-30
+version: "1.1.0"
 doi: ""
 url: ""
 repository-code: "https://github.com/sdsc-ordes/compass"
