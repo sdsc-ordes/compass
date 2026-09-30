@@ -19,6 +19,11 @@ export interface ViewState {
   ready: boolean;
 }
 
+export const K_MIN = 1;
+export const K_MAX = 9;
+// Zoom factor of one zoom-button press.
+export const ZOOM_BTN = 1.6;
+
 export const initialView = (): ViewState => ({
   view: 'flat',
   theme: 'light',
@@ -30,15 +35,8 @@ export const initialView = (): ViewState => ({
   ready: false,
 });
 
-export const K_MIN = 1;
-export const K_MAX = 9;
-// What one press of a zoom button multiplies k by. The keyboard steps finer
-// (1.4, or 2 with shift) and is not derived from this.
-export const ZOOM_BTN = 1.6;
-
-// The k = 1 camera each view is a multiple of. Every flat projection below is
-// this one scaled about the origin, which is what makes a fit a ratio rather
-// than a search.
+// The k = 1 cameras. Every flat camera is flatBase scaled about the origin and
+// translated, so fitting one is a ratio rather than a search.
 const flatBase = (w: number, h: number): GeoProjection =>
   geoEqualEarth().fitExtent(
     [
@@ -57,6 +55,7 @@ const globeBase = (w: number, h: number): GeoProjection =>
     { type: 'Sphere' },
   );
 
+/** Build the projection for view state `S` on a w x h stage. */
 export function proj(S: ViewState, w: number, h: number): GeoProjection {
   if (S.view === 'globe') {
     const p = globeBase(w, h).rotate(S.rot);
@@ -83,35 +82,28 @@ export function centreLonLat(S: ViewState, W: number, H: number): [number, numbe
   return ll && isFinite(ll[0]) ? [ll[0], ll[1]] : [0, 0];
 }
 
+/** Return the flat-view translate that centres `c` on the stage at zoom `k`. */
 export function flatOffsetFor(
   S: ViewState,
   W: number,
   H: number,
   c: [number, number],
-  k?: number,
+  k = S.k,
 ): { tx: number; ty: number } {
-  const kk = k === undefined ? S.k : k;
-  const p = flatBase(W, H);
-  const t0 = p.translate();
-  const xy = p.scale(p.scale() * kk).translate([t0[0] * kk, t0[1] * kk])(c);
+  const xy = proj({ ...S, view: 'flat', k, tx: 0, ty: 0 }, W, H)(c);
   return xy && isFinite(xy[0]) ? { tx: W / 2 - xy[0], ty: H / 2 - xy[1] } : { tx: 0, ty: 0 };
 }
 
-// An auto-fit stops well short of K_MAX. A filter that leaves one entity, or a
-// handful of them a few hundred metres apart, would otherwise fit to a patch of
-// empty sea with no coastline in frame to say where it is; going closer than
-// this stays the user's own move.
+// Zoom ceiling for auto-framing, so a lone entity still has coastline in frame.
 export const FOCUS_K_MAX = 5;
 
-// Breathing room around a framed set, in px. About a pin's height, so the
-// outermost pin sits inside the stage rather than half off it.
+// Padding round a framed set, px: about a pin's height.
 const FOCUS_PAD = 64;
 
 const wrapLon = (v: number) => ((((v + 180) % 360) + 360) % 360) - 180;
 
-// geoBounds walks the geometry the way d3 projects it, so a set straddling the
-// antimeridian comes back as the short way round. A min/max over the longitudes
-// would call the same handful of points a whole world wide.
+// geoBounds goes the short way round across the antimeridian, where a min/max
+// over the longitudes would span the world.
 function boundsCentre(pts: [number, number][]): [number, number] {
   const [[x0, y0], [x1, y1]] = geoBounds({ type: 'MultiPoint', coordinates: pts });
   const span = x1 >= x0 ? x1 - x0 : x1 - x0 + 360;
@@ -128,29 +120,26 @@ export function frameFor(
   [top, bot]: [number, number] = [0, H],
 ): TweenTo | null {
   if (!pts.length || W <= 0 || H <= 0) return null;
-  const fit = (k: number) => Math.max(K_MIN, Math.min(FOCUS_K_MAX, k));
+  const clampK = (k: number) => Math.max(K_MIN, Math.min(FOCUS_K_MAX, k));
   const roomW = Math.max(1, W - 2 * FOCUS_PAD);
   const roomH = Math.max(1, bot - top - 2 * FOCUS_PAD);
   const mid = (top + bot) / 2;
 
   if (S.view === 'globe') {
-    // The globe pans by turning, so framing is a rotation plus however far the
-    // camera pulls back for the furthest point to clear the limb. Past a
-    // hemisphere nothing more fits however far out it goes.
+    // Rotate to the set's centre and zoom until its furthest point, r away,
+    // clears the limb. Past a hemisphere nothing more fits.
     const c = boundsCentre(pts);
     const r = pts.reduce((m, p) => Math.max(m, geoDistance(p, c)), 0);
     const half = Math.min(roomW, roomH) / 2;
     const R = globeBase(W, H).scale();
-    const k = r >= Math.PI / 2 ? K_MIN : fit(half / (R * Math.sin(r)));
-    // turned past the centre by the arc that spans the band's offset on the rim
+    const k = r >= Math.PI / 2 ? K_MIN : clampK(half / (R * Math.sin(r)));
+    // Tilt past the centre by the arc that puts it mid-band instead of mid-stage.
     const d = (Math.asin(Math.max(-1, Math.min(1, (H / 2 - mid) / (R * k)))) * 180) / Math.PI;
     return { k, rot: [-c[0], d - c[1]] };
   }
 
-  // The flat map is cut at the antimeridian, so a set straddling it really
-  // does span the sheet and no centre draws it together -- which is why the
-  // flat fit is measured in projected px rather than in degrees. It is also
-  // exact for a projection whose parallels are not evenly spaced.
+  // Measured in projected px: the flat map is cut at the antimeridian, and its
+  // parallels are not evenly spaced.
   const p = flatBase(W, H);
   let x0 = Infinity,
     y0 = Infinity,
@@ -165,12 +154,12 @@ export function frameFor(
     y1 = Math.max(y1, xy[1]);
   }
   if (x0 > x1) return null;
-  // A degenerate span divides to Infinity and clamps to FOCUS_K_MAX, which is
-  // what a single entity should get anyway.
-  const k = fit(Math.min(roomW / (x1 - x0), roomH / (y1 - y0)));
+  // A zero span divides to Infinity, which clamps to FOCUS_K_MAX.
+  const k = clampK(Math.min(roomW / (x1 - x0), roomH / (y1 - y0)));
   return { k, tx: W / 2 - ((x0 + x1) / 2) * k, ty: mid - ((y0 + y1) / 2) * k };
 }
 
+// Guarded because vitest imports this module without a DOM.
 export const REDUCED =
   typeof window !== 'undefined'
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -178,8 +167,7 @@ export const REDUCED =
 
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-// cubic-bezier(0.4, 0, 0.2, 1), the curve map apps glide a camera on: a brief
-// lean-in, then a long settle. Its x(u) inverted by Newton, then y(u).
+// cubic-bezier(0.4, 0, 0.2, 1): x(u) inverted by Newton's method, then y(u).
 export function easeStandard(t: number): number {
   const bz = (u: number, a: number, b: number) =>
     3 * (1 - u) * (1 - u) * u * a + 3 * (1 - u) * u * u * b + u * u * u;
@@ -227,7 +215,7 @@ export class Tweener {
     if (REDUCED.matches || !ms) {
       Object.assign(S, to);
       this.queue(true);
-      if (done) done();
+      done?.();
       return;
     }
     const from = { k: S.k, tx: S.tx, ty: S.ty, rot: S.rot.slice() as [number, number] };
@@ -249,14 +237,14 @@ export class Tweener {
       if (t < 1) this.frame = requestAnimationFrame(step);
       else {
         this.frame = null;
-        if (done) done();
+        done?.();
       }
     };
     this.frame = requestAnimationFrame(step);
   }
 }
 
-export interface InputHooks {
+interface InputHooks {
   S: ViewState;
   stage: HTMLElement;
   queue: (full?: boolean) => void;
@@ -271,25 +259,26 @@ export interface InputHooks {
   onActivity?: () => void;
 }
 
+/** Wire pointer, wheel and keyboard input on the stage; return the unbinder. */
 export function bindInput(h: InputHooks): () => void {
   const { stage, S } = h;
   stage.style.cursor = 'crosshair';
-  const PT = new Map<number, { x: number; y: number }>();
-  let p0: [number, number] | null = null;
+  const pointers = new Map<number, { x: number; y: number }>();
+  let downAt: [number, number] | null = null;
   let base: { rot: [number, number]; tx: number; ty: number } | null = null;
   let moved = 0;
-  // Finger jitter allowance before a tap turns into a pan.
+  // Movement allowed before a tap turns into a pan.
   let slop = 4;
   let dragging = false;
   let pinch: {
-    d: number;
+    dist: number;
     k: number;
-    m: [number, number];
+    mid: [number, number];
     tx: number;
     ty: number;
   } | null = null;
 
-  const pair = () => [...PT.values()].slice(0, 2);
+  const pair = () => [...pointers.values()].slice(0, 2);
   const spread = () => {
     const a = pair();
     return Math.max(1, Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y));
@@ -303,35 +292,33 @@ export function bindInput(h: InputHooks): () => void {
   };
 
   const startPinch = () => {
-    pinch = { d: spread(), k: S.k, m: midpoint(), tx: S.tx, ty: S.ty };
-    p0 = null;
+    pinch = { dist: spread(), k: S.k, mid: midpoint(), tx: S.tx, ty: S.ty };
+    downAt = null;
     dragging = false;
     moved = 99;
     h.clearHover();
   };
 
-  const mv = (e: PointerEvent) => {
-    if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pinch && PT.size >= 2) {
-      // Solve pan and zoom together against the state the pinch started in:
-      // the point under the first midpoint stays under the current one. Doing
-      // it per-frame instead mixes an absolute pan with an incremental zoom
-      // anchor and the map slides out from under the fingers.
+  const onWindowMove = (e: PointerEvent) => {
+    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pointers.size >= 2) {
+      // Pan and zoom solved against the state at pinch start, so the point
+      // under the first midpoint stays under the current one.
       const m = midpoint();
-      const k = Math.max(K_MIN, Math.min(S.kMax, pinch.k * (spread() / pinch.d)));
+      const k = Math.max(K_MIN, Math.min(S.kMax, pinch.k * (spread() / pinch.dist)));
       const g = k / pinch.k;
       h.setInteract(true);
       if (S.view === 'flat') {
-        S.tx = m[0] - g * (pinch.m[0] - pinch.tx);
-        S.ty = m[1] - g * (pinch.m[1] - pinch.ty);
+        S.tx = m[0] - g * (pinch.mid[0] - pinch.tx);
+        S.ty = m[1] - g * (pinch.mid[1] - pinch.ty);
       }
       S.k = k;
       h.queue();
       return;
     }
-    if (!p0 || !base) return;
-    const dx = e.clientX - p0[0],
-      dy = e.clientY - p0[1];
+    if (!downAt || !base) return;
+    const dx = e.clientX - downAt[0],
+      dy = e.clientY - downAt[1];
     moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
     if (moved < slop) return;
     if (!dragging) {
@@ -350,11 +337,11 @@ export function bindInput(h: InputHooks): () => void {
     h.queue();
   };
 
-  const up = (e: PointerEvent) => {
-    PT.delete(e.pointerId);
+  const onWindowUp = (e: PointerEvent) => {
+    pointers.delete(e.pointerId);
     // Lifting one of three fingers changes which pair drives the gesture, so
     // rebase on the pair that is left rather than jumping.
-    if (pinch && PT.size >= 2) {
+    if (pinch && pointers.size >= 2) {
       startPinch();
       return;
     }
@@ -362,7 +349,7 @@ export function bindInput(h: InputHooks): () => void {
       pinch = null;
       const rest = pair()[0];
       if (rest) {
-        p0 = [rest.x, rest.y];
+        downAt = [rest.x, rest.y];
         base = { rot: S.rot.slice() as [number, number], tx: S.tx, ty: S.ty };
         moved = 99;
       } else {
@@ -371,15 +358,15 @@ export function bindInput(h: InputHooks): () => void {
       }
       return;
     }
-    if (PT.size) return;
+    if (pointers.size) return;
     const wasClick = moved < slop;
-    p0 = null;
+    downAt = null;
     dragging = false;
     stage.style.cursor = 'crosshair';
     h.setInteract(false);
-    window.removeEventListener('pointermove', mv);
-    window.removeEventListener('pointerup', up);
-    window.removeEventListener('pointercancel', up);
+    window.removeEventListener('pointermove', onWindowMove);
+    window.removeEventListener('pointerup', onWindowUp);
+    window.removeEventListener('pointercancel', onWindowUp);
     if (wasClick) h.clickAt(e);
     else h.queue(true);
   };
@@ -387,29 +374,29 @@ export function bindInput(h: InputHooks): () => void {
   const onDown = (e: PointerEvent) => {
     h.onActivity?.();
     h.tween.stop();
-    PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (PT.size === 2) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
       startPinch();
       return;
     }
-    if (PT.size > 2) return;
-    p0 = [e.clientX, e.clientY];
+    if (pointers.size > 2) return;
+    downAt = [e.clientX, e.clientY];
     moved = 0;
     slop = e.pointerType === 'mouse' ? 4 : 16;
     dragging = false;
     base = { rot: S.rot.slice() as [number, number], tx: S.tx, ty: S.ty };
-    window.addEventListener('pointermove', mv);
-    window.addEventListener('pointerup', up);
-    window.addEventListener('pointercancel', up);
+    window.addEventListener('pointermove', onWindowMove);
+    window.addEventListener('pointerup', onWindowUp);
+    window.addEventListener('pointercancel', onWindowUp);
   };
 
   const onMove = (e: PointerEvent) => {
-    if (p0 || pinch) return;
+    if (downAt || pinch) return;
     h.hoverAt(e);
   };
   const onLeave = () => h.clearHover();
 
-  let wt: ReturnType<typeof setTimeout> | null = null;
+  let wheelTimer: ReturnType<typeof setTimeout> | null = null;
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     h.onActivity?.();
@@ -418,8 +405,8 @@ export function bindInput(h: InputHooks): () => void {
     const r = stage.getBoundingClientRect();
     h.zoomTo(S.k * f, e.clientX - r.left, e.clientY - r.top);
     h.setInteract(true);
-    if (wt) clearTimeout(wt);
-    wt = setTimeout(() => {
+    if (wheelTimer) clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => {
       h.setInteract(false);
       h.queue(true);
     }, 200);
@@ -483,9 +470,9 @@ export function bindInput(h: InputHooks): () => void {
     stage.removeEventListener('pointerleave', onLeave);
     stage.removeEventListener('wheel', onWheel);
     stage.removeEventListener('keydown', onKey);
-    window.removeEventListener('pointermove', mv);
-    window.removeEventListener('pointerup', up);
-    window.removeEventListener('pointercancel', up);
-    if (wt) clearTimeout(wt);
+    window.removeEventListener('pointermove', onWindowMove);
+    window.removeEventListener('pointerup', onWindowUp);
+    window.removeEventListener('pointercancel', onWindowUp);
+    if (wheelTimer) clearTimeout(wheelTimer);
   };
 }

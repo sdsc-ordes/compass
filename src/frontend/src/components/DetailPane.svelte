@@ -3,47 +3,44 @@
   import Icon from './Icon.svelte';
   import { atlas, type Atlas } from '../lib/basemap';
   import { fmt, type Strings } from '../lib/i18n';
-  import type { Proj, Tag } from '../lib/types';
-  import type { Dim } from '../lib/schema';
+  import type { Entry, Tag } from '../lib/types';
+  import { TYPE_DIM, type Dim } from '../lib/schema';
 
   export let t: Strings;
-  export let entry: Proj | null = null;
+  export let entry: Entry | null = null;
   export let dims: Dim[] = [];
   export let onBack: () => void;
   export let onClose: () => void;
   export let onFilterByTag: (dim: string, iri: string) => void;
   export let titleEl: HTMLHeadingElement | null = null;
 
-  const THUMB = 128;
+  const THUMB_SIZE = 128;
+  const GRATICULE = geoGraticule().step([30, 30])();
 
   $: thumb = entry && $atlas ? buildThumb(entry, $atlas) : null;
 
-  function buildThumb(p: Proj, a: Atlas) {
-    const pr = geoOrthographic()
-      .rotate([-p.c[0], -p.c[1]])
+  function buildThumb(p: Entry, a: Atlas) {
+    const projection = geoOrthographic()
+      .rotate([-p.lonLat[0], -p.lonLat[1]])
       .fitExtent(
         [
           [3, 3],
-          [THUMB - 3, THUMB - 3],
+          [THUMB_SIZE - 3, THUMB_SIZE - 3],
         ],
         { type: 'Sphere' },
       );
-    const pth = geoPath(pr);
-    const xy = pr(p.c) ?? [THUMB / 2, THUMB / 2];
+    const path = geoPath(projection);
+    const [x, y] = projection(p.lonLat) ?? [THUMB_SIZE / 2, THUMB_SIZE / 2];
     return {
-      sea: pth({ type: 'Sphere' }) ?? '',
-      grat: pth(geoGraticule().step([30, 30])()) ?? '',
-      land: pth(a.land) ?? '',
-      rim: pth({ type: 'Sphere' }) ?? '',
-      x: xy[0],
-      y: xy[1],
+      sphere: path({ type: 'Sphere' }) ?? '',
+      grat: path(GRATICULE) ?? '',
+      land: path(a.land) ?? '',
+      x,
+      y,
     };
   }
 
-  // The unabbreviated name leads and the display name follows in brackets, so
-  // the panel reads as prose while the acronym the rest of the UI uses stays
-  // findable. Bracketed only when the two actually differ -- an entity whose
-  // long name is its name would otherwise say it twice.
+  // Long name first, then the display name (often an acronym) in brackets when they differ.
   $: heading =
     entry && entry.longName && entry.longName !== entry.title
       ? `${entry.longName} (${entry.title})`
@@ -51,18 +48,14 @@
 
   $: groups = entry ? tagGroups(entry, dims) : [];
 
-  // the groups read in the sidebar's section order, so the panel and the filter
-  // list name the schemes in the same sequence; a dim the sidebar does not list
-  // still gets a group, last, rather than being dropped from the panel
-  function tagGroups(p: Proj, ds: Dim[]): { dim: string; label: string; tags: Tag[] }[] {
+  // In sidebar order; dims the sidebar does not list come last.
+  function tagGroups(p: Entry, ds: Dim[]): { dim: string; label: string; tags: Tag[] }[] {
     const known = ds.map((d) => d.id);
     const rest = Object.keys(p.tags).filter((id) => !known.includes(id));
     return [...ds, ...rest.map((id) => ({ id, label: id }))]
       .map((d) => ({ dim: d.id, label: d.label, tags: p.tags[d.id] ?? [] }))
       .filter((g) => g.tags.length > 0);
   }
-
-  $: storiesHref = entry?.storiesUrl ?? '';
 </script>
 
 <div class="pane-detail">
@@ -73,12 +66,12 @@
     >
   </div>
 
-  <svg class="thumb" viewBox="0 0 {THUMB} {THUMB}" aria-hidden="true">
+  <svg class="thumb" viewBox="0 0 {THUMB_SIZE} {THUMB_SIZE}" aria-hidden="true">
     {#if thumb}
-      <path class="th-sea" d={thumb.sea} />
+      <path class="th-sea" d={thumb.sphere} />
       <path class="th-grat" d={thumb.grat} />
       <path class="th-land" d={thumb.land} />
-      <path class="th-rim" d={thumb.rim} />
+      <path class="th-rim" d={thumb.sphere} />
       <circle class="th-halo" cx={thumb.x} cy={thumb.y} r="7.5" />
       <circle class="th-dot" cx={thumb.x} cy={thumb.y} r="3.6" />
     {/if}
@@ -88,24 +81,24 @@
     <button
       class="etag"
       type="button"
-      on:click={() => entry && onFilterByTag('entityType', entry.typeIri)}
-      >{entry.entity}<span class="sr"> &mdash; {t.filterByType}</span></button
+      on:click={() => entry && onFilterByTag(TYPE_DIM, entry.typeIri)}
+      >{entry.typeLabel}<span class="sr"> &mdash; {t.filterByType}</span></button
     >
   {:else}
-    <p class="etag etag-flat">{entry?.entity ?? ''}</p>
+    <p class="etag etag-flat">{entry?.typeLabel ?? ''}</p>
   {/if}
   <h2 bind:this={titleEl} tabindex="-1">{heading}</h2>
   <p class="where">{entry?.where ?? ''}</p>
-  <p class="txt">{entry?.txt ?? ''}</p>
+  <p class="txt">{entry?.description ?? ''}</p>
 
-  {#if storiesHref}
+  {#if entry?.storiesUrl}
     <div class="storiescall">
       <a
         class="storiesbtn"
-        href={storiesHref}
+        href={entry.storiesUrl}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`${fmt(t.relatedStoriesFrom, { title: entry?.title ?? '' })} ${t.newTab}`}
+        aria-label={`${fmt(t.relatedStoriesFrom, { title: entry.title })} ${t.newTab}`}
         ><span class="sb-lb">{t.relatedStories}</span><Icon name="extLink" /></a
       >
     </div>

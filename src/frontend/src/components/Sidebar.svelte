@@ -7,7 +7,8 @@
   import CountBadge from './CountBadge.svelte';
   import { tick } from 'svelte';
   import { plural, type Strings } from '../lib/i18n';
-  import type { Proj } from '../lib/types';
+  import type { StoryCount } from '../lib/stories';
+  import type { Entry } from '../lib/types';
   import { TYPE_DIM, type Dim } from '../lib/schema';
 
   export let t: Strings;
@@ -16,10 +17,10 @@
   export let sel: Record<string, Set<string>> = {};
   export let facets: Record<string, Record<string, number>> = {};
   export let resultCount = 0;
-  export let storyCount: { count: number; url: string } | null = null;
+  export let storyCount: StoryCount | null = null;
   export let storiesPending = false;
   export let statusText = '';
-  export let selected: Proj | null = null;
+  export let selected: Entry | null = null;
   export let juston: string | null = null;
 
   export let onToggleDim: (id: string) => void;
@@ -35,23 +36,23 @@
   export let tallyEl: HTMLElement | null = null;
   export let titleEl: HTMLHeadingElement | null = null;
 
-  let acc: FilterAccordion | null = null;
-  let pills: TypePills | null = null;
+  let accordion: FilterAccordion | null = null;
+  let typePills: TypePills | null = null;
 
   export function focusHeader(id: string): void {
-    acc?.focusHeader(id);
+    accordion?.focusHeader(id);
   }
   export function focusRow(dim: string, iri: string): void {
-    acc?.focusRow(dim, iri);
+    accordion?.focusRow(dim, iri);
   }
   export function focusPill(iri: string): void {
-    pills?.focusPill(iri);
+    typePills?.focusPill(iri);
   }
 
   $: typeDim = dims.find((d) => d.id === TYPE_DIM) ?? null;
   $: sectionDims = dims.filter((d) => d.id !== TYPE_DIM);
 
-  $: nsel = Object.values(sel).reduce((n, s) => n + s.size, 0);
+  $: selectedCount = Object.values(sel).reduce((n, s) => n + s.size, 0);
 
   // Clears from the docked sheet; focus falls back to the grab it sat in.
   async function clear(): Promise<void> {
@@ -61,7 +62,6 @@
   }
 
   $: sheetTitle = selected ? t.detailsPane : t.filtersPane;
-  // the one count on mobile; the stories count and its link sit together below
   $: sheetCount = selected
     ? ''
     : `${resultCount} ${plural(resultCount, t.tallyCaptionOne, t.tallyCaption)}`;
@@ -80,9 +80,9 @@
     <span class="sr" id="grabhow">{t.sheetHow}</span>
     <div class="grabrow">
       <span class="grabtitle">{sheetTitle}</span>
-      {#if !selected && nsel}<CountBadge {t} n={nsel} />{/if}
+      {#if !selected && selectedCount}<CountBadge {t} n={selectedCount} />{/if}
       <span class="grabcount">{sheetCount}</span>
-      {#if !selected && nsel}
+      {#if !selected && selectedCount}
         <!-- kept from the grab's drag and toggle handlers in sheet.ts -->
         <button
           type="button"
@@ -97,10 +97,10 @@
 
   <div class="pane-filters">
     <Tally {t} {resultCount} {storyCount} {storiesPending} {statusText} bind:tallyEl />
-    <TypePills bind:this={pills} {t} dim={typeDim} {sel} {facets} {juston} {onPickType} />
+    <TypePills bind:this={typePills} {t} dim={typeDim} {sel} {facets} {juston} {onPickType} />
     <ActivePills {t} {dims} {sel} {onToggleOption} {onReset} />
     <FilterAccordion
-      bind:this={acc}
+      bind:this={accordion}
       {t}
       dims={sectionDims}
       {openDim}

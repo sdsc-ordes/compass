@@ -7,10 +7,10 @@
   import ActivePills from './ActivePills.svelte';
   import { Sheet, isMobile } from '../lib/sheet';
   import { DIM_IDS, SECTION_IDS, TYPE_DIM, buildDims } from '../lib/schema';
-  import { toProjs } from '../lib/features';
+  import { toEntries } from '../lib/features';
   import { isHost } from '../lib/pins';
   import { Stories, type StoryCount } from '../lib/stories';
-  import type { Proj } from '../lib/types';
+  import type { Entry } from '../lib/types';
   import { getEntities, getFacets, init, prefetch, type Feature } from '../engine';
   import { injectFonts } from '../lib/fonts';
   import {
@@ -21,7 +21,7 @@
     syncUrl,
     type QueryFilters,
   } from '../lib/urlstate';
-  import { fmt, i18n, type Lang } from '../lib/i18n';
+  import { fmt, i18n, loadErrorText, type Lang } from '../lib/i18n';
   import { styles } from '../lib/styles';
 
   export let apiurl = '';
@@ -46,6 +46,7 @@
   let selectedId: string | null = null;
   let night = false;
   let juston: string | null = null;
+  let justonTimer: ReturnType<typeof setTimeout> | null = null;
   // ?pin= token, held until the first load can resolve it.
   let pendingPin: string | null = null;
 
@@ -69,33 +70,33 @@
 
   $: anyFilters = DIM_IDS.some((id) => sel[id].size > 0);
 
-  $: projs = toProjs(entities);
+  $: entries = toEntries(entities);
   // Every pin the API returns, so the number always describes what is drawn.
-  $: resultCount = projs.length;
-  // The backend never counts always-on pins, so add them to every count.
-  $: hostCount = projs.filter(isHost).length;
+  $: resultCount = entries.length;
+  // The backend never counts always-on pins. They carry every tag, so they are
+  // added to every tag count, but they belong to none of the entity types.
+  $: hostCount = entries.filter(isHost).length;
   $: shownFacets = Object.fromEntries(
     dims
       .filter((d) => facets[d.id])
       .map((d) => {
         const counts = facets[d.id];
+        const extra = d.id === TYPE_DIM ? 0 : hostCount;
         return [
           d.id,
-          Object.fromEntries(
-            d.options.map((o) => [o.value, (counts[o.value] ?? 0) + hostCount]),
-          ),
+          Object.fromEntries(d.options.map((o) => [o.value, (counts[o.value] ?? 0) + extra])),
         ];
       }),
   );
   $: pinToken = selectedId
     ? encodePin(
         selectedId,
-        projs.map((p) => p.id),
+        entries.map((p) => p.id),
       )
     : pendingPin;
   $: if (mounted) syncUrl(filters, lang, dims, pinToken);
 
-  $: selected = selectedId ? (projs.find((p) => p.id === selectedId) ?? null) : null;
+  $: selected = selectedId ? (entries.find((p) => p.id === selectedId) ?? null) : null;
 
   $: statusText = error
     ? error
@@ -106,12 +107,9 @@
         : fmt(anyFilters ? t.statusResultsFiltered : t.statusResults, { n: resultCount });
 
   let loadSeq = 0;
-  const nextTick = () => new Promise((resolve) => setTimeout(resolve, 0));
+  const yieldToBrowser = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-  // Which filters a reload is for, as one comparable string. The map reframes
-  // on a change of these and on nothing else: a language switch re-queries the
-  // same entities, and the first load -- including the one that restores
-  // ?state= -- is the view the user asked to arrive at, not a change from it.
+  // The map reframes only on a filter change: not on the first load, nor on a language switch.
   const filterKey = (f: QueryFilters): string =>
     JSON.stringify(DIM_IDS.map((id) => [...(f[id] ?? [])].sort()));
 
@@ -135,7 +133,7 @@
       if (pendingPin) {
         selectedId = decodePin(
           pendingPin,
-          toProjs(entities).map((p) => p.id),
+          toEntries(entities).map((p) => p.id),
         );
         pendingPin = null;
       }
@@ -145,14 +143,14 @@
       if (reframe) focusKey += 1;
       loading = false;
 
-      await nextTick();
+      await yieldToBrowser();
       const counts = await counting;
       if (seq !== loadSeq) return;
       facets = counts;
     } catch (e) {
       if (seq !== loadSeq) return;
       console.error('[Compass] Query failed:', e);
-      error = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
+      error = loadErrorText(t, e);
     } finally {
       if (seq === loadSeq) loading = false;
     }
@@ -163,12 +161,8 @@
   let storyCount: StoryCount | null = null;
   let storiesPending = false;
   const stories = new Stories(
-    (c) => {
-      storyCount = c;
-    },
-    (p) => {
-      storiesPending = p;
-    },
+    (c) => (storyCount = c),
+    (p) => (storiesPending = p),
   );
 
   // Stories are tagged by topic etc., never by entity type.
@@ -192,8 +186,8 @@
   }
 
   function pickType(iri: string | null, el?: HTMLElement): void {
-    const held = sel[TYPE_DIM];
-    const same = iri !== null && held.size === 1 && held.has(iri);
+    const current = sel[TYPE_DIM];
+    const same = iri !== null && current.size === 1 && current.has(iri);
     sel[TYPE_DIM] = new Set(iri === null || same ? [] : [iri]);
     sel = { ...sel };
     sheet?.showMap(el);
@@ -208,49 +202,48 @@
     sheet?.onSectionOpened();
   }
 
-  const anchorDim = (): string => openDim ?? SECTION_IDS[0];
-
   function filterByTag(dim: string, iri: string): void {
-    if (!DIM_IDS.includes(dim)) return;
     if (!dims.find((d) => d.id === dim)?.options.some((o) => o.value === iri)) return;
     dismissEntry();
-    if (dim === TYPE_DIM) sel[dim] = new Set([iri]);
-    else sel[dim].add(iri);
-    sel = { ...sel };
     const isType = dim === TYPE_DIM;
-    if (!isType) openDim = dim;
+    if (isType) sel[dim] = new Set([iri]);
+    else {
+      sel[dim].add(iri);
+      openDim = dim;
+    }
+    sel = { ...sel };
     if (sheet?.mobile) sheet.to('half');
     juston = dim + iri;
     tick().then(() => (isType ? sidebarComp?.focusPill(iri) : sidebarComp?.focusRow(dim, iri)));
-    setTimeout(() => {
+    if (justonTimer) clearTimeout(justonTimer);
+    justonTimer = setTimeout(() => {
+      justonTimer = null;
       juston = null;
     }, 1800);
   }
 
-  async function openEntry(p: Proj): Promise<void> {
-    selectedId = p.id;
+  function selectEntry(p: Entry | null): void {
+    if (p) selectedId = p.id;
+    else dismissEntry();
   }
 
   function settledStageWidth(): number {
     if (!mapcEl || isMobile()) return 0;
-    const total = mapcEl.clientWidth;
-    if (!total) return 0;
     const rail = parseFloat(getComputedStyle(mapcEl).getPropertyValue('--rail')) || 0;
-    return Math.max(0, total - rail);
+    return Math.max(0, mapcEl.clientWidth - rail);
   }
 
   function dismissEntry(): void {
     if (selectedId) {
       const root = mapcEl?.getRootNode() as ShadowRoot | Document | undefined;
-      const active = (root as ShadowRoot | null)?.activeElement as HTMLElement | null;
-      const held = !!active?.closest?.('.pane-detail');
+      const focusInDetail = !!root?.activeElement?.closest('.pane-detail');
       selectedId = null;
       // on a phone, the grab: a header below the dock would lift the sheet
-      if (held)
+      if (focusInDetail)
         tick().then(() =>
           sheet?.mobile
             ? grabEl?.focus({ preventScroll: true })
-            : sidebarComp?.focusHeader(anchorDim()),
+            : sidebarComp?.focusHeader(openDim ?? SECTION_IDS[0]),
         );
     }
     if (sheet?.mobile) sheet.to('dock');
@@ -261,14 +254,11 @@
     const had = lastSelectedId;
     lastSelectedId = selectedId;
     if (selectedId) onEntryOpened(!!had);
-    else if (had) onEntryClosed();
+    else if (had) toTop();
   }
 
-  // Both panes scroll one shared container, so each arrival starts at the top.
-  // After the swap, never before it: a reactive block runs while the outgoing
-  // pane is still the one on screen, so resetting there scrolls *it*, and that
-  // lurch is what reads as the pane jumping. tick() lands after the DOM has
-  // changed and before the browser paints, so the new pane is simply at the top.
+  // Both panes share one scroller. Reset it after the DOM swap, not in the reactive
+  // block, or the outgoing pane visibly jumps.
   async function toTop(): Promise<void> {
     await tick();
     if (sidebarEl) sidebarEl.scrollTop = 0;
@@ -280,8 +270,6 @@
     await toTop();
     titleEl?.focus({ preventScroll: true });
   }
-
-  const onEntryClosed = (): Promise<void> => toTop();
 
   onMount(async () => {
     injectFonts();
@@ -296,7 +284,7 @@
       await schema;
     } catch (e) {
       console.error('[Compass] Failed to load the filter schema:', e);
-      error = fmt(t.errorLoad, { detail: e instanceof Error ? e.message : String(e) });
+      error = loadErrorText(t, e);
     }
     // A pin link opens unfiltered, so the pin is always among the results.
     if (!pendingPin) applyFilters(decodeFilters(params, buildDims(lang)));
@@ -310,7 +298,7 @@
       stage: mapcEl.querySelector('.stage') as HTMLElement,
       isDetail: () => !!selectedId,
       queue: (full) => stageComp?.refresh(full),
-      dismiss: () => dismissEntry(),
+      dismiss: dismissEntry,
     });
     sheet.wire();
 
@@ -326,6 +314,7 @@
   }
 
   onDestroy(() => {
+    if (justonTimer) clearTimeout(justonTimer);
     sheet?.destroy();
     stories.cancel();
   });
@@ -374,12 +363,12 @@
     {t}
     {lang}
     {tileurl}
-    {projs}
+    {entries}
     {selected}
     {loading}
     {error}
     {focusKey}
-    onSelect={(p) => (p ? openEntry(p) : dismissEntry())}
+    onSelect={selectEntry}
     onTheme={(n) => (night = n)}
     onLang={(l) => (lang = l)}
     lift={() => sheet?.lift() ?? 0}

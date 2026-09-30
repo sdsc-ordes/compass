@@ -1,38 +1,24 @@
 import { onFontsReady } from './fonts';
 import { REDUCED } from './projection';
 
-export type SheetState = 'dock' | 'half' | 'full';
+type SheetState = 'dock' | 'half' | 'full';
 
-const MOBILE_QUERY = '(max-width:860px)';
-
-const MOBILE: MediaQueryList =
-  typeof window === 'undefined'
-    ? ({
-        matches: false,
-        addEventListener() {},
-        removeEventListener() {},
-      } as unknown as MediaQueryList)
-    : window.matchMedia(MOBILE_QUERY);
+const MOBILE = window.matchMedia('(max-width:860px)');
 
 export const isMobile = (): boolean => MOBILE.matches;
 
-function onMobileChange(cb: (mobile: boolean) => void): () => void {
-  const handler = () => cb(MOBILE.matches);
-  MOBILE.addEventListener('change', handler);
-  return () => MOBILE.removeEventListener('change', handler);
-}
-
+// Share of the map's height the sheet covers at 'half'.
 const SHEET_HALF = 0.58;
 
 // Where the map's floating filter chips end, from the stage's top; 0 when none show.
-export function chipsBottom(stage: HTMLElement): number {
+function chipsBottom(stage: HTMLElement): number {
   const bar = stage.querySelector<HTMLElement>('.chipbar');
   return bar?.offsetHeight
     ? bar.getBoundingClientRect().bottom - stage.getBoundingClientRect().top
     : 0;
 }
 
-export interface SheetHost {
+interface SheetHost {
   mapc: HTMLElement;
   sidebar: HTMLElement;
   grab: HTMLElement;
@@ -44,11 +30,12 @@ export interface SheetHost {
   dismiss: () => void;
 }
 
+// The mobile bottom sheet holding the sidebar: its stops, drags and keys.
 export class Sheet {
   state: SheetState = 'dock';
   private offsets: Record<SheetState, number> | null = null;
   private paintTimer: ReturnType<typeof setTimeout> | null = null;
-  private armAt = 0;
+  private backdropArmedAt = 0;
   private dockH = 0;
   private teardown: (() => void)[] = [];
 
@@ -69,9 +56,9 @@ export class Sheet {
     return this.state === (this.h.isDetail() ? 'half' : 'dock');
   }
 
-  // The map left seen between the filter chips and the sheet at a stop, as
-  // [top, bottom] from the stage's top. Off the stop, not the screen: the sheet
-  // may still be sliding there.
+  // The map left visible between the filter chips and the sheet at a stop, as
+  // [top, bottom] from the stage's top. Computed from the stop, not the screen,
+  // since the sheet may still be sliding there.
   band(state: SheetState = this.state): [number, number] {
     const { stage, mapc } = this.h;
     const H = stage.clientHeight;
@@ -80,7 +67,7 @@ export class Sheet {
     return [chipsBottom(stage), Math.min(H, box - this.seen(state))];
   }
 
-  // Centres the pin in the map that half leaves above it, below the filter chips.
+  // How far above the stage's centre a pin sits when centred in the 'half' band.
   lift(): number {
     if (!this.mobile) return 0;
     const [top, bot] = this.band('half');
@@ -92,7 +79,8 @@ export class Sheet {
     return this.h.sidebar.offsetHeight - (this.offsets ?? this.measure())[state];
   }
 
-  measure(): Record<SheetState, number> {
+  // Each stop's translateY; also publishes --dock and --grabh on the map.
+  private measure(): Record<SheetState, number> {
     const { sidebar: sh, grab, mapc, dockFloor } = this.h;
     const H = mapc.clientHeight || window.innerHeight;
     const sheetH = sh.offsetHeight;
@@ -103,7 +91,6 @@ export class Sheet {
     mapc.style.setProperty('--dock', dock + 'px');
     mapc.style.setProperty('--grabh', grabH + 'px');
     this.offsets = {
-      // all the way up, the same panel the desktop rail shows
       full: 0,
       half: Math.max(0, sheetH - Math.round(H * SHEET_HALF)),
       dock: Math.max(0, sheetH - dock),
@@ -112,12 +99,12 @@ export class Sheet {
   }
 
   to(state: SheetState): void {
-    const { sidebar: sh, backdrop: bd, grab } = this.h;
+    const { sidebar: sh, backdrop, grab } = this.h;
     if (!this.mobile) {
       sh.style.transform = '';
       sh.removeAttribute('data-sheet');
-      bd.classList.remove('on');
-      bd.setAttribute('aria-hidden', 'true');
+      backdrop.classList.remove('on');
+      backdrop.setAttribute('aria-hidden', 'true');
       grab.setAttribute('aria-expanded', 'false');
       return;
     }
@@ -127,23 +114,22 @@ export class Sheet {
     sh.dataset.sheet = state;
     this.slide(this.measure()[state]);
     if (this.low()) sh.scrollTop = 0;
-    // 'half' leaves the map live above it, so filter changes show on the pins
-    // and another pin can be picked.
+    // Only 'full' shades the map; at 'half' it stays interactive.
     const shaded = state === 'full';
-    bd.classList.toggle('on', shaded);
-    bd.setAttribute('aria-hidden', String(!shaded));
+    backdrop.classList.toggle('on', shaded);
+    backdrop.setAttribute('aria-hidden', String(!shaded));
     grab.setAttribute('aria-expanded', String(!this.low()));
-    if (shaded) this.armAt = performance.now() + 400;
+    if (shaded) this.backdropArmedAt = performance.now() + 400;
     if (this.paintTimer) clearTimeout(this.paintTimer);
     this.paintTimer = setTimeout(() => this.h.queue(true), 340);
   }
 
-  toggle(): void {
+  private toggle(): void {
     this.to(this.state === 'full' ? this.stops()[0] : 'full');
   }
 
   wire(): void {
-    const { sidebar: sh, grab, backdrop: bd, dockFloor } = this.h;
+    const { sidebar: sh, grab, backdrop, dockFloor } = this.h;
     let pid: number | null = null,
       y0 = 0,
       off0 = 0,
@@ -181,9 +167,9 @@ export class Sheet {
       }
       const target = off0 + dy + (Math.abs(v) > 0.5 ? v * 170 : 0);
       const offsets = this.offsets ?? this.measure();
-      const d = (k: SheetState) => Math.abs(offsets[k] - target);
-      // from the current stop, which wins a tie with one at the same offset
-      this.to(this.stops().reduce((a, b) => (d(b) < d(a) ? b : a), this.state));
+      const dist = (stop: SheetState) => Math.abs(offsets[stop] - target);
+      // The nearest stop; the current one wins a tie with one at the same offset.
+      this.to(this.stops().reduce((a, b) => (dist(b) < dist(a) ? b : a), this.state));
     };
 
     const onDown = (e: PointerEvent) => {
@@ -200,10 +186,10 @@ export class Sheet {
       if (pid === null || e.pointerId !== pid) return;
       track(e.clientY);
     };
-    const end = (e?: PointerEvent) => {
-      if (pid === null || (e && e.pointerId !== undefined && e.pointerId !== pid)) return;
+    const end = (e: PointerEvent) => {
+      if (pid === null || e.pointerId !== pid) return;
       try {
-        if (pid !== null) grab.releasePointerCapture(pid);
+        grab.releasePointerCapture(pid);
       } catch {
         /* already released */
       }
@@ -211,49 +197,49 @@ export class Sheet {
       settle(true);
     };
 
-    // A gesture on the content is a sheet drag or a native scroll for its whole
-    // length, decided on its first move, before the browser commits to a pan:
-    // it scrolls up only a full sheet with more to show, and down only content
-    // already scrolled off its top. Anything else drags, so the host page never
-    // takes it. The sheet follows past a small threshold, so taps still land.
-    let ty: number | null = null,
+    // A content gesture is a native scroll or a sheet drag for its whole length,
+    // decided on its first move, before the browser commits to a pan. A swipe
+    // up scrolls only a full sheet with more to show, a swipe down only content
+    // already scrolled; anything else drags the sheet, so the host page never
+    // scrolls. The drag starts past 8 px so taps still land.
+    let touchY: number | null = null,
       atTop = false,
-      held = false,
-      tdrag = false;
+      claimed = false,
+      touchDragging = false;
     const onTouchStart = (e: TouchEvent) => {
       const el = e.target as Element | null;
-      ty =
+      touchY =
         this.mobile && pid === null && e.touches.length === 1 && !el?.closest?.('.sheet-grab')
           ? e.touches[0].clientY
           : null;
       // under 1px, as iOS can rest a subpixel off the top
       atTop = sh.scrollTop < 1;
-      held = tdrag = false;
+      claimed = touchDragging = false;
     };
     const onTouchMove = (e: TouchEvent) => {
-      if (ty === null) return;
+      if (touchY === null) return;
       const y = e.touches[0].clientY;
-      const d = y - ty;
-      if (!held) {
+      const d = y - touchY;
+      if (!claimed) {
         const more = this.state === 'full' && sh.scrollHeight - sh.clientHeight >= 1;
         if (d < 0 ? more : !atTop) {
-          ty = null;
+          touchY = null;
           return;
         }
-        held = true;
+        claimed = true;
       }
       if (e.cancelable) e.preventDefault();
-      if (!tdrag) {
+      if (!touchDragging) {
         if (Math.abs(d) < 8) return;
-        tdrag = true;
-        begin(ty);
+        touchDragging = true;
+        begin(touchY);
       }
       track(y);
     };
     const onTouchEnd = () => {
-      if (ty === null) return;
-      ty = null;
-      if (tdrag) settle(false);
+      if (touchY === null) return;
+      touchY = null;
+      if (touchDragging) settle(false);
     };
 
     const onKey = (e: KeyboardEvent) => {
@@ -272,17 +258,17 @@ export class Sheet {
         this.h.dismiss();
       }
     };
-    const onBd = () => {
-      if (performance.now() < this.armAt) return;
+    const onBackdrop = () => {
+      if (performance.now() < this.backdropArmedAt) return;
       this.h.dismiss();
     };
 
-    // Against the stop rather than the screen: the sheet may still be sliding
-    // there, as it is when an entry's title takes focus.
+    // Raises the sheet when focus lands below what the stop shows. Measured
+    // against the stop, as the sheet may still be sliding there (as it is when
+    // an entry's title takes focus).
     const onFocusIn = (e: FocusEvent) => {
       if (!this.mobile || !this.low()) return;
-      const el = e.target as HTMLElement | null;
-      if (typeof el?.getBoundingClientRect !== 'function') return;
+      const el = e.target as Element;
       const top = sh.getBoundingClientRect().top;
       if (el.getBoundingClientRect().bottom - top <= this.seen(this.state)) return;
       sh.scrollTop = 0;
@@ -294,7 +280,7 @@ export class Sheet {
     grab.addEventListener('pointerup', end);
     grab.addEventListener('pointercancel', end);
     grab.addEventListener('keydown', onKey);
-    bd.addEventListener('click', onBd);
+    backdrop.addEventListener('click', onBackdrop);
     sh.addEventListener('focusin', onFocusIn);
     sh.addEventListener('touchstart', onTouchStart, { passive: true });
     sh.addEventListener('touchmove', onTouchMove, { passive: false });
@@ -306,7 +292,7 @@ export class Sheet {
       grab.removeEventListener('pointerup', end);
       grab.removeEventListener('pointercancel', end);
       grab.removeEventListener('keydown', onKey);
-      bd.removeEventListener('click', onBd);
+      backdrop.removeEventListener('click', onBackdrop);
       sh.removeEventListener('focusin', onFocusIn);
       sh.removeEventListener('touchstart', onTouchStart);
       sh.removeEventListener('touchmove', onTouchMove);
@@ -314,38 +300,36 @@ export class Sheet {
       sh.removeEventListener('touchcancel', onTouchEnd);
     });
 
-    let gt: ReturnType<typeof setTimeout> | null = null;
+    let reseatTimer: ReturnType<typeof setTimeout> | null = null;
     let lastH = 0;
-    const ro =
-      typeof ResizeObserver === 'undefined'
-        ? null
-        : new ResizeObserver(() => {
-            if (!this.mobile || sh.classList.contains('dragging')) return;
-            const h = sh.offsetHeight + dockFloor.offsetHeight;
-            if (Math.abs(h - lastH) < 1) return;
-            lastH = h;
-            if (gt) clearTimeout(gt);
-            gt = setTimeout(() => this.reseat(), 60);
-          });
-    // the dock grows with the tally band, which a capped sheet does not show
-    ro?.observe(sh);
-    ro?.observe(dockFloor);
+    const ro = new ResizeObserver(() => {
+      if (!this.mobile || sh.classList.contains('dragging')) return;
+      const h = sh.offsetHeight + dockFloor.offsetHeight;
+      if (Math.abs(h - lastH) < 1) return;
+      lastH = h;
+      if (reseatTimer) clearTimeout(reseatTimer);
+      reseatTimer = setTimeout(() => this.reseat(), 60);
+    });
+    // The tally band too: the dock grows with it, which may not resize a capped sheet.
+    ro.observe(sh);
+    ro.observe(dockFloor);
     this.teardown.push(() => {
-      ro?.disconnect();
-      if (gt) clearTimeout(gt);
+      ro.disconnect();
+      if (reseatTimer) clearTimeout(reseatTimer);
     });
 
-    let rt: ReturnType<typeof setTimeout> | null = null;
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const onResize = () => {
-      if (rt) clearTimeout(rt);
-      rt = setTimeout(() => this.to(this.state), 120);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => this.to(this.state), 120);
     };
+    const onMobileChange = () => this.to(this.stops()[0]);
     window.addEventListener('resize', onResize);
-    const unmobile = onMobileChange(() => this.to(this.stops()[0]));
+    MOBILE.addEventListener('change', onMobileChange);
     this.teardown.push(() => {
       window.removeEventListener('resize', onResize);
-      unmobile();
-      if (rt) clearTimeout(rt);
+      MOBILE.removeEventListener('change', onMobileChange);
+      if (resizeTimer) clearTimeout(resizeTimer);
     });
 
     sh.style.transition = 'none';
@@ -370,8 +354,8 @@ export class Sheet {
   }
 
   // A filter picked from the full sheet drops it to half, so the pins it
-  // changed show, and keeps the tapped control in the part still seen.
-  // Scrolled two frames on, once the sheet has re-laid out at half.
+  // changed show, and scrolls the tapped control into the part still visible,
+  // two frames on, once the sheet has laid out at half.
   showMap(el?: HTMLElement | null): void {
     if (!this.mobile || this.state !== 'full') return;
     this.to('half');

@@ -32,7 +32,7 @@ describe('url filters', () => {
     expect(decodeFilters(toParams(encodeFilters(filters, dims)), dims)).toEqual(filters);
   });
 
-  it('accepts old full-IRI links and drops unknown values', () => {
+  it('accepts full IRIs and drops unknown values', () => {
     const params = toParams({ workArea: [`${ns}AdvocacyWork`, 'Nope'], other: ['x'] });
     expect(decodeFilters(params, dims)).toEqual({ workArea: [`${ns}AdvocacyWork`] });
   });

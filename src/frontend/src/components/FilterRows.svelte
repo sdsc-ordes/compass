@@ -28,9 +28,9 @@
 
   const countOf = (
     f: Record<string, Record<string, number>>,
-    dim: string,
+    id: string,
     iri: string,
-  ): number | null => (f[dim] ? (f[dim][iri] ?? 0) : null);
+  ): number | null => (f[id] ? (f[id][iri] ?? 0) : null);
 </script>
 
 <div class="dimmeta">
@@ -50,7 +50,6 @@
       type="button"
       class="frow"
       class:juston={juston === dim + opt.value}
-      data-dim={dim}
       data-key={opt.value}
       data-empty={n === 0}
       aria-pressed={on}

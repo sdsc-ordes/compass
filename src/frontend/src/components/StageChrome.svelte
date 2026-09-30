@@ -1,20 +1,21 @@
 <script lang="ts">
   import { onDestroy, tick } from 'svelte';
   import Icon from './Icon.svelte';
-  import type { Strings } from '../lib/i18n';
+  import SettingRow from './SettingRow.svelte';
+  import type { Lang, Strings } from '../lib/i18n';
   import { ZOOM_BTN } from '../lib/projection';
 
   export let t: Strings;
   export let viewMode: 'flat' | 'globe' = 'flat';
   export let night = false;
-  export let lang: 'en' | 'de' = 'en';
+  export let lang: Lang = 'en';
   export let depth = true;
   export let depthReady = false;
 
   export let onMode: (m: 'flat' | 'globe') => void;
   export let onTheme: (dark: boolean) => void;
   export let onDepth: (on: boolean) => void;
-  export let onLang: (l: 'en' | 'de') => void;
+  export let onLang: (l: Lang) => void;
   export let onZoom: (factor: number) => void;
   export let onReset: () => void;
   export let onChromeChange: () => void = () => {};
@@ -30,26 +31,26 @@
     if (open === on) return;
     const root = wrapEl?.getRootNode() as ShadowRoot | null;
     const active = root?.activeElement as Node | null;
-    const held = !!(active && panelEl?.contains(active));
+    const focusInPanel = !!(active && panelEl?.contains(active));
     open = on;
     await tick();
     if (on) panelEl?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
-    else if (restoreFocus && held) btnEl?.focus({ preventScroll: true });
+    else if (restoreFocus && focusInPanel) btnEl?.focus({ preventScroll: true });
     onChromeChange();
   }
 
-  function onWrapKey(e: KeyboardEvent): void {
+  function closeOnEscape(e: KeyboardEvent): void {
     if (e.key !== 'Escape' || !open) return;
     e.stopPropagation();
     e.preventDefault();
     setOpen(false);
   }
 
-  let unwire: (() => void) | null = null;
+  let disarmOutside: (() => void) | null = null;
 
   function armOutside(on: boolean): void {
-    unwire?.();
-    unwire = null;
+    disarmOutside?.();
+    disarmOutside = null;
     if (!on || !wrapEl) return;
     const root = wrapEl.getRootNode() as ShadowRoot | Document;
     const close = (e: Event) => {
@@ -59,7 +60,7 @@
     };
     root.addEventListener('pointerdown', close);
     document.addEventListener('pointerdown', close);
-    unwire = () => {
+    disarmOutside = () => {
       root.removeEventListener('pointerdown', close);
       document.removeEventListener('pointerdown', close);
     };
@@ -67,7 +68,7 @@
 
   $: armOutside(open);
 
-  onDestroy(() => unwire?.());
+  onDestroy(() => disarmOutside?.());
 </script>
 
 <div class="zoom" bind:this={zoomEl} on:pointerdown|stopPropagation>
@@ -80,7 +81,7 @@
       aria-label={t.mapSettings}
       bind:this={btnEl}
       on:click={() => setOpen(!open)}
-      on:keydown={onWrapKey}><Icon name="sliders" size={17} /></button
+      on:keydown={closeOnEscape}><Icon name="sliders" size={17} /></button
     >
 
     {#if open}
@@ -91,85 +92,52 @@
         role="group"
         aria-label={t.mapSettings}
         bind:this={panelEl}
-        on:keydown={onWrapKey}
+        on:keydown={closeOnEscape}
       >
-        <div class="setrow">
-          <span class="setlbl" id="set-proj">{t.projection}</span>
-          <div
-            class="seg"
-            data-active={viewMode === 'globe' ? '1' : '0'}
-            role="group"
-            aria-labelledby="set-proj"
-          >
-            <span class="segthumb"></span>
-            <button
-              type="button"
-              aria-pressed={viewMode === 'flat'}
-              on:click={() => onMode('flat')}><Icon name="mapFlat" />{t.flatMap}</button
-            >
-            <button
-              type="button"
-              aria-pressed={viewMode === 'globe'}
-              on:click={() => onMode('globe')}><Icon name="globe" />{t.globeMap}</button
-            >
-          </div>
-        </div>
-
-        <div class="setrow">
-          <span class="setlbl" id="set-theme">{t.theme}</span>
-          <div
-            class="seg"
-            data-active={night ? '1' : '0'}
-            role="group"
-            aria-labelledby="set-theme"
-          >
-            <span class="segthumb"></span>
-            <button type="button" aria-pressed={!night} on:click={() => onTheme(false)}
-              ><Icon name="sun" />{t.themeLight}</button
-            >
-            <button type="button" aria-pressed={night} on:click={() => onTheme(true)}
-              ><Icon name="moon" />{t.themeDark}</button
-            >
-          </div>
-        </div>
-
+        <SettingRow
+          id="set-proj"
+          label={t.projection}
+          choices={[
+            {
+              label: t.flatMap,
+              icon: 'mapFlat',
+              pressed: viewMode === 'flat',
+              pick: () => onMode('flat'),
+            },
+            {
+              label: t.globeMap,
+              icon: 'globe',
+              pressed: viewMode === 'globe',
+              pick: () => onMode('globe'),
+            },
+          ]}
+        />
+        <SettingRow
+          id="set-theme"
+          label={t.theme}
+          choices={[
+            { label: t.themeLight, icon: 'sun', pressed: !night, pick: () => onTheme(false) },
+            { label: t.themeDark, icon: 'moon', pressed: night, pick: () => onTheme(true) },
+          ]}
+        />
         {#if depthReady}
-          <div class="setrow">
-            <span class="setlbl" id="set-depth">{t.seafloor}</span>
-            <div
-              class="seg"
-              data-active={depth ? '0' : '1'}
-              role="group"
-              aria-labelledby="set-depth"
-            >
-              <span class="segthumb"></span>
-              <button type="button" aria-pressed={depth} on:click={() => onDepth(true)}
-                >{t.seafloorOn}</button
-              >
-              <button type="button" aria-pressed={!depth} on:click={() => onDepth(false)}
-                >{t.seafloorOff}</button
-              >
-            </div>
-          </div>
+          <SettingRow
+            id="set-depth"
+            label={t.seafloor}
+            choices={[
+              { label: t.seafloorOn, pressed: depth, pick: () => onDepth(true) },
+              { label: t.seafloorOff, pressed: !depth, pick: () => onDepth(false) },
+            ]}
+          />
         {/if}
-
-        <div class="setrow">
-          <span class="setlbl" id="set-lang">{t.language}</span>
-          <div
-            class="seg"
-            data-active={lang === 'de' ? '1' : '0'}
-            role="group"
-            aria-labelledby="set-lang"
-          >
-            <span class="segthumb"></span>
-            <button type="button" aria-pressed={lang === 'en'} on:click={() => onLang('en')}
-              >EN</button
-            >
-            <button type="button" aria-pressed={lang === 'de'} on:click={() => onLang('de')}
-              >DE</button
-            >
-          </div>
-        </div>
+        <SettingRow
+          id="set-lang"
+          label={t.language}
+          choices={[
+            { label: 'EN', pressed: lang === 'en', pick: () => onLang('en') },
+            { label: 'DE', pressed: lang === 'de', pick: () => onLang('de') },
+          ]}
+        />
       </div>
     {/if}
   </div>

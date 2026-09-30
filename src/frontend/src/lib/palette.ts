@@ -1,4 +1,4 @@
-export interface Pal {
+export interface Palette {
   page: string;
   sea: string;
   grat: string;
@@ -10,23 +10,17 @@ export interface Pal {
   pin: string;
   pinSel: string;
   pinRing: string;
-  // The globe's terminator wash. Astronaut by day, NIGHT_INK after dark.
+  // The globe's terminator wash.
   shade: string;
-  // The same colour at zero alpha: the gradient's middle stop, where the wash
-  // fades out. Inert as a colour, but it steers the interpolation.
+  // `shade` at zero alpha, for the gradient's middle stop, so the fade does not
+  // pass through another hue.
   shadeFade: string;
 }
 
-// Astronaut, and the near-black the night map is painted in. Named here because
-// both are read from more than one module: the pins draw their edge in Astronaut
-// and their ink in the night colour, and .mapc.night .stage carries a fourth copy
-// in CSS that no import can reach -- keep that one in step by hand.
+// NIGHT_INK is also hard-coded in styles/stage.css (.mapc.night .stage).
 export const ASTRONAUT = '#2A4E71';
 export const NIGHT_INK = '#081827';
 
-// Canvas wants rgba() strings, so every wash of the two colours above is derived
-// rather than written out again -- four hand-synced spellings of one colour is
-// how they drift.
 const wash = (hex: string, alpha: number): string => {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
@@ -34,7 +28,7 @@ const wash = (hex: string, alpha: number): string => {
 
 export type Theme = 'light' | 'dark';
 
-export const P: Record<Theme, Pal> = {
+export const PALETTES: Record<Theme, Palette> = {
   light: {
     page: '#FFFFFF',
     sea: '#E8F1F8',

@@ -1,6 +1,20 @@
-import type { Filters, FilterWidget } from './namespaces';
+export type Filters = Record<string, string[]>;
 
-export type EntityProperties = {
+export type FilterOption = { value: string; label: string; description?: string };
+
+type FilterWidget = {
+  id: string;
+  path: string;
+  label: string;
+  description?: string;
+  type: 'multiselect' | 'slider' | 'datepicker' | 'toggle';
+  order: number;
+  options?: FilterOption[];
+  min?: number | string;
+  max?: number | string;
+};
+
+type EntityProperties = {
   id: string;
   label: string;
   type: string;
@@ -8,7 +22,7 @@ export type EntityProperties = {
   storiesUrl: string;
 } & Record<string, unknown>;
 
-export type Geometry = { type: string; coordinates: number[] | number[][][] };
+type Geometry = { type: string; coordinates: number[] | number[][][] };
 
 export type Feature = {
   type: 'Feature';
@@ -16,28 +30,23 @@ export type Feature = {
   properties: EntityProperties;
 };
 
-export type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] };
+type FeatureCollection = { type: 'FeatureCollection'; features: Feature[] };
 
-export type FacetCounts = Record<string, Record<string, number>>;
+type FacetCounts = Record<string, Record<string, number>>;
+
+const ENTITIES = '/api/v1/entities';
+const FACETS = '/api/v1/entities/facets';
 
 const widgetsByLang: Record<string, FilterWidget[]> = {};
 let apiBase = '';
 
 function toParams(lang: string, filters: Filters): URLSearchParams {
   const params = new URLSearchParams({ lang });
-  for (const [key, value] of Object.entries(filters ?? {})) {
-    if (value === undefined || value === null) continue;
-    for (const item of Array.isArray(value) ? value : [value]) {
-      if (item !== undefined && item !== null && item !== '') {
-        params.append(key, String(item));
-      }
-    }
+  for (const [key, values] of Object.entries(filters)) {
+    for (const value of values) params.append(key, value);
   }
   return params;
 }
-
-const ENTITIES = '/api/v1/entities';
-const FACETS = '/api/v1/entities/facets';
 
 const urlOf = (path: string, params?: URLSearchParams): string =>
   `${apiBase}${path}${params ? `?${params}` : ''}`;
@@ -50,28 +59,29 @@ async function fetchJson<T>(path: string, params?: URLSearchParams): Promise<T> 
   return response.json() as Promise<T>;
 }
 
-// Requests sent ahead of the call that wants them; that call takes one over once.
-const warm = new Map<string, Promise<unknown>>();
+// Prefetched requests by URL; the first getJson for that URL takes it over.
+const prefetched = new Map<string, Promise<unknown>>();
 
 function getJson<T>(path: string, params?: URLSearchParams): Promise<T> {
   const key = urlOf(path, params);
-  const held = warm.get(key) as Promise<T> | undefined;
-  warm.delete(key);
+  const held = prefetched.get(key) as Promise<T> | undefined;
+  prefetched.delete(key);
   return held ?? fetchJson<T>(path, params);
 }
 
-// The first load's queries, sent alongside the schema rather than after it.
+/** Send the first load's queries without waiting for the filter schema. */
 export function prefetch(lang: string, filters: Filters): void {
   const params = toParams(lang, filters);
   for (const path of [ENTITIES, FACETS]) {
-    const req = fetchJson(path, params);
-    req.catch(() => {}); // the taker reports a failure
-    warm.set(urlOf(path, params), req);
+    const request = fetchJson(path, params);
+    request.catch(() => {}); // reported by the getJson caller that takes it
+    prefetched.set(urlOf(path, params), request);
   }
 }
 
+/** Point the client at `url` and load the filter schema in both languages. */
 export async function init(url: string): Promise<void> {
-  // Before the first await: prefetch() reads it straight after the call.
+  // Set before the first await: the caller runs prefetch() as soon as this returns.
   apiBase = (url ?? '').replace(/\/$/, '');
   const [en, de] = await Promise.all([
     getJson<FilterWidget[]>('/api/v1/filters', new URLSearchParams({ lang: 'en' })),

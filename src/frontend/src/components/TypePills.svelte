@@ -45,7 +45,7 @@
         data-key={opt.value}
         data-empty={n === 0}
         aria-pressed={on}
-        on:click={(e) => dim && onPickType(opt.value, e.currentTarget)}
+        on:click={(e) => onPickType(opt.value, e.currentTarget)}
       >
         <span class="tn" aria-hidden="true">{n ?? ''}</span>
         <span class="tl">{short}</span>
