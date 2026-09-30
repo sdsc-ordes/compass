@@ -4,15 +4,15 @@ version = "1.0.0"
 description = "Ontology generation from the source-data workbook"
 requires-python = ">=3.11"
 dependencies = [
-    "odfpy>=1.4",
-    "pyshacl>=0.31.0",
-    "rdflib>=7.6.0",
+    "odfpy>=1.4,<2",
+    "pyshacl>=0.31.0,<1",
+    "rdflib>=7.6.0,<8",
 ]
 
 [dependency-groups]
 dev = [
-    "hypothesis>=6.100",
-    "pytest>=8.0",
+    "hypothesis>=6.100,<7",
+    "pytest>=8.0,<10",
     "ruff>=0.9,<1",
 ]
 

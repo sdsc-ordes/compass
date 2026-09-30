@@ -1,20 +1,19 @@
-# Build context is the repo root: the app needs src/ontology as well as src/backend.
+# Build context: the repository root (needs src/backend and src/ontology).
 FROM python:3.11-slim
 
 RUN pip install --no-cache-dir uv
 
-# Mirrors the repo layout, because app/rdf.py locates the ontology relative to
-# its own file (three levels up).
+# Mirrors the repo layout: app/core/settings.py resolves the default ontology
+# dir (src/ontology) relative to its own path.
 WORKDIR /srv/src/backend
 
-COPY src/backend/pyproject.toml src/backend/uv.lock src/backend/.python-version ./
+COPY src/backend/pyproject.toml src/backend/uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY src/backend/app ./app
 
-# A baseline copy, so the image runs on its own. Compose mounts the live data
-# over COMPASS_ONTOLOGY_DIR instead, which is what keeps editorial updates from
-# needing a rebuild.
+# Baseline data for running the image alone. Compose mounts src/ontology at
+# COMPASS_ONTOLOGY_DIR instead, so data updates need no rebuild.
 COPY src/ontology /srv/src/ontology
 
 EXPOSE 8000
