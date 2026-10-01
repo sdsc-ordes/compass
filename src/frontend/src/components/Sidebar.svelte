@@ -38,6 +38,7 @@
 
   let accordion: FilterAccordion | null = null;
   let typePills: TypePills | null = null;
+  const version = __APP_VERSION__;
 
   export function focusHeader(id: string): void {
     accordion?.focusHeader(id);
@@ -123,12 +124,15 @@
   />
 
   <footer class="sidefoot">
-    {t.creditBefore}<span class="heart" aria-hidden="true">&#9829;</span><span class="sr"
-      >{t.creditLove}</span
-    >
-    {t.creditAfter}
-    <a href="https://www.datascience.ch" target="_blank" rel="noopener noreferrer"
-      >Swiss Data Science Center</a
-    >
+    <span>
+      {t.creditBefore}<span class="heart" aria-hidden="true">&#9829;</span><span class="sr"
+        >{t.creditLove}</span
+      >
+      {t.creditAfter}
+      <a href="https://www.datascience.ch" target="_blank" rel="noopener noreferrer"
+        >Swiss Data Science Center</a
+      >
+    </span>
+    <span class="badge"><span class="beta">{t.beta}</span> · v{version}</span>
   </footer>
 </aside>

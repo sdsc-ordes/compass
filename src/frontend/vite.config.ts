@@ -93,7 +93,12 @@ export default defineConfig(({ mode }) => {
   return {
     envDir: repoRoot,
     envPrefix: 'COMPASS_',
-    define: { __ASSET_V__: JSON.stringify(assetVersion()) },
+    define: {
+      __ASSET_V__: JSON.stringify(assetVersion()),
+      __APP_VERSION__: JSON.stringify(
+        JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version,
+      ),
+    },
     server: {
       port: devPort,
       strictPort: true,

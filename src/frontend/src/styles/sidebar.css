@@ -26,6 +26,10 @@ aside.filters::-webkit-scrollbar-track {
 }
 
 .sidefoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
   margin-top: 26px;
   padding-top: 14px;
   border-top: 1px solid var(--land-hi);
@@ -37,6 +41,19 @@ aside.filters::-webkit-scrollbar-track {
   margin: 0 0.28em;
   font-size: 1.05em;
   line-height: 1;
+}
+.sidefoot .badge {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid rgba(var(--astronaut-rgb), 0.3);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--astronaut);
+}
+.sidefoot .beta {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .sidefoot a {
   color: var(--astronaut);

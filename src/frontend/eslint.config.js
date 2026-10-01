@@ -12,7 +12,8 @@ export default ts.config(
   ...svelte.configs['flat/prettier'],
   {
     languageOptions: {
-      globals: globals.browser,
+      // Build-time constants from vite.config.ts.
+      globals: { ...globals.browser, __ASSET_V__: 'readonly', __APP_VERSION__: 'readonly' },
     },
     rules: {
       'no-console': ['error', { allow: ['warn', 'error'] }],
