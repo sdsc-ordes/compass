@@ -15,6 +15,7 @@ const en = {
   creditBefore: 'Built with',
   creditLove: 'love',
   creditAfter: 'at the',
+  beta: 'Beta',
 
   filterDimensions: 'Filter dimensions',
   dimOptionsCount: '{n} options · {m} selected',
@@ -99,6 +100,7 @@ const de: Strings = {
   creditBefore: 'Mit',
   creditLove: 'Liebe',
   creditAfter: 'kreiert am',
+  beta: 'Beta',
 
   filterDimensions: 'Filter Optionen',
   dimOptionsCount: '{n} Filter · {m} ausgewählt',
